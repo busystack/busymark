@@ -1,0 +1,5 @@
+{
+  "source": "busystack_git_flutter-pub.log",
+  "sha256": "f5110ae340c25f063765b579feeafadf68f9d2a74e5a5395ed4f795149a2f1bc",
+  "text": "Resolving dependencies...\nDownloading packages...\n  _fe_analyzer_shared 99.0.0 (108.0.0 available)\n  analyzer 12.1.0 (14.4.0 available)\n  package_config 2.2.0 (3.0.0 available)\n  test_api 0.7.12 (0.7.14 available)\nGot dependencies!\n4 packages have newer versions incompatible with dependency constraints.\nTry `flutter pub outdated` for more information.\n"
+}

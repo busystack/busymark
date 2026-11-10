@@ -68,6 +68,7 @@ enum BusyMarkCommandScope {
   tree,
   sourceSymbol,
   wysiwyg,
+  git,
 }
 
 enum BusyMarkCommandResourceContext { any, localWorkspace, notesWorkspace }

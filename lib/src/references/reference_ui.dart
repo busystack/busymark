@@ -1,3 +1,7 @@
+import '../platform/native_menu_service.dart';
+import 'package:yaru/yaru.dart';
+import '../nextcloud_notes/application/nextcloud_connection.dart';
+import '../app/busymark_native_controls.dart';
 import '../editor/link_destination.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +13,6 @@ import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../app/app_settings.dart';
 import '../nextcloud_notes/data/server_uri.dart';
-import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
 import '../workspace/workspace_controller.dart';
 import 'reference_controller.dart';
@@ -17,6 +20,29 @@ import 'reference_index.dart';
 import 'markdown_move_ui.dart';
 import 'dart:io';
 import 'dart:async';
+
+double referenceSidebarMinimumWidth(BuildContext context) {
+  var width = BusyMarkSizes.sidebarWidth;
+  for (final label in [
+    context.l10n.referenceIncoming,
+    context.l10n.referenceOutgoing,
+  ]) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: '$label (9999)',
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.localeOf(context),
+      maxLines: 1,
+    )..layout();
+    final requiredWidth = painter.width + BusyMarkSpacing.md * 4;
+    if (requiredWidth > width) width = requiredWidth;
+    painter.dispose();
+  }
+  return width;
+}
 
 Future<LinkDestination?> showReferenceLinkChooser(
   BuildContext context, {
@@ -160,30 +186,34 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
         (s) => (s.workspace?.id, s.activeBufferId),
       ),
     );
-    return BusyMarkDialogShell(
+    return BusyMarkNativeDialogShell(
       title: context.l10n.referenceChooseTarget,
       maxWidth: 650,
       actions: [
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           onPressed: () => Navigator.pop(context),
           label: context.l10n.cancel,
         ),
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           onPressed: () => _complete(LinkDestination(_url.text)),
           label: context.l10n.apply,
         ),
       ],
       children: [
-        if (_routeFailure != null) Text(_routeFailure!),
-        TextField(
+        if (_routeFailure != null)
+          BusyMarkStatusBox(
+            message: _routeFailure!,
+            kind: BusyMarkStatusKind.error,
+          ),
+        BusyMarkNativeTextEntry(
           controller: _url,
           autofocus: true,
-          decoration: InputDecoration(labelText: context.l10n.source),
+          label: context.l10n.source,
           onSubmitted: (value) => _complete(LinkDestination(value)),
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          decoration: InputDecoration(labelText: context.l10n.quickOpen),
+        BusyMarkNativeTextEntry(
+          label: context.l10n.quickOpen,
           onChanged: (query) => setState(() {
             _query = query.toLowerCase();
             _limit = 100;
@@ -192,41 +222,56 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
         SizedBox(
           height: 320,
           child: data.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Text(error.toString()),
+            loading: () => const Center(child: YaruCircularProgressIndicator()),
+            error: (error, stack) => Column(
+              children: [
+                BusyMarkStatusBox(
+                  message: error.toString(),
+                  kind: BusyMarkStatusKind.error,
+                ),
+                BusyMarkNativeDialogButton(
+                  label: context.l10n.tocTemplateRetry,
+                  onPressed: () =>
+                      ref.read(referenceIndexProvider.notifier).refresh(),
+                ),
+              ],
+            ),
             data: (page) {
               final targets = page.values;
+              if (targets.isEmpty) {
+                return Center(child: Text(context.l10n.referenceNoResults));
+              }
               return ListView.builder(
                 itemCount:
                     targets.length + (page.total > targets.length ? 1 : 0),
                 itemBuilder: (context, i) {
                   if (i == _limit) {
-                    return TextButton(
+                    return BusyMarkNativeDialogButton(
                       onPressed: () => setState(() => _limit += 100),
-                      child: Text(context.l10n.workspaceSearchShowMore),
+                      label: context.l10n.workspaceSearchShowMore,
                     );
                   }
                   final target = targets[i];
                   final destination = index == null
                       ? null
                       : _destination(target, index);
-                  return ListTile(
-                    title: Text(target.label ?? target.document.title),
-                    subtitle: Text(
-                      destination == null
-                          ? index?.missingNoteIds.contains(
-                                      target.document.serverId,
-                                    ) ==
-                                    true
-                                ? context.l10n.referenceMissing
-                                : index?.server == null ||
-                                      !target.document.available
-                                ? context.l10n.referenceUnavailable
-                                : context.l10n.referenceNoPortableId
-                          : '${destination.href}${destination.origin == null ? '' : ' / ${destination.origin}'}',
-                    ),
-                    enabled: destination != null,
-                    onTap: () => _complete(destination!),
+                  return BusyMarkSidebarRecordRow<void>(
+                    icon: BusyMarkGlyphs.link,
+                    title: target.label ?? target.document.title,
+                    subtitle: destination == null
+                        ? index?.missingNoteIds.contains(
+                                    target.document.serverId,
+                                  ) ==
+                                  true
+                              ? context.l10n.referenceMissing
+                              : index?.server == null ||
+                                    !target.document.available
+                              ? context.l10n.referenceUnavailable
+                              : context.l10n.referenceNoPortableId
+                        : '${destination.href}${destination.origin == null ? '' : ' / ${destination.origin}'}',
+                    onTap: destination == null
+                        ? null
+                        : () => _complete(destination),
                   );
                 },
               );
@@ -245,9 +290,8 @@ class ReferencesPanel extends ConsumerStatefulWidget {
 }
 
 class _ReferencesPanelState extends ConsumerState<ReferencesPanel> {
-  bool _incoming = false;
+  final _limits = <bool, int>{true: 100, false: 100};
   String? _anchor;
-  int _limit = 100;
   String? _identity;
   Future<void> _navigate(
     IndexedReference result,
@@ -295,161 +339,216 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
+    final expanded = ref.watch(referenceSectionExpansionProvider);
     final identity =
         state.activeBuffer?.remoteNote?.localId ?? state.activeBuffer?.filePath;
     if (identity != _identity) {
       _identity = identity;
       _anchor = null;
-      _limit = 100;
+      _limits.updateAll((_, _) => 100);
     }
-    final data = ref.watch(
-      referencePanelResultsProvider((
-        identity: identity ?? '',
-        incoming: _incoming,
-        anchor: _anchor,
-        count: _limit,
-      )),
-    );
+    final results = {
+      for (final incoming in [true, false])
+        incoming: ref.watch(
+          referencePanelResultsProvider((
+            identity: identity ?? '',
+            incoming: incoming,
+            anchor: _anchor,
+            count: _limits[incoming]!,
+          )),
+        ),
+    };
+    final headings =
+        results.values
+            .map((value) => value.value?.headings)
+            .whereType<List<ReferenceTarget>>()
+            .firstOrNull ??
+        const <ReferenceTarget>[];
+    if (_anchor != null &&
+        results.values.every((value) => value.hasValue) &&
+        !headings.any((h) => h.anchor == _anchor)) {
+      final staleIdentity = identity;
+      final staleAnchor = _anchor;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _identity == staleIdentity && _anchor == staleAnchor) {
+          setState(() {
+            _anchor = null;
+            _limits.updateAll((_, _) => 100);
+          });
+        }
+      });
+    }
     final recovery =
         ref.watch(refactoringRecoveryProvider).value ?? const <String>[];
-    final account = state.workspace?.isRemote == true
-        ? ref.watch(nextcloudConnectionProvider).account
-        : null;
+    final buffer = state.activeBuffer;
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        BusyMarkSidebarHeader(
+          title: context.l10n.references,
+          actions: [
+            _ReferenceActions(
+              key: const ValueKey('references-actions'),
+              items: [
+                BusyMarkPopupMenuItem(
+                  value: '',
+                  label: context.l10n.referenceWholeDocument,
+                  checked: _anchor == null,
+                  trailingCheck: true,
+                ),
+                for (final h in headings)
+                  BusyMarkPopupMenuItem(
+                    value: h.anchor!,
+                    label: h.label ?? h.anchor!,
+                    checked: h.anchor == _anchor,
+                    trailingCheck: true,
+                  ),
+              ],
+              onSelected: (value) => setState(() {
+                _anchor = value.isEmpty ? null : value;
+                _limits.updateAll((_, _) => 100);
+              }),
+            ),
+          ],
+          leading: const Icon(BusyMarkGlyphs.link),
+          contextLine: buffer == null
+              ? null
+              : BusyMarkTooltipStyle.wrap(
+                  context,
+                  message: [
+                    buffer.filePath ?? buffer.displayName,
+                    if (state.workspace?.writersideProject case final project?)
+                      '${project.activeModule?.config.moduleName ?? ''} / ${project.activeInstanceId ?? ''}',
+                  ].join('\n'),
+                  child: Text(buffer.displayName),
+                ),
+        ),
         for (final journal in recovery)
-          TextButton(
+          BusyMarkNativeDialogButton(
             onPressed: () async {
               await reviewMarkdownRecovery(context, ref, journal);
               if (mounted) ref.invalidate(refactoringRecoveryProvider);
             },
-            child: Text(context.l10n.notesRecovery),
+            label: context.l10n.notesRecovery,
           ),
-        Text(
-          account == null
-              ? state.workspace?.filesystemRootPath ?? ''
-              : '${account.loginName} · ${account.server}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (state.workspace?.writersideProject case final project?)
-          Text(
-            '${project.activeModule?.config.moduleName ?? ''} / ${project.activeInstanceId ?? ''}',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+        if (_anchor != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.md),
+            child: Text(
+              '${context.l10n.referenceScope}: ${headings.where((h) => h.anchor == _anchor).firstOrNull?.label ?? _anchor}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-        SegmentedButton<bool>(
-          segments: [
-            ButtonSegment(
-              value: true,
-              label: Text(context.l10n.referenceIncoming),
-            ),
-            ButtonSegment(
-              value: false,
-              label: Text(context.l10n.referenceOutgoing),
-            ),
-          ],
-          selected: {_incoming},
-          onSelectionChanged: (v) => setState(() {
-            _incoming = v.single;
-            _limit = 100;
-          }),
-        ),
         Expanded(
-          child: data.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Column(
-              children: [
-                Text(error.toString()),
-                TextButton(
-                  onPressed: () =>
-                      ref.read(referenceIndexProvider.notifier).refresh(),
-                  child: Text(context.l10n.tocTemplateRetry),
+          child: ListView(
+            children: [
+              for (final incoming in [true, false]) ...[
+                BusyMarkSidebarTreeRow(
+                  key: ValueKey('references-section-$incoming'),
+                  title:
+                      '${incoming ? context.l10n.referenceIncoming : context.l10n.referenceOutgoing}${results[incoming]!.value == null ? '' : ' (${results[incoming]!.value!.total})'}',
+                  depth: 0,
+                  hasChildren: true,
+                  expanded: expanded[incoming]!,
+                  traverseWithArrows: true,
+                  onToggle: () => ref
+                      .read(referenceSectionExpansionProvider.notifier)
+                      .toggle(incoming),
+                  onTap: () => ref
+                      .read(referenceSectionExpansionProvider.notifier)
+                      .toggle(incoming),
                 ),
-              ],
-            ),
-            data: (page) {
-              final headings = page.headings;
-              final selected = page.references;
-              if (!headings.any((h) => h.anchor == _anchor)) _anchor = null;
-              return Column(
-                children: [
-                  DropdownButton<String>(
-                    value: _anchor,
-                    isExpanded: true,
-                    hint: Text(context.l10n.referenceWholeDocument),
-                    items: [
-                      DropdownMenuItem(
-                        value: null,
-                        child: Text(context.l10n.referenceWholeDocument),
-                      ),
-                      for (final h in headings)
-                        DropdownMenuItem(
-                          value: h.anchor,
-                          child: Text(h.label ?? h.anchor!),
+                if (expanded[incoming]!)
+                  results[incoming]!.when(
+                    loading: () =>
+                        const Center(child: YaruCircularProgressIndicator()),
+                    error: (error, stack) => Column(
+                      children: [
+                        BusyMarkStatusBox(
+                          message: error.toString(),
+                          kind: BusyMarkStatusKind.error,
                         ),
-                    ],
-                    onChanged: (v) => setState(() {
-                      _anchor = v;
-                      _limit = 100;
-                    }),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount:
-                          selected.length +
-                          (page.total > selected.length ? 1 : 0),
-                      itemBuilder: (context, i) {
-                        if (i == _limit) {
-                          return TextButton(
-                            onPressed: () => setState(() => _limit += 100),
-                            child: Text(context.l10n.workspaceSearchShowMore),
-                          );
-                        }
-                        final result = selected[i];
-                        return ListTile(
-                          title: Text(
-                            _incoming
-                                ? result.source.title
-                                : result.target?.document.title ??
-                                      result.authored.destination,
+                        BusyMarkNativeDialogButton(
+                          label: context.l10n.tocTemplateRetry,
+                          onPressed: () => ref
+                              .read(referenceIndexProvider.notifier)
+                              .refresh(),
+                        ),
+                      ],
+                    ),
+                    data: (page) => Column(
+                      children: [
+                        if (page.references.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+                            child: Text(
+                              buffer == null
+                                  ? context.l10n.referenceNoActiveDocument
+                                  : context.l10n.referenceNoResults,
+                            ),
                           ),
-                          subtitle: Text(
-                            '${result.authored.label}\n${_resolutionLabel(context, result.resolution)}'
-                            '${result.authored.moduleId == null ? '' : '\n${result.authored.moduleId} / ${result.authored.origin ?? ''}'}',
+                        for (final result in page.references)
+                          _entry(context, result, incoming),
+                        if (page.total > page.references.length)
+                          BusyMarkNativeDialogButton(
+                            label: context.l10n.workspaceSearchShowMore,
+                            onPressed: () => setState(
+                              () =>
+                                  _limits[incoming] = _limits[incoming]! + 100,
+                            ),
                           ),
-                          onTap: () =>
-                              _navigate(result, _incoming ? false : true),
-                          trailing: PopupMenuButton<bool>(
-                            icon: const Icon(BusyMarkGlyphs.link),
-                            onSelected: (target) =>
-                                _navigate(result, target, source: true),
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: false,
-                                child: Text(
-                                  context.l10n.referenceSourceLocation,
-                                ),
-                              ),
-                              if (result.target != null)
-                                PopupMenuItem(
-                                  value: true,
-                                  child: Text(
-                                    context.l10n.referenceTargetLocation,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
+                      ],
                     ),
                   ),
-                ],
-              );
-            },
+              ],
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _entry(BuildContext context, IndexedReference result, bool incoming) {
+    final title = incoming
+        ? result.source.title
+        : result.target?.document.title ?? result.authored.destination;
+    final origin = [
+      result.authored.moduleId,
+      result.authored.origin,
+    ].whereType<String>().where((value) => value.trim().isNotEmpty).join(' / ');
+    final details = [
+      result.authored.label,
+      _resolutionLabel(context, result.resolution),
+      if (origin.isNotEmpty) origin,
+    ].where((text) => text.isNotEmpty).join(' · ');
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: BusyMarkSpacing.md),
+      child: BusyMarkSidebarRecordRow<bool>(
+        compact: true,
+        icon: result.resolution == ReferenceResolution.resolved
+            ? BusyMarkGlyphs.link
+            : BusyMarkGlyphs.error,
+        title: title,
+        subtitle: details,
+        tooltip: '$title\n$details',
+        semanticsLabel: '$title, $details',
+        onTap: () => _navigate(result, !incoming),
+        menuTooltip: context.l10n.actions,
+        menuItemsBuilder: (context) => [
+          BusyMarkPopupMenuItem(
+            value: false,
+            label: context.l10n.referenceSourceLocation,
+          ),
+          if (result.target != null)
+            BusyMarkPopupMenuItem(
+              value: true,
+              label: context.l10n.referenceTargetLocation,
+            ),
+        ],
+        onMenuSelected: (target) => _navigate(result, target, source: true),
+      ),
     );
   }
 }
@@ -477,3 +576,53 @@ final refactoringRecoveryProvider = FutureProvider<List<String>>((ref) async {
       .map((f) => f.path)
       .toList();
 });
+
+class _ReferenceActions extends StatefulWidget {
+  const _ReferenceActions({
+    super.key,
+    required this.items,
+    required this.onSelected,
+  });
+  final List<PopupMenuEntry<String>> items;
+  final ValueChanged<String> onSelected;
+  @override
+  State<_ReferenceActions> createState() => _ReferenceActionsState();
+}
+
+class _ReferenceActionsState extends State<_ReferenceActions> {
+  NativeMenuSession? _session;
+  @override
+  void dispose() {
+    final session = _session;
+    if (session != null) unawaited(const NativeMenuService().dismiss(session));
+    super.dispose();
+  }
+
+  Future<void> _open() async {
+    if (_session != null) return;
+    final session = NativeMenuSession();
+    setState(() => _session = session);
+    final selected = await showBusyMarkNativeContextMenu<String>(
+      context,
+      null,
+      items: widget.items,
+      session: session,
+    );
+    if (!mounted || !identical(_session, session)) return;
+    setState(() => _session = null);
+    if (selected != null) widget.onSelected(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(
+      expanded: _session != null,
+      child: BusyMarkHeaderIconButton(
+        tooltip: context.l10n.actions,
+        icon: BusyMarkGlyphs.menuHorizontal,
+        transparent: true,
+        onPressed: _open,
+      ),
+    ),
+  );
+}

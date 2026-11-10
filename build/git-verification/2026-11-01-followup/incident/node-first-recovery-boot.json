@@ -1,0 +1,5 @@
+{
+  "rawFile": "node-first-recovery-boot.log",
+  "sha256": "9fdea7b2cb4094eb62e1ba5d0614ea447af54626168ca6f5b6b53db5f911a9f3",
+  "transcript": "Command: /snap/bin/lxc exec busynode-continuation-20261015 -- journalctl -b -1 --no-pager --grep=corrupted\nExit: 0\n\nNov 01 09:36:54 busynode-continuation-20261015 systemd-journald[329]: File /var/log/journal/162464f287d34b0eb995f4e5bb4319d1/system.journal corrupted or uncleanly shut down, renaming and replacing.\n\n"
+}

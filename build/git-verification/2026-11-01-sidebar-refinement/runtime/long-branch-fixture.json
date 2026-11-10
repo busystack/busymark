@@ -1,0 +1,13 @@
+{
+  "root": "/home/ubuntu/busystack-native-git-verification-20261031/sidebar-refinement-20261101/long-branch-fixture",
+  "branch": "feature/native-control-consistency-long-branch-name-with-retained-upstream-and-independent-comparison-tabs",
+  "head": "5e2a71de28929e91d795cbf2677de579e712428d",
+  "purpose": "Separate task-owned clone for native branch truncation; original fixture unchanged",
+  "files": {
+    "unrelated.dat": "c71402ea63d8060cf0a04acca65cd5dcfc6df819a58b861b393fe2ffc6bf4f38",
+    "rapid.md": "49490ad87c3674eb78b52e90a980113694e7799e0431d8c91b2ee355ca4d861d",
+    "docs/\u65b0\u3057\u3044\u30d5\u30a1\u30a4\u30eb-long-Unicode.md": "ad960f0827fc376d7dcb23f0e2e25a9de5de6b3efa332a370cb7cd91dcef97e8",
+    "docs/\u65e5\u672c\u8a9e-\u9577\u3044\u540d\u524d-review.md": "b289d214c30db4749aa613c5c7b1010dbc0f58dda8af452e653498eae69f60bb",
+    "docs/chapter/overview.md": "0c937d1db505787c851f22d6418fee4e5809c0d565d52ea1f029b1a06545dc19"
+  }
+}

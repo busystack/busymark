@@ -250,7 +250,7 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
                                                 (a, b) =>
                                                     a.name.compareTo(b.name),
                                               )))
-                                          YaruMasterTile(
+                                          BusyMarkMasterTile(
                                             key: ValueKey(
                                               'template-${template.id}',
                                             ),
@@ -263,7 +263,7 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
                                             ),
                                           ),
                                         if (category == 'custom')
-                                          YaruListTile.square(
+                                          BusyMarkListTile.square(
                                             title: Text(
                                               context
                                                   .l10n
@@ -318,7 +318,7 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
                                   onChanged: (_) => setState(() {}),
                                   onSubmitted: (_) => _create(),
                                 ),
-                                YaruListTile.square(
+                                BusyMarkListTile.square(
                                   key: const ValueKey('template-format'),
                                   title: Wrap(
                                     spacing: BusyMarkSpacing.md,
@@ -669,7 +669,7 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
                           child: BusyMarkSidebarNavigation(
                             children: [
                               for (final entry in _visible)
-                                YaruMasterTile(
+                                BusyMarkMasterTile(
                                   selected: entry.id == _selected?.id,
                                   title: Text(
                                     '${entry.name}.${entry.extension}',

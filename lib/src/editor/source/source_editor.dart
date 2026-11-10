@@ -4160,11 +4160,12 @@ class _SearchPanelIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return YaruIconButton(
+    return BusyMarkCompactIconButton(
       tooltip: tooltip,
-      iconSize: 28,
+      size: 28,
+      glyphSize: 14,
       onPressed: onPressed,
-      icon: Icon(icon, size: 14),
+      icon: icon,
     );
   }
 }

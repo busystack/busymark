@@ -22,7 +22,9 @@ export async function renderMermaid(source, theme) {
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
-    htmlLabels: false,
+    // Upstream renders flowchart math through MathML HTML labels. Ordinary
+    // diagrams keep vector text; strict sanitization applies in both modes.
+    htmlLabels: source.includes('$$'),
     maxTextSize: 100000,
     maxEdges: 500,
     suppressErrorRendering: true,

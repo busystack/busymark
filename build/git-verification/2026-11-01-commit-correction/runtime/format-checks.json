@@ -1,0 +1,61 @@
+{
+  "busymark": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "lib/src/app/busymark_design.dart",
+      "lib/src/app/linux/linux_page_frame.dart",
+      "lib/src/git",
+      "lib/src/workspace/presentation/workspace_screen.dart",
+      "test/src/app_smoke_test.dart",
+      "test/src/git",
+      "tools/git_ui_audit/bin/check.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 41 files (0 changed) in 1.88 seconds.\n"
+  },
+  "busystack_git": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "lib/src/models.dart",
+      "lib/src/parsers.dart",
+      "lib/src/repository_queries.dart",
+      "test/tracking_counts_test.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 4 files (0 changed) in 0.04 seconds.\n"
+  },
+  "busystack_git_flutter": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "lib/src/commit_view.dart",
+      "lib/src/presentation.dart",
+      "test/commit_amend_draft_test.dart",
+      "test/support/native_presentation_fixture.dart",
+      "tool/check_native_presentation.dart",
+      "tool/test_native_presentation_audit.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 6 files (0 changed) in 0.17 seconds.\n"
+  },
+  "busyfiles": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "apps/busyfiles_ui/lib/src/app/busyfiles_design.dart",
+      "apps/busyfiles_ui/test/git_location_entry_test.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 2 files (0 changed) in 0.12 seconds.\n"
+  }
+}

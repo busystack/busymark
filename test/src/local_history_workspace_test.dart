@@ -683,6 +683,14 @@ void main() {
             reason: 'Only a protective capture may preserve X',
           );
         }
+        // Opening queues history observation independently of session writes.
+        // Settle it before the final flush and deletion of the disk fixture.
+        expect(
+          await reopened.container
+              .read(localHistoryControllerProvider.notifier)
+              .flushAll(reopened.state.documentBuffers),
+          isTrue,
+        );
         await reopened.controller.flushPersistence();
       },
     );

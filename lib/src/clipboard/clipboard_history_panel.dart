@@ -26,6 +26,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   final _listScrollController = ScrollController();
   final _listFocusNode = FocusNode(debugLabel: 'Clipboard History list');
   final _entryKeys = <String, GlobalKey>{};
+  final _menuKeys = BusyMarkContextMenuKeys();
   String? _selectedId;
 
   @override
@@ -46,6 +47,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   void dispose() {
     _listScrollController.dispose();
     _listFocusNode.dispose();
+    _menuKeys.clear();
     super.dispose();
   }
 
@@ -68,60 +70,51 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     _entryKeys.removeWhere((id, _) => !visibleIds.contains(id));
     return Focus(
       focusNode: _listFocusNode,
+      onFocusChange: (focused) {
+        if (!focused) _menuKeys.clear();
+      },
       onKeyEvent: (_, event) => _handleKey(event, visible, registry),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              BusyMarkSpacing.md,
-              BusyMarkSpacing.sm,
-              BusyMarkSpacing.md,
-              BusyMarkSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.l10n.clipboardHistory,
-                    style: Theme.of(context).textTheme.bodyMedium,
+          BusyMarkSidebarHeader(
+            title: context.l10n.clipboardHistory,
+            leading: const Icon(BusyMarkGlyphs.paste),
+            actions: [
+              BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>.native(
+                key: const ValueKey('clipboard-history-actions-menu'),
+                tooltip: context.l10n.actions,
+                icon: BusyMarkGlyphs.menuVertical,
+                transparent: true,
+                borderRadius: BusyMarkRadius.nativeHeaderButton,
+                highlightWhenOpen: false,
+                itemBuilder: (context) => [
+                  BusyMarkPopupMenuItem(
+                    value: _ClipboardHistoryAction.refresh,
+                    label: MaterialLocalizations.of(
+                      context,
+                    ).refreshIndicatorSemanticLabel,
+                    icon: BusyMarkGlyphs.refresh,
+                    enabled: !state.refreshing,
                   ),
-                ),
-                BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>(
-                  key: const ValueKey('clipboard-history-actions-menu'),
-                  tooltip: context.l10n.actions,
-                  icon: BusyMarkGlyphs.menuVertical,
-                  transparent: true,
-                  borderRadius: BusyMarkRadius.nativeHeaderButton,
-                  highlightWhenOpen: false,
-                  itemBuilder: (context) => [
-                    BusyMarkPopupMenuItem(
-                      value: _ClipboardHistoryAction.refresh,
-                      label: MaterialLocalizations.of(
-                        context,
-                      ).refreshIndicatorSemanticLabel,
-                      icon: BusyMarkGlyphs.refresh,
-                      enabled: !state.refreshing,
-                    ),
-                    const PopupMenuDivider(height: BusyMarkSpacing.sm),
-                    BusyMarkPopupMenuItem(
-                      value: _ClipboardHistoryAction.clear,
-                      label: context.l10n.clipboardClearAll,
-                      icon: BusyMarkGlyphs.clearAll,
-                      enabled: state.entries.isNotEmpty,
-                    ),
-                  ],
-                  onSelected: (action) {
-                    switch (action) {
-                      case _ClipboardHistoryAction.refresh:
-                        unawaited(controller.refreshCurrentClipboard());
-                      case _ClipboardHistoryAction.clear:
-                        controller.clear();
-                    }
-                  },
-                ),
-              ],
-            ),
+                  const PopupMenuDivider(height: BusyMarkSpacing.sm),
+                  BusyMarkPopupMenuItem(
+                    value: _ClipboardHistoryAction.clear,
+                    label: context.l10n.clipboardClearAll,
+                    icon: BusyMarkGlyphs.clearAll,
+                    enabled: state.entries.isNotEmpty,
+                  ),
+                ],
+                onSelected: (action) {
+                  switch (action) {
+                    case _ClipboardHistoryAction.refresh:
+                      unawaited(controller.refreshCurrentClipboard());
+                    case _ClipboardHistoryAction.clear:
+                      controller.clear();
+                  }
+                },
+              ),
+            ],
           ),
           if (!controller.collectionEnabled)
             _PanelNotice(
@@ -148,7 +141,8 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                     children: [
                       for (final payload in visible)
                         _ClipboardEntryTile(
-                          key: _entryKeys.putIfAbsent(
+                          key: ValueKey(payload.id),
+                          geometryKey: _entryKeys.putIfAbsent(
                             payload.id,
                             () => GlobalKey(
                               debugLabel: 'Clipboard entry ${payload.id}',
@@ -194,6 +188,21 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     List<BusyMarkClipboardPayload> visible,
     BusyMarkClipboardInsertionRegistry registry,
   ) {
+    if (_listFocusNode.hasPrimaryFocus &&
+        _menuKeys.handle(event, () {
+          final selected = visible
+              .where((entry) => entry.id == _selectedId)
+              .firstOrNull;
+          final entryContext = _entryKeys[selected?.id]?.currentContext;
+          if (entryContext != null && entryContext.mounted) {
+            Actions.invoke(
+              entryContext,
+              const BusyMarkSidebarContextMenuIntent(),
+            );
+          }
+        })) {
+      return KeyEventResult.handled;
+    }
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.escape) {
       widget.onEscape?.call();
@@ -275,6 +284,7 @@ enum _ClipboardEntryAction { paste, pastePlain, remove }
 class _ClipboardEntryTile extends StatelessWidget {
   const _ClipboardEntryTile({
     super.key,
+    required this.geometryKey,
     required this.payload,
     required this.current,
     required this.selected,
@@ -286,6 +296,7 @@ class _ClipboardEntryTile extends StatelessWidget {
   });
 
   final BusyMarkClipboardPayload payload;
+  final GlobalKey geometryKey;
   final bool current;
   final bool selected;
   final bool canPaste;
@@ -313,6 +324,7 @@ class _ClipboardEntryTile extends StatelessWidget {
     final originPath = origin?.documentPath?.trim();
     final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkSidebarRecordRow<_ClipboardEntryAction>(
+      geometryKey: geometryKey,
       icon: payload.kind == BusyMarkClipboardContentKind.image
           ? BusyMarkGlyphs.image
           : BusyMarkGlyphs.copy,

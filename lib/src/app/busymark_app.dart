@@ -1,3 +1,4 @@
+import '../git/application/shared_git_tabs.dart';
 import '../workspace/recent_presentation.dart';
 import '../search/welcome_notes_action.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
@@ -7,8 +8,10 @@ import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../references/reference_controller.dart';
 import 'dart:async';
 
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
@@ -50,6 +53,7 @@ import 'busymark_toast.dart';
 import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
+import 'git_dismissal.dart';
 import 'linux/linux_window_host.dart';
 
 final _busyMarkDefaultCommandRegistryProvider =
@@ -237,6 +241,16 @@ class BusyMarkApp extends ConsumerWidget {
       darkTheme: buildBusyMarkTheme(
         brightness: Brightness.dark,
         accentColor: accent,
+      ),
+      highContrastTheme: buildBusyMarkTheme(
+        brightness: Brightness.light,
+        accentColor: accent,
+        highContrast: true,
+      ),
+      highContrastDarkTheme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: accent,
+        highContrast: true,
       ),
       themeMode: settings.themeMode,
       locale: settings.locale,
@@ -828,13 +842,14 @@ class BusyMarkApp extends ConsumerWidget {
   }) async {
     final workspaceState = ref.read(workspaceControllerProvider);
     final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
     if (workspace == null) {
       return;
     }
     final tabs = workspaceTabEntries(
       workspace: workspace,
-      gitState: gitState,
+      gitTabs:
+          ref.read(sharedGitReviewProvider)[workspace.id] ??
+          const SharedGitTabs(),
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
       localHistoryRevisionId: ref
@@ -862,13 +877,14 @@ class BusyMarkApp extends ConsumerWidget {
   ) async {
     final workspaceState = ref.read(workspaceControllerProvider);
     final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
     if (workspace == null) {
       return;
     }
     final tabs = workspaceTabEntries(
       workspace: workspace,
-      gitState: gitState,
+      gitTabs:
+          ref.read(sharedGitReviewProvider)[workspace.id] ??
+          const SharedGitTabs(),
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
       localHistoryRevisionId: ref
@@ -903,19 +919,26 @@ class BusyMarkApp extends ConsumerWidget {
     final gitController = ref.read(gitControllerProvider.notifier);
     switch (tab.kind) {
       case WorkspaceTabKind.file:
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
         ref.read(localHistoryControllerProvider.notifier).clearComparison();
         await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(tab.bufferId!);
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
-        if (tab.path.isEmpty) {
-          return;
-        }
-        await gitController.activateDiffFile(tab.path);
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .activate(
+              ref.read(workspaceControllerProvider).workspace!.id,
+              tab.comparisonId!,
+            );
       case WorkspaceTabKind.localHistory:
-        return;
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
+        gitController.deactivateDiffFile();
     }
   }
 
@@ -1058,11 +1081,15 @@ class _BusyMarkWindowLifecycleState
   late final WindowControlService _windowControlService;
   late final AppLifecycleListener _notesLifecycle;
   late final GoRouter _notesRouter;
+  late final VoidCallback _unregisterMessageGuard;
 
   @override
   void initState() {
     super.initState();
     _windowControlService = ref.read(windowControlServiceProvider);
+    _unregisterMessageGuard = ref
+        .read(busyMarkGitDismissalProvider)
+        .register(_mayDismissMessageDrafts);
     _notesRouter = ref.read(appRouterProvider);
     _notesRouter.routeInformationProvider.addListener(_notesRouteChanged);
     _notesLifecycle = AppLifecycleListener(
@@ -1091,6 +1118,7 @@ class _BusyMarkWindowLifecycleState
     _notesRouter.routeInformationProvider.removeListener(_notesRouteChanged);
     _notesLifecycle.dispose();
     _windowControlService.unregisterCloseHandler();
+    _unregisterMessageGuard();
     super.dispose();
   }
 
@@ -1110,11 +1138,34 @@ class _BusyMarkWindowLifecycleState
         );
   }
 
+  Future<bool> _mayDismissMessageDrafts() async {
+    final context = rootNavigatorKey.currentContext ?? this.context;
+    if (!mounted || !context.mounted) return false;
+    return shared.gitMayDismissMessageDrafts(
+      context,
+      ref.read(busyMarkGitDraftFlushProvider).liveSessions,
+    );
+  }
+
   Future<void> _handleWindowClose() async {
     final context = rootNavigatorKey.currentContext ?? this.context;
     if (!context.mounted) {
       return;
     }
+    final drafts = ref.read(busyMarkGitDraftFlushProvider);
+    await drafts.flush();
+    if (!mounted || !context.mounted) return;
+    if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
+        !mounted ||
+        !context.mounted) {
+      return;
+    }
+    final reviewedMessages = <(shared.GitDraftStore, String), Map<String, int>>{
+      for (final session in drafts.liveSessions())
+        (session.host.drafts, session.repository.presentationKey): Map.of(
+          session.messageDraftRevisions,
+        ),
+    };
     final controller = ref.read(workspaceControllerProvider.notifier);
     await controller.waitForWorkspaceOpening();
     if (!mounted || !context.mounted) return;
@@ -1136,6 +1187,24 @@ class _BusyMarkWindowLifecycleState
       saveChanges: () => _saveAllDirtyDocuments(context),
       beforeClose: controller.markCleanShutdown,
       discardChanges: controller.discardRecoveryForShutdown,
+      finalCloseGuard: () async {
+        // Document metadata can await I/O after the message discard consent.
+        // Drain later writes, then veto only newly unsaved message revisions.
+        await drafts.flush();
+        for (final session in drafts.liveSessions()) {
+          if (!session.hasUnpersistedMessageDrafts) continue;
+          final reviewed =
+              reviewedMessages[(
+                session.host.drafts,
+                session.repository.presentationKey,
+              )];
+          if (reviewed == null ||
+              !mapEquals(reviewed, session.messageDraftRevisions)) {
+            return false;
+          }
+        }
+        return true;
+      },
     );
   }
 
@@ -1281,6 +1350,16 @@ class _BusyMarkSearchShortcutHandlerState
     )) {
       unawaited(commands.execute(BusyMarkCommandIds.sidebarOutline));
       return true;
+    }
+    // HardwareKeyboard calls every registered handler, even when the focused
+    // Git view handles the same key. Let its local shortcuts own search and
+    // operation combinations instead of also opening authoring search.
+    if (focused != null &&
+        BusyMarkCommandRegistryScope.read(focused)?.commands.any(
+              (command) => command.scope == BusyMarkCommandScope.git,
+            ) ==
+            true) {
+      return false;
     }
     for (final entry in searchCommandDestinations.entries) {
       if (commands.shortcutAccepts(entry.key, event, keyboard)) {

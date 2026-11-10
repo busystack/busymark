@@ -1,0 +1,5 @@
+{
+  "rawFile": "runtime/files-release.log",
+  "sha256": "13b192fa347f6eb331171fe5ccd643cce5b8d96d09581fd18e4c6e63ba168099",
+  "transcript": "BusyFiles release qualification failed: Production engine/package producer must be Ubuntu 26.04\n"
+}

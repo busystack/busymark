@@ -53,13 +53,43 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
 
+    def test_snap_declares_both_packaged_pinentry_frontends(self):
+        packages = set(self.recipe['parts']['busymark']['stage-packages'])
+        self.assertTrue({'gnupg', 'pinentry-gnome3', 'pinentry-curses'}.issubset(packages))
+
+    def test_snap_ubuntu_archives_use_https_and_the_official_signing_key(self):
+        repositories = self.recipe['package-repositories']
+        self.assertEqual(len(repositories), 2)
+        expected = {
+            'https://archive.ubuntu.com/ubuntu': {'noble', 'noble-updates', 'noble-backports'},
+            'https://security.ubuntu.com/ubuntu': {'noble-security'},
+        }
+        fingerprint = 'F6ECB3762474EDA9D21B7022871920D1991BC93C'
+        for repository in repositories:
+            self.assertEqual(repository['type'], 'apt')
+            self.assertEqual(set(repository['suites']), expected.pop(repository['url']))
+            self.assertEqual(set(repository['components']), {'main', 'restricted', 'universe', 'multiverse'})
+            self.assertEqual(repository['architectures'], ['amd64'])
+            self.assertEqual(repository['key-id'], fingerprint)
+            self.assertNotIn('priority', repository)
+        self.assertFalse(expected)
+        with tempfile.TemporaryDirectory() as home:
+            result = subprocess.run(
+                ['gpg', '--homedir', home, '--batch', '--show-keys', '--with-colons',
+                 str(ROOT / 'snap/keys/991BC93C.asc')],
+                check=True, capture_output=True, text=True)
+        fingerprints = [line.split(':')[9] for line in result.stdout.splitlines()
+                        if line.startswith('fpr:')]
+        self.assertEqual(fingerprints, [fingerprint])
+
     def test_tooling_job_installs_its_python_test_dependencies(self):
         script = next(s for s in self.workflow['jobs']['verify']['steps'] if s.get('id') == 'linux-dependencies')['run']
         # Parse executed command tokens, not a comment mentioning the packages.
         commands = [shlex.split(line, comments=True) for line in script.replace('\\\n', '').splitlines()]
         packages = {arg for command in commands if command[:3] == ['sudo', 'apt-get', 'install']
                     for arg in command[3:]}
-        self.assertTrue({'clang', 'cmake', 'python3-yaml'}.issubset(packages))
+        self.assertTrue({'clang', 'cmake', 'python3-yaml', 'gnome-keyring',
+                         'x11-xserver-utils', 'xdg-desktop-portal-gtk'}.issubset(packages))
 
     def test_snap_build_invokes_selected_sdk_with_locked_inputs(self):
         # Execute the real build preamble in a disposable tree. The SDK spy
@@ -79,8 +109,21 @@ raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
 ''')
             spy.chmod(0o700)
             calls = root / 'calls.jsonl'
+            application = root / 'busymark'
+            application.mkdir()
+            for name in ['tools/checkout_shared_dependencies.py',
+                         'tools/shared_source_archives.py',
+                         'tool/shared_dependencies.json']:
+                destination = application / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, destination)
+            dependencies = json.loads((application / 'tool/shared_dependencies.json').read_text())
+            for dependency in dependencies['dependencies']:
+                destination = application / dependency['archive']
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / dependency['archive'], destination)
             result = subprocess.run(['bash', '-euc', self.recipe['parts']['busymark']['override-build']],
-                                    cwd=root, env={**os.environ, 'CRAFT_STAGE': str(stage),
+                                    cwd=application, env={**os.environ, 'CRAFT_STAGE': str(stage),
                                                    'CRAFT_PART_BUILD': str(root / 'build'),
                                                    'CRAFT_PART_INSTALL': str(root / 'install'),
                                                    'BUILD_CALLS': str(calls)}, capture_output=True, text=True)
@@ -357,6 +400,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     self.assertIn('test -S "$runtime_dir/wayland-99"', step['run'])
                 else:
                     self.assertIn('xvfb-run', step['run'])
+
                     self.assertIn('GDK_BACKEND=x11', step['run'])
                     self.assertNotIn('|| true', step['run'])
                 if invocation != 'tools/test_gtk_accent_host.sh':
@@ -370,12 +414,74 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     self.assertIn('report["ok"]', step['run'])
                     self.assertIn('test -s', step['run'])
 
+    def test_full_corpus_has_real_gtk_and_spelling_inputs_and_preserves_failures(self):
+        steps = self.workflow['jobs']['verify']['steps']
+        corpus = next(s for s in steps if s.get('name') ==
+                      'Test including bundled D2 and Typst paths')
+        resources = next(s for s in steps if s.get('id') == 'spelling-resources')
+        self.assertLess(steps.index(resources), steps.index(corpus))
+        self.assertNotIn('continue-on-error', corpus)
+        for scenario in ['ready', 'failed-test', 'missing-dictionaries']:
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                spelling = root / shlex.split(resources['run'])[-1]
+                spelling.mkdir(parents=True)
+                if scenario != 'missing-dictionaries':
+                    (spelling / 'dictionaries.json').write_text('{}')
+                binary = root / 'bin'
+                binary.mkdir()
+                flutter = binary / 'flutter'
+                flutter.write_text('''#!/usr/bin/python3
+import json, os, sys
+from pathlib import Path
+display = os.environ['DISPLAY']
+number = display.removeprefix(':').split('.')[0]
+Path(os.environ['CONTROLLED_CALLS']).write_text(json.dumps({
+    'argv': sys.argv[1:], 'display': display,
+    'nativeDisplay': os.environ.get('BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY'),
+    'spellingRoot': os.environ.get('BUSYMARK_TEST_SPELLING_ROOT'),
+    'liveXSocket': Path('/tmp/.X11-unix/X' + number).is_socket(),
+}))
+raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
+''')
+                flutter.chmod(0o700)
+                calls = root / 'calls.json'
+                environment = {key: value.replace('${{ github.workspace }}', str(root))
+                               for key, value in corpus['env'].items()}
+                result = subprocess.run(
+                    ['bash', '-euo', 'pipefail', '-c', corpus['run']], cwd=root,
+                    env={**os.environ, **environment,
+                         'PATH': str(binary) + ':' + os.environ['PATH'],
+                         'DISPLAY': ':inherited-display-must-not-be-used',
+                         'CONTROLLED_CALLS': str(calls),
+                         'CONTROLLED_FLUTTER_EXIT': '73' if scenario == 'failed-test' else '0'},
+                    capture_output=True, text=True, timeout=20)
+                if scenario == 'missing-dictionaries':
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(calls.exists())
+                    continue
+                self.assertEqual(result.returncode, 73 if scenario == 'failed-test' else 0,
+                                 result.stdout + result.stderr)
+                observed = json.loads(calls.read_text())
+                self.assertEqual(observed['argv'], ['test', '--concurrency=2'])
+                self.assertEqual(observed['nativeDisplay'], observed['display'])
+                self.assertNotEqual(observed['display'], ':inherited-display-must-not-be-used')
+                self.assertTrue(observed['liveXSocket'])
+                self.assertEqual(observed['spellingRoot'], str(spelling))
+
     def test_ordinary_standalone_checks_share_one_shipping_build(self):
         self._automatic_product_jobs()
         steps = self.workflow['jobs']['verify']['steps']
-        builds = [s for s in steps if s.get('run', '').startswith('flutter build linux ')]
+        builds = [s for s in steps if any(line.startswith('flutter build linux ')
+                  for line in s.get('run', '').splitlines())]
         self.assertEqual(len(builds), 1)
-        self.assertEqual(shlex.split(builds[0]['run']), ['flutter', 'build', 'linux', '--release'])
+        commands = [shlex.split(line) for line in builds[0]['run'].splitlines() if line.strip()]
+        self.assertEqual(commands[1], ['flutter', 'build', 'linux', '--release'])
+        self.assertEqual(commands[0], ['python3', 'tools/git_native_build_receipt.py', 'capture',
+                                     'build/linux/x64/release/git-native-source.json'])
+        self.assertEqual(commands[2], ['python3', 'tools/git_native_build_receipt.py', 'seal',
+                                     'build/linux/x64/release/git-native-source.json',
+                                     'build/linux/x64/release/bundle/busymark'])
         self.assertEqual(builds[0]['id'], 'release-build')
         for step in steps:
             if any(command in step.get('run', '') for command in
@@ -449,8 +555,11 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
     def test_development_modes_prepare_locked_dependencies(self):
         steps = self.native['jobs']['development-modes']['steps']
         preparation = [step for step in steps
-                       if step.get('run', '').strip() == 'flutter pub get --enforce-lockfile']
+                       if 'flutter pub get --enforce-lockfile' in
+                       step.get('run', '').splitlines()]
         self.assertEqual(len(preparation), 1)
+        self.assertIn('python3 tools/checkout_shared_dependencies.py',
+                      preparation[0]['run'].splitlines())
         # Clean jobs need dependency resolution before either --no-pub build.
         self.assertIn("steps.flutter-sdk.outcome == 'success'", preparation[0]['if'])
         self.assertIn('!cancelled()', preparation[0]['if'])
@@ -504,7 +613,8 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                      if command[:3] == ['sudo', 'apt-get', 'install']
                      for arg in command[3:]}
         self.assertTrue({'xvfb', 'python3-gi', 'gir1.2-gtk-3.0',
-                         'dbus-user-session'}.issubset(installed))
+                         'dbus-user-session', 'at-spi2-core',
+                         'xdg-desktop-portal-gtk'}.issubset(installed))
         self.assertIn("steps.snap-artifact.outcome == 'success'", desktop['if'])
         install = next(s for s in steps if s.get('id') == 'strict-install')
         self.assertLess(steps.index(desktop), steps.index(install))
@@ -595,7 +705,16 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         self.assertIn('DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus', session['run'])
         self.assertIn('XDG_RUNTIME_DIR=$runtime_dir', session['run'])
         self.assertIn('"$GITHUB_ENV"', session['run'])
+        self.assertIn('Xvfb -displayfd 3', session['run'])
+        self.assertIn('systemctl --user import-environment DISPLAY', session['run'])
+        self.assertIn('systemctl --user start at-spi-dbus-bus.service', session['run'])
+        self.assertIn('xdg-desktop-portal-gtk.service xdg-desktop-portal.service', session['run'])
+        self.assertIn('--method org.a11y.atspi.Registry.GetRegisteredEvents', session['run'])
         self.assertNotIn('continue-on-error', session)
+        cleanup = next(step for step in steps if step.get('name') == 'Stop strict-Snap desktop session')
+        self.assertEqual(cleanup['if'], 'always()')
+        self.assertGreater(steps.index(cleanup), steps.index(session))
+        self.assertIn('kill "$display_pid"', cleanup['run'])
         launches = [step for step in steps if 'snap run' in step.get('run', '') or
                     'tools/application_close_smoke.py' in step.get('run', '')]
         self.assertTrue(launches)

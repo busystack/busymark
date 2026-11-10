@@ -1,201 +1,146 @@
+// The retired app-owned identity form is replaced by the real shared workflow.
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
-import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_toast.dart';
-import 'package:busymark/src/git/application/git_controller.dart';
-import 'package:busymark/src/git/domain/git_models.dart';
-import 'package:busymark/src/git/presentation/git_author_identity_dialog.dart';
-import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
+import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../busystack_git_flutter/test/support/presentation_fixture.dart'
+    as fixture;
+
+class _IdentityClient extends fixture.FixtureClient
+    implements git.GitWorkflowClient {
+  @override
+  Future<git.Json> inspect(
+    git.RepositoryId repository,
+    git.GitInspection request, {
+    git.GitCancellation? cancellation,
+    void Function(git.GitProgress)? onProgress,
+  }) async => {'name': '', 'email': '', 'hooks': <String>[]};
+  @override
+  Future<git.GitCreationOutcome> create(
+    git.GitCreation request, {
+    git.GitCancellation? cancellation,
+    void Function(git.GitProgress)? onProgress,
+  }) => throw StateError('Identity form cannot create a repository.');
+}
 
 void main() {
-  testWidgets('Enter submits Git identity and preserves global scope', (
-    tester,
-  ) async {
-    GitAuthorIdentityInput? result;
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: buildBusyMarkTheme(
-          brightness: Brightness.light,
-          accentColor: const Color(0xFFB34CB4),
-        ),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () async {
-                result = await showGitAuthorIdentityDialog(context);
-              },
-              child: const Text('Commit'),
+  testWidgets(
+    'Enter moves to email and saves the reviewed shared repository identity once',
+    (tester) async {
+      tester.view.physicalSize = const Size(1100, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final client = _IdentityClient();
+      git.GitSession? session;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedGitDraftStoreProvider.overrideWithValue(
+              git.MemoryGitDraftStore(),
             ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Commit'));
-    await tester.pumpAndSettle();
-    expect(find.text('Git Author Identity'), findsOneWidget);
-
-    final fields = find.descendant(
-      of: find.byType(BusyMarkModalEditorScaffold),
-      matching: find.byType(TextFormField),
-    );
-    await tester.enterText(fields.at(0), 'Example Author');
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.enterText(fields.at(1), 'author@example.com');
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Git Author Identity'), findsNothing);
-    expect(result?.name, 'Example Author');
-    expect(result?.email, 'author@example.com');
-    expect(result?.globally, isTrue);
-  });
-
-  testWidgets('failed commit saves identity and retries the same commit', (
-    tester,
-  ) async {
-    final controller = _IdentityRecoveryGitController();
-    final workspace = Workspace(
-      id: '/repo',
-      rootPath: '/repo',
-      kind: WorkspaceKind.markdownFolder,
-      openedAt: DateTime(2026),
-      files: const [],
-      diagnostics: const [],
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [gitControllerProvider.overrideWith(() => controller)],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: buildBusyMarkTheme(
-            brightness: Brightness.light,
-            accentColor: const Color(0xFFB34CB4),
-          ),
-          home: BusyMarkToastOverlay(
-            child: Scaffold(
-              body: GitSidebarTab(
-                workspace: workspace,
-                onOpenFile: (_) {},
-                onConfirmDiscard: (_) async => true,
-                onAfterWorkspaceFilesChanged: () async {},
-                onConfirmSwitchBranch: (_) async => true,
-                onConfirmPushSetUpstream: () async => true,
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: const Color(0xFFB34CB4),
+            ),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  final host = busyMarkGitHost(
+                    context,
+                    ref,
+                    Workspace(
+                      id: '/fixture/repo',
+                      rootPath: '/fixture/repo',
+                      kind: WorkspaceKind.markdownFolder,
+                      openedAt: DateTime.utc(2026),
+                      files: [],
+                      diagnostics: [],
+                    ),
+                    isMounted: () => context.mounted,
+                  );
+                  // This form fixture approves only the identity write; shipping safety
+                  // remains exercised by shared_host_dismissal and real adapter tests.
+                  final formHost = git.GitHost(
+                    presentation: host.presentation,
+                    icons: host.icons,
+                    presentMenu: host.presentMenu,
+                    present: <T>(context, title, child, {expanded = false}) =>
+                        host.present<T>(
+                          context,
+                          title,
+                          child,
+                          expanded: expanded,
+                        ),
+                    openDocument: host.openDocument,
+                    prepareMutation: (_, request) async =>
+                        request is git.ConfigureIdentity,
+                    chooseDirectory: host.chooseDirectory,
+                    notify: host.notify,
+                    drafts: git.MemoryGitDraftStore(),
+                  );
+                  return git.GitHostScope(
+                    host: formHost,
+                    child: Builder(
+                      builder: (context) => git.GitButton(
+                        onPressed: () async {
+                          session = git.GitSession(
+                            client: client,
+                            repository: fixture.repo,
+                            host: formHost,
+                          );
+                          await session!.start();
+                          if (context.mounted) {
+                            await formHost.present<void>(
+                              context,
+                              git.GitMessages.commitIdentityAndHooks,
+                              git.GitIdentityView(session: session!),
+                            );
+                          }
+                        },
+                        child: const Text('Inspect identity'),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
         ),
-      ),
-    );
-    final commitField = find.descendant(
-      of: find.byKey(const ValueKey('git-commit-message')),
-      matching: find.byType(TextField),
-    );
-    await tester.enterText(commitField, 'Document strict Git');
-    await tester.pump();
-    await tester.tap(find.text('Commit'));
-    await tester.pumpAndSettle();
-    expect(controller.commitMessages, ['Document strict Git']);
-    expect(find.text('Git Author Identity'), findsOneWidget);
-
-    final fields = find.descendant(
-      of: find.byType(BusyMarkModalEditorScaffold),
-      matching: find.byType(TextFormField),
-    );
-    await tester.enterText(fields.at(0), 'Example Author');
-    await tester.enterText(fields.at(1), 'author@example.com');
-    await tester.pump();
-    await tester.tap(find.text('Save and Commit'));
-    await tester.pumpAndSettle();
-
-    expect(controller.commitMessages, [
-      'Document strict Git',
-      'Document strict Git',
-    ]);
-    expect(controller.configuredName, 'Example Author');
-    expect(controller.configuredEmail, 'author@example.com');
-    expect(controller.configuredGlobally, isTrue);
-  });
-}
-
-class _IdentityRecoveryGitController extends GitController {
-  static const repository = GitRepositoryInfo(
-    rootPath: '/repo',
-    gitDirPath: '/repo/.git',
-    currentBranch: 'main',
-  );
-
-  final commitMessages = <String>[];
-  String? configuredName;
-  String? configuredEmail;
-  bool? configuredGlobally;
-
-  @override
-  GitState build() => const GitState(
-    availability: GitAvailability(
-      available: true,
-      executablePath: '/snap/busymark/current/usr/bin/git',
-      version: '2.50.0',
-    ),
-    repositoryInfo: repository,
-    statusSnapshot: GitStatusSnapshot(
-      repositoryInfo: repository,
-      files: [
-        GitFileStatus(
-          repoRelativePath: 'README.md',
-          absolutePath: '/repo/README.md',
-          indexStatus: GitFileChangeStatus.modified,
-          workTreeStatus: GitFileChangeStatus.unmodified,
-          category: GitFileStatusCategory.modified,
-          staged: true,
-          unstaged: false,
-          untracked: false,
-          conflicted: false,
-          renamed: false,
-          copied: false,
-          deleted: false,
-          ignored: false,
-        ),
-      ],
-    ),
-  );
-
-  @override
-  Future<bool> commit(String message) async {
-    commitMessages.add(message);
-    if (commitMessages.length == 1) {
-      state = state.copyWith(
-        lastError: const GitFailure(
-          code: GitFailureCode.authorIdentity,
-          userMessageKey: 'gitErrorAuthorIdentity',
-          rawMessage: 'Author identity unknown',
-          commandName: 'commit',
-        ),
       );
-      return false;
-    }
-    state = state.copyWith(lastError: null, lastOperationMessage: 'Committed');
-    return true;
-  }
-
-  @override
-  Future<bool> configureAuthorIdentity({
-    required String name,
-    required String email,
-    required bool globally,
-  }) async {
-    configuredName = name;
-    configuredEmail = email;
-    configuredGlobally = globally;
-    state = state.copyWith(lastError: null);
-    return true;
-  }
+      await tester.tap(find.text('Inspect identity'));
+      await tester.pumpAndSettle();
+      final fields = find.descendant(
+        of: find.byType(git.GitIdentityView),
+        matching: find.byType(EditableText),
+      );
+      expect(fields, findsNWidgets(2));
+      await tester.enterText(fields.at(0), 'Example Author');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(
+        tester.widget<EditableText>(fields.at(1)).focusNode.hasFocus,
+        isTrue,
+      );
+      await tester.enterText(fields.at(1), 'author@example.invalid');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(find.byType(git.GitIdentityView), findsNothing);
+      final write = client.mutations.single as git.ConfigureIdentity;
+      expect(write.name, 'Example Author');
+      expect(write.email, 'author@example.invalid');
+      expect(write.expectedIndex, 'index');
+      expect(client.mutations.whereType<git.CommitIndex>(), isEmpty);
+      await tester.pumpWidget(const SizedBox());
+      session?.dispose();
+    },
+  );
 }

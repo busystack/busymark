@@ -1,0 +1,15 @@
+{
+  "workingFilesHeadConfigRefsUnchanged": true,
+  "allIndexModesAndBlobsMatchOriginalFixture": true,
+  "originalPartialStagingRetained": true,
+  "rawIndexFileChanges": {
+    ".git/index": {
+      "before": "4e61b1d29bafe707e740a06e24543db5e3c62a844c3871b50c56e1df268c3aea",
+      "after": "e5075b23cf2dbbac62f47d9e977c007baafe13c8d84c2baff46c82c8b7310051"
+    }
+  },
+  "initialSnapshotTiming": "fixture-before.json was recorded before the final normal git status inspection; raw cache metadata is distinct from staged blob/mode semantics",
+  "index": "100644 10f79c601476fe6d048fa145762a739bafcabd61 0\t.idea/.gitignore\n100644 10f79c601476fe6d048fa145762a739bafcabd61 0\t.idea/dev-notes.iml\n100644 10f79c601476fe6d048fa145762a739bafcabd61 0\t.idea/misc.xml\n100644 10f79c601476fe6d048fa145762a739bafcabd61 0\t.idea/modules.xml\n100644 10f79c601476fe6d048fa145762a739bafcabd61 0\t.idea/vcs.xml\n100644 b430a527ea02cd46a1c968412c18f6a736e1e572 0\tREADME.md\n100644 7db8b19be5aa69ffe6552fb44cc2059942ded224 0\tdocs/deleted.md\n100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0\tdocs/empty.md\n100644 4af2222056c6df67f3d6f1f4e46d1e6253826462 0\tdocs/main-only.md\n100644 96257c0f6a0ed8b7c35a691b83424665ee01811d 0\tdocs/nested/review.md\n100644 091ac1057d53f9a178df138443e02d1ea0967296 0\tdocs/review.md\n100644 00cd267b09e98d39ddb684a964840b8021bbc983 0\tsrc/nested/review.md\n",
+  "status": " D docs/deleted.md\nMM docs/review.md\n?? docs/untracked.md\n",
+  "cachedPatch": "diff --git a/docs/review.md b/docs/review.md\nindex a23f3fb..091ac10 100644\n--- a/docs/review.md\n+++ b/docs/review.md\n@@ -1,6 +1,6 @@\n Line 01: original review content\n Line 02: original review content\n-Line 03: original review content\n+Line 03: staged review content\n Line 04: original review content\n Line 05: original review content\n Line 06: original review content\n"
+}

@@ -1,0 +1,5 @@
+{
+  "initialProbe": "Receipt helper invoked git as root, which correctly refused Ubuntu-owned SDK/source checkouts",
+  "correction": "Run receipt git reads as the existing ubuntu source owner, matching verification builds",
+  "result": "No Git safe.directory/ownership settings or source modified"
+}

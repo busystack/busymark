@@ -1,9 +1,11 @@
+import '../app/busymark_native_controls.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
+import '../app/git_dismissal.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
@@ -25,6 +27,10 @@ XTypeGroup _markdownSaveType(BuildContext context) => XTypeGroup(
 );
 
 Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
+  if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
+      !context.mounted) {
+    return false;
+  }
   if (!ref.read(workspaceControllerProvider.notifier).propertyEdits.flush()) {
     return false;
   }
@@ -150,26 +156,45 @@ Future<bool> _confirmUnsavedChanges(
   final action = await showBusyMarkModalDialog<_UnsavedChangesAction>(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
+    builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.unsavedChanges,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          icon: BusyMarkGlyphs.clear,
+        BusyMarkNativeActionButton(
+          role: BusyMarkNativeActionRole.standard,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(BusyMarkGlyphs.clear, size: BusyMarkSizes.iconSm),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              Text(context.l10n.cancel),
+            ],
+          ),
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.cancel),
         ),
-        BusyMarkDialogButton(
-          label: context.l10n.discard,
-          icon: BusyMarkGlyphs.delete,
-          destructive: true,
+        BusyMarkNativeActionButton(
+          role: BusyMarkNativeActionRole.destructive,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(BusyMarkGlyphs.delete, size: BusyMarkSizes.iconSm),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              Text(context.l10n.discard),
+            ],
+          ),
           onPressed: () =>
               Navigator.pop(context, _UnsavedChangesAction.discard),
         ),
-        BusyMarkDialogButton(
-          label: context.l10n.save,
-          icon: BusyMarkGlyphs.save,
-          suggested: true,
+        BusyMarkNativeActionButton(
+          role: BusyMarkNativeActionRole.suggested,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(BusyMarkGlyphs.save, size: BusyMarkSizes.iconSm),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              Text(context.l10n.save),
+            ],
+          ),
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.save),
         ),
       ],
@@ -183,14 +208,36 @@ Future<bool> _confirmUnsavedChanges(
         ),
         if (dirtyBuffers.length > 1) ...[
           const SizedBox(height: BusyMarkSpacing.md),
-          BusyMarkGroupedList(
-            filled: true,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final buffer in dirtyBuffers)
-                BusyMarkActionRow(
-                  title: buffer.displayName,
-                  subtitle: buffer.filePath,
-                  leading: const Icon(BusyMarkGlyphs.document),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: BusyMarkSpacing.xs,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        BusyMarkGlyphs.document,
+                        size: BusyMarkSizes.iconSm,
+                      ),
+                      const SizedBox(width: BusyMarkSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(buffer.displayName),
+                            if (buffer.filePath != null)
+                              Text(
+                                buffer.filePath!,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -427,15 +474,15 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   final action = await showBusyMarkModalDialog<_OverwriteAction>(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
+    builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.fileChangedOnDisk,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
         ),
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: context.l10n.overwrite,
           destructive: true,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
@@ -543,19 +590,19 @@ Future<LineEndingNormalization?> _chooseMixedLineEndingNormalizationForFormat(
   return showBusyMarkModalDialog<LineEndingNormalization>(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
+    builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.normalizeLineEndings,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context),
         ),
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: LineEndingNormalization.lf.name.toUpperCase(),
           onPressed: () => Navigator.pop(context, LineEndingNormalization.lf),
         ),
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: LineEndingNormalization.crlf.name.toUpperCase(),
           suggested: true,
           onPressed: () => Navigator.pop(context, LineEndingNormalization.crlf),
@@ -575,15 +622,15 @@ Future<_OverwriteAction?> _confirmSaveAsOverwrite(
   return showBusyMarkModalDialog<_OverwriteAction>(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
+    builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.warning,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
         ),
-        BusyMarkDialogButton(
+        BusyMarkNativeDialogButton(
           label: context.l10n.overwrite,
           destructive: true,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),

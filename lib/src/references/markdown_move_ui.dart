@@ -1,3 +1,4 @@
+import '../app/busymark_native_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,15 +36,17 @@ Future<void> reviewMarkdownRecovery(
     }
     final accepted = await showBusyMarkModalDialog<bool>(
       context,
-      builder: (context) => BusyMarkDialogShell(
+      builder: (context) => BusyMarkNativeDialogShell(
         title: context.l10n.notesRecovery,
         actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.cancel,
+          BusyMarkNativeActionButton(
+            role: BusyMarkNativeActionRole.standard,
+            child: Text(context.l10n.cancel),
             onPressed: () => Navigator.pop(context, false),
           ),
-          BusyMarkDialogButton(
-            label: context.l10n.apply,
+          BusyMarkNativeActionButton(
+            role: BusyMarkNativeActionRole.suggested,
+            child: Text(context.l10n.apply),
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
@@ -65,9 +68,25 @@ Future<void> reviewMarkdownRecovery(
     }
   } on Object catch (error) {
     if (context.mounted) {
-      ScaffoldMessenger.of(
+      await showBusyMarkModalDialog<void>(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+        builder: (context) => BusyMarkNativeDialogShell(
+          title: context.l10n.notesRecovery,
+          actions: [
+            BusyMarkNativeActionButton(
+              role: BusyMarkNativeActionRole.standard,
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.close),
+            ),
+          ],
+          children: [
+            BusyMarkStatusBox(
+              message: error.toString(),
+              kind: BusyMarkStatusKind.error,
+            ),
+          ],
+        ),
+      );
     }
   }
 }

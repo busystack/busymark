@@ -1,0 +1,6 @@
+{
+  "reason": "Preserve former complete-message Copy Text behavior contextually as Copy Commit Message before final native acceptance",
+  "initialRun": "Stopped only task verification unit before final tests/build; completed checks retained, incomplete audit transcript retained",
+  "finalRun": "All setup/audits/tests/builds restarted on synchronized final sources",
+  "changes": "Additional localized contextual copy entry and exact-content regression; no repository mutation/API semantics changed"
+}

@@ -3368,48 +3368,43 @@ void main() {}
       );
       await tester.pump();
 
-      IconButton editingToggle(String tooltip) {
-        return tester.widget<IconButton>(
-          find.descendant(
-            of: find.byWidgetPredicate(
-              (widget) =>
-                  widget is BusyMarkHeaderIconButton &&
-                  widget.tooltip == tooltip,
-            ),
-            matching: find.byType(IconButton),
-          ),
+      Finder editingToggle(String tooltip) => find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkHeaderIconButton && widget.tooltip == tooltip,
+      );
+
+      PhysicalShape paintedToggle(String tooltip) {
+        return tester.widget<PhysicalShape>(
+          find
+              .descendant(
+                of: editingToggle(tooltip),
+                matching: find.byType(PhysicalShape),
+              )
+              .first,
         );
       }
 
       final colorScheme = Theme.of(
         tester.element(find.byType(BusyMarkWysiwygEditor)),
       ).colorScheme;
-      final hideButton = editingToggle('Hide editing buttons');
-      expect(
-        hideButton.style?.backgroundColor?.resolve(const {}),
-        colorScheme.primary,
+      final hideButton = tester.widget<BusyMarkHeaderIconButton>(
+        editingToggle('Hide editing buttons'),
       );
-      expect(
-        hideButton.style?.foregroundColor?.resolve(const {}),
-        BusyMarkLinuxPalette.white,
-      );
+      expect(hideButton.accented, isTrue);
+      expect(paintedToggle('Hide editing buttons').color, colorScheme.primary);
       final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
 
       await tester.tap(find.byTooltip('Hide editing buttons'));
       await tester.pump();
 
       final showRect = tester.getRect(find.byTooltip('Show editing buttons'));
-      final showButton = editingToggle('Show editing buttons');
+      final showButton = tester.widget<BusyMarkHeaderIconButton>(
+        editingToggle('Show editing buttons'),
+      );
 
       expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
-      expect(
-        showButton.style?.backgroundColor?.resolve(const {}),
-        colorScheme.primary,
-      );
-      expect(
-        showButton.style?.foregroundColor?.resolve(const {}),
-        BusyMarkLinuxPalette.white,
-      );
+      expect(showButton.accented, isTrue);
+      expect(paintedToggle('Show editing buttons').color, colorScheme.primary);
     },
   );
 
@@ -6624,7 +6619,10 @@ void main() {}
     final marker = find.byType(BusyMarkDocumentListMarker);
     expect(marker, findsOneWidget);
     expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isFalse);
-    final semanticCheckbox = find.bySemanticsLabel('Toggle task checked');
+    final semanticCheckbox = find.descendant(
+      of: marker,
+      matching: find.bySemanticsLabel('Toggle task checked'),
+    );
     expect(semanticCheckbox, findsOneWidget);
     expect(
       tester.getSemantics(semanticCheckbox).flagsCollection.isChecked,

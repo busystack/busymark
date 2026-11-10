@@ -600,141 +600,139 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                     )
                   : null,
             ),
-          Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: Row(
-              children: [
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.nextcloudNewNote,
-                  icon: BusyMarkGlyphs.add,
-                  onPressed: _creating ? null : () => unawaited(_create()),
-                ),
-                const Spacer(),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.tocSynchronize,
-                  icon: BusyMarkGlyphs.refresh,
-                  onPressed: repository.isSynchronizing(widget.accountId)
-                      ? null
-                      : () => unawaited(
-                          ref
-                              .read(workspaceControllerProvider.notifier)
-                              .refreshNextcloudNotes(),
-                        ),
-                ),
-                BusyMarkHeaderPopupMenuButton<String>(
-                  tooltip: context.l10n.notesActions,
-                  icon: BusyMarkGlyphs.menuVertical,
-                  itemBuilder: (context) {
-                    _offlineScope = scope;
-                    _exportTargets = List.unmodifiable(
-                      repository.notes
-                          .where(
-                            (n) =>
-                                n.accountId == widget.accountId &&
-                                !isNotesRecovery(n) &&
-                                categoryIncludes(scope, n.category),
-                          )
-                          .map((n) => n.localId),
-                    );
-                    final requirement = offlineController?.requirements
+          BusyMarkSidebarHeader(
+            title: context.l10n.nextcloudNotes,
+            leading: const Icon(BusyMarkGlyphs.documentHistory),
+            contextLine: scope.isEmpty ? null : Text(scope),
+            actions: [
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.nextcloudNewNote,
+                icon: BusyMarkGlyphs.add,
+                onPressed: _creating ? null : () => unawaited(_create()),
+              ),
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.tocSynchronize,
+                icon: BusyMarkGlyphs.refresh,
+                onPressed: repository.isSynchronizing(widget.accountId)
+                    ? null
+                    : () => unawaited(
+                        ref
+                            .read(workspaceControllerProvider.notifier)
+                            .refreshNextcloudNotes(),
+                      ),
+              ),
+              BusyMarkHeaderPopupMenuButton<String>.native(
+                tooltip: context.l10n.actions,
+                icon: BusyMarkGlyphs.menuVertical,
+                itemBuilder: (context) {
+                  _offlineScope = scope;
+                  _exportTargets = List.unmodifiable(
+                    repository.notes
                         .where(
-                          (r) =>
-                              r['kind'] == 'category' && r['target'] == scope,
+                          (n) =>
+                              n.accountId == widget.accountId &&
+                              !isNotesRecovery(n) &&
+                              categoryIncludes(scope, n.category),
                         )
-                        .firstOrNull;
-                    final scopeLabel = scope.isEmpty
-                        ? context.l10n.notesAll
-                        : scope;
-                    final paused = requirement?['paused'] == 1;
-                    return [
+                        .map((n) => n.localId),
+                  );
+                  final requirement = offlineController?.requirements
+                      .where(
+                        (r) => r['kind'] == 'category' && r['target'] == scope,
+                      )
+                      .firstOrNull;
+                  final scopeLabel = scope.isEmpty
+                      ? context.l10n.notesAll
+                      : scope;
+                  final paused = requirement?['paused'] == 1;
+                  return [
+                    BusyMarkPopupMenuItem(
+                      value: 'export',
+                      label: categoryScope
+                          ? '${context.l10n.notesExportCategory} · $scope'
+                          : context.l10n.notesExportAll,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: 'import',
+                      label:
+                          '${context.l10n.notesImport} · ${context.l10n.folder}',
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: 'file',
+                      label:
+                          '${context.l10n.notesImport} · ${context.l10n.fileTypeMarkdown}',
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: 'offline',
+                      label: categoryScope
+                          ? '${context.l10n.notesOfflineCategory} · $scope'
+                          : context.l10n.notesOfflineAll,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: 'remove',
+                      label: categoryScope
+                          ? '${context.l10n.notesOfflineRemoveCategory} · $scope'
+                          : context.l10n.notesOfflineRemoveAll,
+                    ),
+                    if (requirement != null)
                       BusyMarkPopupMenuItem(
-                        value: 'export',
-                        label: categoryScope
-                            ? '${context.l10n.notesExportCategory} · $scope'
-                            : context.l10n.notesExportAll,
-                      ),
-                      BusyMarkPopupMenuItem(
-                        value: 'import',
+                        value: paused ? 'resumeScope' : 'pauseScope',
                         label:
-                            '${context.l10n.notesImport} · ${context.l10n.folder}',
+                            '${paused ? context.l10n.notesResumeRequirement : context.l10n.notesPauseRequirement} · $scopeLabel',
                       ),
-                      BusyMarkPopupMenuItem(
-                        value: 'file',
-                        label:
-                            '${context.l10n.notesImport} · ${context.l10n.fileTypeMarkdown}',
-                      ),
-                      BusyMarkPopupMenuItem(
-                        value: 'offline',
-                        label: categoryScope
-                            ? '${context.l10n.notesOfflineCategory} · $scope'
-                            : context.l10n.notesOfflineAll,
-                      ),
-                      BusyMarkPopupMenuItem(
-                        value: 'remove',
-                        label: categoryScope
-                            ? '${context.l10n.notesOfflineRemoveCategory} · $scope'
-                            : context.l10n.notesOfflineRemoveAll,
-                      ),
-                      if (requirement != null)
-                        BusyMarkPopupMenuItem(
-                          value: paused ? 'resumeScope' : 'pauseScope',
-                          label:
-                              '${paused ? context.l10n.notesResumeRequirement : context.l10n.notesPauseRequirement} · $scopeLabel',
-                        ),
-                      BusyMarkPopupMenuItem(
-                        value: 'retryScope',
-                        enabled:
-                            offlineController != null &&
-                            offlineController.failures.keys.any(
-                              (key) => _exportTargets.any(
-                                (id) => key.startsWith('$id:'),
-                              ),
-                            ) &&
-                            (scope.isEmpty || requirement != null),
-                        label:
-                            '${context.l10n.visualizationRetry} · ${context.l10n.notesAttachments} · $scopeLabel',
-                      ),
-                    ];
-                  },
-                  onSelected: (action) async {
-                    if (action == 'export') {
-                      await showNotesExport(context, ref, _exportTargets);
-                    } else if (action == 'import' || action == 'file') {
-                      await showNotesImport(
-                        context,
-                        ref,
-                        folder: action == 'import',
-                      );
-                    } else {
-                      try {
-                        final offline = await ref.read(
-                          notesOfflineProvider(widget.accountId).future,
-                        );
-                        if (action == 'retryScope' && _offlineScope.isEmpty) {
-                          await offline.retry();
-                        } else {
-                          await offline.setRequirement(
-                            'category',
-                            _offlineScope,
-                            required: action != 'remove',
-                            paused: action == 'pauseScope',
-                          );
-                        }
-                      } on Object catch (error) {
-                        if (mounted) {
-                          setState(
-                            () => _operationError = localizeNotesFailure(
-                              context,
-                              error,
+                    BusyMarkPopupMenuItem(
+                      value: 'retryScope',
+                      enabled:
+                          offlineController != null &&
+                          offlineController.failures.keys.any(
+                            (key) => _exportTargets.any(
+                              (id) => key.startsWith('$id:'),
                             ),
-                          );
-                        }
+                          ) &&
+                          (scope.isEmpty || requirement != null),
+                      label:
+                          '${context.l10n.visualizationRetry} · ${context.l10n.notesAttachments} · $scopeLabel',
+                    ),
+                  ];
+                },
+                onSelected: (action) async {
+                  if (action == 'export') {
+                    await showNotesExport(context, ref, _exportTargets);
+                  } else if (action == 'import' || action == 'file') {
+                    await showNotesImport(
+                      context,
+                      ref,
+                      folder: action == 'import',
+                    );
+                  } else {
+                    try {
+                      final offline = await ref.read(
+                        notesOfflineProvider(widget.accountId).future,
+                      );
+                      if (action == 'retryScope' && _offlineScope.isEmpty) {
+                        await offline.retry();
+                      } else {
+                        await offline.setRequirement(
+                          'category',
+                          _offlineScope,
+                          required: action != 'remove',
+                          paused: action == 'pauseScope',
+                        );
+                      }
+                    } on Object catch (error) {
+                      if (mounted) {
+                        setState(
+                          () => _operationError = localizeNotesFailure(
+                            context,
+                            error,
+                          ),
+                        );
                       }
                     }
-                  },
-                ),
-              ],
-            ),
+                  }
+                },
+              ),
+            ],
           ),
           SizedBox(
             height: (constraints.maxHeight * .36).clamp(0.0, 240.0),

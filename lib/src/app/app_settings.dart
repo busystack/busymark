@@ -1009,6 +1009,17 @@ class AppSettingsController extends Notifier<AppSettings> {
     );
   }
 
+  Future<void> revokeGitWorkspaceTrust(String workspacePath) {
+    final key = _normalizedGitWorkspacePath(workspacePath);
+    return _mutate(
+      (settings) => settings.copyWith(
+        trustedGitWorkspacePaths: settings.trustedGitWorkspacePaths
+            .where((path) => path != key)
+            .toList(),
+      ),
+    );
+  }
+
   Future<void> selectWritersideInstance(
     String workspacePath,
     String instanceId,

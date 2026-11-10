@@ -12,7 +12,10 @@ abstract final class BusyMarkGlyphs {
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData blankLine = YaruIcons.insert_text;
   static const IconData bold = YaruIcons.bold;
-  static const IconData branch = Icons.fork_right;
+  // The native Yaru three-node graph; no Material Git iconography.
+  static const IconData branch = YaruIcons.share;
+  static const IconData gitPrevious = YaruIcons.pan_start;
+  static const IconData gitNext = YaruIcons.pan_end;
   static const IconData category = YaruIcons.tag;
   static const IconData check = YaruIcons.checkmark;
   static const IconData checkedBox = YaruIcons.checkbox_checked;
@@ -60,6 +63,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData markdownFile = YaruIcons.text_editor;
   static const IconData math = Icons.functions;
   static const IconData play = YaruIcons.media_play;
+  static const IconData mainMenu = YaruIcons.menu;
   static const IconData menuHorizontal = YaruIcons.view_more_horizontal;
   static const IconData menuVertical = YaruIcons.view_more;
   static const IconData newDocument = YaruIcons.document_new;
@@ -80,6 +84,9 @@ abstract final class BusyMarkGlyphs {
   static const IconData selectAll = YaruIcons.selection;
   static const IconData settings = YaruIcons.settings;
   static const IconData sidebarLocalHistory = YaruIcons.history;
+  // A catalog of destinations; distinct from sidebar visibility and Actions.
+  static const IconData sidebarViews = YaruIcons.app_grid;
+  static const IconData selectContext = YaruIcons.selection;
   static const IconData sidebar = YaruIcons.sidebar;
   static const IconData startTopic = YaruIcons.document;
   static const IconData strikethrough = YaruIcons.strikethrough;

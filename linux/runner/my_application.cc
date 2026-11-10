@@ -1,6 +1,7 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
+#include <busystack_git_flutter/busystack_git_flutter_plugin.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <handy.h>
 #include <pango/pango.h>
@@ -1176,6 +1177,8 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_set_hexpand(self->flutter_overlay, TRUE);
   gtk_widget_set_vexpand(self->flutter_overlay, TRUE);
   gtk_container_add(GTK_CONTAINER(self->flutter_overlay), GTK_WIDGET(view));
+  busystack_git_flutter_plugin_set_accessibility_host(
+      view, GTK_OVERLAY(self->flutter_overlay));
   gtk_widget_show(self->flutter_overlay);
   gtk_container_add(GTK_CONTAINER(window), self->flutter_overlay);
 

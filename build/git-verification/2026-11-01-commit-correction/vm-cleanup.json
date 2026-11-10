@@ -1,0 +1,18 @@
+{
+  "qa": "busyfiles-release24-20261005",
+  "beforeShutdown": {
+    "system": "running",
+    "failedUnits": [],
+    "dpkgAudit": "",
+    "freeBytes": 19272957952,
+    "uiUnit": "inactive"
+  },
+  "disk": "Existing root expanded through LXD from 40GiB to 56GiB; automatic supported guest filesystem growth",
+  "protectedVMs": "busydata-installed-20261003 and busynode-continuation-20261015 kept running; busymax-acceptance-v031-20261011 kept stopped",
+  "finalStates": {
+    "busyfiles-release24-20261005": "STOPPED",
+    "busydata-installed-20261003": "RUNNING",
+    "busynode-continuation-20261015": "RUNNING",
+    "busymax-acceptance-v031-20261011": "STOPPED"
+  }
+}

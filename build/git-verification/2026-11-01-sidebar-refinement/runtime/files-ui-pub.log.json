@@ -1,0 +1,5 @@
+{
+  "sha256": "920341fe8278366da0529df39aa6ecd7d88db823cd29f2a6420207282eb1886e",
+  "encoding": "utf-8",
+  "text": "Resolving dependencies in `/home/ubuntu/busystack-native-git-verification-20261031/inputs/busyfiles`...\nDownloading packages...\n  _fe_analyzer_shared 103.0.0 (108.0.0 available)\n  analyzer 13.3.0 (14.4.0 available)\n  package_config 2.2.0 (3.0.0 available)\n  sqlite3 3.6.0 (3.7.0 available)\n  test 1.31.1 (1.32.0 available)\n  test_api 0.7.12 (0.7.14 available)\n  test_core 0.6.18 (0.6.20 available)\n  vector_math 2.4.2 (2.4.3 available)\nGot dependencies in `/home/ubuntu/busystack-native-git-verification-20261031/inputs/busyfiles`!\n8 packages have newer versions incompatible with dependency constraints.\nTry `flutter pub outdated` for more information.\n"
+}

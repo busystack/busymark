@@ -20,6 +20,7 @@ class LinuxPageFrame extends StatefulWidget {
     this.sidebarExpanded = false,
     this.sidebarOverlay = false,
     this.sidebarTransitionGeneration = 0,
+    this.sidebarWidth = BusyMarkSizes.sidebarWidth,
   });
 
   final Widget header;
@@ -30,6 +31,7 @@ class LinuxPageFrame extends StatefulWidget {
   final bool sidebarExpanded;
   final bool sidebarOverlay;
   final int sidebarTransitionGeneration;
+  final double sidebarWidth;
 
   @override
   State<LinuxPageFrame> createState() => _LinuxPageFrameState();
@@ -131,7 +133,7 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
     );
     final sidebar = _hasSidebar
         ? SizedBox(
-            width: BusyMarkSizes.sidebarWidth,
+            width: widget.sidebarWidth,
             child: ColoredBox(
               color: colors.sidebar,
               child: Column(
@@ -163,10 +165,10 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
       child: main,
       builder: (context, mainChild) {
         final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-        final rawWidth = BusyMarkSizes.sidebarWidth * _controller.value;
+        final rawWidth = widget.sidebarWidth * _controller.value;
         final presentedWidth =
             (rawWidth * devicePixelRatio).round() / devicePixelRatio;
-        final widthFactor = presentedWidth / BusyMarkSizes.sidebarWidth;
+        final widthFactor = presentedWidth / widget.sidebarWidth;
         final sidebarSideOverlap = (sidebarControlInset - presentedWidth)
             .clamp(0.0, double.infinity)
             .toDouble();
@@ -210,7 +212,7 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
                   start: 0,
                   top: BusyMarkLinuxWindowMetrics.headerHeight,
                   bottom: 0,
-                  width: BusyMarkSizes.sidebarWidth,
+                  width: widget.sidebarWidth,
                   child: ColoredBox(
                     color: colors.sidebar,
                     child: retainedSidebar,

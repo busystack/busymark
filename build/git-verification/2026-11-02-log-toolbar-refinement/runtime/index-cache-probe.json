@@ -1,0 +1,43 @@
+{
+  "noApplicationWasLaunched": true,
+  "before": "3f967307450abf584f93b2e83f7803fc940a9f0188febda9a3b50904f68a9448",
+  "after": "6192d3117d45308a8c21ddd61bf7e11b886d0648798d8b41f4681e8b399938cd",
+  "indexChanged": true,
+  "entryChanges": {
+    "docs/review.md": [
+      {
+        "stat": [
+          1793626094,
+          391000000,
+          1793626094,
+          391000000,
+          2049,
+          1841257,
+          33188,
+          1000,
+          1000,
+          1978
+        ],
+        "oid": "091ac1057d53f9a178df138443e02d1ea0967296",
+        "flags": 14
+      },
+      {
+        "stat": [
+          1793626094,
+          391000000,
+          1793626094,
+          391000000,
+          2049,
+          1841257,
+          33188,
+          1000,
+          1000,
+          0
+        ],
+        "oid": "091ac1057d53f9a178df138443e02d1ea0967296",
+        "flags": 14
+      }
+    ]
+  },
+  "extensionChanged": false
+}

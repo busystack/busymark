@@ -1,0 +1,44 @@
+{
+  "sdk": {
+    "frameworkVersion": "3.47.5",
+    "channel": "stable",
+    "repositoryUrl": "https://github.com/flutter/flutter.git",
+    "frameworkRevision": "6a19cca56475dbfba1478ee68d7bd0c2ef891da1",
+    "frameworkCommitDate": "2026-09-17 14:13:22 -0400",
+    "engineRevision": "af7e796e161ae0bb1ff0758c71a7105418bd9ded",
+    "engineCommitDate": "2026-09-16 18:35:09.000Z",
+    "engineContentHash": "ab598368592da0064197e2bc15c7f5b0a2c6bb1f",
+    "engineBuildDate": "2026-09-16 12:35:21.428",
+    "dartSdkVersion": "3.13.4",
+    "devToolsVersion": "2.60.0",
+    "flutterVersion": "3.47.5",
+    "flutterRoot": "/home/ubuntu/busystack-native-git-verification-20261031/flutter"
+  },
+  "mark": "b396f876aaa1d113d04bdb27f2481c7ff8c8f406",
+  "files": "fc462114014efb478bde0c2cc1eaf3848b108eee",
+  "dependencies": {
+    "schema": 1,
+    "layout": "sibling-working-trees",
+    "dependencies": [
+      {
+        "name": "busystack_git",
+        "path": "../busystack_git",
+        "archive": "tool/source-dependencies/busystack_git.tar.gz",
+        "sha256": "e3069f64edd7e5dfad7919c7338119f1246f1595c3bc962bfa0e393a4e479453",
+        "tree_sha256": "b19ca9d79557fe3645578e08745e37cb1994ab16e96a96f92d0d9046a5ca59f4",
+        "repository": "https://github.com/busystack/busystack_git.git",
+        "revision": "7d8e55d8034aeb85cddac1c0f498b0f3cc33105b"
+      },
+      {
+        "name": "busystack_git_flutter",
+        "path": "../busystack_git_flutter",
+        "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
+        "sha256": "82b450a7f3d3a2c1e65cbd56c1bd7acdb3fda92276a0a7f9b4af86c452ddda14",
+        "tree_sha256": "793e2505e7dc917968ded3d6e6d128f2ffc1360a751dfa67fbf46de93522d884",
+        "repository": "https://github.com/busystack/busystack_git_flutter.git",
+        "revision": "8be750c7a76f98d547c7835653162af6935137e4"
+      }
+    ]
+  },
+  "hostTestsSource": "3c566f078c384bc0f8eb55ddad6a490c1a5eda46"
+}

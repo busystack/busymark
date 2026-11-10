@@ -1,3 +1,4 @@
+import '../support/native_menu_probe.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -2445,12 +2446,16 @@ void main() {
         findsNothing,
       );
       expect(find.byTooltip(refreshLabel), findsNothing);
+      final nativeMenus = NativeMenuProbe(tester);
       await tester.tap(actionsMenu);
       await tester.pumpAndSettle();
-      expect(find.text(refreshLabel), findsOneWidget);
-      expect(find.text('Find in Local History…'), findsNothing);
-      expect(find.text('Clear This Document’s History'), findsOneWidget);
-      expect(find.text('Clear All Local History'), findsOneWidget);
+      expect(nativeMenus.matching(refreshLabel), hasLength(1));
+      expect(nativeMenus.matching('Find in Local History…'), isEmpty);
+      expect(
+        nativeMenus.matching('Clear This Document’s History'),
+        hasLength(1),
+      );
+      expect(nativeMenus.matching('Clear All Local History'), hasLength(1));
     },
   );
 
@@ -2568,8 +2573,8 @@ void main() {
       expect(
         find.byWidgetPredicate(
           (widget) =>
-              widget is Tooltip &&
-              widget.message?.contains(
+              widget is BusyMarkSidebarRecordRow &&
+              widget.tooltip?.contains(
                     l10n.localHistoryReasonAutomaticCheckpoint,
                   ) ==
                   true,
@@ -2667,18 +2672,13 @@ void main() {
         (widget) => widget is IconButton && widget.tooltip == refreshLabel,
       );
       expect(refresh, findsNothing);
+      final nativeMenus = NativeMenuProbe(tester);
       await tester.tap(
         find.byKey(const ValueKey('local-history-actions-menu')),
       );
       await tester.pumpAndSettle();
-      final refreshItem = find.byWidgetPredicate(
-        (widget) =>
-            widget is BusyMarkPopupMenuItem && widget.label == refreshLabel,
-      );
-      expect(
-        tester.widget<BusyMarkPopupMenuItem<dynamic>>(refreshItem).enabled,
-        isTrue,
-      );
+      expect(nativeMenus.contains(refreshLabel), isTrue);
+      expect(nativeMenus.enabled(refreshLabel), isTrue);
     },
   );
 

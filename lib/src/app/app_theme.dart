@@ -7,6 +7,7 @@ import 'busymark_design.dart';
 ThemeData buildBusyMarkTheme({
   required Brightness brightness,
   required Color accentColor,
+  bool highContrast = false,
 }) {
   final base = switch (brightness) {
     Brightness.light => createYaruLightTheme(primaryColor: accentColor),
@@ -44,7 +45,11 @@ ThemeData buildBusyMarkTheme({
     scrim: BusyMarkLinuxPalette.black,
   );
   final textTheme = _busyMarkTextTheme(base.textTheme, colors);
-  final inputDecorationTheme = base.inputDecorationTheme;
+  final inputDecorationTheme = BusyMarkFocusStyle.inputs(
+    base.inputDecorationTheme,
+    colorScheme,
+    highContrast: highContrast,
+  );
   final outlinedButtonStyle = _semanticButtonStyle(
     base.outlinedButtonTheme.style,
     foreground: colors.foreground,
@@ -268,8 +273,9 @@ ThemeData buildBusyMarkTheme({
     ),
     tooltipTheme: tooltipTheme,
     tabBarTheme: base.tabBarTheme.copyWith(
-      labelStyle: textTheme.labelLarge,
-      unselectedLabelStyle: textTheme.labelLarge,
+      labelPadding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+      labelStyle: textTheme.bodyMedium,
+      unselectedLabelStyle: textTheme.bodyMedium,
       dividerColor: colors.divider,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(

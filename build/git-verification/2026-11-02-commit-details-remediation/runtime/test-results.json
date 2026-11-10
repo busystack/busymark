@@ -1,0 +1,75 @@
+{
+  "shared-tests": {
+    "passed": 399,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "errors": []
+  },
+  "shared-real-repositories": {
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "errors": []
+  },
+  "mark-host-tests": {
+    "passed": 802,
+    "failed": 1,
+    "skipped": 0,
+    "success": false,
+    "errors": [
+      {
+        "testID": 465,
+        "error": "Timed out waiting for workspace state",
+        "stackTrace": "package:matcher                                 fail\ntest/src/workspace_controller_test.dart 4643:7  _waitFor\n",
+        "isFailure": true,
+        "type": "error",
+        "time": 446792,
+        "test": {
+          "id": 465,
+          "name": "external file moves remap the open document buffer",
+          "suiteID": 277,
+          "groupIDs": [
+            279
+          ],
+          "metadata": {
+            "skip": false,
+            "skipReason": null
+          },
+          "line": 4143,
+          "column": 3,
+          "url": "file:///home/ubuntu/busystack-native-git-verification-20261031/inputs/busymark/test/src/workspace_controller_test.dart"
+        }
+      }
+    ]
+  },
+  "mark-host-tests-attempt2": {
+    "passed": 803,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "errors": []
+  },
+  "watcher-isolated": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "errors": []
+  },
+  "files-git-ipc-tests": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "errors": []
+  },
+  "files-ui-git-tests": {
+    "passed": 42,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "errors": []
+  }
+}

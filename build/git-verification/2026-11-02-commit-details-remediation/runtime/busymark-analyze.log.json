@@ -1,0 +1,5 @@
+{
+  "source": "busymark-analyze.log",
+  "sha256": "a3f89cd99e3faa3607d5ab8835e767a56e2630f9050d6c7cb8a36ba2cb2239e8",
+  "text": "Analyzing busymark...                                           \nNo issues found! (ran in 21.3s)\n"
+}

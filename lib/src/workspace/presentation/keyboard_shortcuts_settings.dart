@@ -434,4 +434,5 @@ String commandContextLabel(BuildContext context, BusyMarkCommand command) =>
         context.l10n.shortcutContextWritersideSource,
       BusyMarkCommandScope.sidebar => context.l10n.shortcutContextWorkspace,
       BusyMarkCommandScope.tree => context.l10n.shortcutContextTree,
+      BusyMarkCommandScope.git => context.l10n.git,
     };

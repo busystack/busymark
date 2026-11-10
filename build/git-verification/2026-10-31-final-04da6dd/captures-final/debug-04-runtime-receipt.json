@@ -1,0 +1,14 @@
+{
+  "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+  "launch": "flutter run -d linux --debug --no-pub --dart-entrypoint-args=<fixture>",
+  "backend": "X11/Xvfb; real native portal; scale=1.0; locale=en_US.UTF-8",
+  "processes": [
+    {
+      "pid": 77233,
+      "app": "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busymark/build/linux/x64/debug/bundle/busymark",
+      "appSha256": "6dc6de5cc2001b1163663181cf3de55fb384de537d7f57aa0a9feb3c259194b4",
+      "engine": "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busymark/build/linux/x64/debug/bundle/lib/libflutter_linux_gtk.so",
+      "engineSha256": "7a5698608a3c79ad3f123a74bce8074339ffa1a83c896d73ae853c9f92a43cc3"
+    }
+  ]
+}

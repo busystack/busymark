@@ -599,7 +599,13 @@ void main() {
           ),
         ),
       );
-      await _settle(tester);
+      // Real filesystem review can outlive the helper's minimum pump rounds
+      // under a full-suite load. Wait for scan completion before checking the
+      // exact causal message and technical-details action below.
+      await _settle(
+        tester,
+        until: () => find.byType(LinearProgressIndicator).evaluate().isEmpty,
+      );
       expect(
         find.textContaining(
           malformed ? 'snapshot is invalid' : 'source could not be read',

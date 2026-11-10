@@ -1,0 +1,67 @@
+{
+  "busymark": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "lib/l10n/generated/app_localizations.dart",
+      "lib/l10n/generated/app_localizations_ar.dart",
+      "lib/l10n/generated/app_localizations_de.dart",
+      "lib/l10n/generated/app_localizations_en.dart",
+      "lib/l10n/generated/app_localizations_es.dart",
+      "lib/l10n/generated/app_localizations_et.dart",
+      "lib/l10n/generated/app_localizations_fa.dart",
+      "lib/l10n/generated/app_localizations_fr.dart",
+      "lib/l10n/generated/app_localizations_hi.dart",
+      "lib/l10n/generated/app_localizations_id.dart",
+      "lib/l10n/generated/app_localizations_it.dart",
+      "lib/l10n/generated/app_localizations_ja.dart",
+      "lib/l10n/generated/app_localizations_ko.dart",
+      "lib/l10n/generated/app_localizations_nb.dart",
+      "lib/l10n/generated/app_localizations_nl.dart",
+      "lib/l10n/generated/app_localizations_pl.dart",
+      "lib/l10n/generated/app_localizations_pt.dart",
+      "lib/l10n/generated/app_localizations_ru.dart",
+      "lib/l10n/generated/app_localizations_tr.dart",
+      "lib/l10n/generated/app_localizations_uk.dart",
+      "lib/l10n/generated/app_localizations_vi.dart",
+      "lib/l10n/generated/app_localizations_zh.dart",
+      "lib/src/app/busymark_design.dart",
+      "lib/src/git/application/shared_git_integration.dart",
+      "lib/src/workspace/presentation/workspace_screen.dart",
+      "test/src/app_smoke_test.dart",
+      "test/src/git/native_presentation_contract_test.dart",
+      "tools/git_ui_audit/bin/check.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 28 files (0 changed) in 3.92 seconds.\n"
+  },
+  "busyfiles": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "apps/busyfiles_ui/lib/src/app/busyfiles_design.dart",
+      "apps/busyfiles_ui/test/git_native_presentation_contract_test.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 2 files (0 changed) in 0.15 seconds.\n"
+  },
+  "busystack_git_flutter": {
+    "argv": [
+      "dart",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "lib/src/commit_view.dart",
+      "lib/src/presentation.dart",
+      "lib/src/workflow_ui.dart",
+      "test/desktop_interaction_test.dart",
+      "test/support/native_presentation_fixture.dart"
+    ],
+    "exit": 0,
+    "output": "Formatted 5 files (0 changed) in 0.20 seconds.\n"
+  }
+}

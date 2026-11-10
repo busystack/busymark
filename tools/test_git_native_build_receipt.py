@@ -1,0 +1,144 @@
+import tempfile
+from pathlib import Path
+import unittest
+from tools.git_native_build_receipt import engine_artifact, payloads, sha, sources, verify
+
+
+class NativeBuildReceiptTest(unittest.TestCase):
+    def test_aot_library_selects_release_even_with_kernel_asset(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary)/'busymark'
+            for relative in ['lib/libapp.so', 'data/flutter_assets/kernel_blob.bin']:
+                path = binary.parent/relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'producer-bound app artifact')
+            self.assertEqual(engine_artifact(binary), 'linux-x64-release')
+
+    def test_kernel_without_aot_selects_official_debug_artifact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary)/'busymark'
+            path = binary.parent/'data/flutter_assets/kernel_blob.bin'
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b'producer-bound JIT application')
+            self.assertEqual(engine_artifact(binary), 'linux-x64')
+
+    def test_aot_without_kernel_selects_official_release_artifact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary)/'busymark'
+            path = binary.parent/'lib/libapp.so'
+            path.parent.mkdir()
+            path.write_bytes(b'producer-bound AOT application')
+            self.assertEqual(engine_artifact(binary), 'linux-x64-release')
+
+    def test_missing_application_artifacts_cannot_claim_release_mode(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(RuntimeError, 'application artifacts'):
+                engine_artifact(Path(temporary)/'busymark')
+
+    def test_packaged_daemon_outside_ui_bundle_must_still_match(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                (root/name/'lib').mkdir(parents=True)
+                (root/name/'lib/source.dart').write_text('original source')
+            binary = root/'usr/lib/busyfiles/busyfiles'
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b'owned UI payload')
+            daemon = root/'usr/libexec/busyfiles/busyfilesd'
+            daemon.parent.mkdir(parents=True)
+            daemon.write_bytes(b'producer-bound daemon')
+            receipt = {'sealed': True, 'sources': sources(root),
+                       'payloads': payloads(binary),
+                       'externalPayloads': {str(daemon): sha(daemon)}}
+            verify(receipt, binary, root)
+            daemon.write_bytes(b'changed daemon')
+            with self.assertRaisesRegex(RuntimeError, 'External package payload differs'):
+                verify(receipt, binary, root)
+
+    def test_seal_rejects_changed_compiled_source_or_binary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                (root / name / 'lib').mkdir(parents=True)
+                (root / name / 'lib/source.dart').write_text('original source')
+            binary = root / 'bundle/busymark'
+            binary.parent.mkdir()
+            binary.write_bytes(b'owned test payload')
+            extras = [binary.parent/'lib/libnative.so', binary.parent/'lib/libflutter_linux_gtk.so', binary.parent/'data/flutter_assets/font.ttf']
+            for extra in extras:
+                extra.parent.mkdir(parents=True, exist_ok=True)
+                extra.write_bytes(b'original native or font payload')
+            receipt = {'sealed': True, 'sources': sources(root), 'payloads': payloads(binary)}
+            for extra in extras:
+                extra.write_bytes(b'changed native or font payload')
+                with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                    verify(receipt, binary, root)
+                extra.write_bytes(b'original native or font payload')
+            verify(receipt, binary, root)
+            source = root / 'busystack_git_flutter/lib/source.dart'
+            source.write_text('changed presentation')
+            with self.assertRaisesRegex(RuntimeError, 'source changed'):
+                verify(receipt, binary, root)
+            source.write_text('original source')
+            binary.write_bytes(b'changed owned test payload')
+            with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                verify(receipt, binary, root)
+            receipt['sealed'] = False
+            with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                verify(receipt, binary, root)
+
+    def test_workspace_inside_build_still_binds_all_production_sources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / 'build' / 'isolated-workspace'
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                (root/name/'lib').mkdir(parents=True)
+                (root/name/'lib/source.dart').write_text('original source')
+                (root/name/'pubspec.yaml').write_text('name: '+name)
+            binary = root/'bundle/busymark'
+            binary.parent.mkdir()
+            binary.write_bytes(b'owned test payload')
+            receipt = {'sealed': True, 'sources': sources(root), 'payloads': payloads(binary)}
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                source = root/name/'lib/source.dart'
+                source.write_text('changed production source')
+                with self.assertRaisesRegex(RuntimeError, 'source changed'):
+                    verify(receipt, binary, root)
+                source.write_text('original source')
+            verify(receipt, binary, root)
+
+    def test_manifest_only_workspace_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root/'busymark').mkdir()
+            (root/'busymark/pubspec.yaml').write_text('name: busymark')
+            with self.assertRaisesRegex(RuntimeError, 'No production source'):
+                sources(root)
+
+    def test_busyfiles_receipt_binds_ui_daemon_and_ipc_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for folder in ['busyfiles/apps/busyfiles_ui/lib', 'busyfiles/apps/busyfilesd/bin',
+                           'busyfiles/packages/busyfiles_ipc/lib', 'busystack_git_flutter/lib', 'busystack_git/lib']:
+                path = root / folder
+                path.mkdir(parents=True)
+                (path / 'source.dart').write_text('original production source')
+            binary = root / 'bundle/busyfiles'
+            binary.parent.mkdir()
+            binary.write_bytes(b'owned test payload')
+            receipt = {'host': 'busyfiles', 'sealed': True,
+                       'sources': sources(root, host='busyfiles'), 'payloads': payloads(binary)}
+            verify(receipt, binary, root)
+            tests = root/'busyfiles/apps/busyfiles_ui/test'
+            tests.mkdir()
+            (tests/'fixture.dart').write_text('test-only change')
+            verify(receipt, binary, root)
+            for source in ['busyfiles/apps/busyfilesd/bin/source.dart', 'busyfiles/packages/busyfiles_ipc/lib/source.dart']:
+                file = root/source
+                file.write_text('changed production source')
+                with self.assertRaisesRegex(RuntimeError, 'busyfiles source changed'):
+                    verify(receipt, binary, root)
+                file.write_text('original production source')
+
+
+if __name__ == '__main__':
+    unittest.main()

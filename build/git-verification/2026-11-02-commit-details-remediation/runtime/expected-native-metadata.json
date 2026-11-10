@@ -1,0 +1,14 @@
+{
+  "head": {
+    "oid": "bcf9d18f587886cc5db60b5fb1f0a9c6f3946df5",
+    "message": "Merge grouped historical files for parent-aware review\n\nThe two actual parents remain individually selectable without retargeting open comparisons.\n"
+  },
+  "ordinary": {
+    "oid": "bff2eacbc7eea1d89bb308c65b26404d7f7fb3c8",
+    "message": "Preserve grouped historical review and independent comparisons with a long subject that remains available in full\n\nBody paragraph 1: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 2: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 3: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 4: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 5: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 6: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 7: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 8: complete metadata remains available through Details while Changed Files keeps its own usable space.\n"
+  },
+  "root": {
+    "oid": "d84856483dbe0f365affe9f32be1f28026caba41",
+    "message": "Initial documents and comparison endpoints\n"
+  }
+}

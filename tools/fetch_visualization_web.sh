@@ -3,7 +3,7 @@
 set -euo pipefail
 
 MERMAID_VERSION="11.16.1"
-MERMAID_SOURCE_SHA256="0ee99b3bb82766e5d6c34b8cc768b8530ce8f1aaa13790ae368aebeef3de9d11"
+MERMAID_PACKAGE_SHA256="ebd9885111092c78cefc79a76f6c1dc34ed5b834b02ae8f338227ce79c003de4"
 PLANTUML_VERSION="1.2026.6"
 PLANTUML_SHA256="798f99592eb03a6446519d2becf78e6f1008d0d25c75d60b37a0f46e39e3c413"
 SCALAR_PARSER_VERSION="0.28.14"
@@ -34,7 +34,7 @@ SOURCE_FINGERPRINT="$({
     "${SOURCE_DIR}/plantuml_renderer.js" \
     "${SOURCE_DIR}/openapi_renderer.js" \
     "${SOURCE_DIR}/mathjax_renderer.js" \
-    "${SOURCE_DIR}/mermaid_math_disabled.js" \
+    "${SOURCE_DIR}/verify_published_package.py" \
     "${SOURCE_DIR}/build_render_engines.js" \
     "${SOURCE_DIR}/reference.js" \
     "${SOURCE_DIR}/bootstrap.js" \
@@ -103,9 +103,11 @@ verify_package() {
 }
 
 verify_package \
-  mermaid-source \
-  "https://github.com/mermaid-js/mermaid/archive/refs/tags/mermaid@${MERMAID_VERSION}.tar.gz" \
-  "${MERMAID_SOURCE_SHA256}"
+  mermaid \
+  "https://registry.npmjs.org/mermaid/-/mermaid-${MERMAID_VERSION}.tgz" \
+  "${MERMAID_PACKAGE_SHA256}"
+python3 "${SOURCE_DIR}/verify_published_package.py" \
+  "${TEMP_DIR}/mermaid.tgz" "${TOOL_DIR}/node_modules/mermaid"
 verify_package \
   plantuml \
   "https://registry.npmjs.org/@plantuml/core/-/core-${PLANTUML_VERSION}.tgz" \
@@ -137,14 +139,9 @@ verify_package \
 
 BUILD_DIR="${TEMP_DIR}/output"
 mkdir -p -- "${BUILD_DIR}"
-cp -R -- \
-  "${TEMP_DIR}/mermaid-source/mermaid-mermaid-${MERMAID_VERSION}/packages/mermaid" \
-  "${TOOL_DIR}/mermaid-source"
 node "${TOOL_DIR}/build_render_engines.js" \
   "${TOOL_DIR}/render_engines.js" \
-  "${BUILD_DIR}/render-engines.js" \
-  "${TOOL_DIR}/mermaid-source" \
-  "${SOURCE_DIR}/mermaid_math_disabled.js"
+  "${BUILD_DIR}/render-engines.js"
 
 install -m 0644 "${SOURCE_DIR}/harness.html" "${BUILD_DIR}/harness.html"
 install -m 0644 "${SOURCE_DIR}/reference.html" "${BUILD_DIR}/reference.html"
@@ -161,10 +158,9 @@ printf '%s\n' "${VERSION_FINGERPRINT}" > "${BUILD_DIR}/VERSION"
 LICENSE_DIR="${BUILD_DIR}/licenses"
 node "${SOURCE_DIR}/generate_notices.js" \
   "${TOOL_DIR}/node_modules" \
-  "${LICENSE_DIR}/npm" \
-  "${TEMP_DIR}/mermaid-source/mermaid-mermaid-${MERMAID_VERSION}/packages/mermaid"
+  "${LICENSE_DIR}/npm"
 install -D -m 0644 \
-  "${TEMP_DIR}/mermaid-source/mermaid-mermaid-${MERMAID_VERSION}/LICENSE" \
+  "${TEMP_DIR}/mermaid/package/LICENSE" \
   "${LICENSE_DIR}/mermaid/LICENSE"
 # @scalar/api-reference and @scalar/openapi-parser are released from the same
 # Scalar repository. The reference package omits LICENSE from its npm files;

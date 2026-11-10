@@ -1,4 +1,7 @@
+import 'package:busymark/src/app/busymark_native_controls.dart';
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -13,6 +16,11 @@ import 'package:busymark/src/workspace/workspace_safety.dart';
 import 'package:busymark/src/workspace/workspace_tab_actions.dart';
 import 'package:busymark/src/workspace/workspace_tabs.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
+import 'package:busymark/src/git/application/git_gateway.dart';
+import 'package:busymark/src/git/domain/git_models.dart';
+import 'package:busymark/src/git/application/shared_git_integration.dart';
+import 'package:busystack_git/busystack_git.dart' as shared;
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' show GitHost;
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.unsavedChanges), findsOneWidget);
-      expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
+      expect(find.byType(BusyMarkNativeActionButton), findsNWidgets(3));
       expect(find.byIcon(BusyMarkGlyphs.clear), findsOneWidget);
       expect(find.byIcon(BusyMarkGlyphs.delete), findsOneWidget);
       expect(find.byIcon(BusyMarkGlyphs.save), findsOneWidget);
@@ -235,27 +243,27 @@ void main() {
       await tester.pumpAndSettle();
 
       final discardButton = find.widgetWithText(
-        BusyMarkDialogButton,
+        BusyMarkNativeActionButton,
         l10n.discard,
       );
-      final elevated = tester.widget<ElevatedButton>(
-        find.descendant(
-          of: discardButton,
-          matching: find.byType(ElevatedButton),
+      expect(
+        tester.widget<BusyMarkNativeActionButton>(discardButton).role,
+        BusyMarkNativeActionRole.destructive,
+      );
+      final painted = find.descendant(
+        of: discardButton,
+        matching: find.byWidgetPredicate(
+          (w) => w is DecoratedBox && w.decoration is ShapeDecoration,
         ),
       );
       expect(
-        elevated.style?.foregroundColor?.resolve({}),
-        BusyMarkLinuxPalette.white,
-      );
-      expect(
-        elevated.style?.backgroundColor?.resolve({}),
+        (tester.widget<DecoratedBox>(painted).decoration as ShapeDecoration)
+            .color,
         BusyMarkLinuxPalette.red,
       );
+      final label = find.text(l10n.discard);
       expect(
-        DefaultTextStyle.of(
-          tester.element(find.text(l10n.discard)),
-        ).style.color,
+        DefaultTextStyle.of(tester.element(label)).style.color,
         BusyMarkLinuxPalette.white,
       );
     },
@@ -954,6 +962,408 @@ void main() {
     expect(service.documents[service.secondPath], '# Original B\n');
   });
 
+  testWidgets(
+    'a shared Git surface retains localized labels after its invoking workspace element retires',
+    (tester) async {
+      final service = _IdentityWorkspaceService();
+      final visible = ValueNotifier(true);
+      addTearDown(visible.dispose);
+      late WidgetRef widgetRef;
+      GitHost? host;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ValueListenableBuilder<bool>(
+                valueListenable: visible,
+                builder: (_, attached, _) => attached
+                    ? Consumer(
+                        builder: (context, ref, _) {
+                          widgetRef = ref;
+                          return TextButton(
+                            onPressed: () {
+                              host = busyMarkGitHost(
+                                context,
+                                ref,
+                                ref
+                                    .read(workspaceControllerProvider)
+                                    .workspace!,
+                                isMounted: () => context.mounted,
+                              );
+                            },
+                            child: const Text('Open Git surface'),
+                          );
+                        },
+                      )
+                    : const Text('New workspace'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await widgetRef
+          .read(workspaceControllerProvider.notifier)
+          .openPath(service.rootPath);
+      await tester.tap(find.text('Open Git surface'));
+      visible.value = false;
+      await tester.pumpAndSettle();
+      expect(find.text('New workspace'), findsOneWidget);
+      expect(host!.text('git.Cancel', 'Cancel'), l10n.cancel);
+      expect(
+        host!.text('git.Commit message', 'Commit message'),
+        l10n.gitCommitMessage,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('duplicate Git trust approval preserves its parent review', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-git-trust-review-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = _IdentityWorkspaceService(rootPath: root.path);
+    late WidgetRef widgetRef;
+    late BuildContext hostContext;
+    bool? approved;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Consumer(
+            builder: (context, ref, child) {
+              widgetRef = ref;
+              hostContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+    await widgetRef
+        .read(workspaceControllerProvider.notifier)
+        .openPath(service.rootPath);
+    final workspace = widgetRef.read(workspaceControllerProvider).workspace!;
+    final host = busyMarkGitHost(
+      hostContext,
+      widgetRef,
+      workspace,
+      isMounted: () => hostContext.mounted,
+    );
+    final repository = shared.RepositoryId(
+      root: service.rootPath,
+      gitDir: '${service.rootPath}/.git',
+      commonDir: '${service.rootPath}/.git',
+      objectFormat: 'sha1',
+    );
+    final review = host.present<void>(
+      hostContext,
+      'Preserved rebase plan',
+      TextButton(
+        onPressed: () async {
+          approved = await host.prepareInspection!(
+            repository,
+            const shared.GitInspection(shared.GitInspectionKind.rebasePlan),
+          );
+        },
+        child: const Text('Prepare reviewed plan'),
+      ),
+      expanded: true,
+    );
+    unawaited(review);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    tester
+        .widget<TextButton>(
+          find.widgetWithText(TextButton, 'Prepare reviewed plan'),
+        )
+        .onPressed!();
+    // Unrelated filesystem requests are not a barrier for the production
+    // canonical-path checks. Wait for their observable dialog result while
+    // servicing both real I/O and Flutter's fake clock.
+    await pumpUntil(
+      tester,
+      () => find
+          .byKey(const ValueKey('busy-mark-git-trust-confirm'))
+          .evaluate()
+          .isNotEmpty,
+      operation: 'Canonical Git trust dialog',
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(approved, isNull);
+    expect(find.text(l10n.gitTrustRequiredTitle), findsOneWidget);
+    final accept = tester
+        .widget<BusyMarkGitActionButton>(
+          find.byKey(const ValueKey('busy-mark-git-trust-confirm')),
+        )
+        .onPressed!;
+    // Two queued native activations can arrive before the first dismissal
+    // retires the old accessibility node. Only this trust surface may close.
+    accept();
+    accept();
+    await pumpUntil(
+      tester,
+      () => approved != null,
+      operation: 'Duplicate Git trust approval and persistence',
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    expect(approved, isTrue);
+    expect(find.text('Preserved rebase plan'), findsOneWidget);
+    expect(
+      widgetRef
+          .read(appSettingsControllerProvider)
+          .trustsGitWorkspace(service.rootPath),
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+    Navigator.of(hostContext).popUntil((route) => route.isFirst);
+    await tester.pumpAndSettle();
+    await review;
+  });
+
+  testWidgets(
+    'shared Git fetch reconciliation leaves authoring buffers and workspace scans alone',
+    (tester) async {
+      final root = Directory.systemTemp.createTempSync('git-fetch-authoring-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = _IdentityWorkspaceService(rootPath: root.path);
+      final metadata = _PendingGitGateway();
+      addTearDown(metadata.release);
+      late WidgetRef widgetRef;
+      late BuildContext hostContext;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(
+                      autoSave: false,
+                      trustedGitWorkspacePaths: [service.rootPath],
+                    )
+                    .toJson(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+            gitRepositoryGatewayProvider.overrideWithValue(metadata),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Consumer(
+              builder: (context, ref, _) {
+                widgetRef = ref;
+                hostContext = context;
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await controller.openPath(service.rootPath);
+      widgetRef
+          .read(gitControllerProvider.notifier)
+          .attachWorkspace(
+            widgetRef.read(workspaceControllerProvider).workspace!,
+          );
+      controller.updateActiveText('# Unsaved draft\n');
+      final before = service.openPathCalls;
+      final draft = widgetRef.read(workspaceControllerProvider).activeBuffer!;
+      final repository = shared.RepositoryId(
+        root: service.rootPath,
+        gitDir: '${service.rootPath}/.git',
+        commonDir: '${service.rootPath}/.git',
+        objectFormat: 'sha1',
+      );
+      final host = busyMarkGitHost(
+        hostContext,
+        widgetRef,
+        widgetRef.read(workspaceControllerProvider).workspace!,
+        isMounted: () => hostContext.mounted,
+      );
+      expect(
+        await tester.runAsync(
+          () => host.prepareMutation(
+            repository,
+            const shared.FetchRemote(
+              'origin',
+              expectedHead: null,
+              expectedIndex: 'reviewed',
+            ),
+          ),
+        ),
+        isTrue,
+      );
+      var completed = false;
+      final reconciliation = host
+          .afterMutation!(
+            repository,
+            const shared.GitOutcome(
+              phase: shared.GitOperationPhase.cancelled,
+              snapshot: null,
+            ),
+          )
+          .then((_) => completed = true);
+      await tester.pump();
+      expect(metadata.started.isCompleted, isTrue);
+      expect(
+        completed,
+        isTrue,
+        reason:
+            'The engine already reconciled the cancelled operation; '
+            'a background compatibility status query must not hold it open.',
+      );
+      metadata.release();
+      await reconciliation;
+      expect(service.openPathCalls, before);
+      final after = widgetRef.read(workspaceControllerProvider).activeBuffer!;
+      expect(after.id, draft.id);
+      expect(after.text, draft.text);
+      expect(after.isDirty, isTrue);
+      expect(service.saves, isEmpty);
+
+      // A failed operation that could have changed working files still needs
+      // disk reconciliation. Protect the draft before preparing that operation.
+      controller.updateActiveText(draft.lastSavedText);
+      expect(
+        await tester.runAsync(
+          () => host.prepareMutation(
+            repository,
+            const shared.BranchMutation(
+              shared.BranchAction.switchBranch,
+              'incoming',
+              expectedHead: null,
+              expectedIndex: 'reviewed',
+            ),
+          ),
+        ),
+        isTrue,
+      );
+      await tester.runAsync(
+        () => host.afterMutation!(
+          repository,
+          const shared.GitOutcome(
+            phase: shared.GitOperationPhase.failed,
+            snapshot: null,
+          ),
+        ),
+      );
+      expect(service.openPathCalls, before + 1);
+      expect(service.saves, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'shared Git branch switching reviews every affected dirty document and cancellation preserves them',
+    (tester) async {
+      final root = Directory.systemTemp.createTempSync('git-branch-authoring-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = _IdentityWorkspaceService(rootPath: root.path);
+      late WidgetRef widgetRef;
+      bool? allowed;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(
+                      autoSave: false,
+                      trustedGitWorkspacePaths: [service.rootPath],
+                    )
+                    .toJson(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.green,
+            ),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, child) {
+                  widgetRef = ref;
+                  return TextButton(
+                    onPressed: () async {
+                      final workspace = ref
+                          .read(workspaceControllerProvider)
+                          .workspace!;
+                      final host = busyMarkGitHost(
+                        context,
+                        ref,
+                        workspace,
+                        isMounted: () => context.mounted,
+                      );
+                      allowed = await host.prepareMutation(
+                        shared.RepositoryId(
+                          root: service.rootPath,
+                          gitDir: '${service.rootPath}/.git',
+                          commonDir: '${service.rootPath}/.git',
+                          objectFormat: 'sha1',
+                        ),
+                        const shared.BranchMutation(
+                          shared.BranchAction.switchBranch,
+                          'incoming',
+                          expectedHead: null,
+                          expectedIndex: 'reviewed',
+                        ),
+                      );
+                    },
+                    child: const Text('Switch reviewed branch'),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Unsaved A\n');
+      await controller.openActiveFile(service.secondPath);
+      controller.updateActiveText('# Unsaved B\n');
+      await tester.tap(find.text('Switch reviewed branch'));
+      for (var step = 0; step < 4; step++) {
+        await tester.runAsync(() => FileSystemEntity.type(root.path));
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('a.md'), findsOneWidget);
+      expect(find.text('b.md'), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(allowed, isFalse);
+      final dirty = widgetRef.read(workspaceControllerProvider).dirtyBuffers;
+      expect(dirty.map((b) => b.filePath).toSet(), {
+        service.firstPath,
+        service.secondPath,
+      });
+      expect(dirty.map((b) => b.text).toSet(), {
+        '# Unsaved A\n',
+        '# Unsaved B\n',
+      });
+      expect(service.saves, isEmpty);
+    },
+  );
+
   for (final action in [
     (label: 'save', discard: false),
     (label: 'discard', discard: true),
@@ -1106,6 +1516,86 @@ void main() {
     await controller.openActiveFile(service.secondPath);
     await controller.activateDocumentBuffer(firstId);
     return (ref: ref, controller: controller, result: () => result);
+  }
+
+  for (final openDuringConfirmation in [false, true]) {
+    testWidgets(
+      'closing the last document activates its surviving shared comparison; newer=$openDuringConfirmation',
+      (tester) async {
+        final service = _IdentityWorkspaceService();
+        final targets = <String>{};
+        final h = await closeHarness(
+          tester,
+          service,
+          targets,
+          operation: 'one',
+        );
+        var state = h.ref.read(workspaceControllerProvider);
+        final first = state.activeBufferId!;
+        await h.controller.closeDocumentBuffer(
+          state.documentBuffers.singleWhere((b) => b.id != first).id,
+        );
+        state = h.ref.read(workspaceControllerProvider);
+        final workspace = state.workspace!;
+        final review = SharedGitReview(
+          shared.RepositoryId(
+            root: service.rootPath,
+            gitDir: '${service.rootPath}/.git',
+            commonDir: '${service.rootPath}/.git',
+            objectFormat: 'sha1',
+          ),
+          comparison: shared.GitComparison(
+            shared.RepoPath.text('comparison.md'),
+            const shared.ContentVersion.index(),
+            const shared.ContentVersion.working(),
+          ),
+        );
+        final tabs = h.ref.read(sharedGitReviewProvider.notifier);
+        tabs.open(workspace.id, review);
+        tabs.deactivate(workspace.id);
+        h.controller.updateActiveText('# Unsaved document\n');
+        targets.add(first);
+
+        await tester.tap(find.text('Close targets'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
+        expect(h.result(), isFalse);
+        expect(h.ref.read(workspaceControllerProvider).activeBufferId, first);
+        expect(
+          h.ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+          isTrue,
+        );
+        expect(h.ref.read(sharedGitReviewProvider)[workspace.id]!.entries, [
+          review,
+        ]);
+
+        await tester.tap(find.text('Close targets'));
+        await tester.pumpAndSettle();
+        SharedGitReview? newer;
+        if (openDuringConfirmation) {
+          newer = SharedGitReview(
+            review.repository,
+            comparison: shared.GitComparison(
+              shared.RepoPath.text('newer-comparison.md'),
+              const shared.ContentVersion.index(),
+              const shared.ContentVersion.working(),
+            ),
+          );
+          tabs.open(workspace.id, newer);
+        }
+        await tester.tap(find.text(l10n.discard));
+        await tester.pumpAndSettle();
+        expect(h.result(), isTrue);
+        expect(
+          h.ref.read(workspaceControllerProvider).documentBuffers,
+          isEmpty,
+        );
+        final remaining = h.ref.read(sharedGitReviewProvider)[workspace.id]!;
+        expect(remaining.entries, [review, if (newer != null) newer]);
+        expect(remaining.active, same(newer ?? review));
+      },
+    );
   }
 
   for (final choice in ['Cancel', 'Save', 'Discard']) {
@@ -1570,24 +2060,55 @@ class _MemorySettingsStore implements LocalSettingsStore {
   }
 }
 
+class _PendingGitGateway implements GitRepositoryGateway {
+  final started = Completer<void>();
+  final _result = Completer<GitAvailability>();
+  void release() {
+    if (!_result.isCompleted) {
+      _result.complete(const GitAvailability.unavailable('Fixture metadata'));
+    }
+  }
+
+  @override
+  bool get requiresWorkspaceTrust => true;
+  @override
+  Future<GitAvailability> availability() {
+    if (!started.isCompleted) started.complete();
+    return _result.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw StateError('Unexpected metadata request: ${invocation.memberName}');
+}
+
 class _IdentityWorkspaceService extends WorkspaceService {
-  final rootPath = '/virtual/workspace';
-  final firstPath = '/virtual/workspace/a.md';
-  final secondPath = '/virtual/workspace/b.md';
-  final saveAsPath = '/virtual/workspace/saved.md';
-  final saveAsExtensionlessPath = '/virtual/workspace/notes';
-  final saveAsNormalizedPath = '/virtual/workspace/notes.md';
-  final documents = <String, String>{
-    '/virtual/workspace/a.md': '# External A\n',
-    '/virtual/workspace/b.md': '# Original B\n',
-    '/virtual/workspace/notes.md': '# Existing notes\n',
-  };
+  _IdentityWorkspaceService({this.rootPath = '/virtual/workspace'})
+    : firstPath = '$rootPath/a.md',
+      secondPath = '$rootPath/b.md',
+      saveAsPath = '$rootPath/saved.md',
+      saveAsExtensionlessPath = '$rootPath/notes',
+      saveAsNormalizedPath = '$rootPath/notes.md',
+      documents = {
+        '$rootPath/a.md': '# External A\n',
+        '$rootPath/b.md': '# Original B\n',
+        '$rootPath/notes.md': '# Existing notes\n',
+      };
+
+  final String rootPath;
+  final String firstPath;
+  final String secondPath;
+  final String saveAsPath;
+  final String saveAsExtensionlessPath;
+  final String saveAsNormalizedPath;
+  final Map<String, String> documents;
   final saves = <({String path, String text})>[];
   final fileChangeCheckStarted = Completer<void>();
   final firstSaveStarted = Completer<void>();
   final pathExistsCheckStarted = Completer<void>();
   final pathExistsChecks = <String>[];
   var failSave = false;
+  var openPathCalls = 0;
   var firstChangedOnDisk = false;
   var pauseFirstSave = false;
   Completer<bool>? pendingFileChangedResult;
@@ -1596,6 +2117,7 @@ class _IdentityWorkspaceService extends WorkspaceService {
 
   @override
   Future<Workspace> openPath(String path) async {
+    openPathCalls++;
     if (path == rootPath) {
       return Workspace(
         id: rootPath,

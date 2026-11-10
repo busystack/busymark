@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  busystack_git_flutter
   file_selector_linux
   gtk
   screen_retriever_linux
