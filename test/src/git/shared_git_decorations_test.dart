@@ -2,8 +2,56 @@ import 'package:busymark/src/git/application/shared_git_decorations.dart';
 import 'package:busymark/src/git/data/git_shared_gateway.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:busymark/src/git/domain/git_models.dart' as authoring;
 
 void main() {
+  test(
+    'authoring adapter rejects mismatched and unsafe paths without decorating another entry',
+    () {
+      const repo = authoring.GitRepositoryInfo(
+        rootPath: '/repo',
+        gitDirPath: '/repo/.git',
+        currentBranch: 'main',
+      );
+      authoring.GitFileStatus file(String relative, String absolute) =>
+          authoring.GitFileStatus(
+            repoRelativePath: relative,
+            absolutePath: absolute,
+            indexStatus: authoring.GitFileChangeStatus.unmodified,
+            workTreeStatus: authoring.GitFileChangeStatus.modified,
+            category: authoring.GitFileStatusCategory.modified,
+            staged: false,
+            unstaged: true,
+            untracked: false,
+            deleted: false,
+            renamed: false,
+            copied: false,
+            conflicted: false,
+            ignored: false,
+          );
+      final tree = busyMarkFileTreeDecorations(
+        authoring.GitStatusSnapshot(
+          repositoryInfo: repo,
+          files: [
+            file('topics/valid.md', '/repo/topics/valid.md'),
+            file('topics/mismatched.md', '/other/topics/mismatched.md'),
+            file('../outside.md', '/repo/../outside.md'),
+          ],
+        ),
+      )!;
+      expect(
+        tree.forUri('file:///repo/topics/valid.md')!.status,
+        shared.GitFileStatus.modified,
+      );
+      expect(tree.forUri('file:///repo/topics/mismatched.md'), isNull);
+      expect(tree.forUri('file:///outside.md'), isNull);
+      expect(
+        tree.forUri('file:///repo/topics', directory: true)!.immediateCount,
+        1,
+      );
+    },
+  );
+
   test(
     'authoring projection retains shared byte paths, deletions and clean refresh',
     () {
