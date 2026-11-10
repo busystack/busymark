@@ -57,6 +57,31 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         packages = set(self.recipe['parts']['busymark']['stage-packages'])
         self.assertTrue({'gnupg', 'pinentry-gnome3', 'pinentry-curses'}.issubset(packages))
 
+    def test_snap_ubuntu_archives_use_https_and_the_official_signing_key(self):
+        repositories = self.recipe['package-repositories']
+        self.assertEqual(len(repositories), 2)
+        expected = {
+            'https://archive.ubuntu.com/ubuntu': {'noble', 'noble-updates', 'noble-backports'},
+            'https://security.ubuntu.com/ubuntu': {'noble-security'},
+        }
+        fingerprint = 'F6ECB3762474EDA9D21B7022871920D1991BC93C'
+        for repository in repositories:
+            self.assertEqual(repository['type'], 'apt')
+            self.assertEqual(set(repository['suites']), expected.pop(repository['url']))
+            self.assertEqual(set(repository['components']), {'main', 'restricted', 'universe', 'multiverse'})
+            self.assertEqual(repository['architectures'], ['amd64'])
+            self.assertEqual(repository['key-id'], fingerprint)
+            self.assertNotIn('priority', repository)
+        self.assertFalse(expected)
+        with tempfile.TemporaryDirectory() as home:
+            result = subprocess.run(
+                ['gpg', '--homedir', home, '--batch', '--show-keys', '--with-colons',
+                 str(ROOT / 'snap/keys/991BC93C.asc')],
+                check=True, capture_output=True, text=True)
+        fingerprints = [line.split(':')[9] for line in result.stdout.splitlines()
+                        if line.startswith('fpr:')]
+        self.assertEqual(fingerprints, [fingerprint])
+
     def test_tooling_job_installs_its_python_test_dependencies(self):
         script = next(s for s in self.workflow['jobs']['verify']['steps'] if s.get('id') == 'linux-dependencies')['run']
         # Parse executed command tokens, not a comment mentioning the packages.

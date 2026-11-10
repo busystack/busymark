@@ -26,6 +26,24 @@ platforms:
     build-on: [amd64]
     build-for: [amd64]
 
+# Declare the official archives over TLS instead of inheriting the provider's
+# HTTP transport. Snapcraft refreshes their signed indexes before resolving
+# build/stage packages. Preserve every Noble pocket and the Ubuntu archive key;
+# snap/keys/991BC93C.asc is exported from Ubuntu's ubuntu-archive-keyring.gpg.
+package-repositories:
+  - type: apt
+    url: https://archive.ubuntu.com/ubuntu
+    suites: [noble, noble-updates, noble-backports]
+    components: [main, restricted, universe, multiverse]
+    architectures: [amd64]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+  - type: apt
+    url: https://security.ubuntu.com/ubuntu
+    suites: [noble-security]
+    components: [main, restricted, universe, multiverse]
+    architectures: [amd64]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+
 plugs:
   browser-support:
     interface: browser-support
