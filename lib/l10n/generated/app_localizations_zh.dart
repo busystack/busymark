@@ -8592,6 +8592,12 @@ class AppLocalizationsZh extends AppLocalizations {
   ) {
     return 'Git 更改：此目录中直接有 $immediate 项，子目录中有 $descendant 项；已删除 $deleted 项。请在 Git 更改中查看路径。';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => '隐藏侧边栏面板';
+
+  @override
+  String get gitUiShowSidebarPanel => '显示侧边栏面板';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -17180,4 +17186,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   ) {
     return 'Git 更改：此目录中直接有 $immediate 项，子目录中有 $descendant 项；已删除 $deleted 项。请在 Git 更改中查看路径。';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => '隐藏侧边栏面板';
+
+  @override
+  String get gitUiShowSidebarPanel => '显示侧边栏面板';
 }

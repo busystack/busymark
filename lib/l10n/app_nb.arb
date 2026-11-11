@@ -4581,5 +4581,7 @@
   "referenceScope": "Omfang",
   "referenceNoActiveDocument": "Ingen aktive dokumenter",
   "referenceNoResults": "Ingen referanser funnet",
-  "gitUiDirectoryChanges": "Git-endringer: {immediate} direkte i denne mappen, {descendant} i undermapper; {deleted} slettet. Se filstier i Git-endringer."
+  "gitUiDirectoryChanges": "Git-endringer: {immediate} direkte i denne mappen, {descendant} i undermapper; {deleted} slettet. Se filstier i Git-endringer.",
+  "gitUiHideSidebarPanel": "Skjul sidepanel",
+  "gitUiShowSidebarPanel": "Vis sidepanel"
 }

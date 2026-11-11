@@ -7515,5 +7515,13 @@
         "type": "String"
       }
     }
+  },
+  "gitUiHideSidebarPanel": "Hide sidebar panel",
+  "gitUiShowSidebarPanel": "Show sidebar panel",
+  "@gitUiHideSidebarPanel": {
+    "description": "Shared Git interface: Hide sidebar panel"
+  },
+  "@gitUiShowSidebarPanel": {
+    "description": "Shared Git interface: Show sidebar panel"
   }
 }

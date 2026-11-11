@@ -4581,5 +4581,7 @@
   "referenceScope": "दायरा",
   "referenceNoActiveDocument": "कोई सक्रिय दस्तावेज़ नहीं",
   "referenceNoResults": "कोई संदर्भ नहीं मिला",
-  "gitUiDirectoryChanges": "Git परिवर्तन: इस डायरेक्टरी में सीधे {immediate}, उपडायरेक्टरियों में {descendant}; {deleted} हटाए गए। Git परिवर्तन में पथ देखें।"
+  "gitUiDirectoryChanges": "Git परिवर्तन: इस डायरेक्टरी में सीधे {immediate}, उपडायरेक्टरियों में {descendant}; {deleted} हटाए गए। Git परिवर्तन में पथ देखें।",
+  "gitUiHideSidebarPanel": "साइडबार पैनल छिपाएँ",
+  "gitUiShowSidebarPanel": "साइडबार पैनल दिखाएँ"
 }

@@ -8961,4 +8961,10 @@ class AppLocalizationsHi extends AppLocalizations {
   ) {
     return 'Git परिवर्तन: इस डायरेक्टरी में सीधे $immediate, उपडायरेक्टरियों में $descendant; $deleted हटाए गए। Git परिवर्तन में पथ देखें।';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'साइडबार पैनल छिपाएँ';
+
+  @override
+  String get gitUiShowSidebarPanel => 'साइडबार पैनल दिखाएँ';
 }

@@ -8957,4 +8957,10 @@ class AppLocalizationsVi extends AppLocalizations {
   ) {
     return 'Thay đổi Git: $immediate trực tiếp trong thư mục này, $descendant trong các thư mục con; $deleted đã xóa. Xem các đường dẫn trong Thay đổi Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Ẩn bảng điều khiển thanh bên';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Hiện bảng điều khiển thanh bên';
 }

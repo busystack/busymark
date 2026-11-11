@@ -6111,5 +6111,7 @@
   "referenceScope": "Cakupan",
   "referenceNoActiveDocument": "Tidak ada dokumen aktif",
   "referenceNoResults": "Tidak ada referensi ditemukan",
-  "gitUiDirectoryChanges": "Perubahan Git: {immediate} langsung di direktori ini, {descendant} di subdirektori; {deleted} dihapus. Tinjau jalur di Perubahan Git."
+  "gitUiDirectoryChanges": "Perubahan Git: {immediate} langsung di direktori ini, {descendant} di subdirektori; {deleted} dihapus. Tinjau jalur di Perubahan Git.",
+  "gitUiHideSidebarPanel": "Sembunyikan panel bilah sisi",
+  "gitUiShowSidebarPanel": "Tampilkan panel bilah sisi"
 }

@@ -8966,4 +8966,10 @@ class AppLocalizationsTr extends AppLocalizations {
   ) {
     return 'Git değişiklikleri: doğrudan bu dizinde $immediate, alt dizinlerde $descendant; silinen: $deleted. Yolları Git değişikliklerinde inceleyin.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Kenar çubuğu panelini gizle';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Kenar çubuğu panelini göster';
 }

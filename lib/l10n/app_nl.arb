@@ -6111,5 +6111,7 @@
   "referenceScope": "Bereik",
   "referenceNoActiveDocument": "Geen actief document",
   "referenceNoResults": "Geen verwijzingen gevonden",
-  "gitUiDirectoryChanges": "Git-wijzigingen: {immediate} direct in deze map, {descendant} in submappen; {deleted} verwijderd. Bekijk de paden in Git-wijzigingen."
+  "gitUiDirectoryChanges": "Git-wijzigingen: {immediate} direct in deze map, {descendant} in submappen; {deleted} verwijderd. Bekijk de paden in Git-wijzigingen.",
+  "gitUiHideSidebarPanel": "Zijbalkpaneel verbergen",
+  "gitUiShowSidebarPanel": "Zijbalkpaneel tonen"
 }

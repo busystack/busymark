@@ -4623,5 +4623,7 @@
   "referenceScope": "محدوده",
   "referenceNoActiveDocument": "سند فعالی وجود ندارد",
   "referenceNoResults": "ارجاعی یافت نشد",
-  "gitUiDirectoryChanges": "تغییرات Git: {immediate} مستقیماً در این پوشه، {descendant} در زیرپوشه‌ها؛ {deleted} حذف‌شده. مسیرها را در تغییرات Git بررسی کنید."
+  "gitUiDirectoryChanges": "تغییرات Git: {immediate} مستقیماً در این پوشه، {descendant} در زیرپوشه‌ها؛ {deleted} حذف‌شده. مسیرها را در تغییرات Git بررسی کنید.",
+  "gitUiHideSidebarPanel": "پنهان کردن پنل کناری",
+  "gitUiShowSidebarPanel": "نمایش پنل کناری"
 }

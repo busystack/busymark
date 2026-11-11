@@ -15212,6 +15212,18 @@ abstract class AppLocalizations {
     String descendant,
     String deleted,
   );
+
+  /// Shared Git interface: Hide sidebar panel
+  ///
+  /// In en, this message translates to:
+  /// **'Hide sidebar panel'**
+  String get gitUiHideSidebarPanel;
+
+  /// Shared Git interface: Show sidebar panel
+  ///
+  /// In en, this message translates to:
+  /// **'Show sidebar panel'**
+  String get gitUiShowSidebarPanel;
 }
 
 class _AppLocalizationsDelegate

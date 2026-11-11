@@ -8969,4 +8969,10 @@ class AppLocalizationsAr extends AppLocalizations {
   ) {
     return 'تغييرات Git: $immediate مباشرة في هذا المجلد، و$descendant في المجلدات الفرعية؛ $deleted محذوفة. راجع المسارات في تغييرات Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'إخفاء اللوحة الجانبية';
+
+  @override
+  String get gitUiShowSidebarPanel => 'إظهار اللوحة الجانبية';
 }

@@ -9050,4 +9050,10 @@ class AppLocalizationsRu extends AppLocalizations {
   ) {
     return 'Изменения Git: $immediate непосредственно в этой папке, $descendant во вложенных папках; удалено: $deleted. Пути доступны в разделе изменений Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Скрыть боковую панель';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Показать боковую панель';
 }

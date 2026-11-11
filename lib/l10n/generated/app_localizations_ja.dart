@@ -8727,4 +8727,10 @@ class AppLocalizationsJa extends AppLocalizations {
   ) {
     return 'Git の変更: このディレクトリに直接 $immediate 件、サブディレクトリに $descendant 件、削除 $deleted 件。Git の変更画面でパスを確認できます。';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'サイドバーパネルを非表示';
+
+  @override
+  String get gitUiShowSidebarPanel => 'サイドバーパネルを表示';
 }

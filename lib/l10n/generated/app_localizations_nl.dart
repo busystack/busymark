@@ -9041,4 +9041,10 @@ class AppLocalizationsNl extends AppLocalizations {
   ) {
     return 'Git-wijzigingen: $immediate direct in deze map, $descendant in submappen; $deleted verwijderd. Bekijk de paden in Git-wijzigingen.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Zijbalkpaneel verbergen';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Zijbalkpaneel tonen';
 }

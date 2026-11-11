@@ -6111,5 +6111,7 @@
   "referenceScope": "범위",
   "referenceNoActiveDocument": "활성 문서 없음",
   "referenceNoResults": "참조를 찾을 수 없음",
-  "gitUiDirectoryChanges": "Git 변경 사항: 이 디렉터리에 직접 {immediate}개, 하위 디렉터리에 {descendant}개, 삭제 {deleted}개. Git 변경 사항에서 경로를 확인하세요."
+  "gitUiDirectoryChanges": "Git 변경 사항: 이 디렉터리에 직접 {immediate}개, 하위 디렉터리에 {descendant}개, 삭제 {deleted}개. Git 변경 사항에서 경로를 확인하세요.",
+  "gitUiHideSidebarPanel": "사이드바 패널 숨기기",
+  "gitUiShowSidebarPanel": "사이드바 패널 표시"
 }

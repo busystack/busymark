@@ -95,7 +95,7 @@ void main() {
           ),
           'git icon' => git.NativeGitIconAction(
             tooltip: 'Git action',
-            icon: YaruIcons.plus,
+            icon: const Icon(YaruIcons.plus, size: 16),
             onPressed: () => activated++,
           ),
           _ => git.NativeGitCheckbox(

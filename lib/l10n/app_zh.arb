@@ -6123,5 +6123,7 @@
   "referenceScope": "范围",
   "referenceNoActiveDocument": "没有活动文档",
   "referenceNoResults": "未找到引用",
-  "gitUiDirectoryChanges": "Git 更改：此目录中直接有 {immediate} 项，子目录中有 {descendant} 项；已删除 {deleted} 项。请在 Git 更改中查看路径。"
+  "gitUiDirectoryChanges": "Git 更改：此目录中直接有 {immediate} 项，子目录中有 {descendant} 项；已删除 {deleted} 项。请在 Git 更改中查看路径。",
+  "gitUiHideSidebarPanel": "隐藏侧边栏面板",
+  "gitUiShowSidebarPanel": "显示侧边栏面板"
 }

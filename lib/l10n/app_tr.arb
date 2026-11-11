@@ -6111,5 +6111,7 @@
   "referenceScope": "Kapsam",
   "referenceNoActiveDocument": "Etkin belge yok",
   "referenceNoResults": "Başvuru bulunamadı",
-  "gitUiDirectoryChanges": "Git değişiklikleri: doğrudan bu dizinde {immediate}, alt dizinlerde {descendant}; silinen: {deleted}. Yolları Git değişikliklerinde inceleyin."
+  "gitUiDirectoryChanges": "Git değişiklikleri: doğrudan bu dizinde {immediate}, alt dizinlerde {descendant}; silinen: {deleted}. Yolları Git değişikliklerinde inceleyin.",
+  "gitUiHideSidebarPanel": "Kenar çubuğu panelini gizle",
+  "gitUiShowSidebarPanel": "Kenar çubuğu panelini göster"
 }

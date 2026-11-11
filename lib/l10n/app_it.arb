@@ -4581,5 +4581,7 @@
   "referenceScope": "Ambito",
   "referenceNoActiveDocument": "Nessun documento attivo",
   "referenceNoResults": "Nessun riferimento trovato",
-  "gitUiDirectoryChanges": "Modifiche Git: {immediate} direttamente in questa cartella, {descendant} nelle sottocartelle; {deleted} eliminazioni. Consulta i percorsi nelle modifiche Git."
+  "gitUiDirectoryChanges": "Modifiche Git: {immediate} direttamente in questa cartella, {descendant} nelle sottocartelle; {deleted} eliminazioni. Consulta i percorsi nelle modifiche Git.",
+  "gitUiHideSidebarPanel": "Nascondi il pannello laterale",
+  "gitUiShowSidebarPanel": "Mostra il pannello laterale"
 }

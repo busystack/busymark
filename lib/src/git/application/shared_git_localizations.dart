@@ -1339,6 +1339,8 @@ extension SharedGitLocalizations on AppLocalizations {
       (values['descendant'] ?? '').toString(),
       (values['deleted'] ?? '').toString(),
     ),
+    GitMessages.hideSidebarPanel => gitUiHideSidebarPanel,
+    GitMessages.showSidebarPanel => gitUiShowSidebarPanel,
     _ => message,
   };
 }

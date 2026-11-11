@@ -4607,5 +4607,7 @@
   "referenceScope": "Область",
   "referenceNoActiveDocument": "Нет активного документа",
   "referenceNoResults": "Ссылки не найдены",
-  "gitUiDirectoryChanges": "Изменения Git: {immediate} непосредственно в этой папке, {descendant} во вложенных папках; удалено: {deleted}. Пути доступны в разделе изменений Git."
+  "gitUiDirectoryChanges": "Изменения Git: {immediate} непосредственно в этой папке, {descendant} во вложенных папках; удалено: {deleted}. Пути доступны в разделе изменений Git.",
+  "gitUiHideSidebarPanel": "Скрыть боковую панель",
+  "gitUiShowSidebarPanel": "Показать боковую панель"
 }

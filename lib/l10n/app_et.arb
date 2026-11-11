@@ -5041,5 +5041,7 @@
   "referenceScope": "Ulatus",
   "referenceNoActiveDocument": "Aktiivne dokument puudub",
   "referenceNoResults": "Viiteid ei leitud",
-  "gitUiDirectoryChanges": "Giti muudatused: {immediate} otse selles kaustas, {descendant} alamkaustades; {deleted} kustutatud. Vaata teid Giti muudatuste vaates."
+  "gitUiDirectoryChanges": "Giti muudatused: {immediate} otse selles kaustas, {descendant} alamkaustades; {deleted} kustutatud. Vaata teid Giti muudatuste vaates.",
+  "gitUiHideSidebarPanel": "Peida külgpaneel",
+  "gitUiShowSidebarPanel": "Kuva külgpaneel"
 }

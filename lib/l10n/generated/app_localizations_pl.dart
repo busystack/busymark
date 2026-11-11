@@ -9042,4 +9042,10 @@ class AppLocalizationsPl extends AppLocalizations {
   ) {
     return 'Zmiany Git: $immediate bezpośrednio w tym katalogu, $descendant w podkatalogach; usunięte: $deleted. Sprawdź ścieżki w zmianach Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Ukryj panel boczny';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Pokaż panel boczny';
 }

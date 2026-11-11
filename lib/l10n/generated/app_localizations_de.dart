@@ -9061,4 +9061,10 @@ class AppLocalizationsDe extends AppLocalizations {
   ) {
     return 'Git-Änderungen: $immediate direkt in diesem Ordner, $descendant in Unterordnern; $deleted gelöscht. Pfade unter Git-Änderungen ansehen.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Seitenbereich ausblenden';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Seitenbereich anzeigen';
 }

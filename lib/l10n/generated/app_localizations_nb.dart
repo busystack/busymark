@@ -8977,4 +8977,10 @@ class AppLocalizationsNb extends AppLocalizations {
   ) {
     return 'Git-endringer: $immediate direkte i denne mappen, $descendant i undermapper; $deleted slettet. Se filstier i Git-endringer.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Skjul sidepanel';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Vis sidepanel';
 }

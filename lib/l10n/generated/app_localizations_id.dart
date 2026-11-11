@@ -8979,4 +8979,10 @@ class AppLocalizationsId extends AppLocalizations {
   ) {
     return 'Perubahan Git: $immediate langsung di direktori ini, $descendant di subdirektori; $deleted dihapus. Tinjau jalur di Perubahan Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Sembunyikan panel bilah sisi';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Tampilkan panel bilah sisi';
 }

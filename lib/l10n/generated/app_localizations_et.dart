@@ -8976,4 +8976,10 @@ class AppLocalizationsEt extends AppLocalizations {
   ) {
     return 'Giti muudatused: $immediate otse selles kaustas, $descendant alamkaustades; $deleted kustutatud. Vaata teid Giti muudatuste vaates.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Peida külgpaneel';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Kuva külgpaneel';
 }

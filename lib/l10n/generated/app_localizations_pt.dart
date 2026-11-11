@@ -9054,6 +9054,12 @@ class AppLocalizationsPt extends AppLocalizations {
   ) {
     return 'Alterações do Git: $immediate diretamente nesta pasta, $descendant em subpastas; $deleted eliminados. Consulte os caminhos nas alterações do Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Ocultar painel lateral';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Mostrar painel lateral';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -18099,4 +18105,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   ) {
     return 'Alterações do Git: $immediate diretamente nesta pasta, $descendant em subpastas; $deleted excluídos. Confira os caminhos nas alterações do Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Ocultar painel lateral';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Mostrar painel lateral';
 }

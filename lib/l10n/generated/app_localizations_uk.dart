@@ -9058,4 +9058,10 @@ class AppLocalizationsUk extends AppLocalizations {
   ) {
     return 'Зміни Git: $immediate безпосередньо в цій теці, $descendant у вкладених теках; видалено: $deleted. Перегляньте шляхи в розділі змін Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Приховати бічну панель';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Показати бічну панель';
 }

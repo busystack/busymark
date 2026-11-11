@@ -4581,5 +4581,7 @@
   "referenceScope": "Âmbito",
   "referenceNoActiveDocument": "Nenhum documento ativo",
   "referenceNoResults": "Nenhuma referência encontrada",
-  "gitUiDirectoryChanges": "Alterações do Git: {immediate} diretamente nesta pasta, {descendant} em subpastas; {deleted} eliminados. Consulte os caminhos nas alterações do Git."
+  "gitUiDirectoryChanges": "Alterações do Git: {immediate} diretamente nesta pasta, {descendant} em subpastas; {deleted} eliminados. Consulte os caminhos nas alterações do Git.",
+  "gitUiHideSidebarPanel": "Ocultar painel lateral",
+  "gitUiShowSidebarPanel": "Mostrar painel lateral"
 }

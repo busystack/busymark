@@ -8724,4 +8724,10 @@ class AppLocalizationsKo extends AppLocalizations {
   ) {
     return 'Git 변경 사항: 이 디렉터리에 직접 $immediate개, 하위 디렉터리에 $descendant개, 삭제 $deleted개. Git 변경 사항에서 경로를 확인하세요.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => '사이드바 패널 숨기기';
+
+  @override
+  String get gitUiShowSidebarPanel => '사이드바 패널 표시';
 }

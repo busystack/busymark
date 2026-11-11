@@ -9041,4 +9041,10 @@ class AppLocalizationsIt extends AppLocalizations {
   ) {
     return 'Modifiche Git: $immediate direttamente in questa cartella, $descendant nelle sottocartelle; $deleted eliminazioni. Consulta i percorsi nelle modifiche Git.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Nascondi il pannello laterale';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Mostra il pannello laterale';
 }

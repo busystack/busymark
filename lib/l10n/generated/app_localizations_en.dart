@@ -8973,4 +8973,10 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'Hide sidebar panel';
+
+  @override
+  String get gitUiShowSidebarPanel => 'Show sidebar panel';
 }

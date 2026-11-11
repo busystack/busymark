@@ -8986,4 +8986,10 @@ class AppLocalizationsFa extends AppLocalizations {
   ) {
     return 'تغییرات Git: $immediate مستقیماً در این پوشه، $descendant در زیرپوشه‌ها؛ $deleted حذف‌شده. مسیرها را در تغییرات Git بررسی کنید.';
   }
+
+  @override
+  String get gitUiHideSidebarPanel => 'پنهان کردن پنل کناری';
+
+  @override
+  String get gitUiShowSidebarPanel => 'نمایش پنل کناری';
 }
