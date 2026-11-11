@@ -209,6 +209,16 @@ class DesktopRun:
         self.wait_accessible(lambda rows: not any(row['role'] == 'check menu item' for row in rows)
             and any(row['role'] == 'panel' and row['name'].split('\n', 1)[0] ==
                     self.catalog['gitUiGitLog'] for row in rows), '_log-view-ready')
+        rows = self.wait_accessible(lambda rows: any(
+            row['name'] == self.catalog['gitUiSelectACommitForDetailsAndChangedFiles']
+            or row['name'].startswith(self.catalog['gitUiChangedFiles'] + ' (')
+            for row in rows), '_log-selection-ready')
+        if any(row['name'] == self.catalog['gitUiSelectACommitForDetailsAndChangedFiles']
+               for row in rows):
+            self.capture('log-before-first-selection')
+            self.activate_message('gitUiSelectAnotherCommit')
+            self.wait_history()
+            self.activate_message('gitUiSelectThisCommit')
         self.wait_sidebar(rtl, information=True)
     def sidebar_menu_x(self, rtl):
         picture = self.checkpoint()

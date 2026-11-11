@@ -94,6 +94,7 @@ Future<git.GitSession> mountGitVisualContract(
   double scale = 1,
   Size size = const Size(1000, 800),
   Brightness brightness = Brightness.light,
+  bool selectedCommit = true,
 }) async {
   // The real Yaru titlebar paints in widget tests; only its OS-window channel
   // is provisioned here. Shipping acceptance exercises the actual GTK service.
@@ -113,6 +114,7 @@ Future<git.GitSession> mountGitVisualContract(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   git.GitSession? session;
+  final client = _Client();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -156,10 +158,14 @@ Future<git.GitSession> mountGitVisualContract(
                   isMounted: () => context.mounted,
                 );
                 session ??= git.GitSession(
-                  client: _Client(),
+                  client: client,
                   repository: repo,
                   host: host,
                 );
+                // Metadata and layout fixtures explicitly own their selection.
+                if (selectedCommit) {
+                  session!.feature.logCommit ??= client.historyCommits.first;
+                }
                 return git.GitHostScope(host: host, child: view(session!));
               },
             ),

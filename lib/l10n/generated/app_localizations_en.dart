@@ -7567,7 +7567,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gitUiSelectACommitForDetailsAndChangedFiles =>
-      'Select a commit for details and changed files';
+      'Select commit to view changes';
 
   @override
   String get gitUiPreviewCombinedCommitMessages =>

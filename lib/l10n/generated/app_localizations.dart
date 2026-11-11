@@ -12887,10 +12887,10 @@ abstract class AppLocalizations {
   /// **' · branch block {arg0}'**
   String gitUiBranchBlockArg02(String arg0);
 
-  /// Shared Git interface: Select a commit for details and changed files
+  /// Shared Git interface: Select commit to view changes
   ///
   /// In en, this message translates to:
-  /// **'Select a commit for details and changed files'**
+  /// **'Select commit to view changes'**
   String get gitUiSelectACommitForDetailsAndChangedFiles;
 
   /// Shared Git interface: Preview combined commit messages…

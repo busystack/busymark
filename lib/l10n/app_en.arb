@@ -5580,9 +5580,9 @@
       }
     }
   },
-  "gitUiSelectACommitForDetailsAndChangedFiles": "Select a commit for details and changed files",
+  "gitUiSelectACommitForDetailsAndChangedFiles": "Select commit to view changes",
   "@gitUiSelectACommitForDetailsAndChangedFiles": {
-    "description": "Shared Git interface: Select a commit for details and changed files"
+    "description": "Shared Git interface: Select commit to view changes"
   },
   "gitUiPreviewCombinedCommitMessages": "Preview combined commit messages…",
   "@gitUiPreviewCombinedCommitMessages": {

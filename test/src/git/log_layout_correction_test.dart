@@ -17,6 +17,34 @@ import 'git_navigation_visual_contract_test.dart'
 
 void main() {
   setUpAll(loadGitVisualFonts);
+  for (final locale in ['en', 'ar']) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        'unselected Log uses native localized prompt $locale $brightness',
+        (tester) async {
+          final session = await mountGitVisualContract(
+            tester,
+            (session) => SizedBox(
+              width: 300,
+              child: git.GitLogView(session: session, inspector: true),
+            ),
+            selectedCommit: false,
+            locale: Locale(locale),
+            brightness: brightness,
+            scale: 1.5,
+          );
+          expect(session.feature.logCommit, isNull);
+          expect(find.byType(git.GitLabel), findsWidgets);
+          expect(find.byKey(const ValueKey('git-changed-files')), findsNothing);
+          expect(find.text('A readable selected commit'), findsNothing);
+          if (locale == 'en') {
+            expect(find.text('Select commit to view changes'), findsOneWidget);
+          }
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
   testWidgets(
     'inspector exposes one dedicated commit selector beside Actions',
     (tester) async {

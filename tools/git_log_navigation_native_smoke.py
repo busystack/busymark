@@ -78,13 +78,7 @@ def main():
         rtl = locale == 'ar'
         d.key('Control_L', '4')
         d.wait_sidebar(rtl)
-        menu = d.sidebar_menu_x(rtl)
-        d.send('click', x=menu, y=82)
-        d.key('Home')
-        for _ in range(3):
-            d.key('Down')
-        d.key('Return')
-        d.wait_sidebar(rtl, information=True)
+        d.log_view(rtl)
         d.send('move', x=d.width//2, y=500)
         d.capture('inspector-root-and-nested-files')
         if locale == 'en' and scale == 1.0:

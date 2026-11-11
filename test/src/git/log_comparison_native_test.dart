@@ -279,6 +279,8 @@ void main() {
               repository: repo,
               host: host,
             );
+            session!.feature.logCommit ??=
+                (session!.client as _ReviewClient).commit;
             return SizedBox(
               width: 320,
               child: git.GitLogView(session: session!, inspector: true),
@@ -390,6 +392,7 @@ void main() {
                   repository: repo,
                   host: host,
                 );
+                session!.feature.logCommit ??= client.commit;
                 return SizedBox(
                   width: 320,
                   height: 900,
@@ -509,6 +512,7 @@ void main() {
                 repository: repo,
                 host: host,
               );
+              session!.feature.logCommit ??= client.commit;
               return SizedBox(
                 width: 320,
                 height: 900,
@@ -607,6 +611,7 @@ void main() {
                   repository: repo,
                   host: host,
                 );
+                session!.feature.logCommit ??= client.commit;
                 return SizedBox(
                   width: 320,
                   height: 900,
