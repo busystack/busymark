@@ -9922,6 +9922,9 @@ code
           );
         });
         await tester.pumpWidget(const SizedBox.shrink());
+        // The test owns this container independently of the widget tree. Stop
+        // its live filesystem monitors before Flutter verifies pending timers.
+        container.dispose();
       },
     );
   }
