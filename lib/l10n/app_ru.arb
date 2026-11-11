@@ -4606,5 +4606,6 @@
   "selectInstance": "Выбрать экземпляр",
   "referenceScope": "Область",
   "referenceNoActiveDocument": "Нет активного документа",
-  "referenceNoResults": "Ссылки не найдены"
+  "referenceNoResults": "Ссылки не найдены",
+  "gitUiDirectoryChanges": "Изменения Git: {immediate} непосредственно в этой папке, {descendant} во вложенных папках; удалено: {deleted}. Пути доступны в разделе изменений Git."
 }

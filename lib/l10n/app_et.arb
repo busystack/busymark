@@ -5040,5 +5040,6 @@
   "selectInstance": "Vali eksemplar",
   "referenceScope": "Ulatus",
   "referenceNoActiveDocument": "Aktiivne dokument puudub",
-  "referenceNoResults": "Viiteid ei leitud"
+  "referenceNoResults": "Viiteid ei leitud",
+  "gitUiDirectoryChanges": "Giti muudatused: {immediate} otse selles kaustas, {descendant} alamkaustades; {deleted} kustutatud. Vaata teid Giti muudatuste vaates."
 }

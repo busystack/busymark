@@ -8725,6 +8725,6 @@ class AppLocalizationsJa extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Git の変更: このディレクトリに直接 $immediate 件、サブディレクトリに $descendant 件、削除 $deleted 件。Git の変更画面でパスを確認できます。';
   }
 }

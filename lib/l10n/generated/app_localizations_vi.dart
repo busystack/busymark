@@ -8955,6 +8955,6 @@ class AppLocalizationsVi extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Thay đổi Git: $immediate trực tiếp trong thư mục này, $descendant trong các thư mục con; $deleted đã xóa. Xem các đường dẫn trong Thay đổi Git.';
   }
 }

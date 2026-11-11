@@ -4592,5 +4592,6 @@
   "selectInstance": "Instanz auswählen",
   "referenceScope": "Bereich",
   "referenceNoActiveDocument": "Kein aktives Dokument",
-  "referenceNoResults": "Keine Referenzen gefunden"
+  "referenceNoResults": "Keine Referenzen gefunden",
+  "gitUiDirectoryChanges": "Git-Änderungen: {immediate} direkt in diesem Ordner, {descendant} in Unterordnern; {deleted} gelöscht. Pfade unter Git-Änderungen ansehen."
 }

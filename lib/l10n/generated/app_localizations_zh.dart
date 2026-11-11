@@ -8590,7 +8590,7 @@ class AppLocalizationsZh extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Git 更改：此目录中直接有 $immediate 项，子目录中有 $descendant 项；已删除 $deleted 项。请在 Git 更改中查看路径。';
   }
 }
 
@@ -17171,4 +17171,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get referenceNoResults => '未找到引用';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Git 更改：此目录中直接有 $immediate 项，子目录中有 $descendant 项；已删除 $deleted 项。请在 Git 更改中查看路径。';
+  }
 }

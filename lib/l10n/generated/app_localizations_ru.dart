@@ -9048,6 +9048,6 @@ class AppLocalizationsRu extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Изменения Git: $immediate непосредственно в этой папке, $descendant во вложенных папках; удалено: $deleted. Пути доступны в разделе изменений Git.';
   }
 }

@@ -4592,5 +4592,6 @@
   "selectInstance": "اختيار المثيل",
   "referenceScope": "النطاق",
   "referenceNoActiveDocument": "لا يوجد مستند نشط",
-  "referenceNoResults": "لم يتم العثور على مراجع"
+  "referenceNoResults": "لم يتم العثور على مراجع",
+  "gitUiDirectoryChanges": "تغييرات Git: {immediate} مباشرة في هذا المجلد، و{descendant} في المجلدات الفرعية؛ {deleted} محذوفة. راجع المسارات في تغييرات Git."
 }

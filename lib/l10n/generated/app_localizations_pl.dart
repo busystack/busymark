@@ -9040,6 +9040,6 @@ class AppLocalizationsPl extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Zmiany Git: $immediate bezpośrednio w tym katalogu, $descendant w podkatalogach; usunięte: $deleted. Sprawdź ścieżki w zmianach Git.';
   }
 }

@@ -4606,5 +4606,6 @@
   "selectInstance": "Wybierz instancję",
   "referenceScope": "Zakres",
   "referenceNoActiveDocument": "Brak aktywnego dokumentu",
-  "referenceNoResults": "Nie znaleziono odwołań"
+  "referenceNoResults": "Nie znaleziono odwołań",
+  "gitUiDirectoryChanges": "Zmiany Git: {immediate} bezpośrednio w tym katalogu, {descendant} w podkatalogach; usunięte: {deleted}. Sprawdź ścieżki w zmianach Git."
 }

@@ -4580,5 +4580,6 @@
   "selectInstance": "Seleziona istanza",
   "referenceScope": "Ambito",
   "referenceNoActiveDocument": "Nessun documento attivo",
-  "referenceNoResults": "Nessun riferimento trovato"
+  "referenceNoResults": "Nessun riferimento trovato",
+  "gitUiDirectoryChanges": "Modifiche Git: {immediate} direttamente in questa cartella, {descendant} nelle sottocartelle; {deleted} eliminazioni. Consulta i percorsi nelle modifiche Git."
 }

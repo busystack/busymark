@@ -4580,5 +4580,6 @@
   "selectInstance": "Seleccionar instancia",
   "referenceScope": "Ámbito",
   "referenceNoActiveDocument": "No hay ningún documento activo",
-  "referenceNoResults": "No se encontraron referencias"
+  "referenceNoResults": "No se encontraron referencias",
+  "gitUiDirectoryChanges": "Cambios de Git: {immediate} directamente en esta carpeta, {descendant} en subcarpetas; {deleted} eliminados. Revisa las rutas en Cambios de Git."
 }

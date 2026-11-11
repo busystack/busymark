@@ -8722,6 +8722,6 @@ class AppLocalizationsKo extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Git 변경 사항: 이 디렉터리에 직접 $immediate개, 하위 디렉터리에 $descendant개, 삭제 $deleted개. Git 변경 사항에서 경로를 확인하세요.';
   }
 }

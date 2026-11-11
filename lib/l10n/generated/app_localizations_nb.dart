@@ -8975,6 +8975,6 @@ class AppLocalizationsNb extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Git-endringer: $immediate direkte i denne mappen, $descendant i undermapper; $deleted slettet. Se filstier i Git-endringer.';
   }
 }

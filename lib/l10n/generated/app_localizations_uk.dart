@@ -9056,6 +9056,6 @@ class AppLocalizationsUk extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Зміни Git: $immediate безпосередньо в цій теці, $descendant у вкладених теках; видалено: $deleted. Перегляньте шляхи в розділі змін Git.';
   }
 }

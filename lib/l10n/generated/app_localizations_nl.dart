@@ -9039,6 +9039,6 @@ class AppLocalizationsNl extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Git-wijzigingen: $immediate direct in deze map, $descendant in submappen; $deleted verwijderd. Bekijk de paden in Git-wijzigingen.';
   }
 }

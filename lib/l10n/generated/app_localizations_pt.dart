@@ -9052,7 +9052,7 @@ class AppLocalizationsPt extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'Alterações do Git: $immediate diretamente nesta pasta, $descendant em subpastas; $deleted eliminados. Consulte os caminhos nas alterações do Git.';
   }
 }
 
@@ -18090,4 +18090,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get referenceNoResults => 'Nenhuma referência encontrada';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Alterações do Git: $immediate diretamente nesta pasta, $descendant em subpastas; $deleted excluídos. Confira os caminhos nas alterações do Git.';
+  }
 }

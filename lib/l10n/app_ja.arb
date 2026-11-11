@@ -6122,5 +6122,6 @@
   "selectInstance": "インスタンスを選択",
   "referenceScope": "範囲",
   "referenceNoActiveDocument": "アクティブなドキュメントがありません",
-  "referenceNoResults": "参照が見つかりません"
+  "referenceNoResults": "参照が見つかりません",
+  "gitUiDirectoryChanges": "Git の変更: このディレクトリに直接 {immediate} 件、サブディレクトリに {descendant} 件、削除 {deleted} 件。Git の変更画面でパスを確認できます。"
 }

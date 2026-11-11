@@ -8984,6 +8984,6 @@ class AppLocalizationsFa extends AppLocalizations {
     String descendant,
     String deleted,
   ) {
-    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+    return 'تغییرات Git: $immediate مستقیماً در این پوشه، $descendant در زیرپوشه‌ها؛ $deleted حذف‌شده. مسیرها را در تغییرات Git بررسی کنید.';
   }
 }

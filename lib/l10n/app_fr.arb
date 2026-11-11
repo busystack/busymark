@@ -4580,5 +4580,6 @@
   "selectInstance": "Sélectionner une instance",
   "referenceScope": "Portée",
   "referenceNoActiveDocument": "Aucun document actif",
-  "referenceNoResults": "Aucune référence trouvée"
+  "referenceNoResults": "Aucune référence trouvée",
+  "gitUiDirectoryChanges": "Modifications Git : {immediate} directement dans ce dossier, {descendant} dans les sous-dossiers ; {deleted} suppressions. Consultez les chemins dans les modifications Git."
 }

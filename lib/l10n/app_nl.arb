@@ -6110,5 +6110,6 @@
   "selectInstance": "Instantie selecteren",
   "referenceScope": "Bereik",
   "referenceNoActiveDocument": "Geen actief document",
-  "referenceNoResults": "Geen verwijzingen gevonden"
+  "referenceNoResults": "Geen verwijzingen gevonden",
+  "gitUiDirectoryChanges": "Git-wijzigingen: {immediate} direct in deze map, {descendant} in submappen; {deleted} verwijderd. Bekijk de paden in Git-wijzigingen."
 }

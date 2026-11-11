@@ -6110,5 +6110,6 @@
   "selectInstance": "Chọn phiên bản",
   "referenceScope": "Phạm vi",
   "referenceNoActiveDocument": "Không có tài liệu đang hoạt động",
-  "referenceNoResults": "Không tìm thấy tham chiếu"
+  "referenceNoResults": "Không tìm thấy tham chiếu",
+  "gitUiDirectoryChanges": "Thay đổi Git: {immediate} trực tiếp trong thư mục này, {descendant} trong các thư mục con; {deleted} đã xóa. Xem các đường dẫn trong Thay đổi Git."
 }

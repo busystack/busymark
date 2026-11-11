@@ -4606,5 +4606,6 @@
   "selectInstance": "Вибрати екземпляр",
   "referenceScope": "Область",
   "referenceNoActiveDocument": "Немає активного документа",
-  "referenceNoResults": "Посилань не знайдено"
+  "referenceNoResults": "Посилань не знайдено",
+  "gitUiDirectoryChanges": "Зміни Git: {immediate} безпосередньо в цій теці, {descendant} у вкладених теках; видалено: {deleted}. Перегляньте шляхи в розділі змін Git."
 }
