@@ -453,96 +453,52 @@ abstract final class BusyMarkTooltipStyle {
 /// The overlay uses the existing BusyMark tooltip tokens and exposes the same
 /// information through semantics. Official Flutter overlay/compositing APIs
 /// own placement and lifecycle; no alternate menu or window is introduced.
-class _BusyMarkNativeTooltip extends StatefulWidget {
+class _BusyMarkNativeTooltip extends StatelessWidget {
   const _BusyMarkNativeTooltip({required this.message, required this.child});
 
   final String message;
   final Widget child;
 
   @override
-  State<_BusyMarkNativeTooltip> createState() => _BusyMarkNativeTooltipState();
-}
-
-class _BusyMarkNativeTooltipState extends State<_BusyMarkNativeTooltip> {
-  final _controller = OverlayPortalController();
-  final _link = LayerLink();
-  Timer? _showTimer;
-
-  void _scheduleShow() {
-    _showTimer?.cancel();
-    if (widget.message.isEmpty) return;
-    _showTimer = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) _controller.show();
-    });
-  }
-
-  void _hide() {
-    _showTimer?.cancel();
-    _showTimer = null;
-    if (_controller.isShowing) _controller.hide();
-  }
-
-  @override
-  void didUpdateWidget(covariant _BusyMarkNativeTooltip oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.message != widget.message) _hide();
-  }
-
-  @override
-  void dispose() {
-    _showTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      tooltip: widget.message,
-      child: MouseRegion(
-        onEnter: (_) => _scheduleShow(),
-        onExit: (_) => _hide(),
-        child: Listener(
-          onPointerDown: (_) => _hide(),
-          child: OverlayPortal(
-            controller: _controller,
-            overlayChildBuilder: (overlayContext) => IgnorePointer(
-              child: CompositedTransformFollower(
-                showWhenUnlinked: false,
-                link: _link,
-                targetAnchor: Alignment.bottomCenter,
-                followerAnchor: Alignment.topCenter,
-                offset: const Offset(0, BusyMarkSpacing.xs),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BusyMarkTooltipStyle.constraints,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: BusyMarkTooltipStyle.background,
-                        borderRadius: BusyMarkTooltipStyle.borderRadius,
-                        border: Border.all(color: BusyMarkTooltipStyle.border),
-                      ),
-                      child: Padding(
-                        padding: BusyMarkTooltipStyle.padding,
-                        child: Text(
-                          widget.message,
-                          style: Theme.of(overlayContext).textTheme.bodySmall
-                              ?.copyWith(
-                                color: BusyMarkTooltipStyle.foreground,
-                              ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+  Widget build(BuildContext context) => RawTooltip(
+    semanticsTooltip: message,
+    hoverDelay: const Duration(milliseconds: 500),
+    dismissDelay: Duration.zero,
+    animationStyle: AnimationStyle.noAnimation,
+    ignorePointer: true,
+    positionDelegate: (position) => positionDependentBox(
+      size: position.overlaySize,
+      childSize: position.tooltipSize,
+      target: position.target,
+      verticalOffset: position.targetSize.height / 2 + BusyMarkSpacing.xs,
+      preferBelow: true,
+    ),
+    tooltipBuilder: (context, animation) => ConstrainedBox(
+      // Keep long explanations readable without changing short tooltips' natural
+      // width. RawTooltip positions the measured surface inside the overlay.
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: ConstrainedBox(
+        constraints: BusyMarkTooltipStyle.constraints,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: BusyMarkTooltipStyle.background,
+            borderRadius: BusyMarkTooltipStyle.borderRadius,
+            border: Border.all(color: BusyMarkTooltipStyle.border),
+          ),
+          child: Padding(
+            padding: BusyMarkTooltipStyle.padding,
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: BusyMarkTooltipStyle.foreground,
               ),
             ),
-            child: CompositedTransformTarget(link: _link, child: widget.child),
           ),
         ),
       ),
-    );
-  }
+    ),
+    child: child,
+  );
 }
 
 /// Filled destructive actions use Yaru's dark red button treatment.

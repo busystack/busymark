@@ -892,6 +892,70 @@ void main() {
     );
   }
 
+  for (final brightness in Brightness.values) {
+    for (final alignment in [Alignment.topLeft, Alignment.bottomRight]) {
+      testWidgets(
+        'long directory tooltip stays inside the window: $brightness $alignment',
+        (tester) async {
+          const message =
+              'Git changes: 2 directly in this directory, 3 in nested directories; 1 deleted. Review paths in Git Changes.';
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: buildBusyMarkTheme(
+                brightness: brightness,
+                accentColor: const Color(0xFF3584E4),
+              ),
+              home: Scaffold(
+                body: MediaQuery(
+                  data: const MediaQueryData(
+                    textScaler: TextScaler.linear(1.5),
+                  ),
+                  child: Align(
+                    alignment: alignment,
+                    child: SizedBox(
+                      width: 120,
+                      child: Builder(
+                        builder: (context) => BusyMarkTooltipStyle.wrap(
+                          context,
+                          message: message,
+                          child: const Text('topics'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          final pointer = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await pointer.addPointer(location: const Offset(400, 300));
+          await pointer.moveTo(tester.getCenter(find.text('topics')));
+          await tester.pump(const Duration(milliseconds: 600));
+          await tester.pump();
+          final text = find.text(message);
+          expect(text, findsOneWidget);
+          final bounds = tester.getRect(text);
+          expect(bounds.left, greaterThanOrEqualTo(0));
+          expect(bounds.top, greaterThanOrEqualTo(0));
+          expect(bounds.right, lessThanOrEqualTo(800));
+          expect(bounds.bottom, lessThanOrEqualTo(600));
+          final paragraph = tester.renderObject<RenderParagraph>(text);
+          expect(paragraph.didExceedMaxLines, isFalse);
+          expect(
+            bounds.height,
+            greaterThan(30),
+            reason: 'The full explanation wraps.',
+          );
+          expect(tester.takeException(), isNull);
+          await pointer.removePointer();
+          await tester.pumpAndSettle();
+        },
+      );
+    }
+  }
+
   testWidgets('desktop tooltips use one explicit natural-width geometry', (
     tester,
   ) async {
