@@ -7799,11 +7799,10 @@ code
           child: const BusyMarkApp(),
         ),
       );
-      await pumpUntil(
-        tester,
-        () => container.read(workspaceControllerProvider).workspace != null,
-        operation: 'open authoring workspace',
-      );
+      await pumpUntil(tester, () {
+        final state = container.read(workspaceControllerProvider);
+        return state.workspace != null && !state.isLoading;
+      }, operation: 'open authoring workspace');
       final workspace = container.read(workspaceControllerProvider).workspace!;
       final source = find.byWidgetPredicate(
         (widget) =>
@@ -8041,11 +8040,10 @@ code
           child: const BusyMarkApp(),
         ),
       );
-      await pumpUntil(
-        tester,
-        () => container.read(workspaceControllerProvider).workspace != null,
-        operation: 'open authoring workspace',
-      );
+      await pumpUntil(tester, () {
+        final state = container.read(workspaceControllerProvider);
+        return state.workspace != null && !state.isLoading;
+      }, operation: 'open authoring workspace');
       final workspace = container.read(workspaceControllerProvider).workspace!;
       container
           .read(sharedGitReviewProvider.notifier)
@@ -9193,12 +9191,10 @@ code
       ),
     );
     await tester.pump();
-    for (var i = 0; i < 30; i += 1) {
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
 
     for (final (key, expectedMode)
@@ -9451,11 +9447,10 @@ code
           child: const BusyMarkApp(),
         ),
       );
-      await pumpUntil(
-        tester,
-        () => container.read(workspaceControllerProvider).workspace != null,
-        operation: 'open history workspace',
-      );
+      await pumpUntil(tester, () {
+        final state = container.read(workspaceControllerProvider);
+        return state.workspace != null && !state.isLoading;
+      }, operation: 'open history workspace');
       await container
           .read(appSettingsControllerProvider.notifier)
           .trustGitWorkspace(
@@ -9673,12 +9668,10 @@ code
       ),
     );
     await tester.pump();
-    for (var i = 0; i < 30; i += 1) {
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     await tester.pumpAndSettle();
 
     final nativeMenus = NativeMenuProbe(tester);
@@ -9749,11 +9742,10 @@ code
             child: const BusyMarkApp(),
           ),
         );
-        await pumpUntil(
-          tester,
-          () => container.read(workspaceControllerProvider).workspace != null,
-          operation: 'open authoring workspace',
-        );
+        await pumpUntil(tester, () {
+          final state = container.read(workspaceControllerProvider);
+          return state.workspace != null && !state.isLoading;
+        }, operation: 'open authoring workspace');
         await tester.pumpAndSettle();
         await container
             .read(appSettingsControllerProvider.notifier)
@@ -9995,7 +9987,10 @@ code
         );
         await pumpUntil(
           tester,
-          () => container.read(workspaceControllerProvider).workspace != null,
+          () {
+            final state = container.read(workspaceControllerProvider);
+            return state.workspace != null && !state.isLoading;
+          },
           operation:
               'open first actual workspace before same-State replacement',
         );
@@ -10247,11 +10242,10 @@ code
             child: const BusyMarkApp(),
           ),
         );
-        await pumpUntil(
-          tester,
-          () => container.read(workspaceControllerProvider).workspace != null,
-          operation: 'open workspace for retirement',
-        );
+        await pumpUntil(tester, () {
+          final state = container.read(workspaceControllerProvider);
+          return state.workspace != null && !state.isLoading;
+        }, operation: 'open workspace for retirement');
         await tester.pumpAndSettle();
         await container
             .read(appSettingsControllerProvider.notifier)
@@ -10456,12 +10450,10 @@ code
       ),
     );
     await tester.pump();
-    for (var i = 0; i < 30; i += 1) {
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-      await tester.pumpAndSettle();
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     await tester.pumpAndSettle();
 
     expect(find.text('Api.md'), findsOneWidget);
@@ -11855,12 +11847,10 @@ code
       ),
     );
     await tester.pump();
-    for (var i = 0; i < 30; i += 1) {
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     await tester.pumpAndSettle();
 
     _expectTextWithVcsColor(tester, 'README.md', shared.GitFileStatus.modified);
@@ -11961,12 +11951,10 @@ code
         ),
       );
       await tester.pump();
-      for (var i = 0; i < 30; i += 1) {
-        if (container.read(workspaceControllerProvider).workspace != null) {
-          break;
-        }
-        await tester.pump(const Duration(milliseconds: 100));
-      }
+      await pumpUntil(tester, () {
+        final state = container.read(workspaceControllerProvider);
+        return state.workspace != null && !state.isLoading;
+      }, operation: 'finish workspace startup');
       await tester.pumpAndSettle();
 
       final rowFinder = find.ancestor(
@@ -12127,13 +12115,12 @@ code
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 30; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null &&
-          find.byType(TextField).evaluate().isNotEmpty) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null &&
+          !state.isLoading &&
+          find.byType(TextField).evaluate().isNotEmpty;
+    }, operation: 'finish workspace startup');
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
 
@@ -12192,13 +12179,12 @@ code
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 30; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null &&
-          find.byType(TextField).evaluate().isNotEmpty) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null &&
+          !state.isLoading &&
+          find.byType(TextField).evaluate().isNotEmpty;
+    }, operation: 'finish workspace startup');
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
 
@@ -12649,12 +12635,10 @@ code
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 30; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -14172,12 +14156,10 @@ code
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 30; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
@@ -14261,12 +14243,10 @@ code
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 30; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
@@ -15740,12 +15720,10 @@ After break.
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 30; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    }, operation: 'finish workspace startup');
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
     container
         .read(workspaceControllerProvider.notifier)
@@ -16055,13 +16033,12 @@ After break.
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 20; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (container.read(workspaceControllerProvider).workspace != null &&
-          nativeWindow.listeners.isNotEmpty) {
-        break;
-      }
-    }
+    await pumpUntil(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null &&
+          !state.isLoading &&
+          nativeWindow.listeners.isNotEmpty;
+    }, operation: 'finish workspace startup');
 
     container
         .read(workspaceControllerProvider.notifier)
