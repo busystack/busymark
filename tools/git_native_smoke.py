@@ -210,11 +210,11 @@ class DesktopRun:
             and any(row['role'] == 'panel' and row['name'].split('\n', 1)[0] ==
                     self.catalog['gitUiGitLog'] for row in rows), '_log-view-ready')
         rows = self.wait_accessible(lambda rows: any(
-            row['name'] == self.catalog['gitUiSelectACommitForDetailsAndChangedFiles']
-            or row['name'].startswith(self.catalog['gitUiChangedFiles'] + ' (')
-            for row in rows), '_log-selection-ready')
-        if any(row['name'] == self.catalog['gitUiSelectACommitForDetailsAndChangedFiles']
-               for row in rows):
+            line == self.catalog['gitUiSelectACommitForDetailsAndChangedFiles']
+            or line.startswith(self.catalog['gitUiChangedFiles'] + ' (')
+            for row in rows for line in row['name'].split('\n')), '_log-selection-ready')
+        if any(line == self.catalog['gitUiSelectACommitForDetailsAndChangedFiles']
+               for row in rows for line in row['name'].split('\n')):
             self.capture('log-before-first-selection')
             self.activate_message('gitUiSelectAnotherCommit')
             self.wait_history()
