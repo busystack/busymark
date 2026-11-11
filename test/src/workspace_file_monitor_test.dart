@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';

@@ -7361,13 +7361,13 @@ code
         child: const BusyMarkApp(),
       ),
     );
-    for (
-      var i = 0;
-      i < 40 && container.read(workspaceControllerProvider).workspace == null;
-      i++
-    ) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+    // Workspace identity is published before asynchronous monitor setup ends.
+    // Finish that real I/O before opening more tabs; a fake-clock settle cannot
+    // complete it and would keep animating the startup loading indicator.
+    await waitForTabAction(tester, () {
+      final state = container.read(workspaceControllerProvider);
+      return state.workspace != null && !state.isLoading;
+    });
     final controller = container.read(workspaceControllerProvider.notifier);
     await tabOperation(tester, () async {
       for (final path in paths.skip(1)) {
