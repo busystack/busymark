@@ -225,7 +225,8 @@ void main() {
             '# Numbered\n\n3. Parent\n   4. Nested first\n   5. Nested second\n4. Sibling\n'
             '${outerOverride ? '\n{start="10" id="numbered-list"}\n' : ''}';
         await file.writeAsString(original);
-        final harness = await _createControllerHarness();
+        final monitor = _ControlledFileMonitor();
+        final harness = await _createControllerHarness(fileMonitor: monitor);
         await harness.settingsController.setAutoSave(false);
         final controller = harness.controller._notifier;
         await controller.openPath(root.path);
@@ -286,8 +287,20 @@ void main() {
         expect(controller.state.activeText, converted);
         verify(controller.state.activeText);
         expect(await controller.saveActive(), isTrue);
+        // Deliver and settle the save notification explicitly. The property
+        // round-trip must retain the active numbered document through refresh;
+        // concurrent watcher/close rejection is covered by lifetime tests.
+        final savedWorkspace = controller.state.workspace;
+        monitor.emit(file.path);
+        await _waitFor(
+          () =>
+              !identical(controller.state.workspace, savedWorkspace) &&
+              !controller.state.isLoading,
+        );
+        expect(controller.state.activeBuffer!.id, buffer.id);
+        expect(controller.state.activeText, converted);
         expect(await controller.closeDocumentBuffer(buffer.id), isTrue);
-        await controller.openActiveFile(file.path);
+        expect(await controller.openActiveFile(file.path), isTrue);
         expect(controller.state.activeText, await file.readAsString());
         verify(controller.state.activeText);
       },

@@ -525,6 +525,9 @@ void main() {
         final h = await _harness(
           store,
           clock: clock,
+          // History lives inside this disposable fixture. Its index writes
+          // must not masquerade as external edits to the document under test.
+          fileMonitor: _ControlledFileMonitor(),
           sessionStore: JsonDocumentSessionStore(filePathOverride: sessionPath),
           recoveryStore: JsonDocumentRecoveryStore(
             filePathOverride: recoveryPath,
@@ -642,6 +645,7 @@ void main() {
         final reopened = await _harness(
           FileLocalHistoryStore(rootDirectory: () async => historyRoot),
           clock: clock,
+          fileMonitor: _ControlledFileMonitor(),
           sessionStore: JsonDocumentSessionStore(filePathOverride: sessionPath),
           recoveryStore: JsonDocumentRecoveryStore(
             filePathOverride: recoveryPath,

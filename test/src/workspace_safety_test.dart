@@ -1054,9 +1054,13 @@ void main() {
         ),
       ),
     );
-    await widgetRef
-        .read(workspaceControllerProvider.notifier)
-        .openPath(service.rootPath);
+    // This fixture uses a real directory: service the production monitor's I/O
+    // outside the widget test's fake clock, as for the trust check below.
+    await tester.runAsync(
+      () => widgetRef
+          .read(workspaceControllerProvider.notifier)
+          .openPath(service.rootPath),
+    );
     final workspace = widgetRef.read(workspaceControllerProvider).workspace!;
     final host = busyMarkGitHost(
       hostContext,
@@ -1175,7 +1179,7 @@ void main() {
         ),
       );
       final controller = widgetRef.read(workspaceControllerProvider.notifier);
-      await controller.openPath(service.rootPath);
+      await tester.runAsync(() => controller.openPath(service.rootPath));
       widgetRef
           .read(gitControllerProvider.notifier)
           .attachWorkspace(
@@ -1336,7 +1340,7 @@ void main() {
         ),
       );
       final controller = widgetRef.read(workspaceControllerProvider.notifier);
-      await controller.openPath(service.rootPath);
+      await tester.runAsync(() => controller.openPath(service.rootPath));
       controller.updateActiveText('# Unsaved A\n');
       await controller.openActiveFile(service.secondPath);
       controller.updateActiveText('# Unsaved B\n');
