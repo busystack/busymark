@@ -6,7 +6,7 @@ This document records the invariants behind the user-facing
 ## Document Undo/Redo
 
 `DocumentBuffer` owns application document history across Source, Editor and
-Split. Flutter field history remains available for auxiliary inputs. Document
+Dual. Flutter field history remains available for auxiliary inputs. Document
 fields override Flutter's overridable `UndoTextIntent` and `RedoTextIntent`
 actions, including rich table cells and the hidden table-selection IME client.
 A configured shortcut or action is consumed even when its document stack is
@@ -37,7 +37,7 @@ guards.
 Each editor tracks its last accepted source/revision independently of parent
 frames. Live shared-history identity distinguishes same-content save metadata
 from traversal. Closing a group at the same revision preserves the accepted
-content while starting a fresh transaction, including Source-to-Split input
+content while starting a fresh transaction, including Source-to-Dual input
 before a parent frame. Controller publications also carry expected source/revision
 preconditions. Consecutive edits advance that accepted base synchronously;
 Undo/Redo or a different authoritative source invalidates it. The rich editor

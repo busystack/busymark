@@ -159,7 +159,7 @@ The shared journeys also open `nested-references.md` in the contextual project
 and target repeated parent, child, quoted and embedded-XML references through
 Editor and Source, using the explicit Element Properties command after selecting
 an occurrence. The shared explicit-inspection journey also checks pinned owners
-across Editor/Source/Split, ordinary editing and caret motion, deletion/Undo,
+across Editor/Source/Dual, ordinary editing and caret motion, deletion/Undo,
 invalid-draft rejection, multiline XML attributes, and semantic-text wrapping and
 insertion through the consolidated Writerside menu. Their saved output is checked
 by `list-caps-native`. Review
@@ -172,7 +172,7 @@ Use `test/fixtures/writerside/property_contract_conformance` as the fixture argu
 and set `BUSYMARK_PROPERTY_CONTRACT_ONLY=1` for the reusable Topic, Chapter and
 Paragraph journey. It exercises the production forms, source ownership, Custom
 navigation from all presets, invalid-draft protection, compound undo/redo,
-conditions, defaults, Source/Editor/Split/Reading, save/close/reopen, keyboard
+conditions, defaults, Source/Editor/Dual/Reading, save/close/reopen, keyboard
 focus and narrow light/dark layouts. The two `contract-*` documents come from
 `test/fixtures/writerside/property_contract_conformance`. Validate their saved
 bytes with the pinned builder and the property verifier's `contract-native`
@@ -186,7 +186,7 @@ Treat a nonzero exit or a non-null `failure` in `result.json` as failure. The ch
 cover target identity and ancestry independently of the caret, Source without a
 hidden Editor, native Save and one-step undo/redo, invalid-draft transition
 blocking and Escape, XML/Markdown save/close/reopen, defaults/override/reset,
-source-neutral folding, Split/Reading, narrow layouts, RTL and text scaling.
+source-neutral folding, Dual/Reading, narrow layouts, RTL and text scaling.
 Ownership cases retain literal code/image labels and selected inline attributes;
 ordered-item conversions retain outer and nested list starts. Screenshots alone
 do not establish persistence or correct mutation. Keep output and copied projects

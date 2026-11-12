@@ -651,7 +651,7 @@ void main() {
   );
 
   test(
-    'resetting a default checks keypad aliases before one reassignment transaction',
+    'resetting a default checks editing aliases before one reassignment transaction',
     () async {
       final store = _KeymapStore();
       final container = ProviderContainer(
@@ -663,7 +663,7 @@ void main() {
           container.read(appSettingsControllerProvider).shortcutOverrides;
       expect(
         (await keymap.update(
-          'sidebar.outline',
+          'text.copy',
           const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
           expected: current(),
         )).status,
@@ -672,14 +672,14 @@ void main() {
       expect(
         (await keymap.update(
           'file.save',
-          const BusyMarkKeyBinding(LogicalKeyboardKey.numpad3, control: true),
+          const BusyMarkKeyBinding(LogicalKeyboardKey.insert, control: true),
           expected: current(),
         )).status,
         KeymapUpdateStatus.saved,
       );
       final before = current();
       final rejected = await keymap.update(
-        'sidebar.outline',
+        'text.copy',
         null,
         expected: before,
         reset: true,
@@ -690,7 +690,7 @@ void main() {
       expect(store.writes, hasLength(2));
       expect(
         (await keymap.update(
-          'sidebar.outline',
+          'text.copy',
           null,
           expected: before,
           reset: true,
@@ -699,7 +699,7 @@ void main() {
         KeymapUpdateStatus.saved,
       );
       expect(store.writes, hasLength(3));
-      expect(current().containsKey('sidebar.outline'), isFalse);
+      expect(current().containsKey('text.copy'), isFalse);
       expect(current()['file.save'], isNull);
       final registry = effectiveCommandRegistry(
         BusyMarkCommandCatalog.metadata,
@@ -708,13 +708,58 @@ void main() {
       expect(registry['file.save']!.shortcut, isNull);
       expect(
         registry
-            .activators('sidebar.outline')
+            .activators('text.copy')
             .whereType<SingleActivator>()
             .map(BusyMarkKeyBinding.fromActivator),
         contains(
-          const BusyMarkKeyBinding(LogicalKeyboardKey.numpad3, control: true),
+          const BusyMarkKeyBinding(LogicalKeyboardKey.insert, control: true),
         ),
       );
+    },
+  );
+
+  test(
+    'resetting a retired sidebar default preserves unrelated keypad overrides',
+    () async {
+      final store = _KeymapStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      const savedKey = BusyMarkKeyBinding(
+        LogicalKeyboardKey.numpad3,
+        control: true,
+      );
+      for (final (id, binding) in [
+        ('sidebar.outline', const BusyMarkKeyBinding(LogicalKeyboardKey.f8)),
+        ('file.save', savedKey),
+      ]) {
+        expect(
+          (await keymap.update(id, binding, expected: current())).status,
+          KeymapUpdateStatus.saved,
+        );
+      }
+      expect(
+        (await keymap.update(
+          'sidebar.outline',
+          null,
+          expected: current(),
+          reset: true,
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(current().containsKey('sidebar.outline'), isFalse);
+      expect(current()['file.save'], savedKey);
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        current(),
+      );
+      expect(registry.activators('sidebar.outline'), isEmpty);
+      expect(registry['file.save']!.shortcut!.label, savedKey.label);
+      expect(store.writes, hasLength(3));
     },
   );
 

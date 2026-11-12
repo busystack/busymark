@@ -418,7 +418,7 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Dual",
+  "split": "Dualansicht",
   "@split": {
     "description": "Dual content view label (source and reading side by side)."
   },

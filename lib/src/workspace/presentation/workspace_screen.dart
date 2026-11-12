@@ -1,5 +1,6 @@
 import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../../core/debug_log.dart';
+import '../../app/document_view_availability.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import '../../editor/document_edit_history.dart';
 import '../../search/search_result_preview.dart';
@@ -536,8 +537,16 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       return const WelcomeScreen();
     }
     final searchState = ref.watch(searchSessionProvider);
-    final documentViewMode =
+    final preferredViewMode =
         state.activeBuffer?.editorState.mode ?? settings.documentViewMode;
+    final documentViewMode =
+        busyMarkDocumentViewAvailable(
+          workspace,
+          state.activeBuffer,
+          preferredViewMode,
+        )
+        ? preferredViewMode
+        : DocumentViewModePreference.source;
     final gitState = ref.watch(gitControllerProvider);
     final sharedGitTabs =
         ref.watch(sharedGitReviewProvider)[workspace.id] ??
@@ -892,7 +901,11 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                                       mode,
                                     ),
                                     mnemonic: _documentViewMnemonic(mode),
-                                    enabled: state.activeBuffer != null,
+                                    enabled: busyMarkDocumentViewAvailable(
+                                      workspace,
+                                      state.activeBuffer,
+                                      mode,
+                                    ),
                                     icon: _documentViewModeIcon(mode),
                                     shortcut: _documentViewMnemonic(mode),
                                     gtkAccelerator: _documentViewMnemonic(
@@ -903,10 +916,14 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                                   ),
                               ],
                               onSelected: (mode) {
-                                if (ref
-                                        .read(workspaceControllerProvider)
-                                        .activeBuffer ==
-                                    null) {
+                                final current = ref.read(
+                                  workspaceControllerProvider,
+                                );
+                                if (!busyMarkDocumentViewAvailable(
+                                  current.workspace,
+                                  current.activeBuffer,
+                                  mode,
+                                )) {
                                   return;
                                 }
                                 ref

@@ -778,7 +778,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get source => 'Quelltext';
 
   @override
-  String get split => 'Dual';
+  String get split => 'Dualansicht';
 
   @override
   String get systemTheme => 'Systemeinstellung';

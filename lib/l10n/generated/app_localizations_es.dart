@@ -774,7 +774,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get source => 'Código fuente';
 
   @override
-  String get split => 'Dual';
+  String get split => 'Vista dual';
 
   @override
   String get systemTheme => 'Sistema';

@@ -279,6 +279,74 @@ void main() {
   );
 
   testWidgets(
+    'configuration content selector preserves letters and rejects unavailable view responses',
+    (tester) async {
+      const source = '<settings/>\n';
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Document\n',
+        'settings.cfg': source,
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      expect(
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .openActiveFile('${_SearchRegressionService.root}/settings.cfg'),
+        isTrue,
+      );
+      await tester.pumpAndSettle();
+      final packets = <Map>[];
+      var rejectedIndex = 0;
+      const channel = MethodChannel('busymark/native_menus');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+        call,
+      ) async {
+        if (call.method == 'dismiss') return true;
+        packets.add(call.arguments as Map);
+        // A stale or invalid native response must also respect availability.
+        return rejectedIndex;
+      });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          null,
+        ),
+      );
+      for (final index in [0, 2, 3]) {
+        rejectedIndex = index;
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        final entries = (packets.last['entries'] as List).cast<Map>();
+        expect(entries.map((e) => e['mnemonic']), ['E', 'S', 'R', 'D']);
+        expect(entries.map((e) => e['enabled']), [false, true, false, false]);
+        expect(
+          container
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .editorState
+              .mode,
+          DocumentViewModePreference.source,
+        );
+        expect(container.read(workspaceControllerProvider).activeText, source);
+      }
+      final commands = container.read(busyMarkCommandRegistryProvider);
+      for (final id in [
+        BusyMarkCommandIds.viewEditor,
+        BusyMarkCommandIds.viewReading,
+        BusyMarkCommandIds.viewSplit,
+      ]) {
+        expect(await commands.execute(id), isFalse, reason: id);
+      }
+      expect(packets, hasLength(3));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'focused Source opens its context menu with Shift+F10 and Menu, excluding Ctrl+Shift+F10',
     (tester) async {
       final harness = await _pumpSearchRegression(tester, headerBarService, {
@@ -8178,6 +8246,10 @@ code
         same(staged),
       );
       await _chooseNativeSidebar(tester, l10n.gitHostGitLog);
+      await _chooseInspectorCommit(
+        tester,
+        gitState.projectHistory.commits.first.subject,
+      );
       await pumpUntil(
         tester,
         () => find
@@ -8278,7 +8350,7 @@ code
   );
 
   testWidgets(
-    'Git comparison search keeps authoring search inactive and returns focus',
+    'Git comparison retains its search action while Ctrl+F reaches application search',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1;
@@ -8361,8 +8433,27 @@ code
       await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(find.byKey(const ValueKey('shared-search-query')), findsOneWidget);
+      expect(
+        find.descendant(of: review, matching: find.byType(EditableText)),
+        findsNothing,
+        reason: 'The retired Git-local Ctrl+F must not open comparison search',
+      );
+      container.read(searchSessionProvider.notifier).close();
+      await tester.pumpAndSettle();
+      final searchAction = find.byKey(const ValueKey('git-diff-search'));
+      if (searchAction.evaluate().isNotEmpty) {
+        await tester.tap(searchAction);
+      } else {
+        await _chooseNativeGitMenu(
+          tester,
+          find.byKey(const ValueKey('git-diff-overflow')),
+          l10n.gitUiSearchComparison,
+        );
+      }
+      await tester.pumpAndSettle();
       expect(container.read(searchSessionProvider).active, isFalse);
-      expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
       final query = find.descendant(
         of: review,
         matching: find.byType(EditableText),
@@ -9476,14 +9567,15 @@ code
     }, operation: 'finish workspace startup');
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
 
-    for (final (key, expectedMode)
-        in <(LogicalKeyboardKey, DocumentViewModePreference)>[
-          (LogicalKeyboardKey.digit3, DocumentViewModePreference.preview),
-          (LogicalKeyboardKey.digit2, DocumentViewModePreference.source),
-          (LogicalKeyboardKey.digit1, DocumentViewModePreference.editor),
-          (LogicalKeyboardKey.digit4, DocumentViewModePreference.split),
+    for (final (command, expectedMode)
+        in <(String, DocumentViewModePreference)>[
+          (BusyMarkCommandIds.viewReading, DocumentViewModePreference.preview),
+          (BusyMarkCommandIds.viewSource, DocumentViewModePreference.source),
+          (BusyMarkCommandIds.viewEditor, DocumentViewModePreference.editor),
+          (BusyMarkCommandIds.viewSplit, DocumentViewModePreference.split),
         ]) {
-      await selectSidebarCommand(key, shift: true);
+      await _executeViewCommand(tester, command);
+      await tester.pumpAndSettle();
       expect(
         container.read(appSettingsControllerProvider).documentViewMode,
         expectedMode,
@@ -10976,6 +11068,7 @@ code
     final statusReadsBeforeLog = sharedClient.statusReads;
     expect(sharedClient.watchSubscriptions, 1);
     await _chooseNativeSidebar(tester, l10n.gitHostGitLog);
+    await _chooseInspectorCommit(tester, 'Sidebar history shortcut commit');
     await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsOneWidget);
     final gitSidebar = find.byType(shared.GitFeatureSidebar);
@@ -12416,7 +12509,9 @@ code
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
 
-    final sidebarRect = tester.getRect(find.byTooltip(ar.sidebarViewMenu));
+    final sidebarRect = tester.getRect(
+      find.byTooltip('${ar.sidebarViewMenu} (Ctrl+Shift+F9)'),
+    );
     final sourceRect = tester.getRect(find.byType(TextField).last);
     final scaffold = find.byType(Scaffold).last;
     final resolvedHeaderPadding = BusyMarkInsets.sidebarHeader.resolve(
@@ -12480,7 +12575,9 @@ code
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
 
-    final sidebarRect = tester.getRect(find.byTooltip(fa.sidebarViewMenu));
+    final sidebarRect = tester.getRect(
+      find.byTooltip('${fa.sidebarViewMenu} (Ctrl+Shift+F9)'),
+    );
     final sourceField = tester.widget<TextField>(find.byType(TextField).last);
     final sourceRect = tester.getRect(find.byType(TextField).last);
     final scaffold = find.byType(Scaffold).last;
@@ -17538,6 +17635,21 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       WorkspaceState(
         workspace: workspace,
         activeText: source,
+        // Production owns an active document buffer for this Reading surface.
+        // Keep the image-link regression in that same command/view context.
+        documentBuffers: [
+          DocumentBuffer(
+            id: 'linked-images',
+            filePath: readmePath,
+            text: source,
+            lastSavedText: source,
+            dirty: false,
+            editorState: const DocumentEditorState(
+              mode: DocumentViewModePreference.preview,
+            ),
+          ),
+        ],
+        activeBufferId: 'linked-images',
         preview: const MarkdownPreviewBuilder().build(parsed),
       ),
     );
@@ -23681,6 +23793,25 @@ SharedGitTabs _comparisonTabs(ProviderContainer container) =>
         ?.id] ??
     const SharedGitTabs();
 
+Future<void> _chooseInspectorCommit(WidgetTester tester, String subject) async {
+  await tester.tap(find.byKey(const ValueKey('git-select-another-commit')));
+  await pumpUntil(
+    tester,
+    () => find.text(subject).evaluate().isNotEmpty,
+    operation: 'load the existing history selector',
+  );
+  await tester.tap(find.text(subject).last);
+  await tester.pumpAndSettle();
+  final confirm = find.widgetWithText(
+    shared.GitButton,
+    shared.GitMessages.selectThisCommit,
+  );
+  expect(confirm, findsOneWidget);
+  expect(tester.widget<shared.GitButton>(confirm).onPressed, isNotNull);
+  await tester.tap(confirm);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _chooseNativeSidebar(WidgetTester tester, String label) async {
   const channel = MethodChannel('busymark/native_menus');
   var selected = false;
@@ -23700,6 +23831,10 @@ Future<void> _chooseNativeSidebar(WidgetTester tester, String label) async {
     await tester.tap(find.byKey(const ValueKey('workspace-sidebar-view-menu')));
     await tester.pump();
     expect(selected, isTrue);
+    // Finish the menu callback without waiting for the newly opened view
+    // to stop animating during real filesystem/Git loading. Callers wait for
+    // the domain state they need.
+    await tester.pump();
   } finally {
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       channel,

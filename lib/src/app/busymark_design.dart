@@ -1827,31 +1827,32 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
 ) {
   final fallbackItems = <PopupMenuEntry<T>>[];
   var routeKeyPending = true;
+  final hasMnemonics = items.any(
+    (item) => item is BusyMarkPopupMenuItem<T> && item.mnemonic != null,
+  );
   final focusEnabledRow =
-      items.any(
-        (item) => item is BusyMarkPopupMenuItem<T> && item.mnemonic != null,
-      ) &&
+      hasMnemonics &&
       items.any((item) => item is BusyMarkPopupMenuItem<T> && item.enabled);
   for (final item in items) {
     if (item is BusyMarkPopupMenuItem<T>) {
       final useRouteKey = routeKeyPending && (!focusEnabledRow || item.enabled);
+      final menuItem = BusyMarkPopupMenuItem<T>(
+        value: item.menuValue,
+        label: item.label,
+        icon: item.icon,
+        iconColor: item.iconColor,
+        shortcut: item.shortcut,
+        enabled: item.enabled,
+        checked: item.checked,
+        trailingCheck: item.trailingCheck,
+        mutuallyExclusive: item.mutuallyExclusive,
+        routeKey: useRouteKey ? routeKey : null,
+        mnemonic: item.mnemonic,
+      );
       fallbackItems.add(
-        _BusyMarkMnemonicMenuEntry<T>(
-          items: items,
-          item: BusyMarkPopupMenuItem<T>(
-            value: item.menuValue,
-            label: item.label,
-            icon: item.icon,
-            iconColor: item.iconColor,
-            shortcut: item.shortcut,
-            enabled: item.enabled,
-            checked: item.checked,
-            trailingCheck: item.trailingCheck,
-            mutuallyExclusive: item.mutuallyExclusive,
-            routeKey: useRouteKey ? routeKey : null,
-            mnemonic: item.mnemonic,
-          ),
-        ),
+        hasMnemonics
+            ? _BusyMarkMnemonicMenuEntry<T>(items: items, item: menuItem)
+            : menuItem,
       );
       if (useRouteKey) routeKeyPending = false;
     } else {

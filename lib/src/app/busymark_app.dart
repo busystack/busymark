@@ -56,6 +56,7 @@ import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
 import 'git_dismissal.dart';
+import 'document_view_availability.dart';
 import 'linux/linux_window_host.dart';
 
 final _busyMarkDefaultCommandRegistryProvider =
@@ -132,6 +133,26 @@ final _busyMarkDefaultCommandRegistryProvider =
             },
         },
         enabled: {
+          for (final (id, mode) in [
+            (BusyMarkCommandIds.viewEditor, DocumentViewModePreference.editor),
+            (BusyMarkCommandIds.viewSource, DocumentViewModePreference.source),
+            (
+              BusyMarkCommandIds.viewReading,
+              DocumentViewModePreference.preview,
+            ),
+            (BusyMarkCommandIds.viewSplit, DocumentViewModePreference.split),
+          ])
+            id: () {
+              final state = ref.read(workspaceControllerProvider);
+              return ref
+                      .read(searchSessionProvider.notifier)
+                      .workspaceVisible &&
+                  busyMarkDocumentViewAvailable(
+                    state.workspace,
+                    state.activeBuffer,
+                    mode,
+                  );
+            },
           for (final id in BusyMarkCommandCatalog.notesWorkspaceCommandIds)
             id: () =>
                 ref.read(searchSessionProvider.notifier).workspaceVisible &&
@@ -169,10 +190,6 @@ final _busyMarkDefaultCommandRegistryProvider =
           for (final id in [
             BusyMarkCommandIds.elementProperties,
             BusyMarkCommandIds.references,
-            BusyMarkCommandIds.viewEditor,
-            BusyMarkCommandIds.viewSource,
-            BusyMarkCommandIds.viewReading,
-            BusyMarkCommandIds.viewSplit,
             BusyMarkCommandIds.nextTab,
             BusyMarkCommandIds.previousTab,
             BusyMarkCommandIds.closeTab,

@@ -53,7 +53,7 @@ therefore isolate those remaining defects, not an entirely unmodified baseline.
   the visible region does not establish application-reactivation behavior.
 - Negative item leading edges are legitimate; negative `jumpTo` alignments are
   not the repair. The package's documented alignment range remains respected.
-- Menu/dialog/Source/Split paths were not all declared defective merely because
+- Menu/dialog/Source/Dual paths were not all declared defective merely because
   they restore focus. Passing cancellation, competing-owner and navigation
   cases are retained as coverage, not additional claimed bugs.
 - A later native-probe failure initially suggested that a short table cell did
@@ -144,7 +144,7 @@ dialogs; newer focus owners; document replacement/disposal; committed input,
 composition, paste and undo/redo. Existing viewport coverage is retained.
 Workspace coverage checks meaningful pixel-only session updates, coalescing
 sub-tolerance changes, unchanged bytes/dirty/history, and existing document/view
-switching behavior. Native Source/Split coverage complements the widget cases.
+switching behavior. Native Source/Dual coverage complements the widget cases.
 
 ## Native Linux acceptance
 
@@ -156,7 +156,7 @@ documents, a separate real GTK application, and real Mutter keyboard input. It
 does not operate the user's desktop. Both native Wayland and GTK X11 through
 XWayland were exercised; this does not claim a separate standalone Xorg session.
 
-The successful matrix is Markdown Editor, Source, Split, and table-cell editing
+The successful matrix is Markdown Editor, Source, Dual, and table-cell editing
 on both backends, plus Writerside Editor on both backends (10 runs). Each run
 uses four real Alt-Tab out/back cycles, including a 15-second inactive interval,
 then types a native `z` without tapping or refocusing the editor. All recorded

@@ -582,7 +582,6 @@ static gboolean validate_native_menu_entries(FlValue* entries,
   *entry_count += fl_value_get_length(entries);
   size_t command_count = 0;
   size_t checkable_run_selected_count = 0;
-  gboolean checkable_run_has_disabled_entry = FALSE;
   gboolean in_checkable_run = FALSE;
   for (size_t index = 0; index < fl_value_get_length(entries); index++) {
     FlValue* entry = fl_value_get_list_value(entries, index);
@@ -643,34 +642,27 @@ static gboolean validate_native_menu_entries(FlValue* entries,
       command_count++;
     }
     if (!separator && checkable && mutually_exclusive) {
+      // Unavailable views are valid members of a single-choice group. Their
+      // individual GActions retain sensitivity and reject activation.
       if (!in_checkable_run) {
         checkable_run_selected_count = 0;
-        checkable_run_has_disabled_entry = FALSE;
         in_checkable_run = TRUE;
       }
       checkable_run_selected_count += selected ? 1 : 0;
-      checkable_run_has_disabled_entry =
-          checkable_run_has_disabled_entry || !enabled;
       continue;
     }
-    if (in_checkable_run &&
-        (checkable_run_selected_count > 1 ||
-         checkable_run_has_disabled_entry)) {
+    if (in_checkable_run && checkable_run_selected_count > 1) {
       respond_native_menu_argument_error(
           method_call,
-          "single-choice groups allow at most one selected entry and require "
-          "enabled entries.");
+          "single-choice groups allow at most one selected entry.");
       return FALSE;
     }
     in_checkable_run = FALSE;
   }
-  if (in_checkable_run &&
-      (checkable_run_selected_count > 1 ||
-       checkable_run_has_disabled_entry)) {
+  if (in_checkable_run && checkable_run_selected_count > 1) {
     respond_native_menu_argument_error(
         method_call,
-        "single-choice groups allow at most one selected entry and require "
-        "enabled entries.");
+        "single-choice groups allow at most one selected entry.");
     return FALSE;
   }
   if (command_count == 0) {

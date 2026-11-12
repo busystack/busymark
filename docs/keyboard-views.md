@@ -33,6 +33,8 @@ preference and command identity remain compatible with existing settings.
 Unavailable sidebar views stay unavailable. For example, Table of Contents requires a
 Writerside workspace, and Commit/Git Log require an attached repository. Letters
 stay fixed when entries are missing or disabled and across UI languages.
+Content choices also follow the document type: configuration files offer Source
+only, with E/R/D displayed but disabled.
 
 Both buttons retain the same display-layout icon in every view. Their default
 tooltips are **Sidebar view (Ctrl+Shift+F9)** and **Content view

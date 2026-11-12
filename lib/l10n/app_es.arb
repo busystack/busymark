@@ -416,7 +416,7 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Dual",
+  "split": "Vista dual",
   "@split": {
     "description": "Dual content view label (source and reading side by side)."
   },
