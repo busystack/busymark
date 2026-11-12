@@ -1501,10 +1501,10 @@ abstract class AppLocalizations {
   /// **'Source'**
   String get source;
 
-  /// Split view label.
+  /// Dual content view label (source and reading side by side).
   ///
   /// In en, this message translates to:
-  /// **'Split'**
+  /// **'Dual'**
   String get split;
 
   /// System theme option.
@@ -2089,10 +2089,16 @@ abstract class AppLocalizations {
   /// **'Sidebar'**
   String get shortcutGroupSidebar;
 
+  /// Content view selector tooltip and accessible label.
+  ///
+  /// In en, this message translates to:
+  /// **'Content view'**
+  String get contentViewMenu;
+
   /// Tooltip for the sidebar view selector button.
   ///
   /// In en, this message translates to:
-  /// **'Select sidebar view'**
+  /// **'Sidebar view'**
   String get sidebarViewMenu;
 
   /// Welcome screen action for creating a Markdown file.
@@ -2962,13 +2968,13 @@ abstract class AppLocalizations {
   /// Tooltip for hiding the workspace sidebar panel.
   ///
   /// In en, this message translates to:
-  /// **'Hide sidebar panel'**
+  /// **'Hide sidebar'**
   String get hideSidebar;
 
   /// Tooltip for showing the workspace sidebar panel.
   ///
   /// In en, this message translates to:
-  /// **'Show sidebar panel'**
+  /// **'Show sidebar'**
   String get showSidebar;
 
   /// Tooltip for showing the preview pane.
@@ -3025,7 +3031,7 @@ abstract class AppLocalizations {
   /// **'Files'**
   String get files;
 
-  /// Writerside Topics sidebar tab label.
+  /// Writerside Table of Contents sidebar view label.
   ///
   /// In en, this message translates to:
   /// **'Table of Contents'**

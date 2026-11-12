@@ -773,7 +773,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get source => 'Исходный текст';
 
   @override
-  String get split => 'Разделённый вид';
+  String get split => 'Двойной';
 
   @override
   String get systemTheme => 'Как в системе';
@@ -1089,6 +1089,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Боковая панель';
+
+  @override
+  String get contentViewMenu => 'Вид содержимого';
 
   @override
   String get sidebarViewMenu => 'Вид боковой панели';

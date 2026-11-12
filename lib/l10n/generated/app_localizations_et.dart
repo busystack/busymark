@@ -766,7 +766,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get source => 'Lähtekood';
 
   @override
-  String get split => 'Kõrvuti';
+  String get split => 'Kaksikvaade';
 
   @override
   String get systemTheme => 'Süsteem';
@@ -1087,7 +1087,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutGroupSidebar => 'Külgpaneel';
 
   @override
-  String get sidebarViewMenu => 'Külgpaneeli vaade';
+  String get contentViewMenu => 'Sisuvaade';
+
+  @override
+  String get sidebarViewMenu => 'Külgriba vaade';
 
   @override
   String get createMarkdownFile => 'Loo Markdowni fail';
@@ -1582,10 +1585,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Laadi välispildid alati';
 
   @override
-  String get hideSidebar => 'Peida külgpaneel';
+  String get hideSidebar => 'Peida külgriba';
 
   @override
-  String get showSidebar => 'Kuva külgpaneel';
+  String get showSidebar => 'Näita külgriba';
 
   @override
   String get showPreview => 'Kuva eelvaade';

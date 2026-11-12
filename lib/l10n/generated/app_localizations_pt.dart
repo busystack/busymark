@@ -774,7 +774,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get source => 'Código-fonte';
 
   @override
-  String get split => 'Vista dividida';
+  String get split => 'Dupla';
 
   @override
   String get systemTheme => 'Sistema';
@@ -1096,7 +1096,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shortcutGroupSidebar => 'Barra lateral';
 
   @override
-  String get sidebarViewMenu => 'Visualização da barra lateral';
+  String get contentViewMenu => 'Vista do conteúdo';
+
+  @override
+  String get sidebarViewMenu => 'Vista da barra lateral';
 
   @override
   String get createMarkdownFile => 'Criar ficheiro Markdown';
@@ -1594,10 +1597,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Sempre carregar imagens remotas';
 
   @override
-  String get hideSidebar => 'Ocultar painel lateral';
+  String get hideSidebar => 'Ocultar barra lateral';
 
   @override
-  String get showSidebar => 'Mostrar painel lateral';
+  String get showSidebar => 'Mostrar barra lateral';
 
   @override
   String get showPreview => 'Mostrar pré-visualização';
@@ -9830,7 +9833,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get source => 'Código-fonte';
 
   @override
-  String get split => 'Dividido';
+  String get split => 'Dupla';
 
   @override
   String get systemTheme => 'Sistema';
@@ -10151,6 +10154,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shortcutGroupSidebar => 'Barra lateral';
+
+  @override
+  String get contentViewMenu => 'Visualização do conteúdo';
 
   @override
   String get sidebarViewMenu => 'Visualização da barra lateral';
@@ -10651,10 +10657,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get alwaysLoadRemoteImages => 'Sempre carregar imagens remotas';
 
   @override
-  String get hideSidebar => 'Ocultar painel lateral';
+  String get hideSidebar => 'Ocultar barra lateral';
 
   @override
-  String get showSidebar => 'Mostrar painel lateral';
+  String get showSidebar => 'Mostrar barra lateral';
 
   @override
   String get showPreview => 'Mostrar pré-visualização';
@@ -10693,7 +10699,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get files => 'Arquivos';
 
   @override
-  String get toc => 'Índice';
+  String get toc => 'Sumário';
 
   @override
   String get tocActions => 'Ações do sumário';

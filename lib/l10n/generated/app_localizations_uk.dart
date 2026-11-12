@@ -772,7 +772,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get source => 'Вихідний текст';
 
   @override
-  String get split => 'Розділений перегляд';
+  String get split => 'Подвійний';
 
   @override
   String get systemTheme => 'Системна';
@@ -1095,7 +1095,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutGroupSidebar => 'Бічна панель';
 
   @override
-  String get sidebarViewMenu => 'Подання бічної панелі';
+  String get contentViewMenu => 'Вигляд вмісту';
+
+  @override
+  String get sidebarViewMenu => 'Вигляд бічної панелі';
 
   @override
   String get createMarkdownFile => 'Створити файл Markdown';

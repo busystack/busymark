@@ -1,3 +1,4 @@
+import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
 import 'package:busymark/src/references/reference_controller.dart';
 import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../support/native_menu_probe.dart';
@@ -128,6 +129,154 @@ void main() {
     );
     headerBarService = _FallbackHeaderBarService();
   });
+
+  testWidgets(
+    'workspace selectors reveal the sidebar and follow configured bindings',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Heading\n\nDocument text\n',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final menus = NativeMenuProbe(tester);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      await settings.setSidebarVisible(false);
+      await tester.pumpAndSettle();
+      final source = _searchSourceController(tester);
+      final before = source.text;
+      Future<void> chord(
+        LogicalKeyboardKey key, {
+        bool control = true,
+        bool shift = true,
+      }) async {
+        if (control) {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        }
+        if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(key);
+        if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        if (control) {
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        }
+        await tester.pumpAndSettle();
+      }
+
+      await chord(LogicalKeyboardKey.f9);
+      await pumpUntil(
+        tester,
+        () => menus.isOpen,
+        operation: 'open Sidebar View with its registered shortcut',
+      );
+      expect(
+        container.read(appSettingsControllerProvider).sidebarVisible,
+        isTrue,
+      );
+      expect(menus.packets.last['focusFirst'], isTrue);
+      final expected = {
+        'Files': 'F',
+        'Commit': 'C',
+        'Git Log': 'G',
+        'Outline': 'O',
+        'Local History': 'L',
+        'Clipboard History': 'B',
+        'References': 'R',
+      };
+      expect({
+        for (final e in menus.entries) e['label']: e['mnemonic'],
+      }, expected);
+      expect(menus.enabled('Commit'), isFalse);
+      expect(menus.enabled('Git Log'), isFalse);
+      expect(menus.enabled('Files'), isTrue);
+      menus.close();
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Sidebar view (Ctrl+Shift+F9)'), findsOneWidget);
+      expect(find.byTooltip('Hide sidebar (F9)'), findsOneWidget);
+      await chord(LogicalKeyboardKey.f10);
+      expect(menus.isOpen, isTrue);
+      expect(
+        {for (final e in menus.entries) e['label']: e['mnemonic']},
+        {'Editor': 'E', 'Source': 'S', 'Reading': 'R', 'Dual': 'D'},
+      );
+      await menus.choose('Dual');
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        DocumentViewModePreference.split,
+      );
+      for (final key in [
+        'workspace-sidebar-view-menu',
+        'workspace-content-view-menu',
+      ]) {
+        expect(
+          tester
+              .widget<BusyMarkHeaderPopupMenuButton>(find.byKey(ValueKey(key)))
+              .icon,
+          BusyMarkGlyphs.sidebarViews,
+        );
+      }
+      final keymap = container.read(keymapControllerProvider.notifier);
+      for (final assignment in [
+        (
+          BusyMarkCommandIds.sidebarViewSelector,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f6),
+        ),
+        (
+          BusyMarkCommandIds.contentViewSelector,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+        ),
+        (
+          BusyMarkCommandIds.toggleSidebar,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+        ),
+      ]) {
+        final result = await keymap.update(
+          assignment.$1,
+          assignment.$2,
+          expected: container
+              .read(appSettingsControllerProvider)
+              .shortcutOverrides,
+        );
+        expect(result.status, KeymapUpdateStatus.saved);
+      }
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Sidebar view (F6)'), findsOneWidget);
+      expect(find.byTooltip('Content view (F8)'), findsOneWidget);
+      expect(find.byTooltip('Hide sidebar (F12)'), findsOneWidget);
+      await chord(LogicalKeyboardKey.f9);
+      expect(menus.isOpen, isFalse);
+      await chord(LogicalKeyboardKey.f10);
+      expect(menus.isOpen, isFalse);
+      await chord(LogicalKeyboardKey.f6, control: false, shift: false);
+      expect(menus.isOpen, isTrue);
+      menus.close();
+      await tester.pumpAndSettle();
+      await chord(LogicalKeyboardKey.f8, control: false, shift: false);
+      expect(menus.isOpen, isTrue);
+      menus.close();
+      await tester.pumpAndSettle();
+      for (final key in [
+        LogicalKeyboardKey.digit1,
+        LogicalKeyboardKey.digit2,
+        LogicalKeyboardKey.digit3,
+        LogicalKeyboardKey.digit4,
+        LogicalKeyboardKey.digit5,
+        LogicalKeyboardKey.digit6,
+      ]) {
+        await chord(key, shift: false);
+        if (key.keyId <= LogicalKeyboardKey.digit4.keyId) await chord(key);
+      }
+      expect(menus.isOpen, isFalse);
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        DocumentViewModePreference.split,
+      );
+      expect(container.read(workspaceControllerProvider).activeText, before);
+    },
+  );
 
   for (final fail in [false, true]) {
     testWidgets(
@@ -1134,9 +1283,7 @@ void main() {
         expected: current(),
       );
       await tester.pumpAndSettle();
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarOutline);
       await tester.pumpAndSettle();
       expect(container.read(searchSessionProvider).active, isFalse);
       expect(
@@ -1297,40 +1444,30 @@ void main() {
     },
   );
 
-  test('document view shortcuts are distinct from existing commands', () {
-    expect(
-      {
-        for (final entry in BusyMarkDocumentViewShortcuts.definitions.entries)
-          entry.key: entry.value.label,
-      },
-      {
-        BusyMarkDocumentViewShortcutAction.editor: 'Ctrl+Shift+1',
-        BusyMarkDocumentViewShortcutAction.source: 'Ctrl+Shift+2',
-        BusyMarkDocumentViewShortcutAction.reading: 'Ctrl+Shift+3',
-        BusyMarkDocumentViewShortcutAction.split: 'Ctrl+Shift+4',
-      },
-    );
-
-    final existingActivators = <ShortcutActivator>{
-      ...BusyMarkAppShortcuts.definitions.values.map(
-        (definition) => definition.activator,
-      ),
-      ...BusyMarkTextEditingShortcuts.definitions.values.map(
-        (definition) => definition.activator,
-      ),
-      ...BusyMarkEditorShortcuts.definitions.values.map(
-        (definition) => definition.activator,
-      ),
-      ...BusyMarkSidebarShortcuts.definitions.values.map(
-        (definition) => definition.activator,
-      ),
-      ...BusyMarkTreeShortcuts.definitions.values.map(
-        (definition) => definition.activator,
-      ),
-    };
-    for (final definition in BusyMarkDocumentViewShortcuts.definitions.values) {
-      expect(existingActivators, isNot(contains(definition.activator)));
+  test('view selectors replace all numeric view defaults', () {
+    final registry = BusyMarkCommandCatalog.metadata;
+    for (final id in [
+      'view.editor',
+      'view.source',
+      'view.reading',
+      'view.split',
+      'sidebar.files',
+      'sidebar.toc',
+      'sidebar.outline',
+      'sidebar.git',
+      'history.local',
+      'sidebar.clipboardHistory',
+    ]) {
+      expect(registry.activators(id), isEmpty, reason: id);
     }
+    expect(
+      registry[BusyMarkCommandIds.sidebarViewSelector]!.shortcut!.label,
+      'Ctrl+Shift+F9',
+    );
+    expect(
+      registry[BusyMarkCommandIds.contentViewSelector]!.shortcut!.label,
+      'Ctrl+Shift+F10',
+    );
   });
 
   testWidgets(
@@ -2258,13 +2395,13 @@ void main() {
     expect(find.textContaining('sign in'), findsNothing);
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+        '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     await _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+      '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderGeometry(tester);
@@ -2274,13 +2411,13 @@ void main() {
 
     expect(
       find.byTooltip(
-        '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+        '${l10n.showSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     await _expectNeutralSidebarToggle(
       tester,
-      '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+      '${l10n.showSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       selected: false,
     );
 
@@ -2289,13 +2426,13 @@ void main() {
 
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+        '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     await _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+      '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       selected: true,
     );
   });
@@ -5706,7 +5843,9 @@ code
         Iterable<Object> popupMenuItem(String label) =>
             nativeMenus.matching(label, includeShortcut: false);
 
-        await openPopup(find.byTooltip(l10n.sidebarViewMenu));
+        await openPopup(
+          find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+        );
         await nativeMenus.activate(l10n.files);
         await tester.pumpAndSettle();
         await nativeMenus.activate('target.md');
@@ -5751,7 +5890,9 @@ code
         }
         await tester.pumpAndSettle();
 
-        await openPopup(find.byTooltip(l10n.sidebarViewMenu));
+        await openPopup(
+          find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+        );
         await nativeMenus.activate(l10n.toc);
         await tester.pumpAndSettle();
 
@@ -5824,7 +5965,7 @@ code
         expect(instanceSelectorRect.right, lessThan(newTopicRect.left));
         expect(newTopicRect.right, lessThan(actionsRect.left));
         final primaryMenuRect = tester.getRect(
-          find.byTooltip(l10n.sidebarViewMenu),
+          find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
         );
         final tocMenuRect = tester.getRect(
           find.descendant(
@@ -6804,7 +6945,9 @@ code
           await tester.pump();
         }
 
-        await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+        await tester.tap(
+          find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+        );
         await tester.pumpAndSettle();
         await nativeMenus.activate(l10n.toc);
         await tester.pumpAndSettle();
@@ -6921,7 +7064,9 @@ code
         expect(File(treePath).readAsStringSync(), contains('guide.topic'));
         expect(File(linksPath).readAsStringSync(), contains('(guide.topic)'));
 
-        await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+        await tester.tap(
+          find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+        );
         await tester.pumpAndSettle();
         await nativeMenus.activate(l10n.files);
         await tester.pumpAndSettle();
@@ -7436,9 +7581,7 @@ code
       fixture.sharedClient.discoveryError = const shared.GitException(
         shared.GitErrorCode.disconnected,
       );
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
       await pumpUntil(
         tester,
         () => find.byType(shared.GitFailurePanel).evaluate().isNotEmpty,
@@ -7474,9 +7617,7 @@ code
         openGitComparisons: false,
         descendantWorkspace: true,
       );
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
       await pumpUntil(
         tester,
         () => find.text(l10n.gitWorkspaceRootRequired).evaluate().isNotEmpty,
@@ -7541,9 +7682,7 @@ code
         );
         addTearDown(() => next.deleteSync(recursive: true));
         File('${next.path}/Intro.md').writeAsStringSync('# Next\n');
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
         await pumpUntil(
           tester,
           () => fixture.sharedClient.discoveryEntered.isCompleted,
@@ -7616,9 +7755,7 @@ code
           .read(workspaceControllerProvider)
           .workspace!
           .rootPath;
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
       await pumpUntil(
         tester,
         () => find.text(l10n.gitOperationsRequireTrust).evaluate().isNotEmpty,
@@ -7818,9 +7955,7 @@ code
           .trustGitWorkspace(
             container.read(workspaceControllerProvider).workspace!.rootPath,
           );
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
       await pumpUntil(
         tester,
         () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -8251,20 +8386,13 @@ code
               );
               tester.widget<Focus>(focus.first).focusNode!.requestFocus();
               await tester.pump();
-              expect(
-                BusyMarkCommandRegistryScope.read(
-                  FocusManager.instance.primaryFocus!.context!,
-                )!.commands.any(
-                  (command) => command.scope == BusyMarkCommandScope.git,
-                ),
-                isTrue,
-              );
               final statusReads = h.sharedClient.statusReads;
               await tester.sendKeyEvent(LogicalKeyboardKey.f5);
-              await pumpUntil(
-                tester,
-                () => h.sharedClient.statusReads > statusReads,
-                operation: 'refresh through the focused Git command dispatcher',
+              await tester.pumpAndSettle();
+              expect(
+                h.sharedClient.statusReads,
+                statusReads,
+                reason: 'F5 no longer dispatches a Git refresh',
               );
             }
             // Tab order is document, Git comparison, Local History.
@@ -9166,7 +9294,7 @@ code
     );
     addTearDown(container.dispose);
 
-    Future<void> pressControlShortcut(
+    Future<void> selectSidebarCommand(
       LogicalKeyboardKey key, {
       bool shift = false,
     }) async {
@@ -9204,7 +9332,7 @@ code
           (LogicalKeyboardKey.digit1, DocumentViewModePreference.editor),
           (LogicalKeyboardKey.digit4, DocumentViewModePreference.split),
         ]) {
-      await pressControlShortcut(key, shift: true);
+      await selectSidebarCommand(key, shift: true);
       expect(
         container.read(appSettingsControllerProvider).documentViewMode,
         expectedMode,
@@ -9248,7 +9376,7 @@ code
     controller.updateActiveText('# Edited third\n');
     await tester.pump();
 
-    await pressControlShortcut(LogicalKeyboardKey.tab);
+    await selectSidebarCommand(LogicalKeyboardKey.tab);
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
     expect(service.saveCount, 0);
@@ -9257,14 +9385,14 @@ code
       first.path,
     );
 
-    await pressControlShortcut(LogicalKeyboardKey.tab, shift: true);
+    await selectSidebarCommand(LogicalKeyboardKey.tab, shift: true);
 
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       third.path,
     );
 
-    await pressControlShortcut(LogicalKeyboardKey.keyW);
+    await selectSidebarCommand(LogicalKeyboardKey.keyW);
 
     expect(find.text(l10n.unsavedChanges), findsOneWidget);
     await tester.tap(find.text(l10n.discard));
@@ -9288,7 +9416,7 @@ code
       find.descendant(of: tabStrip, matching: find.text('CRLF')),
       findsNothing,
     );
-    await pressControlShortcut(LogicalKeyboardKey.keyW, shift: true);
+    await selectSidebarCommand(LogicalKeyboardKey.keyW, shift: true);
 
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
@@ -9456,9 +9584,7 @@ code
           .trustGitWorkspace(
             container.read(workspaceControllerProvider).workspace!.rootPath,
           );
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
       await pumpUntil(
         tester,
         () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -9752,9 +9878,7 @@ code
             .trustGitWorkspace(
               container.read(workspaceControllerProvider).workspace!.rootPath,
             );
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
         await pumpUntil(
           tester,
           () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -10003,9 +10127,7 @@ code
             .trustGitWorkspace(
               container.read(workspaceControllerProvider).workspace!.rootPath,
             );
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
         await pumpUntil(
           tester,
           () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -10112,9 +10234,7 @@ code
             .trustGitWorkspace(
               container.read(workspaceControllerProvider).workspace!.rootPath,
             );
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
         await pumpUntil(
           tester,
           () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -10155,9 +10275,7 @@ code
             .trustGitWorkspace(
               container.read(workspaceControllerProvider).workspace!.rootPath,
             );
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
         await pumpUntil(
           tester,
           () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -10255,9 +10373,7 @@ code
             .trustGitWorkspace(
               container.read(workspaceControllerProvider).workspace!.rootPath,
             );
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
         await pumpUntil(
           tester,
           () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -10347,9 +10463,7 @@ code
               .trustGitWorkspace(
                 container.read(workspaceControllerProvider).workspace!.rootPath,
               );
-          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-          await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
           await pumpUntil(
             tester,
             () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
@@ -10368,7 +10482,7 @@ code
     );
   }
 
-  testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
+  testWidgets('sidebar view commands select workspace sidebar tabs', (
     tester,
   ) async {
     String? clipboardText;
@@ -10417,11 +10531,15 @@ code
     );
     addTearDown(container.dispose);
 
-    Future<void> pressControlShortcut(LogicalKeyboardKey key) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    Future<void> selectSidebarCommand(LogicalKeyboardKey key) async {
+      await _executeViewCommand(tester, switch (key) {
+        LogicalKeyboardKey.digit1 => BusyMarkCommandIds.sidebarFiles,
+        LogicalKeyboardKey.digit2 => BusyMarkCommandIds.sidebarToc,
+        LogicalKeyboardKey.digit3 => BusyMarkCommandIds.sidebarOutline,
+        LogicalKeyboardKey.digit4 => BusyMarkCommandIds.sidebarGit,
+        LogicalKeyboardKey.digit5 => BusyMarkCommandIds.localHistory,
+        _ => BusyMarkCommandIds.clipboardHistory,
+      });
       if (key == LogicalKeyboardKey.digit4) {
         await pumpUntil(
           tester,
@@ -10468,13 +10586,13 @@ code
 
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+        '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     await _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+      '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderControlGap(
@@ -10484,7 +10602,7 @@ code
     );
     _expectHeaderControlGap(
       tester,
-      leftTooltip: l10n.viewMode,
+      leftTooltip: '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
       rightTooltip: l10n.validate,
     );
     _expectHeaderControlGap(
@@ -10500,7 +10618,7 @@ code
     _expectHeaderGeometry(tester);
     for (final tooltip in [
       l10n.back,
-      l10n.viewMode,
+      '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
       l10n.validate,
       l10n.search,
       l10n.mainMenu,
@@ -10508,12 +10626,22 @@ code
       await _expectNeutralHeaderControl(tester, tooltip, selected: false);
     }
     expect(
-      tester.widget<IconButton>(_headerIconButton(l10n.viewMode)).tooltip,
-      l10n.viewMode,
+      tester
+          .widget<IconButton>(
+            _headerIconButton('${l10n.contentViewMenu} (Ctrl+Shift+F10)'),
+          )
+          .tooltip,
+      '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
     );
-    await tester.tap(_headerIconButton(l10n.viewMode));
+    await tester.tap(
+      _headerIconButton('${l10n.contentViewMenu} (Ctrl+Shift+F10)'),
+    );
     await tester.pumpAndSettle();
-    await _expectNeutralHeaderControl(tester, l10n.viewMode, selected: true);
+    await _expectNeutralHeaderControl(
+      tester,
+      '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
+      selected: true,
+    );
     final viewItems = tester
         .widgetList<BusyMarkPopupMenuItem<DocumentViewModePreference>>(
           find.byType(BusyMarkPopupMenuItem<DocumentViewModePreference>),
@@ -10541,30 +10669,36 @@ code
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pumpAndSettle();
-    expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
+    expect(
+      find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+      findsNothing,
+    );
     expect(
       tester.state(find.byKey(sidebarKey, skipOffstage: false)),
       same(sidebarState),
     );
     expect(
       find.byTooltip(
-        '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+        '${l10n.showSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     await _expectNeutralSidebarToggle(
       tester,
-      '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+      '${l10n.showSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       selected: false,
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pumpAndSettle();
-    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+    expect(
+      find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+      findsOneWidget,
+    );
     expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
     await _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
+      '${l10n.hideSidebar} (${BusyMarkAppShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderGeometry(tester);
@@ -10584,9 +10718,12 @@ code
     );
 
     await setDocumentViewMode(DocumentViewModePreference.source);
-    await pressControlShortcut(LogicalKeyboardKey.digit1);
+    await selectSidebarCommand(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
-    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+    expect(
+      find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+      findsOneWidget,
+    );
     expect(
       tester
           .widget<BusyMarkHeaderPopupMenuButton>(
@@ -10598,7 +10735,7 @@ code
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
 
-    await pressControlShortcut(LogicalKeyboardKey.digit5);
+    await selectSidebarCommand(LogicalKeyboardKey.digit5);
     expect(find.byType(LocalHistoryPanel), findsOneWidget);
     expect(
       tester
@@ -10609,7 +10746,7 @@ code
       BusyMarkGlyphs.sidebarViews,
     );
 
-    await pressControlShortcut(LogicalKeyboardKey.digit6);
+    await selectSidebarCommand(LogicalKeyboardKey.digit6);
     expect(find.byType(ClipboardHistoryPanel), findsOneWidget);
     expect(
       tester
@@ -10624,7 +10761,7 @@ code
         .read(appSettingsControllerProvider.notifier)
         .trustGitWorkspace(temp.path);
     await setDocumentViewMode(DocumentViewModePreference.preview);
-    await pressControlShortcut(LogicalKeyboardKey.digit4);
+    await selectSidebarCommand(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(
@@ -10643,6 +10780,7 @@ code
     final commitView = find.byType(shared.GitCommitView);
     final commitWidget = tester.widget<shared.GitCommitView>(commitView);
     expect(commitWidget.session.host.spacing, BusyMarkSpacing.sm);
+    expect(commitWidget.session.host.actionShortcutsEnabled, isFalse);
     expect(commitWidget.session.repository.root, temp.path);
     expect(commitWidget.session.snapshot!.changes, isEmpty);
     expect(
@@ -10801,7 +10939,7 @@ code
       sourceValue,
     );
     await setDocumentViewMode(DocumentViewModePreference.split);
-    await pressControlShortcut(LogicalKeyboardKey.digit4);
+    await selectSidebarCommand(LogicalKeyboardKey.digit4);
     expect(find.byType(shared.GitCommitView), findsOneWidget);
     expect(find.text('Preserved shell draft'), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
@@ -10820,7 +10958,7 @@ code
     expect(container.read(gitControllerProvider).selectedView, GitView.changes);
 
     await setDocumentViewMode(DocumentViewModePreference.editor);
-    await pressControlShortcut(LogicalKeyboardKey.digit3);
+    await selectSidebarCommand(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
     expect(
       find.textContaining('Sidebar history shortcut commit'),
@@ -10876,7 +11014,7 @@ code
     nativeMenus.close();
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.tap(find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'));
     await pumpUntil(
       tester,
       () => nativeMenus.matching(l10n.gitCommit).isNotEmpty,
@@ -10885,11 +11023,11 @@ code
     await tester.pumpAndSettle();
 
     for (final (label, shortcut) in <(String, String)>[
-      (l10n.files, BusyMarkSidebarShortcuts.files.label),
-      (l10n.outline, BusyMarkSidebarShortcuts.outline.label),
-      (l10n.gitCommit, BusyMarkSidebarShortcuts.git.label),
-      (l10n.localHistory, BusyMarkSidebarShortcuts.localHistory.label),
-      (l10n.clipboardHistory, BusyMarkSidebarShortcuts.clipboardHistory.label),
+      (l10n.files, 'F'),
+      (l10n.outline, 'O'),
+      (l10n.gitCommit, 'C'),
+      (l10n.localHistory, 'L'),
+      (l10n.clipboardHistory, 'B'),
     ]) {
       expect(nativeMenus.matching(label), hasLength(1));
       expect(nativeMenus.matching(shortcut), hasLength(1));
@@ -11002,9 +11140,7 @@ code
       }
       expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
 
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.localHistory);
       await tester.pump(const Duration(milliseconds: 100));
       await waitForHistory((history) => history.selectedRevisions.length == 1);
       expect(find.byType(LocalHistoryPanel), findsOneWidget);
@@ -11266,9 +11402,7 @@ code
           break;
         }
       }
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, BusyMarkCommandIds.localHistory);
       await tester.pump(const Duration(milliseconds: 100));
       for (var index = 0; index < 40; index += 1) {
         await tester.pump(const Duration(milliseconds: 25));
@@ -11349,7 +11483,7 @@ code
     },
   );
 
-  testWidgets('Writerside sidebar shortcuts survive document view changes', (
+  testWidgets('Writerside sidebar commands survive document view changes', (
     tester,
   ) async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -11432,10 +11566,14 @@ code
               container.read(workspaceControllerProvider).workspace!.rootPath,
             );
       }
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _executeViewCommand(tester, switch (key) {
+        LogicalKeyboardKey.digit1 => BusyMarkCommandIds.sidebarFiles,
+        LogicalKeyboardKey.digit2 => BusyMarkCommandIds.sidebarToc,
+        LogicalKeyboardKey.digit3 => BusyMarkCommandIds.sidebarOutline,
+        LogicalKeyboardKey.digit4 => BusyMarkCommandIds.sidebarGit,
+        LogicalKeyboardKey.digit5 => BusyMarkCommandIds.localHistory,
+        _ => BusyMarkCommandIds.clipboardHistory,
+      });
       if (key == LogicalKeyboardKey.digit4) {
         await pumpUntil(
           tester,
@@ -16121,7 +16259,10 @@ After break.
     );
     expect(find.text(l10n.noOutline), findsNothing);
 
-    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+    expect(
+      find.byTooltip('${l10n.sidebarViewMenu} (Ctrl+Shift+F9)'),
+      findsOneWidget,
+    );
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.digit4);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.digit4);
@@ -18805,9 +18946,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       final container = harness.container;
       final session = container.read(searchSessionProvider.notifier);
       Future<void> outlineShortcut() async {
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await _executeViewCommand(tester, BusyMarkCommandIds.sidebarOutline);
         await tester.pumpAndSettle();
       }
 
@@ -19059,7 +19198,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .filePath,
         endsWith('/b.md'),
       );
-      await shortcut(LogicalKeyboardKey.digit3, search: false);
+      await _executeViewCommand(tester, BusyMarkCommandIds.sidebarOutline);
+      await tester.pumpAndSettle();
       expect(container.read(searchSessionProvider).active, isFalse);
       expect(
         find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
@@ -19378,7 +19518,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
     expect(headerButton(l10n.back), findsNothing);
     expect(headerButton(l10n.validate), findsNothing);
-    expect(headerButton(l10n.viewMode), findsNothing);
+    expect(
+      headerButton('${l10n.contentViewMenu} (Ctrl+Shift+F10)'),
+      findsNothing,
+    );
     await _expectNeutralHeaderControl(tester, l10n.search, selected: true);
 
     await tester.tap(headerButton(l10n.search));
@@ -19387,7 +19530,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expect(headerButton(l10n.back), findsOneWidget);
     expect(editorFocus.hasFocus, isTrue);
     expect(headerButton(l10n.validate), findsOneWidget);
-    expect(headerButton(l10n.viewMode), findsOneWidget);
+    expect(
+      headerButton('${l10n.contentViewMenu} (Ctrl+Shift+F10)'),
+      findsOneWidget,
+    );
 
     await tester.tap(headerButton(l10n.search));
     await tester.pumpAndSettle();
@@ -23477,4 +23623,12 @@ class _HistoryComparisonReadFixture extends _ComparisonTabReadFixture {
       ),
     );
   }
+}
+
+// View navigation in lifecycle/geometry tests uses the same command registry as
+// the palette. Selector keyboard dispatch has its own regression coverage.
+Future<void> _executeViewCommand(WidgetTester tester, String id) async {
+  final context = tester.element(find.byType(WorkspaceScreen));
+  final container = ProviderScope.containerOf(context, listen: false);
+  await container.read(busyMarkCommandRegistryProvider).execute(id);
 }

@@ -744,7 +744,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get source => '소스';
 
   @override
-  String get split => '분할';
+  String get split => '듀얼';
 
   @override
   String get systemTheme => '시스템';
@@ -1040,6 +1040,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => '사이드바';
+
+  @override
+  String get contentViewMenu => '콘텐츠 보기';
 
   @override
   String get sidebarViewMenu => '사이드바 보기';
@@ -1522,10 +1525,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get alwaysLoadRemoteImages => '항상 원격 이미지 로드';
 
   @override
-  String get hideSidebar => '사이드바 패널 숨기기';
+  String get hideSidebar => '사이드바 숨기기';
 
   @override
-  String get showSidebar => '사이드바 패널 표시';
+  String get showSidebar => '사이드바 표시';
 
   @override
   String get showPreview => '미리보기 표시';

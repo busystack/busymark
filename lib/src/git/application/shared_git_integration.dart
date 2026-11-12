@@ -9,7 +9,6 @@ import 'dart:io';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -20,8 +19,6 @@ import '../../app/app_router.dart';
 import '../../app/git_dismissal.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
-import '../../app/command_registry.dart';
-import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_model.dart';
@@ -513,95 +510,6 @@ final class BusyMarkGitDraftStore
 
 final _drafts = BusyMarkGitDraftStore();
 
-// Git's local dispatcher must not intercept application commands such as
-// tab activation when their shortcuts bubble out of a focused Git control.
-class _GitCommandIntent extends Intent {
-  const _GitCommandIntent(this.commandId);
-  final String commandId;
-}
-
-Widget _gitCommands(
-  BuildContext context,
-  shared.GitSession session,
-  Widget child, {
-  bool enabled = true,
-}) {
-  final commands = BusyMarkCommandRegistry([
-    for (final action
-        in <(String, String, ShortcutActivator, Future<void> Function())>[
-          (
-            'refresh',
-            context.l10n.gitHostRefreshGitStatus,
-            const SingleActivator(LogicalKeyboardKey.f5),
-            session.refresh,
-          ),
-          (
-            'commit',
-            context.l10n.gitHostCommitStaged,
-            const SingleActivator(LogicalKeyboardKey.enter, control: true),
-            () async {
-              if (session.canCommit?.call() == true) {
-                await session.commitAction?.call(false);
-              }
-            },
-          ),
-          (
-            'branches',
-            context.l10n.gitHostGitBranches,
-            const SingleActivator(
-              LogicalKeyboardKey.keyB,
-              control: true,
-              shift: true,
-            ),
-            () => shared.GitWorkflowUi(context, session).branches(),
-          ),
-          (
-            'push',
-            context.l10n.gitHostReviewPush,
-            const SingleActivator(
-              LogicalKeyboardKey.keyP,
-              control: true,
-              shift: true,
-            ),
-            () => shared.GitWorkflowUi(context, session).push(),
-          ),
-        ])
-      BusyMarkCommand(
-        id: 'git.${action.$1}',
-        label: (_) => action.$2,
-        category: (_) => context.l10n.gitHostGit,
-        scope: BusyMarkCommandScope.git,
-        shortcut: BusyMarkShortcutDefinition(
-          label: action.$2,
-          activator: action.$3,
-        ),
-        execute: () async {
-          if (enabled) await action.$4();
-        },
-      ),
-  ]);
-  return BusyMarkCommandRegistryScope(
-    registry: commands,
-    child: Shortcuts(
-      shortcuts: commands.shortcutIntents(
-        scopes: {BusyMarkCommandScope.git},
-        intentFor: _GitCommandIntent.new,
-      ),
-      child: Actions(
-        actions: {
-          _GitCommandIntent: CallbackAction<_GitCommandIntent>(
-            onInvoke: (intent) {
-              unawaited(commands.execute(intent.commandId));
-              return null;
-            },
-          ),
-        },
-        child: child,
-      ),
-    ),
-  );
-}
-
 Future<bool> _ensureGitTrust(
   BuildContext context,
   WidgetRef ref,
@@ -697,6 +605,7 @@ shared.GitHost busyMarkGitHost(
   var reconcileWorkingFiles = true;
   final fallbackLocalizations = context.l10n;
   return shared.GitHost(
+    actionShortcutsEnabled: false,
     mountReview: (review) {
       if (!isMounted() || !context.mounted) return;
       final current = ref.read(workspaceControllerProvider).workspace;
@@ -1098,37 +1007,32 @@ class _BusyMarkSharedGitSidebarState
       return const Center(child: shared.GitLoading.spinner());
     }
     final session = _session!;
-    return _gitCommands(
-      context,
-      session,
-      shared.GitFeatureSidebar(
-        controller: session.feature,
-        view: widget.log
-            ? shared.GitSidebarView.log
-            : shared.GitSidebarView.commit,
-        onSelectView: widget.onSelectView,
-        active: widget.active,
-        trusted: trusted,
-        onTrust: () async {
-          if (await _ensureGitTrust(
-                context,
-                ref,
-                widget.workspace,
-                session.repository,
-              ) &&
-              mounted &&
-              identical(session, _session)) {
-            await session.refresh();
-          }
-        },
-        selectedComparison: selection,
-        reviewContext: () => (
-          ref.read(sharedGitReviewProvider)[widget.workspace.id]?.activeId,
-          ref.read(workspaceControllerProvider).activeBufferId,
-        ),
-        onReview: session.feature.open,
+    return shared.GitFeatureSidebar(
+      controller: session.feature,
+      view: widget.log
+          ? shared.GitSidebarView.log
+          : shared.GitSidebarView.commit,
+      onSelectView: widget.onSelectView,
+      active: widget.active,
+      trusted: trusted,
+      onTrust: () async {
+        if (await _ensureGitTrust(
+              context,
+              ref,
+              widget.workspace,
+              session.repository,
+            ) &&
+            mounted &&
+            identical(session, _session)) {
+          await session.refresh();
+        }
+      },
+      selectedComparison: selection,
+      reviewContext: () => (
+        ref.read(sharedGitReviewProvider)[widget.workspace.id]?.activeId,
+        ref.read(workspaceControllerProvider).activeBufferId,
       ),
-      enabled: trusted,
+      onReview: session.feature.open,
     );
   }
 }
@@ -1202,28 +1106,24 @@ class _BusyMarkSharedGitReviewState
         )
       : _session == null
       ? const Center(child: shared.GitLoading.spinner())
-      : _gitCommands(
-          context,
-          _session!,
-          shared.GitReviewSurface(
-            session: _session!,
-            review: widget.review,
-            isActive: () =>
-                mounted &&
-                ref
-                        .read(sharedGitReviewProvider)[widget.workspace.id]
-                        ?.activeId ==
-                    widget.review.id &&
-                identical(
-                  ref
+      : shared.GitReviewSurface(
+          session: _session!,
+          review: widget.review,
+          isActive: () =>
+              mounted &&
+              ref
                       .read(sharedGitReviewProvider)[widget.workspace.id]
-                      ?.entries
-                      .where((entry) => entry.id == widget.review.id)
-                      .firstOrNull,
-                  widget.review,
-                ),
-            onOpen: _session!.feature.open,
-          ),
+                      ?.activeId ==
+                  widget.review.id &&
+              identical(
+                ref
+                    .read(sharedGitReviewProvider)[widget.workspace.id]
+                    ?.entries
+                    .where((entry) => entry.id == widget.review.id)
+                    .firstOrNull,
+                widget.review,
+              ),
+          onOpen: _session!.feature.open,
         );
 }
 

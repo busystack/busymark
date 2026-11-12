@@ -743,7 +743,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get source => 'ソース';
 
   @override
-  String get split => '分割';
+  String get split => 'デュアル';
 
   @override
   String get systemTheme => 'システム';
@@ -1042,7 +1042,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shortcutGroupSidebar => 'サイドバー';
 
   @override
-  String get sidebarViewMenu => 'サイドバーの表示を選択';
+  String get contentViewMenu => 'コンテンツ表示';
+
+  @override
+  String get sidebarViewMenu => 'サイドバー表示';
 
   @override
   String get createMarkdownFile => 'Markdown ファイルを作成';
@@ -1522,10 +1525,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alwaysLoadRemoteImages => '常にリモート画像を読み込む';
 
   @override
-  String get hideSidebar => 'サイドバーパネルを非表示';
+  String get hideSidebar => 'サイドバーを隠す';
 
   @override
-  String get showSidebar => 'サイドバーパネルを表示';
+  String get showSidebar => 'サイドバーを表示';
 
   @override
   String get showPreview => 'プレビューを表示';

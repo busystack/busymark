@@ -773,7 +773,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get source => 'स्रोत';
 
   @override
-  String get split => 'विभाजित';
+  String get split => 'दोहरा';
 
   @override
   String get systemTheme => 'सिस्टम';
@@ -1082,6 +1082,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'साइडबार';
+
+  @override
+  String get contentViewMenu => 'सामग्री दृश्य';
 
   @override
   String get sidebarViewMenu => 'साइडबार दृश्य';
@@ -1580,10 +1583,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'दूरस्थ छवियाँ हमेशा लोड करें';
 
   @override
-  String get hideSidebar => 'साइडबार पैनल छिपाएँ';
+  String get hideSidebar => 'साइडबार छिपाएँ';
 
   @override
-  String get showSidebar => 'साइडबार पैनल दिखाएँ';
+  String get showSidebar => 'साइडबार दिखाएँ';
 
   @override
   String get showPreview => 'पूर्वावलोकन दिखाएँ';

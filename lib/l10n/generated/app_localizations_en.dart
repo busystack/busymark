@@ -770,7 +770,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get source => 'Source';
 
   @override
-  String get split => 'Split';
+  String get split => 'Dual';
 
   @override
   String get systemTheme => 'System';
@@ -1087,7 +1087,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutGroupSidebar => 'Sidebar';
 
   @override
-  String get sidebarViewMenu => 'Select sidebar view';
+  String get contentViewMenu => 'Content view';
+
+  @override
+  String get sidebarViewMenu => 'Sidebar view';
 
   @override
   String get createMarkdownFile => 'Create Markdown File';
@@ -1579,10 +1582,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Always load remote images';
 
   @override
-  String get hideSidebar => 'Hide sidebar panel';
+  String get hideSidebar => 'Hide sidebar';
 
   @override
-  String get showSidebar => 'Show sidebar panel';
+  String get showSidebar => 'Show sidebar';
 
   @override
   String get showPreview => 'Show preview';

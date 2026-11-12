@@ -1153,7 +1153,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           '${root.path}/old/target.md',
       'local reference navigation',
     );
-    await nativeShortcut('ctrl+1');
+    await sidebarView('F');
     await treeAction('old', expand: true);
     await treeAction('target.md', menu: 'Rename');
     await wait(
@@ -1270,7 +1270,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Writerside element references',
     );
     await capture('references-writerside-references');
-    await nativeShortcut('ctrl+1');
+    await sidebarView('F');
     await treeAction('topics', expand: true);
     await treeAction('target.topic', menu: 'Rename Topic File');
     await wait(
@@ -1362,7 +1362,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await ref
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
-    await nativeShortcut('ctrl+2');
+    await sidebarView('T');
     await wait(
       () => widgets<BusyMarkMenuButton<String>>().any(
         (w) => w.key == const ValueKey('writerside-instance-selector'),
@@ -1407,7 +1407,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'cross-module element UI navigation',
     );
     await workspace.openActiveFile(sourcePath);
-    await nativeShortcut('ctrl+2');
+    await sidebarView('T');
     await wait(
       () => widgets<BusyMarkMenuButton<String>>().any(
         (w) => w.key == const ValueKey('writerside-instance-selector'),
@@ -1444,7 +1444,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           targetPath,
       'include origin UI navigation',
     );
-    await nativeShortcut('ctrl+2');
+    await sidebarView('T');
     await wait(
       () => widgets<BusyMarkHeaderPopupMenuButton<String>>().any(
         (w) => w.key == const ValueKey('writerside-module-selector'),
@@ -1732,7 +1732,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     await capture('references-references-incoming');
     check(true, 'referencesRenderedLinkAndIncomingReferences');
-    await nativeShortcut('ctrl+1');
+    await sidebarView('F');
     await wait(
       () => widgets<ListTile>().any(
         (t) => t.key == ValueKey('nextcloud-note-${target.localId}'),
@@ -2585,6 +2585,13 @@ class _HarnessState extends ConsumerState<_Harness> {
     await capture(screenshot);
     ref.read(searchSessionProvider.notifier).close();
     check(true, screenshot);
+  }
+
+  Future<void> sidebarView(String letter) async {
+    await nativeShortcut('ctrl+shift+F9');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await nativeShortcut(letter.toLowerCase(), focusWindow: false);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
 
   Future<void> nativeShortcut(String key, {bool focusWindow = true}) async {

@@ -778,7 +778,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get source => 'Quelltext';
 
   @override
-  String get split => 'Geteilt';
+  String get split => 'Dual';
 
   @override
   String get systemTheme => 'Systemeinstellung';
@@ -1103,7 +1103,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortcutGroupSidebar => 'Seitenleiste';
 
   @override
-  String get sidebarViewMenu => 'Seitenleistenansicht auswählen';
+  String get contentViewMenu => 'Inhaltsansicht';
+
+  @override
+  String get sidebarViewMenu => 'Seitenleistenansicht';
 
   @override
   String get createMarkdownFile => 'Markdown-Datei erstellen';
@@ -1602,10 +1605,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Externe Bilder immer laden';
 
   @override
-  String get hideSidebar => 'Seitenbereich ausblenden';
+  String get hideSidebar => 'Seitenleiste ausblenden';
 
   @override
-  String get showSidebar => 'Seitenbereich anzeigen';
+  String get showSidebar => 'Seitenleiste anzeigen';
 
   @override
   String get showPreview => 'Vorschau anzeigen';

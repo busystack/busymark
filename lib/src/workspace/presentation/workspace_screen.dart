@@ -337,6 +337,30 @@ Future<void> _publishWritersideTitleDialog(
   }
 }
 
+final _sidebarSelectorRevealProvider =
+    NotifierProvider<_SidebarSelectorReveal, String?>(
+      _SidebarSelectorReveal.new,
+    );
+
+class _SidebarSelectorReveal extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void reveal(String workspaceId) => state = workspaceId;
+}
+
+final _sidebarViewMenuControllerProvider =
+    Provider<BusyMarkHeaderMenuController>((ref) {
+      final controller = BusyMarkHeaderMenuController();
+      ref.onDispose(controller.dispose);
+      return controller;
+    });
+final _contentViewMenuControllerProvider =
+    Provider<BusyMarkHeaderMenuController>((ref) {
+      final controller = BusyMarkHeaderMenuController();
+      ref.onDispose(controller.dispose);
+      return controller;
+    });
+
 class WorkspaceScreen extends ConsumerWidget {
   const WorkspaceScreen({super.key});
 
@@ -626,6 +650,30 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     });
     ref.listen(workspaceNavigationCommandProvider, (_, request) {
       if (request == null) return;
+      if (request.$1 == BusyMarkCommandIds.sidebarViewSelector) {
+        final menu = ref.read(_sidebarViewMenuControllerProvider);
+        final wasHidden = !ref
+            .read(appSettingsControllerProvider)
+            .sidebarVisible;
+        ref.read(_sidebarSelectorRevealProvider.notifier).reveal(workspace.id);
+        ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
+        unawaited(() async {
+          await settingsController.setSidebarVisible(true);
+          await WidgetsBinding.instance.endOfFrame;
+          if (wasHidden) await Future<void>.delayed(BusyMarkMotion.sidebar);
+          if (context.mounted) menu.open();
+        }());
+        return;
+      }
+      if (request.$1 == BusyMarkCommandIds.contentViewSelector) {
+        final menu = ref.read(_contentViewMenuControllerProvider);
+        ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
+        unawaited(() async {
+          await WidgetsBinding.instance.endOfFrame;
+          if (context.mounted) menu.open();
+        }());
+        return;
+      }
       final tab = switch (request.$1) {
         BusyMarkCommandIds.sidebarFiles => _SidebarTab.files,
         BusyMarkCommandIds.sidebarToc => _SidebarTab.toc,
@@ -732,7 +780,8 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                 builder: (context, constraints) {
                   final sidebarAvailable =
                       constraints.maxWidth >=
-                      BusyMarkSizes.workspaceSidebarBreakpoint;
+                          BusyMarkSizes.workspaceSidebarBreakpoint ||
+                      ref.watch(_sidebarSelectorRevealProvider) == workspace.id;
                   return LinuxPageFrame(
                     key: const ValueKey('workspace-page-frame'),
                     sidebarWidth: sidebarWidth,
@@ -810,8 +859,19 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                             BusyMarkHeaderPopupMenuButton<
                               DocumentViewModePreference
                             >(
-                              tooltip: context.l10n.viewMode,
-                              icon: _documentViewModeIcon(documentViewMode),
+                              key: const ValueKey(
+                                'workspace-content-view-menu',
+                              ),
+                              controller: ref.watch(
+                                _contentViewMenuControllerProvider,
+                              ),
+                              tooltip: context.l10n.contentViewMenu,
+                              shortcut:
+                                  commandRegistry[BusyMarkCommandIds
+                                          .contentViewSelector]
+                                      ?.shortcut
+                                      ?.label,
+                              icon: BusyMarkGlyphs.sidebarViews,
                               itemBuilder: (context) => [
                                 for (final mode
                                     in DocumentViewModePreference.values)
@@ -821,16 +881,24 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                                       context,
                                       mode,
                                     ),
+                                    mnemonic: _documentViewMnemonic(mode),
+                                    enabled: state.activeBuffer != null,
                                     icon: _documentViewModeIcon(mode),
-                                    shortcut: _documentViewModeShortcut(
+                                    shortcut: _documentViewMnemonic(mode),
+                                    gtkAccelerator: _documentViewMnemonic(
                                       mode,
-                                      commandRegistry,
-                                    ),
+                                    ).toLowerCase(),
                                     checked: mode == documentViewMode,
                                     trailingCheck: true,
                                   ),
                               ],
                               onSelected: (mode) {
+                                if (ref
+                                        .read(workspaceControllerProvider)
+                                        .activeBuffer ==
+                                    null) {
+                                  return;
+                                }
                                 ref
                                     .read(workspaceControllerProvider.notifier)
                                     .updateActiveEditorMode(mode);
@@ -1040,6 +1108,14 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     };
   }
 
+  String _documentViewMnemonic(DocumentViewModePreference mode) =>
+      switch (mode) {
+        DocumentViewModePreference.editor => 'E',
+        DocumentViewModePreference.source => 'S',
+        DocumentViewModePreference.preview => 'R',
+        DocumentViewModePreference.split => 'D',
+      };
+
   String _documentViewModeLabel(
     BuildContext context,
     DocumentViewModePreference mode,
@@ -1050,19 +1126,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       DocumentViewModePreference.preview => context.l10n.reading,
       DocumentViewModePreference.split => context.l10n.split,
     };
-  }
-
-  String _documentViewModeShortcut(
-    DocumentViewModePreference mode,
-    BusyMarkCommandRegistry commands,
-  ) {
-    final id = switch (mode) {
-      DocumentViewModePreference.editor => BusyMarkCommandIds.viewEditor,
-      DocumentViewModePreference.source => BusyMarkCommandIds.viewSource,
-      DocumentViewModePreference.preview => BusyMarkCommandIds.viewReading,
-      DocumentViewModePreference.split => BusyMarkCommandIds.viewSplit,
-    };
-    return commands[id]?.shortcut?.label ?? '';
   }
 
   Future<void> _showProblemsDialog(BuildContext context, WidgetRef ref) async {
@@ -2249,23 +2312,24 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
   };
 }
 
-String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
-  final commands =
-      BusyMarkCommandRegistryScope.read(context) ??
-      BusyMarkCommandCatalog.metadata;
-  final id = switch (tab) {
-    _SidebarTab.notes => BusyMarkCommandIds.sidebarFiles,
-    _SidebarTab.files => BusyMarkCommandIds.sidebarFiles,
-    _SidebarTab.toc => BusyMarkCommandIds.sidebarToc,
-    _SidebarTab.outline => BusyMarkCommandIds.sidebarOutline,
-    _SidebarTab.git => BusyMarkCommandIds.sidebarGit,
-    _SidebarTab.gitLog => null,
-    _SidebarTab.localHistory => BusyMarkCommandIds.localHistory,
-    _SidebarTab.clipboard => BusyMarkCommandIds.clipboardHistory,
-    _SidebarTab.references => BusyMarkCommandIds.references,
-  };
-  return id == null ? null : commands[id]?.shortcut?.label;
-}
+bool _sidebarTabAvailable(WidgetRef ref, _SidebarTab tab) => switch (tab) {
+  _SidebarTab.git ||
+  _SidebarTab.gitLog => ref.read(gitControllerProvider).repositoryInfo != null,
+  _SidebarTab.outline =>
+    ref.read(workspaceControllerProvider).activeBuffer != null,
+  _ => true,
+};
+
+String _sidebarTabMnemonic(_SidebarTab tab) => switch (tab) {
+  _SidebarTab.files || _SidebarTab.notes => 'F',
+  _SidebarTab.toc => 'T',
+  _SidebarTab.outline => 'O',
+  _SidebarTab.git => 'C',
+  _SidebarTab.gitLog => 'G',
+  _SidebarTab.localHistory => 'L',
+  _SidebarTab.clipboard => 'B',
+  _SidebarTab.references => 'R',
+};
 
 class _SidebarHeader extends ConsumerWidget {
   const _SidebarHeader({
@@ -2307,9 +2371,12 @@ class _SidebarHeader extends ConsumerWidget {
         BusyMarkPopupMenuItem(
           value: tab,
           label: _sidebarTabLabel(context, tab),
+          mnemonic: _sidebarTabMnemonic(tab),
+          enabled: _sidebarTabAvailable(ref, tab),
           icon: _sidebarTabIcon(tab, direction),
           iconColor: tab == _SidebarTab.git ? colors.foreground : null,
-          shortcut: _sidebarTabShortcut(context, tab),
+          shortcut: _sidebarTabMnemonic(tab),
+          gtkAccelerator: _sidebarTabMnemonic(tab).toLowerCase(),
           checked: tab == selectedTab,
           trailingCheck: true,
         ),
@@ -2346,13 +2413,23 @@ class _SidebarHeader extends ConsumerWidget {
                   const SizedBox(width: BusyMarkSpacing.sm),
                   buildTabMenu(
                     key: const ValueKey('workspace-sidebar-view-menu'),
+                    controller: ref.watch(_sidebarViewMenuControllerProvider),
                     tooltip: context.l10n.sidebarViewMenu,
+                    shortcut:
+                        (BusyMarkCommandRegistryScope.read(context) ??
+                                BusyMarkCommandCatalog
+                                    .metadata)[BusyMarkCommandIds
+                                .sidebarViewSelector]
+                            ?.shortcut
+                            ?.label,
                     icon: BusyMarkGlyphs.sidebarViews,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
                     highlightWhenOpen: false,
                     itemBuilder: (context) => tabMenuItems,
-                    onSelected: onSelectTab,
+                    onSelected: (tab) {
+                      if (_sidebarTabAvailable(ref, tab)) onSelectTab(tab);
+                    },
                   ),
                 ],
               ],

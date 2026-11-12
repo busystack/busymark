@@ -121,6 +121,12 @@ class DesktopRun:
         self.read(lambda value: value.get('done') == payload)
     def key(self, *names):
         self.send('key', names=list(names))
+    def sidebar_view(self, letter):
+        self.key('Control_L', 'Shift_L', 'F9')
+        self.wait_accessible(lambda rows: any(row['role'] == 'check menu item' and row['showing'] for row in rows), '_sidebar-selector-open')
+        self.key(letter.lower())
+        self.wait_accessible(lambda rows: not any(row['role'] == 'check menu item' and row['showing'] for row in rows), '_sidebar-selector-closed')
+
     def capture(self, name):
         self.send('wait', seconds=.3)
         self.send('capture', name=name)
@@ -586,7 +592,7 @@ def main():
         print(f'Native capture: {theme} {locale} scale {scale}', flush=True)
         desktop = DesktopRun(binary, target, repository, scale, locale=locale)
         rtl = locale == 'ar'
-        desktop.key('Control_L', '4')
+        desktop.sidebar_view('C')
         desktop.wait_sidebar(rtl)
         desktop.branches()
         desktop.capture('branches')
@@ -623,7 +629,7 @@ def main():
         desktop.send('resize', width=desktop.width, height=desktop.height)
         if locale == 'en' and scale == 1.0 and not many:
             desktop.selection_and_comparisons()
-        desktop.key('Control_L', '4')
+        desktop.sidebar_view('C')
         desktop.wait_sidebar(rtl)
         desktop.branches()
         desktop.send('resize', width=600, height=730)

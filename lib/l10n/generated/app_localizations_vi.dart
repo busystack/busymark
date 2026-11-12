@@ -769,7 +769,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get source => 'Mã nguồn';
 
   @override
-  String get split => 'Chia đôi';
+  String get split => 'Kép';
 
   @override
   String get systemTheme => 'Hệ thống';
@@ -1082,6 +1082,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Thanh bên';
+
+  @override
+  String get contentViewMenu => 'Chế độ xem nội dung';
 
   @override
   String get sidebarViewMenu => 'Chế độ xem thanh bên';
@@ -1577,10 +1580,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Luôn tải hình ảnh từ xa';
 
   @override
-  String get hideSidebar => 'Ẩn bảng điều khiển thanh bên';
+  String get hideSidebar => 'Ẩn thanh bên';
 
   @override
-  String get showSidebar => 'Hiện bảng điều khiển thanh bên';
+  String get showSidebar => 'Hiện thanh bên';
 
   @override
   String get showPreview => 'Hiện bản xem trước';

@@ -416,9 +416,9 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Dividido",
+  "split": "Dupla",
   "@split": {
-    "description": "Split view label."
+    "description": "Dual content view label (source and reading side by side)."
   },
   "systemTheme": "Sistema",
   "@systemTheme": {
@@ -808,6 +808,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
+  "contentViewMenu": "Visualização do conteúdo",
   "sidebarViewMenu": "Visualização da barra lateral",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
@@ -1347,11 +1348,11 @@
   "@alwaysLoadRemoteImages": {
     "description": "Dialog button that enables remote images globally."
   },
-  "hideSidebar": "Ocultar painel lateral",
+  "hideSidebar": "Ocultar barra lateral",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "Mostrar painel lateral",
+  "showSidebar": "Mostrar barra lateral",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
@@ -1396,9 +1397,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Índice",
+  "toc": "Sumário",
   "@toc": {
-    "description": "Writerside Topics sidebar tab label."
+    "description": "Writerside Table of Contents sidebar view label."
   },
   "tocActions": "Ações do sumário",
   "@tocActions": {

@@ -60,7 +60,7 @@ not modify or add undocumented Writerside project metadata.
 The native Linux context menus provide topic creation, linking, duplication,
 title editing, grouping, sorting, removal, and source navigation. BusyMark's
 AI, Git, clipboard and file actions follow the Writerside actions. Reading and
-Split remain the document preview modes; there is no separate Writerside
+Dual remain the document preview modes; there is no separate Writerside
 Preview tool window or claim of complete original IDE presentation parity.
 
 - **Add Local Markdown Files** imports selected files as siblings from the

@@ -293,9 +293,27 @@ class _DriverState extends ConsumerState<_Driver> {
     }
   }
 
-  Future<void> key(String key, {bool verifySearch = true}) async {
+  Future<void> sidebarView(String letter) async {
+    await key('ctrl+shift+F9');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await key(letter.toLowerCase(), verifySearch: false, focusWindow: false);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> contentView(String letter) async {
+    await key('ctrl+shift+F10');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    await key(letter.toLowerCase(), verifySearch: false, focusWindow: false);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> key(
+    String key, {
+    bool verifySearch = true,
+    bool focusWindow = true,
+  }) async {
     final focusRequest = search.focusRequest;
-    await windowManager.focus();
+    if (focusWindow) await windowManager.focus();
     final result = await Process.run(
       'python3',
       ['tools/nextcloud_notes_native_key.py', key],
@@ -460,7 +478,8 @@ class _DriverState extends ConsumerState<_Driver> {
     );
     await key('ctrl+shift+f');
     await query('scope needle');
-    await key('ctrl+3');
+    await key('ctrl+shift+F9');
+    await key('o');
     check(!search.active, 'ordinary Outline closes workspace search');
     await ref
         .read(busyMarkCommandRegistryProvider)
@@ -501,7 +520,7 @@ class _DriverState extends ConsumerState<_Driver> {
           ref.read(workspaceControllerProvider).activeBufferId == before.id,
       'history inspection never opens or restores a live document',
     );
-    await key('ctrl+5');
+    await sidebarView('L');
     await wait(
       () =>
           !search.active &&
@@ -1201,7 +1220,7 @@ pix.savev(sys.argv[1], 'png', [], [])
         return input;
       }
 
-      await key('ctrl+5', verifySearch: false);
+      await sidebarView('L');
       await wait(
         () => widgets<LocalHistoryPanel>().isNotEmpty,
         'ordinary History panel',
@@ -1487,7 +1506,7 @@ pix.savev(sys.argv[1], 'png', [], [])
       '${widget.output.path}/writerside/topics/outside-search.topic',
     );
     router.go('/workspace');
-    await key('ctrl+shift+1', verifySearch: false);
+    await contentView('E');
     await assign('source.declaration', 'ctrl+alt+y');
     await assign('writerside.uiControl', 'ctrl+alt+y');
     check(
@@ -1680,12 +1699,7 @@ pix.savev(sys.argv[1], 'png', [], [])
       DocumentViewModePreference.editor,
       DocumentViewModePreference.source,
     ]) {
-      await key(
-        mode == DocumentViewModePreference.source
-            ? 'ctrl+shift+2'
-            : 'ctrl+shift+1',
-        verifySearch: false,
-      );
+      await contentView(mode == DocumentViewModePreference.source ? 'S' : 'E');
       await wait(
         () => widgets<TextField>().any(
           (f) => mode == DocumentViewModePreference.source
@@ -1783,7 +1797,7 @@ pix.savev(sys.argv[1], 'png', [], [])
     );
     workspace.updateActiveText('Binding target\n');
     await workspace.saveActive();
-    await key('ctrl+shift+2', verifySearch: false);
+    await contentView('S');
     final layout = await Process.run('setxkbmap', [
       '-display',
       Platform.environment['DISPLAY']!,
@@ -1911,7 +1925,7 @@ pix.savev(sys.argv[1], 'png', [], [])
       () => router.routeInformationProvider.value.uri.path == '/workspace',
       'return after view unassignment',
     );
-    await key('ctrl+shift+1', verifySearch: false);
+    await contentView('E');
     await wait(
       () =>
           widgets<TextField>().any(
@@ -1923,7 +1937,7 @@ pix.savev(sys.argv[1], 'png', [], [])
     final beforeUnassignedView = ref
         .read(workspaceControllerProvider)
         .activeText;
-    await key('ctrl+shift+2', verifySearch: false);
+    await contentView('S');
     check(
       widgets<BusyMarkSourceEditor>().isEmpty &&
           ref.read(workspaceControllerProvider).activeText ==
@@ -2406,7 +2420,7 @@ pix.savev(sys.argv[1], 'png', [], [])
         'Documents Enter opens file',
       );
       await workspace.openActiveFile(file.path);
-      await key('ctrl+shift+2');
+      await contentView('S');
       await wait(
         () => widgets<BusyMarkSourceEditor>().isNotEmpty,
         'Source mode',
@@ -2443,10 +2457,10 @@ pix.savev(sys.argv[1], 'png', [], [])
       workspace.updateActiveText(
         '${ref.read(workspaceControllerProvider).activeText}\n## Unsaved target heading\n',
       );
-      await key('ctrl+3');
+      await sidebarView('O');
       check(
         !search.active && widgets<SearchHeaderField>().isEmpty,
-        'Ctrl+3 opens ordinary Outline without a query',
+        'Sidebar selector opens ordinary Outline without a query',
       );
       await key('ctrl+f');
       await wait(
@@ -2693,7 +2707,7 @@ pix.savev(sys.argv[1], 'png', [], [])
             hidden.path,
         'topic activation',
       );
-      await key('ctrl+shift+1');
+      await contentView('E');
       await wait(
         () => widgets<TextField>().any(
           (f) =>

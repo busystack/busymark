@@ -45,6 +45,8 @@ enum BusyMarkAppShortcutAction {
   closeTab,
   closeAllTabs,
   toggleSidebar,
+  sidebarViewSelector,
+  contentViewSelector,
 }
 
 abstract final class BusyMarkAppShortcuts {
@@ -216,69 +218,30 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.closeTab: closeTab,
         BusyMarkAppShortcutAction.closeAllTabs: closeAllTabs,
         BusyMarkAppShortcutAction.toggleSidebar: toggleSidebar,
+        BusyMarkAppShortcutAction.sidebarViewSelector:
+            BusyMarkShortcutDefinition(
+              label: 'Ctrl+Shift+F9',
+              activator: SingleActivator(
+                LogicalKeyboardKey.f9,
+                control: true,
+                shift: true,
+                includeRepeats: false,
+              ),
+            ),
+        BusyMarkAppShortcutAction.contentViewSelector:
+            BusyMarkShortcutDefinition(
+              label: 'Ctrl+Shift+F10',
+              activator: SingleActivator(
+                LogicalKeyboardKey.f10,
+                control: true,
+                shift: true,
+                includeRepeats: false,
+              ),
+            ),
       };
 }
 
 enum BusyMarkDocumentViewShortcutAction { editor, source, reading, split }
-
-abstract final class BusyMarkDocumentViewShortcuts {
-  const BusyMarkDocumentViewShortcuts._();
-
-  static const editorLabel = 'Ctrl+Shift+1';
-  static const sourceLabel = 'Ctrl+Shift+2';
-  static const readingLabel = 'Ctrl+Shift+3';
-  static const splitLabel = 'Ctrl+Shift+4';
-
-  static const editorGtkAccelerator = '<Primary><Shift>1';
-  static const sourceGtkAccelerator = '<Primary><Shift>2';
-  static const readingGtkAccelerator = '<Primary><Shift>3';
-  static const splitGtkAccelerator = '<Primary><Shift>4';
-
-  static const editor = BusyMarkShortcutDefinition(
-    label: editorLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.digit1,
-      control: true,
-      shift: true,
-    ),
-    gtkAccelerator: editorGtkAccelerator,
-  );
-  static const source = BusyMarkShortcutDefinition(
-    label: sourceLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.digit2,
-      control: true,
-      shift: true,
-    ),
-    gtkAccelerator: sourceGtkAccelerator,
-  );
-  static const reading = BusyMarkShortcutDefinition(
-    label: readingLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.digit3,
-      control: true,
-      shift: true,
-    ),
-    gtkAccelerator: readingGtkAccelerator,
-  );
-  static const split = BusyMarkShortcutDefinition(
-    label: splitLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.digit4,
-      control: true,
-      shift: true,
-    ),
-    gtkAccelerator: splitGtkAccelerator,
-  );
-
-  static const definitions =
-      <BusyMarkDocumentViewShortcutAction, BusyMarkShortcutDefinition>{
-        BusyMarkDocumentViewShortcutAction.editor: editor,
-        BusyMarkDocumentViewShortcutAction.source: source,
-        BusyMarkDocumentViewShortcutAction.reading: reading,
-        BusyMarkDocumentViewShortcutAction.split: split,
-      };
-}
 
 enum BusyMarkTextEditingShortcutAction {
   selectAll,
@@ -639,53 +602,6 @@ enum BusyMarkSidebarShortcutAction {
   git,
   localHistory,
   clipboardHistory,
-}
-
-abstract final class BusyMarkSidebarShortcuts {
-  const BusyMarkSidebarShortcuts._();
-
-  static const filesLabel = 'Ctrl+1';
-  static const tocLabel = 'Ctrl+2';
-  static const outlineLabel = 'Ctrl+3';
-  static const gitLabel = 'Ctrl+4';
-  static const localHistoryLabel = 'Ctrl+5';
-  static const clipboardHistoryLabel = 'Ctrl+6';
-
-  static const toggleSidebar = BusyMarkAppShortcuts.toggleSidebar;
-  static const files = BusyMarkShortcutDefinition(
-    label: filesLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit1, control: true),
-  );
-  static const toc = BusyMarkShortcutDefinition(
-    label: tocLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit2, control: true),
-  );
-  static const outline = BusyMarkShortcutDefinition(
-    label: outlineLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit3, control: true),
-  );
-  static const git = BusyMarkShortcutDefinition(
-    label: gitLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit4, control: true),
-  );
-  static const localHistory = BusyMarkShortcutDefinition(
-    label: localHistoryLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit5, control: true),
-  );
-  static const clipboardHistory = BusyMarkShortcutDefinition(
-    label: clipboardHistoryLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit6, control: true),
-  );
-
-  static const definitions =
-      <BusyMarkSidebarShortcutAction, BusyMarkShortcutDefinition>{
-        BusyMarkSidebarShortcutAction.files: files,
-        BusyMarkSidebarShortcutAction.toc: toc,
-        BusyMarkSidebarShortcutAction.outline: outline,
-        BusyMarkSidebarShortcutAction.git: git,
-        BusyMarkSidebarShortcutAction.localHistory: localHistory,
-        BusyMarkSidebarShortcutAction.clipboardHistory: clipboardHistory,
-      };
 }
 
 enum BusyMarkTreeShortcutAction { deleteSelection }

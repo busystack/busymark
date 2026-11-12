@@ -416,9 +416,9 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Розділений перегляд",
+  "split": "Подвійний",
   "@split": {
-    "description": "Split view label."
+    "description": "Dual content view label (source and reading side by side)."
   },
   "systemTheme": "Системна",
   "@systemTheme": {
@@ -808,7 +808,8 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "Подання бічної панелі",
+  "contentViewMenu": "Вигляд вмісту",
+  "sidebarViewMenu": "Вигляд бічної панелі",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },
@@ -1398,7 +1399,7 @@
   },
   "toc": "Зміст",
   "@toc": {
-    "description": "Writerside Topics sidebar tab label."
+    "description": "Writerside Table of Contents sidebar view label."
   },
   "tocActions": "Дії зі змістом",
   "@tocActions": {

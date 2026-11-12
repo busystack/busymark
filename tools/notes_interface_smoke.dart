@@ -314,6 +314,13 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
     await settle();
   }
 
+  Future<void> sidebarView(String letter) async {
+    await key('ctrl+shift+F9');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await key(letter.toLowerCase());
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+
   Future<void> key(String value) async {
     final result = await Process.run(
       '/usr/bin/python3',
@@ -807,8 +814,8 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
               .contains('Projects')) {
             throw StateError('Right did not expand the focused category');
           }
-          await key('ctrl+3');
-          await key('ctrl+1');
+          await sidebarView('O');
+          await sidebarView('F');
           await until(
             () => widgets<BusyMarkSidebarTreeRow>().any(
               (row) =>
@@ -945,7 +952,7 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
                 '# Heading ${i.toString().padLeft(2, '0')}\n\nParagraph $i.\n',
             ].join('\n'),
           );
-          await key('ctrl+3');
+          await sidebarView('O');
           BusyMarkSidebarTreeRow? focusedHeading() => FocusManager
               .instance
               .primaryFocus
@@ -998,9 +1005,9 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
         }
         await dialogs();
       }
-      await key('ctrl+3');
+      await sidebarView('O');
       await capture('outline-roundtrip');
-      await key('ctrl+1');
+      await sidebarView('F');
       if (widgets<NextcloudNotesSidebar>().isEmpty) {
         throw StateError('Notes did not reopen after Outline');
       }

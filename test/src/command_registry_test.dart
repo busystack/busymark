@@ -236,7 +236,7 @@ void main() {
             const BusyMarkKeyBinding(LogicalKeyboardKey.numpad3, control: true),
           )
           .map((c) => c.id),
-      ['sidebar.outline'],
+      isEmpty,
     );
     expect(
       BusyMarkCommandRegistry.contextsOverlap(
@@ -267,13 +267,7 @@ void main() {
     expect(custom['view.source']!.shortcut, isNull);
     expect(
       custom.blockedDefaultIntents({BusyMarkCommandScope.documentView}),
-      contains(
-        const SingleActivator(
-          LogicalKeyboardKey.digit2,
-          control: true,
-          shift: true,
-        ),
-      ),
+      isEmpty,
     );
   });
   test(
@@ -513,7 +507,8 @@ void main() {
     const expected = {
       'search.find': 'Ctrl+F',
       'search.workspace': 'Ctrl+Shift+F',
-      'sidebar.outline': 'Ctrl+3',
+      'view.sidebarSelector': 'Ctrl+Shift+F9',
+      'view.contentSelector': 'Ctrl+Shift+F10',
       'workspace.quickOpen': 'Ctrl+Shift+D',
       'search.topics': 'Ctrl+Shift+T',
       'search.recent': 'Ctrl+Shift+R',
@@ -596,13 +591,10 @@ void main() {
       registry[BusyMarkCommandIds.syntaxReference]?.shortcut?.label,
       'Ctrl+Alt+M',
     );
-    expect(
-      registry[BusyMarkCommandIds.localHistory]?.shortcut?.label,
-      'Ctrl+5',
-    );
+    expect(registry[BusyMarkCommandIds.localHistory]?.shortcut?.label, isNull);
     expect(
       registry[BusyMarkCommandIds.clipboardHistory]?.shortcut?.label,
-      'Ctrl+6',
+      isNull,
     );
     expect(
       registry[BusyMarkCommandIds.localHistory]?.scope,

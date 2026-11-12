@@ -1133,7 +1133,7 @@ void main() {
                   ),
                   BusyMarkPopupMenuItem<String>(
                     value: 'split',
-                    label: 'Split',
+                    label: 'Dual',
                     icon: BusyMarkGlyphs.splitView,
                     shortcut: 'Ctrl+4',
                     trailingCheck: true,
@@ -1183,7 +1183,7 @@ void main() {
           'separator': false,
         },
         {
-          'label': 'Split',
+          'label': 'Dual',
           'icon': 'sidebar-show-right-symbolic',
           'shortcut': 'Ctrl+4',
           'enabled': true,

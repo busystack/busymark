@@ -775,7 +775,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get source => 'Kilde';
 
   @override
-  String get split => 'Delt';
+  String get split => 'Dobbel';
 
   @override
   String get systemTheme => 'System';
@@ -1090,6 +1090,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Sidefelt';
+
+  @override
+  String get contentViewMenu => 'Innholdsvisning';
 
   @override
   String get sidebarViewMenu => 'Sidefeltvisning';
@@ -1587,10 +1590,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Last alltid inn eksterne bilder';
 
   @override
-  String get hideSidebar => 'Skjul sidepanel';
+  String get hideSidebar => 'Skjul sidefelt';
 
   @override
-  String get showSidebar => 'Vis sidepanel';
+  String get showSidebar => 'Vis sidefelt';
 
   @override
   String get showPreview => 'Vis forhåndsvisning';

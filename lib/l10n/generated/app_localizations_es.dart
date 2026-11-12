@@ -774,7 +774,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get source => 'Código fuente';
 
   @override
-  String get split => 'Vista dividida';
+  String get split => 'Dual';
 
   @override
   String get systemTheme => 'Sistema';
@@ -1098,6 +1098,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Barra lateral';
+
+  @override
+  String get contentViewMenu => 'Vista del contenido';
 
   @override
   String get sidebarViewMenu => 'Vista de la barra lateral';
@@ -1600,10 +1603,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Cargar siempre las imágenes remotas';
 
   @override
-  String get hideSidebar => 'Ocultar panel lateral';
+  String get hideSidebar => 'Ocultar barra lateral';
 
   @override
-  String get showSidebar => 'Mostrar panel lateral';
+  String get showSidebar => 'Mostrar barra lateral';
 
   @override
   String get showPreview => 'Mostrar vista previa';
@@ -1642,7 +1645,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get files => 'Archivos';
 
   @override
-  String get toc => 'Tabla de contenidos';
+  String get toc => 'Tabla de contenido';
 
   @override
   String get tocActions => 'Acciones del índice';

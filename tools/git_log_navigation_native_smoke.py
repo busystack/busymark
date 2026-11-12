@@ -76,7 +76,7 @@ def main():
         print(f'Native navigation: {theme} {locale} {scale}', flush=True)
         d = DesktopRun(binary, target, repository, scale)
         rtl = locale == 'ar'
-        d.key('Control_L', '4')
+        d.sidebar_view('C')
         d.wait_sidebar(rtl)
         d.log_view(rtl)
         d.send('move', x=d.width//2, y=500)

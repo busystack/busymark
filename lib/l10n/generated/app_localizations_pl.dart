@@ -770,7 +770,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get source => 'Źródło';
 
   @override
-  String get split => 'Dzielony';
+  String get split => 'Podwójny';
 
   @override
   String get systemTheme => 'Systemowy';
@@ -1092,6 +1092,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Pasek boczny';
+
+  @override
+  String get contentViewMenu => 'Widok treści';
 
   @override
   String get sidebarViewMenu => 'Widok paska bocznego';
@@ -1597,10 +1600,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Zawsze wczytuj obrazy zdalne';
 
   @override
-  String get hideSidebar => 'Ukryj panel boczny';
+  String get hideSidebar => 'Ukryj pasek boczny';
 
   @override
-  String get showSidebar => 'Pokaż panel boczny';
+  String get showSidebar => 'Pokaż pasek boczny';
 
   @override
   String get showPreview => 'Pokaż podgląd';

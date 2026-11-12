@@ -12,12 +12,14 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
   />
 </a>
 <p align="center">
-  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view" width="900">
+  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark Dual source and reading view" width="900">
 </p>
+
+See the [keyboard view selection guide](docs/keyboard-views.md) for selector letters, configurable bindings, and standard context menus.
 
 ## Features
 
-* **Markdown editing** — Source, Editor, Reading, and Split views with formatting tools, syntax highlighting, code folding, tables, images, links, code blocks, callouts, collapsible content, and document diagnostics.
+* **Markdown editing** — Source, Editor, Reading, and Dual views with formatting tools, syntax highlighting, code folding, tables, images, links, code blocks, callouts, collapsible content, and document diagnostics.
 * **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
 * **Nextcloud Notes** — Connect to a Nextcloud server, create and edit notes offline, synchronize changes, search and filter notes, manage categories and favorites, and work with attachments.
 * **References and links** — Incoming/outgoing references, document/topic/heading target chooser, reviewed local Markdown rename/move, and portable Nextcloud note URLs. See [reference workflows](docs/references.md).
@@ -108,7 +110,7 @@ own Git semantics and specialized views; BusyMark has no BusyFiles daemon
 dependency. Repository-wide staged contents remain visible when a workspace is
 only a subfolder, and history snapshots open read-only.
 
-Choose **Commit** from **Sidebar view** (Ctrl+4) for working changes and commit
+Choose **Commit** from **Sidebar view** (Ctrl+Shift+F9, then C) for working changes and commit
 messages. **Git Log** is a separate sidebar: its selected-commit button opens
 the graph/history selector, with commit information above Changed files.
 Click a staged, unstaged or historical file to open an ordinary comparison tab;
@@ -187,9 +189,9 @@ by command name or path. The selected SDK must match the pinned version.
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view">
+      <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark Dual source and reading view">
       <br>
-      <sub><b>Split view</b> with Markdown source and rendered document.</sub>
+      <sub><b>Dual view</b> with Markdown source and rendered document.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/busymark-editor-view.png" alt="BusyMark editor view">

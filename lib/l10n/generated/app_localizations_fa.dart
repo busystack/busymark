@@ -768,7 +768,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get source => 'متن منبع';
 
   @override
-  String get split => 'تقسیم‌شده';
+  String get split => 'دوگانه';
 
   @override
   String get systemTheme => 'سیستم';
@@ -1079,6 +1079,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'نوار کناری';
+
+  @override
+  String get contentViewMenu => 'نمای محتوا';
 
   @override
   String get sidebarViewMenu => 'نمای نوار کناری';
@@ -1598,10 +1601,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'همیشه تصاویر راه دور بارگیری شوند';
 
   @override
-  String get hideSidebar => 'پنهان کردن پنل کناری';
+  String get hideSidebar => 'پنهان کردن نوار کناری';
 
   @override
-  String get showSidebar => 'نمایش پنل کناری';
+  String get showSidebar => 'نمایش نوار کناری';
 
   @override
   String get showPreview => 'نمایش پیش‌نمایش';

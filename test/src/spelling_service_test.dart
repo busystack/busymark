@@ -5950,7 +5950,7 @@ const _spellingSettingsHeaderLabels = HeaderBarLabels(
   editor: 'Editor',
   source: 'Source',
   preview: 'Preview',
-  split: 'Split',
+  split: 'Dual',
   viewMode: 'View mode',
   editorShortcut: '',
   editorGtkAccelerator: '',

@@ -780,7 +780,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get source => 'Source';
 
   @override
-  String get split => 'Fractionné';
+  String get split => 'Double';
 
   @override
   String get systemTheme => 'Système';
@@ -1106,7 +1106,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shortcutGroupSidebar => 'Barre latérale';
 
   @override
-  String get sidebarViewMenu => 'Vue de la barre latérale';
+  String get contentViewMenu => 'Vue du contenu';
+
+  @override
+  String get sidebarViewMenu => 'Vue du panneau latéral';
 
   @override
   String get createMarkdownFile => 'Créer un fichier Markdown';

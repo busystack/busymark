@@ -416,9 +416,9 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Разделённый вид",
+  "split": "Двойной",
   "@split": {
-    "description": "Split view label."
+    "description": "Dual content view label (source and reading side by side)."
   },
   "systemTheme": "Как в системе",
   "@systemTheme": {
@@ -808,6 +808,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
+  "contentViewMenu": "Вид содержимого",
   "sidebarViewMenu": "Вид боковой панели",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
@@ -1398,7 +1399,7 @@
   },
   "toc": "Оглавление",
   "@toc": {
-    "description": "Writerside Topics sidebar tab label."
+    "description": "Writerside Table of Contents sidebar view label."
   },
   "tocActions": "Действия с оглавлением",
   "@tocActions": {

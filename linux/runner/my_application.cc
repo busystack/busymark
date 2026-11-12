@@ -625,7 +625,11 @@ static gboolean validate_native_menu_entries(FlValue* entries,
         (fl_value_lookup_string(entry, "gtkAccelerator") != nullptr &&
          fl_lookup_string_arg(entry, "gtkAccelerator") == nullptr) ||
         (fl_value_lookup_string(entry, "shortcut") != nullptr &&
-         fl_lookup_string_arg(entry, "shortcut") == nullptr)) {
+         fl_lookup_string_arg(entry, "shortcut") == nullptr) ||
+        (fl_value_lookup_string(entry, "mnemonic") != nullptr &&
+         (fl_lookup_string_arg(entry, "mnemonic") == nullptr ||
+          strlen(fl_lookup_string_arg(entry, "mnemonic")) != 1 ||
+          !g_ascii_isalpha(fl_lookup_string_arg(entry, "mnemonic")[0])))) {
       respond_native_menu_argument_error(
           method_call,
           "entries must contain valid command or separator presentation.");
@@ -754,6 +758,12 @@ static void build_native_menu_model(FlValue* entries,
                                       g_variant_new_boolean(selected))
                                 : g_simple_action_new(action_name, nullptr);
     g_simple_action_set_enabled(action, ancestors_enabled && enabled);
+    const gchar* mnemonic = fl_lookup_string_arg(entry, "mnemonic");
+    if (mnemonic != nullptr && strlen(mnemonic) == 1 &&
+        g_ascii_isalpha(mnemonic[0])) {
+      g_object_set_data(G_OBJECT(action), "busymark-selector-mnemonic",
+                        GUINT_TO_POINTER(g_ascii_tolower(mnemonic[0])));
+    }
     g_object_set_data(G_OBJECT(action), kNativeMenuActionIndexKey,
                       GINT_TO_POINTER(static_cast<gint>(entry_index) + 1));
     g_signal_connect(
@@ -836,6 +846,33 @@ static void set_native_menu_direction(GtkWidget* widget, gpointer data) {
   if (GTK_IS_CONTAINER(widget)) {
     gtk_container_foreach(GTK_CONTAINER(widget), set_native_menu_direction, data);
   }
+}
+
+// Selector letters are explicit metadata, never inferred from translated
+// labels or row positions. GTK keeps ownership of traversal and dismissal.
+static gboolean native_menu_mnemonic_key_cb(GtkWidget* menu,
+                                            GdkEventKey* event,
+                                            gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  if ((event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK | GDK_SUPER_MASK |
+                       GDK_META_MASK)) != 0) return GDK_EVENT_PROPAGATE;
+  const guint key = gdk_keyval_to_lower(event->keyval);
+  g_auto(GStrv) names = g_action_group_list_actions(
+      G_ACTION_GROUP(session->action_group));
+  for (gchar** name = names; *name != nullptr; ++name) {
+    GAction* action = g_action_map_lookup_action(
+        G_ACTION_MAP(session->action_group), *name);
+    const guint mnemonic = GPOINTER_TO_UINT(g_object_get_data(
+        G_OBJECT(action), "busymark-selector-mnemonic"));
+    if (mnemonic == 0 || mnemonic != key) continue;
+    if (g_action_get_enabled(action)) {
+      g_action_activate(action, nullptr);
+      gtk_menu_shell_deactivate(GTK_MENU_SHELL(menu));
+    }
+    // A disabled mnemonic is still owned by this menu.
+    return GDK_EVENT_STOP;
+  }
+  return GDK_EVENT_PROPAGATE;
 }
 
 static void show_native_menu(NativeMenuHandlerData* data,
@@ -942,6 +979,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
     return;
   }
   g_object_ref_sink(session->menu);
+  g_signal_connect(session->menu, "key-press-event",
+                   G_CALLBACK(native_menu_mnemonic_key_cb), session);
   gtk_menu_attach_to_widget(GTK_MENU(session->menu), data->view, nullptr);
   set_native_menu_direction(session->menu, GINT_TO_POINTER(direction));
   gtk_widget_show_all(session->menu);

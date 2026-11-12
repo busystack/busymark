@@ -534,9 +534,9 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Chia đôi",
+  "split": "Kép",
   "@split": {
-    "description": "Split view label."
+    "description": "Dual content view label (source and reading side by side)."
   },
   "systemTheme": "Hệ thống",
   "@systemTheme": {
@@ -926,6 +926,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
+  "contentViewMenu": "Chế độ xem nội dung",
   "sidebarViewMenu": "Chế độ xem thanh bên",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
@@ -1511,11 +1512,11 @@
   "@alwaysLoadRemoteImages": {
     "description": "Dialog button that enables remote images globally."
   },
-  "hideSidebar": "Ẩn bảng điều khiển thanh bên",
+  "hideSidebar": "Ẩn thanh bên",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar panel."
   },
-  "showSidebar": "Hiện bảng điều khiển thanh bên",
+  "showSidebar": "Hiện thanh bên",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar panel."
   },
@@ -1562,7 +1563,7 @@
   },
   "toc": "Mục lục",
   "@toc": {
-    "description": "Writerside Topics sidebar tab label."
+    "description": "Writerside Table of Contents sidebar view label."
   },
   "tocActions": "Thao tác với mục lục",
   "@tocActions": {

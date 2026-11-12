@@ -874,7 +874,7 @@ void main() {
     expect(workspace, contains('icon: BusyMarkGlyphs.sidebarViews'));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
-      contains('sidebarViews = YaruIcons.app_grid'),
+      contains('sidebarViews = YaruIcons.display_layout'),
     );
     expect(workspace, isNot(contains('icon: selectedTabMenuItem.icon')));
     expect(workspace, contains('transparent: true'));
@@ -886,7 +886,8 @@ void main() {
       workspace,
       matches(RegExp(r'icon: _sidebarTabIcon\(tab, direction\)')),
     );
-    expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
+    expect(workspace, contains('shortcut: _sidebarTabMnemonic(tab)'));
+    expect(workspace, contains('mnemonic: _sidebarTabMnemonic(tab)'));
     expect(
       workspace,
       isNot(contains('BusyMarkSidebarShortcuts.history.activator')),

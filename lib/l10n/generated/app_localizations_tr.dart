@@ -769,7 +769,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get source => 'Kaynak';
 
   @override
-  String get split => 'Bölünmüş görünüm';
+  String get split => 'İkili';
 
   @override
   String get systemTheme => 'Sistem';
@@ -1086,6 +1086,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Kenar çubuğu';
+
+  @override
+  String get contentViewMenu => 'İçerik görünümü';
 
   @override
   String get sidebarViewMenu => 'Kenar çubuğu görünümü';
@@ -1583,10 +1586,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Harici görselleri her zaman yükle';
 
   @override
-  String get hideSidebar => 'Kenar çubuğu panelini gizle';
+  String get hideSidebar => 'Kenar çubuğunu gizle';
 
   @override
-  String get showSidebar => 'Kenar çubuğu panelini göster';
+  String get showSidebar => 'Kenar çubuğunu göster';
 
   @override
   String get showPreview => 'Önizlemeyi göster';

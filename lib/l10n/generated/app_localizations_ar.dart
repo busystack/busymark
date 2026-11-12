@@ -763,7 +763,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get source => 'المصدر';
 
   @override
-  String get split => 'تقسيم';
+  String get split => 'مزدوج';
 
   @override
   String get systemTheme => 'النظام';
@@ -1074,7 +1074,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutGroupSidebar => 'الشريط الجانبي';
 
   @override
-  String get sidebarViewMenu => 'اختيار عرض الشريط الجانبي';
+  String get contentViewMenu => 'عرض المحتوى';
+
+  @override
+  String get sidebarViewMenu => 'عرض الشريط الجانبي';
 
   @override
   String get createMarkdownFile => 'إنشاء ملف Markdown';
@@ -1573,10 +1576,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'تحميل الصور البعيدة دائمًا';
 
   @override
-  String get hideSidebar => 'إخفاء اللوحة الجانبية';
+  String get hideSidebar => 'إخفاء الشريط الجانبي';
 
   @override
-  String get showSidebar => 'إظهار اللوحة الجانبية';
+  String get showSidebar => 'إظهار الشريط الجانبي';
 
   @override
   String get showPreview => 'إظهار المعاينة';

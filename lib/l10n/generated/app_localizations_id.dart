@@ -771,7 +771,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get source => 'Sumber';
 
   @override
-  String get split => 'Pisahkan';
+  String get split => 'Ganda';
 
   @override
   String get systemTheme => 'Sistem';
@@ -1089,6 +1089,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Bilah samping';
+
+  @override
+  String get contentViewMenu => 'Tampilan konten';
 
   @override
   String get sidebarViewMenu => 'Tampilan bilah sisi';
@@ -1583,10 +1586,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Selalu muat gambar jarak jauh';
 
   @override
-  String get hideSidebar => 'Sembunyikan panel bilah sisi';
+  String get hideSidebar => 'Sembunyikan bilah sisi';
 
   @override
-  String get showSidebar => 'Tampilkan panel bilah sisi';
+  String get showSidebar => 'Tampilkan bilah sisi';
 
   @override
   String get showPreview => 'Tampilkan pratinjau';
@@ -1626,7 +1629,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'Daftar Isi';
+  String get toc => 'Daftar isi';
 
   @override
   String get tocActions => 'Tindakan TOC';

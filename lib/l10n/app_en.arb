@@ -431,8 +431,8 @@
   "@settings": {"description": "Settings action label."},
   "source": "Source",
   "@source": {"description": "Source view label."},
-  "split": "Split",
-  "@split": {"description": "Split view label."},
+  "split": "Dual",
+  "@split": {"description": "Dual content view label (source and reading side by side)."},
   "systemTheme": "System",
   "@systemTheme": {"description": "System theme option."},
   "theme": "Theme",
@@ -632,7 +632,9 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "Select sidebar view",
+  "contentViewMenu": "Content view",
+  "@contentViewMenu": {"description": "Content view selector tooltip and accessible label."},
+  "sidebarViewMenu": "Sidebar view",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },
@@ -938,9 +940,9 @@
   "alwaysLoadRemoteImages": "Always load remote images",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
-  "hideSidebar": "Hide sidebar panel",
+  "hideSidebar": "Hide sidebar",
   "@hideSidebar": {"description": "Tooltip for hiding the workspace sidebar panel."},
-  "showSidebar": "Show sidebar panel",
+  "showSidebar": "Show sidebar",
   "@showSidebar": {"description": "Tooltip for showing the workspace sidebar panel."},
   "showPreview": "Show preview",
   "@showPreview": {"description": "Tooltip for showing the preview pane."},
@@ -964,7 +966,7 @@
   "files": "Files",
   "@files": {"description": "Files sidebar tab label."},
   "toc": "Table of Contents",
-  "@toc": {"description": "Writerside Topics sidebar tab label."},
+  "@toc": {"description": "Writerside Table of Contents sidebar view label."},
   "tocActions": "TOC actions",
   "@tocActions": {"description": "Tooltip for the Writerside TOC action menu button."},
   "markdownUnsaved": "Markdown - unsaved",

@@ -536,9 +536,9 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "拆分",
+  "split": "双视图",
   "@split": {
-    "description": "Split view label."
+    "description": "Dual content view label (source and reading side by side)."
   },
   "systemTheme": "系统",
   "@systemTheme": {
@@ -928,6 +928,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
+  "contentViewMenu": "内容视图",
   "sidebarViewMenu": "侧边栏视图",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
@@ -1513,11 +1514,11 @@
   "@alwaysLoadRemoteImages": {
     "description": "Dialog button that enables remote images globally."
   },
-  "hideSidebar": "隐藏侧边栏面板",
+  "hideSidebar": "隐藏侧边栏",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar panel."
   },
-  "showSidebar": "显示侧边栏面板",
+  "showSidebar": "显示侧边栏",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar panel."
   },
@@ -1564,7 +1565,7 @@
   },
   "toc": "目录",
   "@toc": {
-    "description": "Writerside Topics sidebar tab label."
+    "description": "Writerside Table of Contents sidebar view label."
   },
   "tocActions": "目录操作",
   "@tocActions": {

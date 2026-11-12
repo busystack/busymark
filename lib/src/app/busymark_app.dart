@@ -100,6 +100,8 @@ final _busyMarkDefaultCommandRegistryProvider =
       final defaults = BusyMarkCommandCatalog.create(
         executions: {
           for (final id in [
+            BusyMarkCommandIds.sidebarViewSelector,
+            BusyMarkCommandIds.contentViewSelector,
             BusyMarkCommandIds.sidebarFiles,
             BusyMarkCommandIds.sidebarToc,
             BusyMarkCommandIds.sidebarOutline,
@@ -133,6 +135,19 @@ final _busyMarkDefaultCommandRegistryProvider =
                 ref.read(searchSessionProvider.notifier).workspaceVisible &&
                 ref.read(workspaceControllerProvider).workspace?.isRemote ==
                     true,
+          BusyMarkCommandIds.sidebarViewSelector: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.contentViewSelector: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).activeBuffer != null &&
+              ref
+                      .read(sharedGitReviewProvider)[ref
+                          .read(workspaceControllerProvider)
+                          .workspace
+                          ?.id]
+                      ?.activeId ==
+                  null,
           BusyMarkCommandIds.sidebarFiles: () =>
               ref.read(searchSessionProvider.notifier).workspaceVisible &&
               ref.read(workspaceControllerProvider).workspace != null,
@@ -1350,16 +1365,6 @@ class _BusyMarkSearchShortcutHandlerState
     )) {
       unawaited(commands.execute(BusyMarkCommandIds.sidebarOutline));
       return true;
-    }
-    // HardwareKeyboard calls every registered handler, even when the focused
-    // Git view handles the same key. Let its local shortcuts own search and
-    // operation combinations instead of also opening authoring search.
-    if (focused != null &&
-        BusyMarkCommandRegistryScope.read(focused)?.commands.any(
-              (command) => command.scope == BusyMarkCommandScope.git,
-            ) ==
-            true) {
-      return false;
     }
     for (final entry in searchCommandDestinations.entries) {
       if (commands.shortcutAccepts(entry.key, event, keyboard)) {

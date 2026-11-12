@@ -719,7 +719,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get source => '源代码';
 
   @override
-  String get split => '拆分';
+  String get split => '双视图';
 
   @override
   String get systemTheme => '系统';
@@ -1012,6 +1012,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => '侧边栏';
+
+  @override
+  String get contentViewMenu => '内容视图';
 
   @override
   String get sidebarViewMenu => '侧边栏视图';
@@ -1487,10 +1490,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alwaysLoadRemoteImages => '始终加载远程图像';
 
   @override
-  String get hideSidebar => '隐藏侧边栏面板';
+  String get hideSidebar => '隐藏侧边栏';
 
   @override
-  String get showSidebar => '显示侧边栏面板';
+  String get showSidebar => '显示侧边栏';
 
   @override
   String get showPreview => '显示预览';
@@ -9313,7 +9316,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get source => '源代码';
 
   @override
-  String get split => '拆分';
+  String get split => '双视图';
 
   @override
   String get systemTheme => '系统';
@@ -9606,6 +9609,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get shortcutGroupSidebar => '侧边栏';
+
+  @override
+  String get contentViewMenu => '内容视图';
 
   @override
   String get sidebarViewMenu => '侧边栏视图';
@@ -10081,10 +10087,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get alwaysLoadRemoteImages => '始终加载远程图像';
 
   @override
-  String get hideSidebar => '隐藏侧边栏面板';
+  String get hideSidebar => '隐藏侧边栏';
 
   @override
-  String get showSidebar => '显示侧边栏面板';
+  String get showSidebar => '显示侧边栏';
 
   @override
   String get showPreview => '显示预览';

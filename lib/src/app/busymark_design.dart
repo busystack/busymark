@@ -1272,6 +1272,50 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   }
 }
 
+/// Opens an existing header menu after Flutter has observed the trigger's key
+/// releases. GTK grabs input while a native menu is open.
+class BusyMarkHeaderMenuController {
+  VoidCallback? _show;
+  bool _pending = false;
+  bool _listening = false;
+
+  void open() {
+    _pending = true;
+    _tryOpen();
+  }
+
+  bool _released(KeyEvent event) {
+    _tryOpen();
+    return false;
+  }
+
+  void _tryOpen() {
+    if (!_pending || _show == null) return;
+    if (HardwareKeyboard.instance.physicalKeysPressed.isNotEmpty) {
+      if (!_listening) {
+        HardwareKeyboard.instance.addHandler(_released);
+        _listening = true;
+      }
+      return;
+    }
+    _stopListening();
+    _pending = false;
+    // Let the release finish propagating before the host toolkit grabs input.
+    scheduleMicrotask(() => _show?.call());
+  }
+
+  void _stopListening() {
+    if (_listening) HardwareKeyboard.instance.removeHandler(_released);
+    _listening = false;
+  }
+
+  void dispose() {
+    _stopListening();
+    _pending = false;
+    _show = null;
+  }
+}
+
 class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   const BusyMarkHeaderPopupMenuButton({
     super.key,
@@ -1280,6 +1324,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
     required this.itemBuilder,
     required this.onSelected,
     this.onCanceled,
+    this.controller,
     this.transparent = true,
     this.elevated = false,
     this.shortcut,
@@ -1297,6 +1342,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
     required this.itemBuilder,
     required this.onSelected,
     this.onCanceled,
+    this.controller,
     this.transparent = true,
     this.elevated = false,
     this.shortcut,
@@ -1312,6 +1358,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   final FutureOr<List<PopupMenuEntry<T>>> Function(BuildContext context)
   itemBuilder;
   final ValueChanged<T> onSelected;
+  final BusyMarkHeaderMenuController? controller;
 
   /// Identifies this presentation's trigger subtree for focus-return policy.
   final ValueChanged<BuildContext>? onCanceled;
@@ -1340,7 +1387,32 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
   var _open = false;
 
   @override
+  void initState() {
+    super.initState();
+    _attachController();
+  }
+
+  void _openFromKeyboard() => unawaited(_loadAndShowMenu(focusFirst: true));
+
+  void _attachController() {
+    widget.controller?._show = _openFromKeyboard;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.controller?._tryOpen();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant BusyMarkHeaderPopupMenuButton<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?._show = null;
+      _attachController();
+    }
+  }
+
+  @override
   void dispose() {
+    widget.controller?._show = null;
     final session = _activeMenuSession;
     _activeMenuSession = null;
     if (session != null) {
@@ -1371,7 +1443,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
     );
   }
 
-  Future<void> _loadAndShowMenu() async {
+  Future<void> _loadAndShowMenu({bool focusFirst = false}) async {
     if (_loading || _open) {
       return;
     }
@@ -1380,6 +1452,9 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
     // rebuilt caller may now represent another buffer or element.
     final onSelected = widget.onSelected;
     final onCanceled = widget.onCanceled;
+    final previousFocus = FocusManager.instance.primaryFocus;
+    final restoreSelectorFocus = widget.controller != null;
+    final owningRoute = ModalRoute.of(context);
     try {
       final items = await widget.itemBuilder(context);
       if (!mounted || items.isEmpty) {
@@ -1401,6 +1476,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           nativeMenuService: widget.nativeMenuService,
           session: session,
           requireNative: widget._requiresNative,
+          focusFirst: focusFirst,
         );
       } finally {
         if (mounted && identical(_activeMenuSession, session)) {
@@ -1425,6 +1501,11 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
         );
       }
     } finally {
+      if (restoreSelectorFocus &&
+          (owningRoute?.isCurrent ?? true) &&
+          previousFocus?.context?.mounted == true) {
+        previousFocus!.requestFocus();
+      }
       if (mounted) {
         setState(() => _loading = false);
       }
@@ -1615,6 +1696,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           iconColorArgb: item.iconColor?.toARGB32(),
           shortcut: item.shortcut,
           gtkAccelerator: item.gtkAccelerator,
+          mnemonic: item.mnemonic,
           enabled: item.enabled,
           checkable: item.trailingCheck,
           selected: item.trailingCheck && item.checked,
@@ -1718,17 +1800,21 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
   for (final item in items) {
     if (item is BusyMarkPopupMenuItem<T>) {
       fallbackItems.add(
-        BusyMarkPopupMenuItem<T>(
-          value: item.menuValue,
-          label: item.label,
-          icon: item.icon,
-          iconColor: item.iconColor,
-          shortcut: item.shortcut,
-          enabled: item.enabled,
-          checked: item.checked,
-          trailingCheck: item.trailingCheck,
-          mutuallyExclusive: item.mutuallyExclusive,
-          routeKey: routeKeyPending ? routeKey : null,
+        _BusyMarkMnemonicMenuEntry<T>(
+          items: items,
+          item: BusyMarkPopupMenuItem<T>(
+            value: item.menuValue,
+            label: item.label,
+            icon: item.icon,
+            iconColor: item.iconColor,
+            shortcut: item.shortcut,
+            enabled: item.enabled,
+            checked: item.checked,
+            trailingCheck: item.trailingCheck,
+            mutuallyExclusive: item.mutuallyExclusive,
+            routeKey: routeKeyPending ? routeKey : null,
+            mnemonic: item.mnemonic,
+          ),
         ),
       );
       routeKeyPending = false;
@@ -1737,6 +1823,48 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
     }
   }
   return fallbackItems;
+}
+
+class _BusyMarkMnemonicMenuEntry<T> extends PopupMenuEntry<T> {
+  const _BusyMarkMnemonicMenuEntry({required this.item, required this.items});
+  final BusyMarkPopupMenuItem<T> item;
+  final List<PopupMenuEntry<T>> items;
+  @override
+  double get height => item.height;
+  @override
+  bool represents(T? value) => item.represents(value);
+  @override
+  State<_BusyMarkMnemonicMenuEntry<T>> createState() =>
+      _BusyMarkMnemonicMenuEntryState<T>();
+}
+
+class _BusyMarkMnemonicMenuEntryState<T>
+    extends State<_BusyMarkMnemonicMenuEntry<T>> {
+  @override
+  Widget build(BuildContext context) => Focus(
+    canRequestFocus: false,
+    skipTraversal: true,
+    onKeyEvent: (_, event) {
+      final keyboard = HardwareKeyboard.instance;
+      if (keyboard.isControlPressed ||
+          keyboard.isAltPressed ||
+          keyboard.isMetaPressed) {
+        return KeyEventResult.ignored;
+      }
+      for (final item in widget.items.whereType<BusyMarkPopupMenuItem<T>>()) {
+        if (item.mnemonic == null ||
+            event.logicalKey.keyLabel.toUpperCase() != item.mnemonic) {
+          continue;
+        }
+        if (event is KeyDownEvent && item.enabled) {
+          Navigator.of(context).pop(item.menuValue);
+        }
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    },
+    child: widget.item,
+  );
 }
 
 /// Shows a BusyMark context menu at a global pointer position.
@@ -2009,6 +2137,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     Color? iconColor,
     String? shortcut,
     this.gtkAccelerator,
+    this.mnemonic,
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
@@ -2044,6 +2173,9 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final Color? iconColor;
   final String? shortcut;
   final String? gtkAccelerator;
+
+  /// Fixed Latin selector mnemonic; independent of translation and row order.
+  final String? mnemonic;
   final bool checked;
   final bool trailingCheck;
   final bool mutuallyExclusive;
@@ -2325,9 +2457,14 @@ bool isBusyMarkContextMenuKeyEvent(KeyEvent event) {
   if (event is! KeyDownEvent) {
     return false;
   }
-  return event.logicalKey == LogicalKeyboardKey.contextMenu ||
-      (event.logicalKey == LogicalKeyboardKey.f10 &&
-          HardwareKeyboard.instance.isShiftPressed);
+  final keyboard = HardwareKeyboard.instance;
+  return !keyboard.isControlPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed &&
+      (event.logicalKey == LogicalKeyboardKey.contextMenu &&
+              !keyboard.isShiftPressed ||
+          event.logicalKey == LogicalKeyboardKey.f10 &&
+              keyboard.isShiftPressed);
 }
 
 class BusyMarkPopupSelectorOption<T> {

@@ -776,7 +776,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get source => 'Bron';
 
   @override
-  String get split => 'Splitsen';
+  String get split => 'Dubbel';
 
   @override
   String get systemTheme => 'Systeem';
@@ -1091,6 +1091,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutGroupSidebar => 'Zijbalk';
+
+  @override
+  String get contentViewMenu => 'Inhoudsweergave';
 
   @override
   String get sidebarViewMenu => 'Zijbalkweergave';
@@ -1589,10 +1592,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get alwaysLoadRemoteImages => 'Externe afbeeldingen altijd laden';
 
   @override
-  String get hideSidebar => 'Zijbalkpaneel verbergen';
+  String get hideSidebar => 'Zijbalk verbergen';
 
   @override
-  String get showSidebar => 'Zijbalkpaneel tonen';
+  String get showSidebar => 'Zijbalk tonen';
 
   @override
   String get showPreview => 'Voorbeeld weergeven';

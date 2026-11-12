@@ -26,7 +26,7 @@ class BusyMarkDocumentLayoutSpec {
     maxContentWidth: BusyMarkSizes.documentContentWidth,
   );
 
-  /// The fluid document canvas used beside Source in Split view.
+  /// The fluid document canvas used beside Source in Dual view.
   ///
   /// Source's line-number gutter is intentionally excluded: it is editor
   /// chrome and has no counterpart in Preview.

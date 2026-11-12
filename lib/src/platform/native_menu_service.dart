@@ -26,6 +26,7 @@ final class NativeMenuEntry {
     this.iconColorArgb,
     this.shortcut,
     this.gtkAccelerator,
+    this.mnemonic,
     this.enabled = true,
     this.checkable = false,
     this.selected = false,
@@ -41,6 +42,7 @@ final class NativeMenuEntry {
        iconColorArgb = null,
        shortcut = null,
        gtkAccelerator = null,
+       mnemonic = null,
        checkable = false,
        selected = false,
        mutuallyExclusive = false,
@@ -52,6 +54,7 @@ final class NativeMenuEntry {
       iconColorArgb = null,
       shortcut = null,
       gtkAccelerator = null,
+      mnemonic = null,
       enabled = false,
       checkable = false,
       selected = false,
@@ -64,6 +67,7 @@ final class NativeMenuEntry {
   final int? iconColorArgb;
   final String? shortcut;
   final String? gtkAccelerator;
+  final String? mnemonic;
   final bool enabled;
   final bool checkable;
   final bool selected;
@@ -79,6 +83,7 @@ final class NativeMenuEntry {
       if (shortcut != null && shortcut!.isNotEmpty) 'shortcut': shortcut!,
       if (gtkAccelerator != null && gtkAccelerator!.isNotEmpty)
         'gtkAccelerator': gtkAccelerator!,
+      if (mnemonic != null) 'mnemonic': mnemonic!,
       'enabled': enabled,
       'checkable': checkable,
       'selected': selected,

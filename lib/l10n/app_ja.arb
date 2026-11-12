@@ -536,9 +536,9 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "分割",
+  "split": "デュアル",
   "@split": {
-    "description": "Split view label."
+    "description": "Dual content view label (source and reading side by side)."
   },
   "systemTheme": "システム",
   "@systemTheme": {
@@ -928,7 +928,8 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "サイドバーの表示を選択",
+  "contentViewMenu": "コンテンツ表示",
+  "sidebarViewMenu": "サイドバー表示",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },
@@ -1513,11 +1514,11 @@
   "@alwaysLoadRemoteImages": {
     "description": "Dialog button that enables remote images globally."
   },
-  "hideSidebar": "サイドバーパネルを非表示",
+  "hideSidebar": "サイドバーを隠す",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar panel."
   },
-  "showSidebar": "サイドバーパネルを表示",
+  "showSidebar": "サイドバーを表示",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar panel."
   },
@@ -1564,7 +1565,7 @@
   },
   "toc": "目次",
   "@toc": {
-    "description": "Writerside Topics sidebar tab label."
+    "description": "Writerside Table of Contents sidebar view label."
   },
   "tocActions": "目次の操作",
   "@tocActions": {
