@@ -211,7 +211,7 @@ void main() {
   );
 
   testWidgets(
-    'native selector waits for all trigger releases and forwards fixed metadata',
+    'native selector waits for its trigger releases with Num Lock pressed',
     (tester) async {
       final probe = NativeMenuProbe(tester);
       final controller = BusyMarkHeaderMenuController();
@@ -244,10 +244,17 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      // The desktop's Linux keyboard state can report Num Lock as pressed
+      // while its lock is enabled. It is unrelated to the opening shortcut.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.numLock);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.f9);
-      controller.open();
+      controller.open(
+        shortcuts: const [
+          SingleActivator(LogicalKeyboardKey.f9, control: true, shift: true),
+        ],
+      );
       await tester.pump();
       expect(probe.isOpen, isFalse);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.f9);
@@ -269,8 +276,77 @@ void main() {
       probe.close();
       await tester.pumpAndSettle();
       expect(focus.hasFocus, isTrue);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.numLock);
     },
   );
+
+  for (final id in [
+    BusyMarkCommandIds.sidebarViewSelector,
+    BusyMarkCommandIds.contentViewSelector,
+  ]) {
+    testWidgets('$id release barrier follows the configured binding', (
+      tester,
+    ) async {
+      const binding = BusyMarkKeyBinding(
+        LogicalKeyboardKey.f8,
+        alt: true,
+        shift: true,
+      );
+      final commands = BusyMarkCommandCatalog.metadata.withOverrides({
+        id: binding,
+      });
+      final controller = BusyMarkHeaderMenuController();
+      final probe = NativeMenuProbe(tester);
+      final text = TextEditingController(text: 'Unchanged');
+      final focus = FocusNode();
+      addTearDown(controller.dispose);
+      addTearDown(text.dispose);
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        _harness(
+          text: text,
+          focus: focus,
+          menu: BusyMarkHeaderPopupMenuButton<String>.native(
+            controller: controller,
+            tooltip: 'Views',
+            shortcut: commands[id]!.shortcut!.label,
+            icon: BusyMarkGlyphs.sidebarViews,
+            itemBuilder: (_) => [
+              BusyMarkPopupMenuItem(value: 'source', label: 'Source'),
+            ],
+            onSelected: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.numLock);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altRight);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftRight);
+      await tester.sendKeyDownEvent(binding.key);
+      controller.open(shortcuts: commands.activators(id));
+      await tester.pump();
+      expect(probe.isOpen, isFalse);
+      await tester.sendKeyUpEvent(binding.key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altRight);
+      await tester.pump();
+      expect(probe.isOpen, isFalse, reason: 'Right Shift is still held');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftRight);
+      await tester.pumpAndSettle();
+      expect(probe.isOpen, isTrue, reason: 'Unrelated keys must not block');
+      expect(
+        HardwareKeyboard.instance.physicalKeysPressed,
+        containsAll([PhysicalKeyboardKey.numLock, PhysicalKeyboardKey.keyA]),
+      );
+      expect(find.byTooltip('Views (Alt+Shift+F8)'), findsOneWidget);
+      probe.close();
+      await tester.pumpAndSettle();
+      expect(focus.hasFocus, isTrue);
+      expect(text.text, 'Unchanged');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.numLock);
+    });
+  }
 
   testWidgets('Linux context-menu keys exclude Ctrl+Shift+F10', (tester) async {
     final keys = BusyMarkContextMenuKeys();

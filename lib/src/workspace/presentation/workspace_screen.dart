@@ -680,7 +680,14 @@ class _WorkspaceScreenContents extends ConsumerWidget {
           await settingsController.setSidebarVisible(true);
           await WidgetsBinding.instance.endOfFrame;
           if (wasHidden) await Future<void>.delayed(BusyMarkMotion.sidebar);
-          if (context.mounted) menu.open();
+          if (context.mounted) {
+            menu.open(
+              shortcuts:
+                  (BusyMarkCommandRegistryScope.read(context) ??
+                          BusyMarkCommandCatalog.metadata)
+                      .activators(request.$1),
+            );
+          }
         }());
         return;
       }
@@ -689,7 +696,14 @@ class _WorkspaceScreenContents extends ConsumerWidget {
         ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
         unawaited(() async {
           await WidgetsBinding.instance.endOfFrame;
-          if (context.mounted) menu.open();
+          if (context.mounted) {
+            menu.open(
+              shortcuts:
+                  (BusyMarkCommandRegistryScope.read(context) ??
+                          BusyMarkCommandCatalog.metadata)
+                      .activators(request.$1),
+            );
+          }
         }());
         return;
       }

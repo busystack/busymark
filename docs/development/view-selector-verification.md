@@ -1,11 +1,27 @@
-# View selector implementation and verification — 2026-11-11
+# View selector implementation and verification — 2026-11-12
 
-**Status: native acceptance remains incomplete.** BusyMark's selector dispatch
-defect is corrected; one native lifecycle gate failed as described below. The
+**Status: the live selector failure is fixed and verified; native acceptance
+remains incomplete because of shutdown failures.** The
 [dispatch investigation](view-selector-dispatch-investigation.md) records the
-actual IDE executable/profile findings and the reproduced Linux menu rejection.
-The acceptance run below uses the unmodified official toolchain and real native
-keyboard input; earlier source-only and socket-blocked results are not acceptance.
+actual IDE executable/profile findings, the reproduced Linux menu rejection,
+and the additional Num Lock failure missed by the earlier X11 acceptance.
+Verification uses the unmodified official toolchain and real native keyboard
+input; earlier source-only and socket-blocked results are not acceptance.
+
+Both live shortcut events reached their registered commands and existing menu
+controllers, but the controllers waited indefinitely for unrelated Num Lock
+state to clear. They now wait only for the effective binding's trigger and
+concrete modifiers. No user shortcut overrides were reset. The regression failed
+before the correction and passed afterward; the workspace integration regression
+also retains Num Lock through hidden-sidebar reveal and remapped commands.
+
+The fully restarted desktop process passed both selectors, all 12 mnemonic
+selections, effective Settings rows and tooltips, Source focus/text preservation,
+and Shift+F10/Menu behavior. Its native Wayland connection and retained Num Lock
+state were inspected. Fresh isolated ordinary and Writerside/Git profiles on
+the same Wayland desktop also passed all 12 available/unavailable letter checks
+and exited with code 0 under the debugger. Those passing closes do not waive
+the failed native matrix or the earlier desktop shutdown crash below.
 
 ## Resulting behavior
 
@@ -43,12 +59,14 @@ only Content View.
 
 | Check | Result |
 | --- | --- |
-| BusyMark full Flutter suite, unfiltered, no skipped cases | 5,813 passed across 249 files; zero failures/skips; unchanged inputs |
+| BusyMark full Flutter suite, unfiltered, no skipped cases | 5,815 passed across 249 files; zero failures/skips; unchanged inputs |
+| Focused selector regressions and Num Lock workspace integration | 19 selector tests and the workspace regression passed |
 | Shared Git Flutter full suite | 489 passed |
 | BusyMark analysis of `lib`, `test`, `tools` | Pass, no issues |
 | Linux debug build of production `lib/main.dart` | Pass |
 | Sealed source and complete payload verification | Pass |
-| Real native keyboard matrix: ordinary/Writerside × Git/non-Git, plus custom bindings | 4 accepted cases; custom-keymap shortcut checks pass but shutdown aborts |
+| Actual Wayland desktop, normal profile and fresh isolated profiles | Both selectors and all 12 letters passed; Settings, focus and standard context keys verified |
+| Real native keyboard matrix: ordinary/Writerside × Git/non-Git, plus custom bindings | All five keyboard workflows passed; four accepted cases, Writerside/Git/default fails shutdown |
 | Shared native C++ accessibility and sidebar tests | 2 targets passed |
 | Native shortcut metadata round trips and rejection checks | 6 round trips, 5 safe rejections passed |
 | Native workflow, geometry, build/package receipt and full-corpus verifier contracts | 65 passed |
@@ -78,7 +96,17 @@ notifications, dispose workspace providers before pending-timer invariants, and
 run real directory setup in the widget tester's I/O zone. Retention/protection,
 undo/redo/save/reopen, draft, focus and lifecycle checks remain intact.
 
-Evidence is retained in `build/selector-native-final/`, notably
+Current evidence is retained in `build/live-selector-investigation/`, including
+`full-corpus-{start,result}.json`, `full-corpus.log`, `source-build.json`,
+`bundle/`, `native-matrix/`, `cold-process-identity.json`,
+`cold-native-socket-peers.json`, the live/cold menu and Settings observations,
+and the two completed `wayland-clean-*/result.json` probes. The full run used
+the original test timeouts and all native prerequisites. An earlier incomplete
+attempt with two Git timeouts during concurrent verification is preserved in
+`resource-contention-attempt/`; it is not counted as passing. The final complete
+run passed those same tests without changing their timeouts or assertions.
+
+Earlier evidence remains in `build/selector-native-final/`, notably
 `full-corpus.log`, `full-corpus-start.json`, `full-corpus-result.json`,
 `shared-tests-final.log`, `analyze-complete.log`,
 `source-ready.json`, `bundle-ready/`, and `native-complete/`. Native cases
@@ -89,10 +117,24 @@ for that binding.
 
 ## Native shutdown blocker
 
-`native-complete/matrix-result.json` remains failed. Ordinary Git/non-Git and
-Writerside Git/non-Git passed the actual native keyboard checks and natural exit.
-The Writerside Git custom F6/F8 case completed its selector, mnemonic, availability,
-focus, context-menu, global-palette and Settings checks, then aborted on exit with
+The current `build/live-selector-investigation/native-matrix/matrix-result.json`
+remains failed. The Writerside Git default case completed its selector, mnemonic,
+availability, focus, context-menu, global-palette and Settings checks, then failed
+`naturalExit`. Its repository remained unchanged and its mapped engine matched
+the approved SDK. The application logged an invalid implicit-view removal;
+the kernel recorded a Flutter I/O-thread segfault in Mesa/libgallium at shutdown.
+Four other cases, including custom bindings, passed every gate. No failed case
+was replaced with a passing repetition.
+
+An earlier real Wayland desktop process also segfaulted in `gtk_main_do_event`
+when closing after its successful keyboard checks. Fresh isolated ordinary and
+Writerside/Git Wayland runs subsequently exited normally under GDB. That does
+not establish a correction to the intermittent GTK shutdown failure; it remains
+recorded separately from the demonstrated Num Lock correction.
+
+The previous `build/selector-native-final/native-complete/matrix-result.json`
+also remains failed. Its Writerside Git custom F6/F8 case completed the keyboard
+workflow, then aborted on exit with
 `g_mutex_clear() called on uninitialised or locked mutex`. Its unchanged-repository
 receipt does not excuse the failed `naturalExit` gate.
 

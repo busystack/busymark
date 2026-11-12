@@ -149,6 +149,9 @@ void main() {
       await tester.pumpAndSettle();
       final source = _searchSourceController(tester);
       final before = source.text;
+      // Retain the live Linux Num Lock state through default and remapped
+      // selector commands, including the hidden-sidebar reveal.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.numLock);
       Future<void> chord(
         LogicalKeyboardKey key, {
         bool control = true,
@@ -275,6 +278,11 @@ void main() {
         DocumentViewModePreference.split,
       );
       expect(container.read(workspaceControllerProvider).activeText, before);
+      expect(
+        HardwareKeyboard.instance.physicalKeysPressed,
+        contains(PhysicalKeyboardKey.numLock),
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.numLock);
     },
   );
 

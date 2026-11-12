@@ -1,4 +1,44 @@
-# Selector dispatch investigation — 2026-11-11
+# Selector dispatch investigation — 2026-11-12
+
+## Live-profile follow-up: Num Lock blocked both controllers
+
+The earlier X11 acceptance did not establish that the user's IDE/Wayland
+instance worked. The continuing failure was reproduced on the real desktop,
+using the same profile and the official GNOME Mutter keyboard input API.
+The profile had neither selector override (including no explicit null), and
+the loaded application contained the current command registrations. Settings
+showed `Sidebar view — Ctrl+Shift+F9` and `Content view — Ctrl+Shift+F10`.
+
+Both actual keypresses reached the command registry, workspace request and
+attached menu controller. They stopped before the native menu request. A VM
+inspection found Num Lock in `HardwareKeyboard.physicalKeysPressed` after the
+shortcut's trigger and modifiers had been released. The controller waited for
+**every** pressed key to be released, so neither menu could open.
+
+The controller now snapshots only the configured shortcut's trigger and
+concrete modifiers and waits for those physical keys to be released. The
+workspace supplies the existing effective registry's activators. Unrelated
+held keys cannot block it, and a user-configured lock-key trigger still waits
+for its own release. This is a correction to the existing menu controller,
+not another keyboard dispatcher or a third-party modification.
+
+The Num Lock regression failed before the correction and passed afterward.
+Both selector commands also have regressions for a remapped Alt+Shift+F8
+binding with right-side modifiers and unrelated held Num Lock/letter keys.
+All 19 selector tests and static analysis passed.
+
+On the user's Wayland desktop, both menus and all 12 immediate mnemonic
+selections passed, including after fully stopping and starting the rebuilt
+executable. Source retained focus and exact text after dismissing either menu;
+Shift+F10 and Menu opened its existing context menu, while Ctrl+Shift+F10
+opened only Content View. The user's shortcut overrides were not reset.
+Evidence, including the failing pre-fix trace, pressed-key inspection, native
+checked-state observations, Settings rows and cold-process traces, is in
+`build/live-selector-investigation/`. Full-suite and isolated matrix results
+are recorded in the verification report when complete; the older lifecycle
+failure below is not waived by this live-profile correction.
+
+## Earlier investigation: contextual native menu entries
 
 The selector-opening failure was reproduced and corrected in BusyMark's Linux
 runner. **Acceptance remains incomplete because a separate native shutdown

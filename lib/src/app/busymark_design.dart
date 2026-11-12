@@ -1281,13 +1281,48 @@ class BusyMarkHeaderMenuController {
   VoidCallback? _show;
   bool _pending = false;
   bool _listening = false;
+  final _awaitingKeys = <PhysicalKeyboardKey>{};
 
-  void open() {
+  void open({Iterable<ShortcutActivator> shortcuts = const []}) {
+    final keyboard = HardwareKeyboard.instance;
+    final triggerKeys = <LogicalKeyboardKey>{
+      for (final shortcut in shortcuts) ...?shortcut.triggers,
+      for (final shortcut in shortcuts.whereType<SingleActivator>()) ...{
+        if (shortcut.control) ...{
+          LogicalKeyboardKey.controlLeft,
+          LogicalKeyboardKey.controlRight,
+        },
+        if (shortcut.shift) ...{
+          LogicalKeyboardKey.shiftLeft,
+          LogicalKeyboardKey.shiftRight,
+        },
+        if (shortcut.alt) ...{
+          LogicalKeyboardKey.altLeft,
+          LogicalKeyboardKey.altRight,
+        },
+        if (shortcut.meta) ...{
+          LogicalKeyboardKey.metaLeft,
+          LogicalKeyboardKey.metaRight,
+        },
+      },
+    };
+    // Wait for the configured trigger and its concrete modifiers, rather than
+    // unrelated keys. In the live Linux keyboard state Num Lock can remain in
+    // physicalKeysPressed while its lock is enabled, indefinitely blocking an
+    // all-keys-up barrier. Keep actual lock-key bindings working as well.
+    _awaitingKeys
+      ..clear()
+      ..addAll(
+        keyboard.physicalKeysPressed.where(
+          (key) => triggerKeys.contains(keyboard.lookUpLayout(key)),
+        ),
+      );
     if (debugLabel != null) {
       busyMarkViewSelectorTrace('controller-open', {
         'command': debugLabel,
         'attached': _show != null,
-        'pressedKeys': HardwareKeyboard.instance.physicalKeysPressed.length,
+        'pressedKeys': keyboard.physicalKeysPressed.length,
+        'awaitingKeys': _awaitingKeys.map((key) => key.debugName).toList(),
       });
     }
     _pending = true;
@@ -1301,7 +1336,9 @@ class BusyMarkHeaderMenuController {
 
   void _tryOpen() {
     if (!_pending || _show == null) return;
-    if (HardwareKeyboard.instance.physicalKeysPressed.isNotEmpty) {
+    if (_awaitingKeys.any(
+      HardwareKeyboard.instance.physicalKeysPressed.contains,
+    )) {
       if (!_listening) {
         HardwareKeyboard.instance.addHandler(_released);
         _listening = true;
@@ -1322,6 +1359,7 @@ class BusyMarkHeaderMenuController {
   void dispose() {
     _stopListening();
     _pending = false;
+    _awaitingKeys.clear();
     _show = null;
   }
 }
