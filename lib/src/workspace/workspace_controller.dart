@@ -9776,5 +9776,10 @@ final workspaceNavigationCommandProvider =
 class WorkspaceNavigationCommandController extends Notifier<(String, int)?> {
   @override
   (String, int)? build() => null;
-  void request(String id) => state = (id, (state?.$2 ?? 0) + 1);
+  void request(String id) {
+    if (isBusyMarkViewSelectorCommand(id)) {
+      busyMarkViewSelectorTrace('workspace-request', {'command': id});
+    }
+    state = (id, (state?.$2 ?? 0) + 1);
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:busymark/src/git/application/shared_git_presentation.dart';
+import '../../core/debug_log.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import '../../editor/document_edit_history.dart';
 import '../../search/search_result_preview.dart';
@@ -350,13 +351,17 @@ class _SidebarSelectorReveal extends Notifier<String?> {
 
 final _sidebarViewMenuControllerProvider =
     Provider<BusyMarkHeaderMenuController>((ref) {
-      final controller = BusyMarkHeaderMenuController();
+      final controller = BusyMarkHeaderMenuController(
+        debugLabel: BusyMarkCommandIds.sidebarViewSelector,
+      );
       ref.onDispose(controller.dispose);
       return controller;
     });
 final _contentViewMenuControllerProvider =
     Provider<BusyMarkHeaderMenuController>((ref) {
-      final controller = BusyMarkHeaderMenuController();
+      final controller = BusyMarkHeaderMenuController(
+        debugLabel: BusyMarkCommandIds.contentViewSelector,
+      );
       ref.onDispose(controller.dispose);
       return controller;
     });
@@ -650,6 +655,11 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     });
     ref.listen(workspaceNavigationCommandProvider, (_, request) {
       if (request == null) return;
+      if (isBusyMarkViewSelectorCommand(request.$1)) {
+        busyMarkViewSelectorTrace('workspace-received', {
+          'command': request.$1,
+        });
+      }
       if (request.$1 == BusyMarkCommandIds.sidebarViewSelector) {
         final menu = ref.read(_sidebarViewMenuControllerProvider);
         final wasHidden = !ref

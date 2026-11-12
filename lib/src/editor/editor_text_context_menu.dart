@@ -101,6 +101,29 @@ Widget buildBusyMarkEditorTextContextMenu(
   );
 }
 
+/// Opens the focused editable's existing menu without requiring pointer-created
+/// selection handles. Keep keyboard presentation independent of the toolbar
+/// overlay, which Flutter removes when a fallback menu takes keyboard focus.
+Future<void> showBusyMarkEditableContextMenu(
+  EditableTextState editable, {
+  required BusyMarkMenuSession session,
+}) async {
+  if (!editable.mounted || session.dismissed) return;
+  final menu = editable.widget.contextMenuBuilder?.call(
+    editable.context,
+    editable,
+  );
+  if (menu is _BusyMarkEditorTextContextMenu) {
+    editable.hideToolbar();
+    await _BusyMarkEditorTextMenuPresentation(
+      menu,
+      session,
+    ).present(focusFirst: true);
+  } else {
+    editable.toggleToolbar();
+  }
+}
+
 class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   const _BusyMarkEditorTextContextMenu({
     required this.editableTextState,
@@ -137,48 +160,68 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
 
 class _BusyMarkEditorTextContextMenuState
     extends State<_BusyMarkEditorTextContextMenu> {
-  final _menuSession = BusyMarkMenuSession();
-  var _presented = false;
-  var _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
-  List<BusyMarkEditorSpellingMenuItem> _spellingItems = const [];
-  var _spellingPreparationTimedOut = false;
+  late final _presentation = _BusyMarkEditorTextMenuPresentation(
+    widget,
+    BusyMarkMenuSession(),
+  );
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _present());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_presentation.present());
+    });
   }
 
   @override
   void dispose() {
-    unawaited(_menuSession.dismiss());
+    unawaited(_presentation._menuSession.dismiss());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();
+}
 
-  Future<void> _present() async {
-    if (!mounted || _presented) {
+class _BusyMarkEditorTextMenuPresentation {
+  _BusyMarkEditorTextMenuPresentation(this.widget, this._menuSession);
+
+  final _BusyMarkEditorTextContextMenu widget;
+  final BusyMarkMenuSession _menuSession;
+  var _presented = false;
+  var _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
+  List<BusyMarkEditorSpellingMenuItem> _spellingItems = const [];
+  var _spellingPreparationTimedOut = false;
+
+  Future<void> present({bool focusFirst = false}) async {
+    if (!widget.editableTextState.mounted ||
+        _menuSession.dismissed ||
+        _presented) {
       return;
     }
     _presented = true;
     final selection = widget.editableTextState.textEditingValue.selection;
     final offset = selection.isValid ? selection.extentOffset : 0;
     await Future.wait([_preparePaste(), _prepareSpelling(offset)]);
-    if (!mounted) {
+    if (!widget.editableTextState.mounted || _menuSession.dismissed) {
       return;
     }
+    // Flutter builds the toolbar in its root overlay, above the Navigator.
+    // Anchor our existing menu in the editable's context so fallback routes
+    // retain the document's Navigator and command/localization scopes.
+    final editorContext = widget.editableTextState.context;
+    if (!editorContext.mounted) return;
     final action = await showBusyMarkMenu<VoidCallback>(
-      context: context,
+      context: editorContext,
       anchorPoint: widget.editableTextState.contextMenuAnchors.primaryAnchor,
-      items: _menuItems(context),
+      items: _menuItems(editorContext),
       session: _menuSession,
+      focusFirst: focusFirst,
       width: widget.onCopyPlainText == null && widget.onPastePlainText == null
           ? BusyMarkSizes.popupMenuMinWidth
           : BusyMarkSizes.editorContextMenuWidth,
     );
-    if (!mounted || _menuSession.dismissed) {
+    if (!widget.editableTextState.mounted || _menuSession.dismissed) {
       return;
     }
     widget.editableTextState.hideToolbar();

@@ -195,7 +195,11 @@ void main() {
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
-      expect(selected, 'files');
+      expect(
+        selected,
+        'outline',
+        reason: 'Down advances from the initially focused enabled Files row',
+      );
       expect(focus.hasFocus, isTrue);
       controller.open();
       await tester.pumpAndSettle();

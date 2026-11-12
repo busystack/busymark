@@ -1,6 +1,7 @@
 import '../editor/wysiwyg/wysiwyg_commands.dart';
 import '../markdown/busymark_document.dart';
 import 'dart:async';
+import '../core/debug_log.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -326,6 +327,13 @@ class BusyMarkCommandRegistry {
 
   Future<bool> execute(String id) async {
     final command = _byId[id];
+    if (isBusyMarkViewSelectorCommand(id)) {
+      busyMarkViewSelectorTrace('execute', {
+        'command': id,
+        'binding': command?.shortcut?.label,
+        'enabled': command?.canExecute ?? false,
+      });
+    }
     if (command == null || !command.canExecute) {
       return false;
     }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -5,6 +6,17 @@ import 'package:path/path.dart' as p;
 bool debugBusyMarkLogging = const bool.fromEnvironment(
   'BUSYMARK_DEBUG_LOGGING',
 );
+
+bool isBusyMarkViewSelectorCommand(String id) =>
+    id == 'view.sidebarSelector' || id == 'view.contentSelector';
+
+/// Opt-in diagnostics contain command state, never document contents or text.
+void busyMarkViewSelectorTrace(String stage, Map<String, Object?> state) {
+  if (!debugBusyMarkLogging) return;
+  stderr.writeln(
+    '[BusyMark view-selector] ${jsonEncode({'stage': stage, if (stage == 'registry') 'executable': Platform.resolvedExecutable, ...state})}',
+  );
+}
 
 void busyMarkDebugLogLines(Iterable<String> lines) {
   if (!debugBusyMarkLogging) {

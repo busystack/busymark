@@ -1,4 +1,5 @@
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
+import '../core/debug_log.dart';
 import 'busymark_toast.dart';
 import 'busymark_focus.dart';
 export 'busymark_focus.dart';
@@ -1275,11 +1276,20 @@ class BusyMarkCompactIconButton extends StatelessWidget {
 /// Opens an existing header menu after Flutter has observed the trigger's key
 /// releases. GTK grabs input while a native menu is open.
 class BusyMarkHeaderMenuController {
+  BusyMarkHeaderMenuController({this.debugLabel});
+  final String? debugLabel;
   VoidCallback? _show;
   bool _pending = false;
   bool _listening = false;
 
   void open() {
+    if (debugLabel != null) {
+      busyMarkViewSelectorTrace('controller-open', {
+        'command': debugLabel,
+        'attached': _show != null,
+        'pressedKeys': HardwareKeyboard.instance.physicalKeysPressed.length,
+      });
+    }
     _pending = true;
     _tryOpen();
   }
@@ -1467,6 +1477,14 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
       final session = BusyMarkMenuSession();
       _activeMenuSession = session;
       setState(() => _open = true);
+      if (widget.controller?.debugLabel case final label?) {
+        busyMarkViewSelectorTrace('menu-present', {
+          'command': label,
+          'items': items.length,
+          'focusFirst': focusFirst,
+          'requireNative': widget._requiresNative,
+        });
+      }
       T? selection;
       try {
         selection = await showBusyMarkMenu<T>(
@@ -1783,6 +1801,18 @@ Future<T?> _showBusyMarkFallbackMenu<T>({
   );
   WidgetsBinding.instance.addPostFrameCallback((_) {
     session._captureFallbackRoute();
+    if (items.any(
+      (item) => item is BusyMarkPopupMenuItem<T> && item.mnemonic != null,
+    )) {
+      final itemContext = session._fallbackRouteKey.currentContext;
+      if (itemContext != null &&
+          itemContext.mounted &&
+          (ModalRoute.of(itemContext)?.isCurrent ?? false)) {
+        // The route's focus scope alone cannot deliver letters to the menu
+        // entries. Focus the first enabled row through its existing InkWell.
+        Focus.of(itemContext).requestFocus();
+      }
+    }
   });
   try {
     return await selection;
@@ -1797,8 +1827,14 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
 ) {
   final fallbackItems = <PopupMenuEntry<T>>[];
   var routeKeyPending = true;
+  final focusEnabledRow =
+      items.any(
+        (item) => item is BusyMarkPopupMenuItem<T> && item.mnemonic != null,
+      ) &&
+      items.any((item) => item is BusyMarkPopupMenuItem<T> && item.enabled);
   for (final item in items) {
     if (item is BusyMarkPopupMenuItem<T>) {
+      final useRouteKey = routeKeyPending && (!focusEnabledRow || item.enabled);
       fallbackItems.add(
         _BusyMarkMnemonicMenuEntry<T>(
           items: items,
@@ -1812,12 +1848,12 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
             checked: item.checked,
             trailingCheck: item.trailingCheck,
             mutuallyExclusive: item.mutuallyExclusive,
-            routeKey: routeKeyPending ? routeKey : null,
+            routeKey: useRouteKey ? routeKey : null,
             mnemonic: item.mnemonic,
           ),
         ),
       );
-      routeKeyPending = false;
+      if (useRouteKey) routeKeyPending = false;
     } else {
       fallbackItems.add(item);
     }

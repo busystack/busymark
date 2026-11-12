@@ -7,6 +7,8 @@ import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
 import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../references/reference_controller.dart';
 import 'dart:async';
+import '../core/debug_log.dart';
+import '../editor/editor_text_context_menu.dart';
 
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:file_selector/file_selector.dart';
@@ -207,10 +209,26 @@ final _busyMarkDefaultCommandRegistryProvider =
 final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   ref,
 ) {
-  return effectiveCommandRegistry(
-    ref.watch(_busyMarkDefaultCommandRegistryProvider),
-    ref.watch(appSettingsControllerProvider.select((s) => s.shortcutOverrides)),
+  final defaults = ref.watch(_busyMarkDefaultCommandRegistryProvider);
+  final overrides = ref.watch(
+    appSettingsControllerProvider.select((s) => s.shortcutOverrides),
   );
+  final effective = effectiveCommandRegistry(defaults, overrides);
+  if (debugBusyMarkLogging) {
+    for (final id in [
+      BusyMarkCommandIds.sidebarViewSelector,
+      BusyMarkCommandIds.contentViewSelector,
+    ]) {
+      busyMarkViewSelectorTrace('registry', {
+        'command': id,
+        'default': defaults[id]?.shortcut?.label,
+        'overridePresent': overrides.containsKey(id),
+        'override': overrides[id]?.label,
+        'effective': effective[id]?.shortcut?.label,
+      });
+    }
+  }
+  return effective;
 });
 
 class BusyMarkApp extends ConsumerWidget {
@@ -1311,6 +1329,8 @@ class _BusyMarkSearchShortcutHandler extends ConsumerStatefulWidget {
 
 class _BusyMarkSearchShortcutHandlerState
     extends ConsumerState<_BusyMarkSearchShortcutHandler> {
+  final _editorContextKeys = BusyMarkContextMenuKeys();
+  BusyMarkMenuSession? _editorContextMenuSession;
   @override
   void initState() {
     super.initState();
@@ -1319,11 +1339,60 @@ class _BusyMarkSearchShortcutHandlerState
 
   @override
   void dispose() {
+    _editorContextKeys.clear();
+    unawaited(_editorContextMenuSession?.dismiss());
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     super.dispose();
   }
 
+  KeyEventResult _handleEditorContextMenu(FocusNode node, KeyEvent event) {
+    final editable = FocusManager.instance.primaryFocus?.context
+        ?.findAncestorStateOfType<EditableTextState>();
+    if (BusyMarkShortcutCapture.suppressing ||
+        editable?.textEditingValue.composing.isValid == true) {
+      _editorContextKeys.clear();
+      return KeyEventResult.ignored;
+    }
+    return _editorContextKeys.handle(
+          event,
+          editable == null
+              ? null
+              : () {
+                  if (editable.mounted && editable.widget.focusNode.hasFocus) {
+                    busyMarkViewSelectorTrace('editable-context-menu', {});
+                    unawaited(_editorContextMenuSession?.dismiss());
+                    final session = BusyMarkMenuSession();
+                    _editorContextMenuSession = session;
+                    unawaited(
+                      showBusyMarkEditableContextMenu(
+                        editable,
+                        session: session,
+                      ).whenComplete(() {
+                        if (identical(_editorContextMenuSession, session)) {
+                          _editorContextMenuSession = null;
+                        }
+                      }),
+                    );
+                  }
+                },
+        )
+        ? KeyEventResult.handled
+        : KeyEventResult.ignored;
+  }
+
   bool _handleKeyEvent(KeyEvent event) {
+    if (debugBusyMarkLogging &&
+        (event.logicalKey == LogicalKeyboardKey.f9 ||
+            event.logicalKey == LogicalKeyboardKey.f10)) {
+      final keyboard = HardwareKeyboard.instance;
+      busyMarkViewSelectorTrace('key-received', {
+        'key': event.logicalKey.keyLabel,
+        'type': event.runtimeType.toString(),
+        'control': keyboard.isControlPressed,
+        'shift': keyboard.isShiftPressed,
+        'captured': BusyMarkShortcutCapture.suppressing,
+      });
+    }
     // Capture owns the event in FocusManager's early handler, including the
     // release that ends suppression. Yield here so native key delivery can
     // reach that handler instead of treating it as an application command.
@@ -1401,7 +1470,13 @@ class _BusyMarkSearchShortcutHandlerState
         }
       }),
     );
-    return widget.child;
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      includeSemantics: false,
+      onKeyEvent: _handleEditorContextMenu,
+      child: widget.child,
+    );
   }
 }
 

@@ -278,6 +278,157 @@ void main() {
     },
   );
 
+  testWidgets(
+    'focused Source opens its context menu with Shift+F10 and Menu, excluding Ctrl+Shift+F10',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Keyboard context\n',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final source = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .singleWhere(
+            (field) => field.controller is BusyMarkSourceEditingController,
+          );
+      // Do not tap: keyboard-only focus must also create the text toolbar.
+      source.focusNode!.requestFocus();
+      await tester.pumpAndSettle();
+      expect(source.focusNode!.hasFocus, isTrue);
+      final menus = NativeMenuProbe(tester);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+      await tester.pump();
+      expect(menus.isOpen, isFalse, reason: 'wait for Shift release');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await pumpUntil(
+        tester,
+        () => menus.isOpen,
+        operation: 'open the focused Source context menu',
+      );
+      expect(menus.contains(l10n.selectAll), isTrue);
+      expect(menus.contains(l10n.source), isFalse);
+      menus.close();
+      await tester.pumpAndSettle();
+      expect(source.focusNode!.hasFocus, isTrue);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await pumpUntil(
+        tester,
+        () => menus.isOpen,
+        operation: 'open Content View without opening a text context menu',
+      );
+      expect(menus.entries.map((entry) => entry['mnemonic']), [
+        'E',
+        'S',
+        'R',
+        'D',
+      ]);
+      expect(menus.packets, hasLength(2));
+      menus.close();
+      await tester.pumpAndSettle();
+      expect(source.focusNode!.hasFocus, isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await pumpUntil(
+        tester,
+        () => menus.isOpen,
+        operation: 'open the focused Source context menu with Menu',
+      );
+      expect(menus.contains(l10n.selectAll), isTrue);
+      expect(menus.packets, hasLength(3));
+      menus.close();
+      await tester.pumpAndSettle();
+      expect(source.focusNode!.hasFocus, isTrue);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '# Keyboard context\n',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'selector Settings show effective opener bindings and preserve unrelated overrides',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Document\n',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      openKeyboardShortcutsSettings(
+        tester.element(find.byType(WorkspaceScreen)),
+      );
+      await tester.pumpAndSettle();
+      Future<void> badge(String id, String expected) async {
+        await _revealShortcutRow(tester, id);
+        final row = find.byKey(ValueKey('shortcut-edit-$id'));
+        final value = tester.widget<BusyMarkKeyboardShortcutBadge>(
+          find.descendant(
+            of: row,
+            matching: find.byType(BusyMarkKeyboardShortcutBadge),
+          ),
+        );
+        expect(value.label, expected, reason: id);
+      }
+
+      await badge(BusyMarkCommandIds.sidebarViewSelector, 'Ctrl+Shift+F9');
+      await badge(BusyMarkCommandIds.contentViewSelector, 'Ctrl+Shift+F10');
+      await badge(BusyMarkCommandIds.sidebarFiles, 'Unassigned');
+      await badge(BusyMarkCommandIds.viewEditor, 'Unassigned');
+      final keymap = container.read(keymapControllerProvider.notifier);
+      for (final assignment in [
+        (
+          BusyMarkCommandIds.save,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+        ),
+        (
+          BusyMarkCommandIds.sidebarViewSelector,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f6),
+        ),
+        (
+          BusyMarkCommandIds.contentViewSelector,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+        ),
+      ]) {
+        expect(
+          (await keymap.update(
+            assignment.$1,
+            assignment.$2,
+            expected: container
+                .read(appSettingsControllerProvider)
+                .shortcutOverrides,
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+      }
+      await tester.pumpAndSettle();
+      await badge(BusyMarkCommandIds.sidebarViewSelector, 'F6');
+      await badge(BusyMarkCommandIds.contentViewSelector, 'F8');
+      expect(
+        (await keymap.update(
+          BusyMarkCommandIds.contentViewSelector,
+          null,
+          expected: container
+              .read(appSettingsControllerProvider)
+              .shortcutOverrides,
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      await badge(BusyMarkCommandIds.contentViewSelector, 'Unassigned');
+      await badge(BusyMarkCommandIds.sidebarViewSelector, 'F6');
+      await badge(BusyMarkCommandIds.save, 'F12');
+    },
+  );
+
   for (final fail in [false, true]) {
     testWidgets(
       'prepared editor is visible during recent persistence failure=$fail',

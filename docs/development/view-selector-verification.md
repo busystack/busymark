@@ -3,6 +3,10 @@
 Status: implemented and built; **acceptance is incomplete**. No passing native
 keyboard or full Flutter test result is claimed.
 
+The follow-up [dispatch investigation](view-selector-dispatch-investigation.md)
+records the real profile and screenshot findings, reproduced focus/context-menu
+defects, corrections, opt-in native tracing, and the remaining acceptance block.
+
 The existing selectors now open through configurable command-registry actions
 (Ctrl+Shift+F9 and Ctrl+Shift+F10). Their fixed Latin mnemonics are displayed in
 the native menu accelerator column and dispatched only by the open menu. GTK

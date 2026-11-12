@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_settings.dart';
+import '../../core/debug_log.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/command_presentation.dart';
@@ -110,6 +111,12 @@ class _KeyboardShortcutsSettingsState
     List<BusyMarkCommand>? conflicts,
   ) {
     final configurable = shortcutConfigurable(command);
+    if (isBusyMarkViewSelectorCommand(command.id)) {
+      busyMarkViewSelectorTrace('settings-row', {
+        'command': command.id,
+        'effective': command.shortcut?.label,
+      });
+    }
     final description = [
       commandContextLabel(context, command),
       if (!configurable) context.l10n.shortcutFixed,
