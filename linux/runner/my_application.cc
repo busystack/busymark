@@ -1,6 +1,7 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
+#include <busystack_git_flutter/busystack_git_flutter_plugin.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <handy.h>
 #include <pango/pango.h>
@@ -581,7 +582,6 @@ static gboolean validate_native_menu_entries(FlValue* entries,
   *entry_count += fl_value_get_length(entries);
   size_t command_count = 0;
   size_t checkable_run_selected_count = 0;
-  gboolean checkable_run_has_disabled_entry = FALSE;
   gboolean in_checkable_run = FALSE;
   for (size_t index = 0; index < fl_value_get_length(entries); index++) {
     FlValue* entry = fl_value_get_list_value(entries, index);
@@ -624,7 +624,11 @@ static gboolean validate_native_menu_entries(FlValue* entries,
         (fl_value_lookup_string(entry, "gtkAccelerator") != nullptr &&
          fl_lookup_string_arg(entry, "gtkAccelerator") == nullptr) ||
         (fl_value_lookup_string(entry, "shortcut") != nullptr &&
-         fl_lookup_string_arg(entry, "shortcut") == nullptr)) {
+         fl_lookup_string_arg(entry, "shortcut") == nullptr) ||
+        (fl_value_lookup_string(entry, "mnemonic") != nullptr &&
+         (fl_lookup_string_arg(entry, "mnemonic") == nullptr ||
+          strlen(fl_lookup_string_arg(entry, "mnemonic")) != 1 ||
+          !g_ascii_isalpha(fl_lookup_string_arg(entry, "mnemonic")[0])))) {
       respond_native_menu_argument_error(
           method_call,
           "entries must contain valid command or separator presentation.");
@@ -638,34 +642,27 @@ static gboolean validate_native_menu_entries(FlValue* entries,
       command_count++;
     }
     if (!separator && checkable && mutually_exclusive) {
+      // Unavailable views are valid members of a single-choice group. Their
+      // individual GActions retain sensitivity and reject activation.
       if (!in_checkable_run) {
         checkable_run_selected_count = 0;
-        checkable_run_has_disabled_entry = FALSE;
         in_checkable_run = TRUE;
       }
       checkable_run_selected_count += selected ? 1 : 0;
-      checkable_run_has_disabled_entry =
-          checkable_run_has_disabled_entry || !enabled;
       continue;
     }
-    if (in_checkable_run &&
-        (checkable_run_selected_count > 1 ||
-         checkable_run_has_disabled_entry)) {
+    if (in_checkable_run && checkable_run_selected_count > 1) {
       respond_native_menu_argument_error(
           method_call,
-          "single-choice groups allow at most one selected entry and require "
-          "enabled entries.");
+          "single-choice groups allow at most one selected entry.");
       return FALSE;
     }
     in_checkable_run = FALSE;
   }
-  if (in_checkable_run &&
-      (checkable_run_selected_count > 1 ||
-       checkable_run_has_disabled_entry)) {
+  if (in_checkable_run && checkable_run_selected_count > 1) {
     respond_native_menu_argument_error(
         method_call,
-        "single-choice groups allow at most one selected entry and require "
-        "enabled entries.");
+        "single-choice groups allow at most one selected entry.");
     return FALSE;
   }
   if (command_count == 0) {
@@ -753,6 +750,12 @@ static void build_native_menu_model(FlValue* entries,
                                       g_variant_new_boolean(selected))
                                 : g_simple_action_new(action_name, nullptr);
     g_simple_action_set_enabled(action, ancestors_enabled && enabled);
+    const gchar* mnemonic = fl_lookup_string_arg(entry, "mnemonic");
+    if (mnemonic != nullptr && strlen(mnemonic) == 1 &&
+        g_ascii_isalpha(mnemonic[0])) {
+      g_object_set_data(G_OBJECT(action), "busymark-selector-mnemonic",
+                        GUINT_TO_POINTER(g_ascii_tolower(mnemonic[0])));
+    }
     g_object_set_data(G_OBJECT(action), kNativeMenuActionIndexKey,
                       GINT_TO_POINTER(static_cast<gint>(entry_index) + 1));
     g_signal_connect(
@@ -835,6 +838,33 @@ static void set_native_menu_direction(GtkWidget* widget, gpointer data) {
   if (GTK_IS_CONTAINER(widget)) {
     gtk_container_foreach(GTK_CONTAINER(widget), set_native_menu_direction, data);
   }
+}
+
+// Selector letters are explicit metadata, never inferred from translated
+// labels or row positions. GTK keeps ownership of traversal and dismissal.
+static gboolean native_menu_mnemonic_key_cb(GtkWidget* menu,
+                                            GdkEventKey* event,
+                                            gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  if ((event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK | GDK_SUPER_MASK |
+                       GDK_META_MASK)) != 0) return GDK_EVENT_PROPAGATE;
+  const guint key = gdk_keyval_to_lower(event->keyval);
+  g_auto(GStrv) names = g_action_group_list_actions(
+      G_ACTION_GROUP(session->action_group));
+  for (gchar** name = names; *name != nullptr; ++name) {
+    GAction* action = g_action_map_lookup_action(
+        G_ACTION_MAP(session->action_group), *name);
+    const guint mnemonic = GPOINTER_TO_UINT(g_object_get_data(
+        G_OBJECT(action), "busymark-selector-mnemonic"));
+    if (mnemonic == 0 || mnemonic != key) continue;
+    if (g_action_get_enabled(action)) {
+      g_action_activate(action, nullptr);
+      gtk_menu_shell_deactivate(GTK_MENU_SHELL(menu));
+    }
+    // A disabled mnemonic is still owned by this menu.
+    return GDK_EVENT_STOP;
+  }
+  return GDK_EVENT_PROPAGATE;
 }
 
 static void show_native_menu(NativeMenuHandlerData* data,
@@ -941,6 +971,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
     return;
   }
   g_object_ref_sink(session->menu);
+  g_signal_connect(session->menu, "key-press-event",
+                   G_CALLBACK(native_menu_mnemonic_key_cb), session);
   gtk_menu_attach_to_widget(GTK_MENU(session->menu), data->view, nullptr);
   set_native_menu_direction(session->menu, GINT_TO_POINTER(direction));
   gtk_widget_show_all(session->menu);
@@ -1176,6 +1208,8 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_set_hexpand(self->flutter_overlay, TRUE);
   gtk_widget_set_vexpand(self->flutter_overlay, TRUE);
   gtk_container_add(GTK_CONTAINER(self->flutter_overlay), GTK_WIDGET(view));
+  busystack_git_flutter_plugin_set_accessibility_host(
+      view, GTK_OVERLAY(self->flutter_overlay));
   gtk_widget_show(self->flutter_overlay);
   gtk_container_add(GTK_CONTAINER(window), self->flutter_overlay);
 

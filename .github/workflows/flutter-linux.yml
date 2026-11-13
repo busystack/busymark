@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - main
-      - release/v0.6.3
+      - release/v0.7.0
   push:
     branches:
       - main
@@ -46,6 +46,7 @@ jobs:
             clang \
             cmake \
             dbus-daemon \
+            gnome-keyring \
             gsettings-desktop-schemas \
             dconf-cli \
             fonts-noto-core \
@@ -57,16 +58,19 @@ jobs:
             libglib2.0-dev \
             libpango1.0-dev \
             libhandy-1-dev \
-            libsecret-1-dev \
+            libsecret-1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             libwebkit2gtk-4.1-dev \
             gir1.2-webkit2-4.1 \
             poppler-utils \
             python3-gi \
             python3-gi-cairo \
+            python3-pil \
             python3-yaml \
             rsync \
             xvfb \
             weston \
+            x11-xserver-utils \
+            xdg-desktop-portal-gtk \
             xz-utils
 
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
@@ -112,7 +116,42 @@ jobs:
       - name: Resolve locked dependencies
         id: flutter-packages
         if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
-        run: flutter pub get --enforce-lockfile
+        run: |
+          python3 tools/checkout_shared_dependencies.py
+          python3 ../busystack_git/tool/build_runtime.py --build-dir "$RUNNER_TEMP/git-native"
+          echo "BUSYSTACK_GIT_EXECUTABLE=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT_256=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_GIT_HELPER_PATH=$RUNNER_TEMP/git-native/busystack-git-helper" >> "$GITHUB_ENV"
+          flutter pub get --enforce-lockfile
+
+      - name: Verify shared Git runtime and engine
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
+        working-directory: ../busystack_git
+        run: |
+          dart pub get --enforce-lockfile
+          dart run tool/check_git.dart
+          dart test
+
+      - name: Verify shared Git desktop views
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
+        working-directory: ../busystack_git_flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run tool/test_native_presentation_audit.dart
+          dart run tool/check_native_presentation.dart lib/src ../busymark/lib/src/git \
+            --host-source ../busymark/lib/src/git/application/shared_git_presentation.dart \
+            --host-root BusyMarkGitPresentation \
+            --host-root BusyMarkGitDialogShell
+          (cd ../busymark/tools/git_ui_audit && dart pub get --offline --enforce-lockfile && dart run bin/check.dart --self-test && dart run bin/check.dart && dart run bin/check_design_boundary.dart --self-test && dart run bin/check_design_boundary.dart && dart run bin/check_sidebar.dart --self-test && dart run bin/check_sidebar.dart)
+          flutter test
+          cmake -S linux/native -B "$RUNNER_TEMP/git-accessibility" -G Ninja
+          cmake --build "$RUNNER_TEMP/git-accessibility"
+          dbus-run-session -- xvfb-run -a ctest --test-dir "$RUNNER_TEMP/git-accessibility" --output-on-failure
+
+      - name: Test native artifact and full-corpus qualification
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
+        run: python3 -m unittest tools/test_git_native_build_receipt.py tools/test_git_native_snap_receipt.py tools/test_verify_flutter_test_corpus.py
 
       - name: Test production GTK accent lookup and observer
         if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
@@ -128,7 +167,13 @@ jobs:
 
       - name: Generate localizations
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
-        run: flutter gen-l10n
+        run: |
+          python3 ../busystack_git_flutter/tool/sync_host_localizations.py \
+            --arb lib/l10n/app_en.arb \
+            --adapter lib/src/git/application/shared_git_localizations.dart \
+            --class-name AppLocalizations \
+            --import-uri ../../../l10n/generated/app_localizations.dart --check
+          flutter gen-l10n
 
       - name: Audit localization catalogs
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
@@ -167,7 +212,24 @@ jobs:
       - name: Build Linux release
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' && steps.linux-dependencies.outcome == 'success' && steps.node.outcome == 'success' }}
         id: release-build
-        run: flutter build linux --release
+        run: |
+          python3 tools/git_native_build_receipt.py capture build/linux/x64/release/git-native-source.json
+          flutter build linux --release
+          python3 tools/git_native_build_receipt.py seal build/linux/x64/release/git-native-source.json build/linux/x64/release/bundle/busymark
+
+      - name: Capture production Git native presentation matrix
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: /usr/bin/python3 tools/git_native_smoke.py build/linux/x64/release/bundle/busymark build/git-native-acceptance
+
+      - name: Preserve native Git acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: git-native-acceptance
+          path: |
+            build/git-native-acceptance
+            build/linux/x64/release/git-native-source.json
+          if-no-files-found: ignore
 
       - name: Test production GTK accent channel host and lifecycle
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
@@ -305,16 +367,27 @@ jobs:
           /usr/bin/python3 -m unittest tools/test_owned_processes.py \
             tools/test_application_close_smoke.py \
             tools/test_run_owned_fixture.py \
-            tools/test_official_flutter_workflow.py
+            tools/test_official_flutter_workflow.py \
+            tools/test_git_native_build_receipt.py \
+            tools/test_git_native_snap_receipt.py \
+            tools/test_git_native_geometry.py \
+            tools/test_visualization_dependency_policy.py
 
       - name: Test including bundled D2 and Typst paths
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         env:
           BUSYMARK_D2_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/d2
           BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
+          BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/spelling-test
         # Real durable fixtures share the runner's filesystem. Keep the full
         # suite bounded independently of a developer machine's CPU count.
-        run: flutter test --concurrency=2
+        run: |
+          test -s "$BUSYMARK_TEST_SPELLING_ROOT/dictionaries.json"
+          xvfb-run -a -s '-screen 0 1600x1100x24' \
+            bash -euo pipefail <<'TESTS'
+          export BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY="$DISPLAY"
+          exec flutter test --concurrency=2
+          TESTS
 
       - name: Preserve compiled visualization report
         if: always()

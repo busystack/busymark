@@ -1,3 +1,5 @@
+import '../support/native_menu_probe.dart';
+import 'package:flutter/gestures.dart';
 import 'dart:async';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -16,6 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+late NativeMenuProbe _menus;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -134,15 +138,15 @@ void main() {
       final readsBeforeRefresh = clipboard.readCalls;
       await tester.tap(actions);
       await tester.pumpAndSettle();
-      expect(find.text(refreshLabel), findsOneWidget);
-      expect(find.text(l10n.clipboardClearAll), findsOneWidget);
-      await tester.tap(find.text(refreshLabel));
+      expect(_menus.contains(refreshLabel), isTrue);
+      expect(_menus.contains(l10n.clipboardClearAll), isTrue);
+      await _menus.choose(refreshLabel);
       await tester.pumpAndSettle();
       expect(clipboard.readCalls, readsBeforeRefresh + 1);
 
       await tester.tap(actions);
       await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.clipboardClearAll));
+      await _menus.choose(l10n.clipboardClearAll);
       await tester.pumpAndSettle();
       expect(
         container.read(clipboardHistoryControllerProvider).entries,
@@ -189,6 +193,41 @@ void main() {
     );
     expect(selectedRect.top, greaterThanOrEqualTo(listRect.top));
     expect(selectedRect.bottom, lessThanOrEqualTo(listRect.bottom));
+    final before = container
+        .read(clipboardHistoryControllerProvider)
+        .entries
+        .map((entry) => entry.id)
+        .toList();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+    expect(_menus.isOpen, isFalse, reason: 'GTK opens after modifier release');
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(_menus.contains('Paste'), isTrue);
+    expect(_menus.contains('Remove'), isTrue);
+    expect(
+      container
+          .read(clipboardHistoryControllerProvider)
+          .entries
+          .map((entry) => entry.id),
+      before,
+    );
+    _menus.close();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+    await tester.pump();
+    await _menus.choose('Remove');
+    expect(
+      container
+          .read(clipboardHistoryControllerProvider)
+          .entries
+          .any((entry) => entry.text == 'entry 9'),
+      isFalse,
+    );
+    expect(
+      container.read(clipboardHistoryControllerProvider).entries.length,
+      before.length - 1,
+    );
   });
 
   testWidgets(
@@ -245,14 +284,9 @@ void main() {
       findsNothing,
     );
     await _openEntryActions(tester);
-    final disabledPaste = find.ancestor(
-      of: find.text('Paste'),
-      matching: find.byWidgetPredicate(
-        (widget) => widget is PopupMenuItem && !widget.enabled,
-      ),
-    );
-    expect(disabledPaste, findsOneWidget);
-    expect(find.text('Paste as Plain Text'), findsNothing);
+    expect(_menus.contains('Paste'), isTrue);
+    expect(_menus.enabled('Paste'), isFalse);
+    expect(_menus.contains('Paste as Plain Text'), isFalse);
   });
 
   testWidgets('double-clicking a shared history row pastes the item', (
@@ -303,16 +337,9 @@ void main() {
       await _pumpPanel(tester, container);
 
       await _openEntryActions(tester);
-      expect(
-        find.ancestor(
-          of: find.text('Paste'),
-          matching: find.byWidgetPredicate(
-            (widget) => widget is PopupMenuItem && !widget.enabled,
-          ),
-        ),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Paste as Plain Text'));
+      expect(_menus.contains('Paste'), isTrue);
+      expect(_menus.enabled('Paste'), isFalse);
+      await _menus.choose('Paste as Plain Text');
       await tester.pump();
       expect(target.pasteCalls, 1);
       expect(target.lastPlainText, isTrue);
@@ -335,7 +362,7 @@ void main() {
     await _pumpPanel(tester, container);
 
     await _openEntryActions(tester);
-    expect(find.text('Paste as Plain Text'), findsNothing);
+    expect(_menus.contains('Paste as Plain Text'), isFalse);
   });
 
   testWidgets('image exposes plain paste only with real text', (tester) async {
@@ -355,7 +382,7 @@ void main() {
     await _pumpPanel(tester, container);
 
     await _openEntryActions(tester);
-    await tester.tap(find.text('Paste as Plain Text'));
+    await _menus.choose('Paste as Plain Text');
     await tester.pump();
     expect(target.lastPlainText, isTrue);
   });
@@ -378,7 +405,7 @@ void main() {
     await _pumpPanel(tester, container);
 
     await _openEntryActions(tester);
-    await tester.tap(find.text('Paste'));
+    await _menus.choose('Paste');
     await tester.pump(const Duration(milliseconds: 200));
     expect(target.pasteCalls, 1);
     expect(
@@ -406,7 +433,7 @@ void main() {
     await _pumpPanel(tester, container);
 
     await _openEntryActions(tester);
-    await tester.tap(find.text('Paste'));
+    await _menus.choose('Paste');
     await tester.pump(const Duration(milliseconds: 200));
     expect(target.pasteCalls, 1);
     expect(find.text(AppLocalizationsEn().clipboardUnavailable), findsNothing);
@@ -440,7 +467,7 @@ void main() {
       );
 
       await _openEntryActions(tester);
-      await tester.tap(find.text('Paste'));
+      await _menus.choose('Paste');
       await tester.pumpAndSettle();
       expect(target.payloads.single.html, html);
       expect(target.lastPlainText, isFalse);
@@ -463,7 +490,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(TextField), findsNothing);
       await _openEntryActions(tester, index: 1);
-      await tester.tap(find.text('Paste'));
+      await _menus.choose('Paste');
       await tester.pumpAndSettle();
       expect(target.payloads, hasLength(2));
       expect(target.payloads.last.html, html);
@@ -488,7 +515,7 @@ void main() {
       await _pumpPanel(tester, container);
 
       await _openEntryActions(tester);
-      await tester.tap(find.text('Paste'));
+      await _menus.choose('Paste');
       await tester.pumpAndSettle();
       expect(
         container.read(clipboardHistoryControllerProvider).entries,
@@ -503,7 +530,7 @@ void main() {
       container.read(clipboardInsertionRegistryProvider).register(successful);
       await tester.pump();
       await _openEntryActions(tester);
-      await tester.tap(find.text('Paste as Plain Text'));
+      await _menus.choose('Paste as Plain Text');
       await tester.pumpAndSettle();
       expect(successful.lastPlainText, isTrue);
       expect(successful.payloads.single.text, 'Readable fallback');
@@ -536,7 +563,7 @@ void main() {
     await _pumpPanel(tester, container);
 
     await _openEntryActions(tester);
-    await tester.tap(find.text('Paste'));
+    await _menus.choose('Paste');
     await tester.pump();
     expect(target.pasteCalls, 1);
 
@@ -613,13 +640,23 @@ void main() {
 }
 
 Future<void> _openEntryActions(WidgetTester tester, {int index = 0}) async {
-  final actions = find.descendant(
+  final rows = find.descendant(
     of: find.byKey(const ValueKey('clipboard-history-list')),
-    matching: find.byTooltip(AppLocalizationsEn().actions),
+    matching: find.byWidgetPredicate(
+      (widget) => widget is BusyMarkSidebarRecordRow,
+    ),
   );
-  expect(actions, findsWidgets);
-  await tester.tap(actions.at(index));
+  expect(rows, findsWidgets);
+  expect(
+    find.descendant(
+      of: rows,
+      matching: find.byTooltip(AppLocalizationsEn().actions),
+    ),
+    findsNothing,
+  );
+  await tester.tap(rows.at(index), buttons: kSecondaryMouseButton);
   await tester.pumpAndSettle();
+  expect(_menus.packets, isNotEmpty);
 }
 
 ProviderContainer _container({RichClipboardService? clipboard}) {
@@ -642,6 +679,7 @@ Future<void> _pumpPanel(
   ProviderContainer container, {
   Locale? locale,
 }) async {
+  _menus = NativeMenuProbe(tester);
   tester.view.physicalSize = const Size(600, 600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);

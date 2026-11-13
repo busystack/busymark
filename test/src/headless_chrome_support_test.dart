@@ -84,6 +84,79 @@ exit 23
     },
   );
 
+  test('browser does not inherit the runner session bus', () {
+    for (final address in [
+      'disabled:',
+      'unix:path=/run/user/1000/bus',
+      'unix:path=/tmp/retired-session-bus',
+    ]) {
+      final parent = {'DBUS_SESSION_BUS_ADDRESS': address, 'DISPLAY': ':97'};
+      expect(chromeProcessEnvironment(parent), {'DISPLAY': ':97'});
+      expect(parent['DBUS_SESSION_BUS_ADDRESS'], address);
+    }
+  });
+
+  test(
+    'browser starts a valid private session bus and retires its daemon',
+    () async {
+      final directory = await Directory.systemTemp.createTemp('browser-bus-');
+      addTearDown(() => directory.delete(recursive: true));
+      final observed = File('${directory.path}/bus.json');
+      final launcher = File('${directory.path}/browser');
+      await launcher.writeAsString('''#!/usr/bin/python3
+import json, os, subprocess, sys
+from pathlib import Path
+names = subprocess.check_output([
+    'gdbus', 'call', '--session', '--dest', 'org.freedesktop.DBus',
+    '--object-path', '/org/freedesktop/DBus',
+    '--method', 'org.freedesktop.DBus.ListNames'], text=True)
+Path(${jsonEncode(observed.path)}).write_text(json.dumps({
+    'address': os.environ['DBUS_SESSION_BUS_ADDRESS'], 'names': names}))
+print('private browser bus verified', file=sys.stderr, flush=True)
+sys.exit(23)
+''');
+      expect((await Process.run('chmod', ['700', launcher.path])).exitCode, 0);
+      await expectLater(
+        evaluateInChrome(
+          '${directory.path}/document.html',
+          'true',
+          browserExecutable: launcher.path,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'browser diagnostics',
+            allOf(
+              contains('exited 23'),
+              contains('private browser bus verified'),
+              isNot(contains('Chromium cleanup:')),
+            ),
+          ),
+        ),
+      );
+      final bus = jsonDecode(await observed.readAsString()) as Map;
+      expect(bus['address'], startsWith('unix:'));
+      expect(
+        bus['address'],
+        isNot(Platform.environment['DBUS_SESSION_BUS_ADDRESS']),
+      );
+      expect(bus['names'], contains('org.freedesktop.DBus'));
+      final request = await Process.run('gdbus', [
+        'call',
+        '--address',
+        bus['address'] as String,
+        '--dest',
+        'org.freedesktop.DBus',
+        '--object-path',
+        '/org/freedesktop/DBus',
+        '--method',
+        'org.freedesktop.DBus.ListNames',
+      ]);
+      expect(request.exitCode, isNot(0), reason: 'The private bus must retire');
+    },
+    skip: !Platform.isLinux,
+  );
+
   test('browser preserves ordinary explicit font configuration', () {
     final parent = {
       'FONTCONFIG_FILE': '/owned/custom-fonts/fonts.conf',

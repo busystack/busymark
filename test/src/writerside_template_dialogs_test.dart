@@ -235,7 +235,7 @@ void main() {
       findsNWidgets(2),
     );
     expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
-    final formatTile = tester.widget<YaruListTile>(
+    final formatTile = tester.widget<BusyMarkListTile>(
       find.byKey(const ValueKey('template-format')),
     );
     expect(formatTile.trailing, isNull);
@@ -261,7 +261,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<YaruMasterTile>(
+          .widget<BusyMarkMasterTile>(
             find.byKey(
               const ValueKey('template-Writerside Overview MD Topic.md'),
             ),

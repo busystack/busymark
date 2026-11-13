@@ -1,0 +1,267 @@
+{
+  "date": "2026-10-31",
+  "commits": {
+    "engine": "07cf4a11ae3f0fd3bb97cafc38ea344826c684ef",
+    "shared": "df529b9e35e56a29de1f4addd1223552ad934255",
+    "busymark_runtime": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "busyfiles_runtime": "ddc0f9ece11d6a250e33a49362448ae0c9ec03bb"
+  },
+  "framework": {
+    "flutter": "3.47.5",
+    "dart": "3.13.4",
+    "framework": "6a19cca56475dbfba1478ee68d7bd0c2ef891da1",
+    "engine": "af7e796e161ae0bb1ff0758c71a7105418bd9ded"
+  },
+  "checks": [
+    {
+      "name": "engine full tests",
+      "result": "140 passed",
+      "source": "07cf4a11ae3f0fd3bb97cafc38ea344826c684ef",
+      "log": "engine-tests.log",
+      "logSha256": {
+        "engine-tests.log": "1bc8d377038906346e88acb7435fd24221f5a89a55f3792030cecf0bb037ea00"
+      }
+    },
+    {
+      "name": "shared presentation full tests",
+      "result": "386 passed",
+      "source": "df529b9e35e56a29de1f4addd1223552ad934255",
+      "log": "shared-tests.log",
+      "logSha256": {
+        "shared-tests.log": "390de2a78d76e7fcec0a5302bf683cb2d1b5c58c68156956c1554b10b0a495de"
+      }
+    },
+    {
+      "name": "shared actual-repository tests",
+      "result": "8 passed",
+      "source": "df529b9e35e56a29de1f4addd1223552ad934255",
+      "log": "shared-real-repositories.log",
+      "logSha256": {
+        "shared-real-repositories.log": "62c7063095fc6d843e51ae13eb0882aac63fe8d10b8f0555bfc924fbec4ecbe2"
+      }
+    },
+    {
+      "name": "BusyMark host/workspace/Git/localization suite",
+      "result": "735 passed before the final menu-only follow-up",
+      "source": "2bc18d261f3d4d5b4c68da8776639f33d10b92c2",
+      "log": "mark-host-tests-attempt2.log",
+      "logSha256": {
+        "mark-host-tests-attempt2.log": "69404abbf4df71ae652dc69d01584c59c222578d7132737a12b289ed22260096"
+      }
+    },
+    {
+      "name": "BusyFiles complete UI suite",
+      "result": "676 passed; 1 pre-existing skip",
+      "source": "f4d919b5d95848879d378b10ebde78940c72cacb",
+      "log": "files-ui-tests.log",
+      "logSha256": {
+        "files-ui-tests.log": "5d23f1c606d7348be60238baa34ad34751e63378485bd2d1e01300a61f7e4339"
+      }
+    },
+    {
+      "name": "BusyFiles private-runtime IPC and prompt tests",
+      "result": "16 passed",
+      "source": "ddc0f9ece11d6a250e33a49362448ae0c9ec03bb",
+      "log": "private-runtime-ipc-tests.log",
+      "logSha256": {
+        "private-runtime-ipc-tests.log": "ba120f7125f7a9afb8a108f51af9b46f1a8b79f6d6e00b0833fcb6b514821ba7"
+      }
+    },
+    {
+      "name": "shared native CTest",
+      "result": "1 passed",
+      "log": "shared-native-tests.log",
+      "logSha256": {
+        "shared-native-tests.log": "b108ee4fafa01774e3e8d07153fbd7e4dbcf85894a5b70577975cb4ba5ea2580"
+      }
+    },
+    {
+      "name": "BusyFiles native CTest",
+      "result": "15 passed",
+      "log": "files-native-tests.log",
+      "logSha256": {
+        "files-native-tests.log": "2f8630089ccffb87d47706a127b51d65b5d0c53b1d806fdf972ca6fce85b696a"
+      }
+    },
+    {
+      "name": "final native menu contract",
+      "result": "6 passed",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "final-native-menu-contract.log",
+      "logSha256": {
+        "final-native-menu-contract.log": "500fa45467e9f80b988f5180e6b30aaf33aeebfb5a3c4e724b2be9d2173cb38b"
+      }
+    },
+    {
+      "name": "latest targeted dismissal and existing Git widgets",
+      "result": "8 dismissal and 44 Git widget cases passed; two stale structural source assertions failed in the same run and were adapted and rerun below",
+      "log": "final-native-tab-menu-regressions-attempt2.log",
+      "logSha256": {
+        "final-native-tab-menu-regressions-attempt2.log": "8722a3d9279a85fc2566f36e6cfb5fa8d21f1e4bee780b9d75176ec69d1024a6"
+      }
+    },
+    {
+      "name": "adapted complete source audit",
+      "result": "44 passed; behavioral assertions retained",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "final-source-audit-adapted.log",
+      "logSha256": {
+        "final-source-audit-adapted.log": "7c6fc95229c40128de3ffd7064dc5e327fe3c2a934466a5d4617551bfa4ac804"
+      }
+    },
+    {
+      "name": "actual workspace comparison tab/native close",
+      "result": "1 passed, including independent tabs, unsaved value/caret and native context close",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "final-workspace-tabs-native-close-regression.log",
+      "logSha256": {
+        "final-workspace-tabs-native-close-regression.log": "bf119dd2a3d4a1f89c3832d4cb5ad77c8f854b8b028fb0c4f60e886c80ec6914"
+      }
+    },
+    {
+      "name": "resolved shared/all-host native gate",
+      "result": "passed",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "final-all-native-boundary.log",
+      "logSha256": {
+        "final-all-native-boundary.log": "2ac0d4567991b486f0110dd67de7e975d80e26c9040c680249be0745226f75fc"
+      }
+    },
+    {
+      "name": "resolved shared native gate self-tests",
+      "result": "passed",
+      "source": "df529b9e35e56a29de1f4addd1223552ad934255",
+      "log": "audit-selftest-attempt2.log",
+      "logSha256": {
+        "audit-selftest-attempt2.log": "b470f3ed47b809555dcb6ffaa83db05d2e493dddabdd7c5cc32587fdffd8151e"
+      }
+    },
+    {
+      "name": "mixed workspace Git scope gate self-tests",
+      "result": "passed; forbidden aliases, qualified constructors/helpers, palette and fallback examples rejected; approved and non-Git branches accepted; missing scopes/resolution rejected",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "workspace-audit-tool-selftest-final.log",
+      "logSha256": {
+        "workspace-audit-tool-selftest-final.log": "05435324636609704c11c9e12f907be13576c03d902253db35f5328c5a1ab2b2"
+      }
+    },
+    {
+      "name": "mixed workspace Git scope gate",
+      "result": "passed",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "workspace-audit-tool-check-final.log",
+      "logSha256": {
+        "workspace-audit-tool-check-final.log": "54c78e85a4c2c27347480c4f883e34acd4781a9209bd1d1e80a271474b2b99b7"
+      }
+    },
+    {
+      "name": "BusyMark final analysis",
+      "result": "No issues",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "final-mark-menu-analyze-attempt2.log",
+      "logSha256": {
+        "final-mark-menu-analyze-attempt2.log": "011b58b2da4600e73cfd8559ee267ccdc4d16f78e1a7b1226e2dbd03e73973aa"
+      }
+    },
+    {
+      "name": "BusyFiles changed daemon/IPC analysis",
+      "result": "No issues",
+      "source": "ddc0f9ece11d6a250e33a49362448ae0c9ec03bb",
+      "log": "runtime-handoff-focused-analyze.log",
+      "logSha256": {
+        "runtime-handoff-focused-analyze.log": "a0bd2cf53e28dfbf969b4d86d769f0eae76a99941e71eb6629dbfe0963ea30f5"
+      }
+    },
+    {
+      "name": "shared and both UI host analysis",
+      "result": "No issues",
+      "logs": [
+        "busystack_git_flutter-analyze-attempt2.log",
+        "busymark-analyze-attempt2.log",
+        "busyfiles-apps-busyfiles_ui-analyze-attempt2.log"
+      ],
+      "logSha256": {
+        "busystack_git_flutter-analyze-attempt2.log": "a437ed15766d10e7c0f46e41345f6ade07ef8439a2be6f9a0b7e66d77001890c",
+        "busymark-analyze-attempt2.log": "8e521a828033eab11b422f3988064972597e05791c0013f70c4a46a3070f1574",
+        "busyfiles-apps-busyfiles_ui-analyze-attempt2.log": "25da9c5f3e137fc375c1dad5a0c481a9b307ae16363726e88e38ea6c1b55eb7d"
+      }
+    },
+    {
+      "name": "native spelling hook and actual Hunspell regression tests",
+      "result": "14 passed",
+      "source": "11208564f5d0cffb271ffb3db582c5769b4469b3",
+      "log": "spelling-hook-regressions-attempt3.log",
+      "logSha256": {
+        "spelling-hook-regressions-attempt3.log": "bf8a76faba0d86342618748c8b87757e4459b7f0ca8363cefc85364e615f50fc"
+      }
+    },
+    {
+      "name": "BusyMark final release build",
+      "result": "passed",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "mark-release-build-attempt4.log",
+      "logSha256": {
+        "mark-release-build-attempt4.log": "47f46b78db410ab65d7588ca64ed304c5413aa46c8f17c004a6a7fa03a259a0f"
+      }
+    },
+    {
+      "name": "BusyMark ordinary final debug startup",
+      "result": "flutter run built, rendered a real staged comparison, then exited naturally 0",
+      "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+      "log": "../captures-final/mark-debug-04.log",
+      "logSha256": {
+        "../captures-final/mark-debug-04.log": "4b00996eeb313a7bba0d35adbad7735142ec9019c1c88c3da9e9ee0e9f0845e3"
+      }
+    }
+  ],
+  "pins": {
+    "schema": 1,
+    "layout": "sibling-working-trees",
+    "dependencies": [
+      {
+        "name": "busystack_git",
+        "path": "../busystack_git",
+        "archive": "tool/source-dependencies/busystack_git.tar.gz",
+        "sha256": "d59d3d326dd7bc381a12f6d9da9c70e8a17e38d802a8224adeb7dccb0f1dea6d",
+        "tree_sha256": "429cd55ed2b1e147d34e52911df07ac0ca088308be994a1314aeb2c0cb886095",
+        "repository": "https://github.com/busystack/busystack_git.git",
+        "revision": "07cf4a11ae3f0fd3bb97cafc38ea344826c684ef"
+      },
+      {
+        "name": "busystack_git_flutter",
+        "path": "../busystack_git_flutter",
+        "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
+        "sha256": "beb9e9e5ec477fd37dc4621010e9942ca48c016361e214c1e515db47ae20732a",
+        "tree_sha256": "e5220d85fad5c90c0092c4630404b04156d8cf53919ff7db91c7210e129006b1",
+        "repository": "https://github.com/busystack/busystack_git_flutter.git",
+        "revision": "df529b9e35e56a29de1f4addd1223552ad934255"
+      }
+    ]
+  },
+  "native": {
+    "BusyMark": "final release en/de/ja/ar and ordinary debug en; all final app processes exited naturally 0",
+    "BusyFiles": "installed final DEB, normal authenticated systemd user service, PrivateTmp=yes and NoNewPrivileges=yes; light/dark staged and historical review; natural UI exits 0",
+    "repositoryReceipts": "final HEAD, full index entries/status and hashes of every working file equal the recorded fixture baseline"
+  },
+  "qualificationLimits": [
+    "Windows native acceptance unrun",
+    "GNOME Wayland hardware and fractional display scaling unrun for final artifacts; 125%/150% are real text scale on X11, device scale 1.0",
+    "Earlier AT-SPI geometry/descriptor and Wayland multiple-engine failures in busyfiles/engine/UPSTREAM.md are not declared fixed",
+    "Outbound network/authentication/signing/credential-service qualification unrun; local authenticated IPC prompt tests passed",
+    "Two pre-final Japanese runs aborted with g_mutex_clear; official-only close probe did not reproduce; final proper-desktop Japanese runs exited 0; no upstream attribution established",
+    "Full host one-command package wrapper hits sandbox pub.dev DNS during SBOM generation after successful packaging; final package stages and source/payload gates passed, SBOM generated in connected VM with exact matching 15 input hashes",
+    "Original DAV checkout 75bdc14 with unrelated IDE change does not match BusyFiles pin 18f636f; isolated verification uses the unchanged clean pin; original preserved"
+  ],
+  "environmentIncident": {
+    "cause": "Temporary disk exhaustion during this verification affected two pre-existing running VMs; task caches reclaimed; no forced restart/repair of unknown workloads",
+    "busydata-installed-20261003": "last observed STOPPED (originally RUNNING)",
+    "busynode-continuation-20261015": "last observed ERROR (originally RUNNING)",
+    "requires": "Operator recovery and consistency checks"
+  },
+  "artifactSourcePolicy": "Runtime source commits above are distinct from later documentation/evidence commits. No push or publication.",
+  "environmentCleanup": {
+    "verificationVm": "busyfiles-release24-20261005 restored STOPPED",
+    "taskContainer": "busystack-git-native-20261031 removed after graceful stop and export",
+    "cacheCleanup": "Only this task official SDK copy, writable pub cache copy, and Files compiler/payload intermediates removed. Original /home/albert/flutter-sdk preserved at Dart 3.13.4."
+  }
+}

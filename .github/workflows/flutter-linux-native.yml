@@ -50,7 +50,7 @@ jobs:
             libglib2.0-dev \
             libpango1.0-dev \
             libhandy-1-dev \
-            libsecret-1-dev \
+            libsecret-1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             libwebkit2gtk-4.1-dev \
             python3-gi \
             rsync \
@@ -100,7 +100,14 @@ jobs:
       - name: Resolve locked dependencies
         id: flutter-packages
         if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
-        run: flutter pub get --enforce-lockfile
+        run: |
+          python3 tools/checkout_shared_dependencies.py
+          python3 ../busystack_git/tool/build_runtime.py --build-dir "$RUNNER_TEMP/git-native"
+          echo "BUSYSTACK_GIT_EXECUTABLE=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT_256=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_GIT_HELPER_PATH=$RUNNER_TEMP/git-native/busystack-git-helper" >> "$GITHUB_ENV"
+          flutter pub get --enforce-lockfile
 
       - name: Build Linux release
         id: release-build
@@ -171,12 +178,113 @@ jobs:
       - name: Build strict Snap from a clean core24 environment (attempt 1)
         id: snapcraft
         uses: snapcore/action-build@v1
+        with:
+          snapcraft-args: --verbosity=debug
         continue-on-error: true
 
       - name: Retry strict Snap build after an infrastructure failure
         id: snapcraft-retry
         if: steps.snapcraft.outcome == 'failure'
         uses: snapcore/action-build@v1
+        with:
+          snapcraft-args: --verbosity=debug
+
+      - name: Collect official Snapcraft and Snapd failure diagnostics
+        if: ${{ !cancelled() && (steps.snapcraft.outcome == 'failure' || steps.snapcraft-retry.outcome == 'failure') }}
+        env:
+          SNAPCRAFT_DIAGNOSTICS: ${{ runner.temp }}/snapcraft-build-diagnostics
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import shlex
+          import subprocess
+
+          output = Path(os.environ['SNAPCRAFT_DIAGNOSTICS'])
+          output.mkdir(parents=True, exist_ok=True)
+          credentials = [value for key, value in os.environ.items()
+              if len(value) >= 8 and any(word in key.upper()
+                  for word in ('TOKEN', 'PASSWORD', 'SECRET'))]
+
+          def redact(text):
+              for value in credentials:
+                  text = text.replace(value, '[REDACTED]')
+              return text
+
+          source = Path.home() / '.local/state/snapcraft/log'
+          if source.is_dir():
+              for path in source.rglob('*.log'):
+                  if not path.is_file() or path.is_symlink():
+                      continue
+                  target = output / 'snapcraft' / path.relative_to(source)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_text(redact(path.read_text(errors='replace')))
+          records = []
+
+          def capture(argv):
+              print('+ ' + shlex.join(argv), flush=True)
+              try:
+                  result = subprocess.run(argv, stdout=subprocess.PIPE,
+                      stderr=subprocess.STDOUT, text=True, timeout=45)
+                  text, code = result.stdout, result.returncode
+              except subprocess.TimeoutExpired as error:
+                  text = error.stdout or ''
+                  if isinstance(text, bytes):
+                      text = text.decode(errors='replace')
+                  text += '\nDiagnostic command timed out after 45 seconds.\n'
+                  code = 124
+              except OSError as error:
+                  text, code = str(error) + '\n', 127
+              text = redact(text)
+              path = output / f'{len(records):03}.log'
+              path.write_text(text)
+              records.append({'argv': argv, 'exitCode': code, 'log': path.name})
+              (output / 'commands.json').write_text(json.dumps(records, indent=2))
+              print(text, flush=True)
+              return code, text
+
+          def snapd(prefix):
+              capture(prefix + ['snap', 'version'])
+              capture(prefix + ['journalctl', '-u', 'snapd.service',
+                  '--no-pager', '-n', '500'])
+              code, changes = capture(prefix + ['snap', 'changes', '--abs-time'])
+              if code == 0:
+                  for line in changes.splitlines():
+                      fields = line.split()
+                      if fields and fields[0].isdigit():
+                          capture(prefix + ['snap', 'tasks', fields[0]])
+
+          snapd(['sudo', '-n'])
+          lxc = ['sudo', '-n', 'lxc', '--project', 'snapcraft']
+          code, listing = capture(lxc + ['list', '--format', 'json'])
+          if code == 0:
+              for instance in json.loads(listing):
+                  name = instance['name']
+                  if not name.startswith('snapcraft-busymark-'):
+                      continue
+                  started = False
+                  if instance['status'] == 'Stopped':
+                      code, _ = capture(lxc + ['start', name])
+                      if code != 0:
+                          continue
+                      started = True
+                  elif instance['status'] != 'Running':
+                      continue
+                  try:
+                      snapd(lxc + ['exec', name, '--'])
+                  finally:
+                      if started:
+                          capture(lxc + ['stop', name])
+          PY
+
+      - name: Preserve official Snapcraft build diagnostics
+        if: ${{ !cancelled() && (steps.snapcraft.outcome == 'failure' || steps.snapcraft-retry.outcome == 'failure') }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapcraft-build-diagnostics
+          path: ${{ runner.temp }}/snapcraft-build-diagnostics
+          if-no-files-found: warn
 
       - name: Select built Snap
         if: ${{ !cancelled() && steps.snap-inspection.outcome == 'success' && (steps.snapcraft.outcome == 'success' || steps.snapcraft-retry.outcome == 'success') }}
@@ -218,7 +326,7 @@ jobs:
         if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session
+          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session at-spi2-core xdg-desktop-portal-gtk
 
       - name: Install strict Snap
         id: strict-install
@@ -237,6 +345,32 @@ jobs:
           test -S "$runtime_dir/bus"
           echo "XDG_RUNTIME_DIR=$runtime_dir" >> "$GITHUB_ENV"
           echo "DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus" >> "$GITHUB_ENV"
+          export XDG_RUNTIME_DIR="$runtime_dir"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus"
+          # The confined clients need the real desktop services to own their
+          # bus names before launch. Keep their display alive across the smoke
+          # steps, which create separate X11 and Wayland application displays.
+          display_file="${RUNNER_TEMP}/strict-session-display"
+          Xvfb -displayfd 3 -screen 0 1280x1024x24 -nolisten tcp \
+            3>"$display_file" >"${RUNNER_TEMP}/strict-session-xvfb.log" 2>&1 &
+          display_pid=$!
+          echo "$display_pid" > "${RUNNER_TEMP}/strict-session-xvfb.pid"
+          for attempt in {1..40}; do
+            if [ -s "$display_file" ]; then break; fi
+            kill -0 "$display_pid"
+            sleep 0.25
+          done
+          test -s "$display_file"
+          export DISPLAY=":$(cat "$display_file")"
+          systemctl --user import-environment DISPLAY
+          systemctl --user start at-spi-dbus-bus.service \
+            xdg-desktop-portal-gtk.service xdg-desktop-portal.service
+          a11y_address="$(gdbus call --session --dest org.a11y.Bus \
+            --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress \
+            | python3 -c 'import ast,sys; print(ast.literal_eval(sys.stdin.read())[0])')"
+          gdbus call --address "$a11y_address" --dest org.a11y.atspi.Registry \
+            --object-path /org/a11y/atspi/registry \
+            --method org.a11y.atspi.Registry.GetRegisteredEvents
 
       - name: Enable parallel Snap instances
         if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
@@ -295,7 +429,9 @@ jobs:
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
         run: |
           snap run --shell busymark -c '
-            set -eu
+            # Trace assertions so a missing resource or duplicate library names
+            # its exact condition and path before the strict audit exits.
+            set -eux
             inspect_dependencies() {
               dependency_object="$1"
               if dependency_output="$(ldd "$dependency_object" 2>&1)"; then
@@ -536,6 +672,25 @@ jobs:
             ~/snap/busymark_fixture/common/close-live
           if-no-files-found: ignore
 
+      - name: Stop strict-Snap desktop session
+        if: always()
+        run: |
+          pid_file="${RUNNER_TEMP}/strict-session-xvfb.pid"
+          if [ -f "$pid_file" ]; then
+            export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+            export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+            cleanup_status=0
+            systemctl --user stop xdg-desktop-portal.service \
+              xdg-desktop-portal-gtk.service at-spi-dbus-bus.service \
+              || cleanup_status=$?
+            display_pid="$(cat "$pid_file")"
+            if kill -0 "$display_pid" 2>/dev/null; then
+              test "$(ps -p "$display_pid" -o comm=)" = Xvfb
+              kill "$display_pid"
+            fi
+            exit "$cleanup_status"
+          fi
+
   development-modes:
     name: Native release acceptance (${{ matrix.mode }})
     if: ${{ inputs.run-stress }}
@@ -551,7 +706,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y apparmor-profiles bubblewrap clang cmake ninja-build pkg-config curl xz-utils \
-            libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
+            libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
         id: web-sandbox
@@ -584,7 +739,14 @@ jobs:
           channel: stable
           flutter-version: '3.47.5'
           cache: true
-      - run: flutter pub get --enforce-lockfile
+      - run: |
+          python3 tools/checkout_shared_dependencies.py
+          python3 ../busystack_git/tool/build_runtime.py --build-dir "$RUNNER_TEMP/git-native"
+          echo "BUSYSTACK_GIT_EXECUTABLE=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT_256=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_GIT_HELPER_PATH=$RUNNER_TEMP/git-native/busystack-git-helper" >> "$GITHUB_ENV"
+          flutter pub get --enforce-lockfile
         id: flutter-packages
         if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
       - name: Build official development mode

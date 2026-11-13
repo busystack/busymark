@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:yaru/yaru.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
@@ -148,7 +147,7 @@ class _BusyMarkFeedbackDialogState
                     enabled: !_submitting,
                     onSelected: _setCategory,
                   ),
-                  YaruListTile.square(
+                  BusyMarkListTile.square(
                     title: TextField(
                       key: BusyMarkFeedbackKeys.subject,
                       controller: _subjectController,
@@ -161,7 +160,7 @@ class _BusyMarkFeedbackDialogState
                       ),
                     ),
                   ),
-                  YaruListTile.square(
+                  BusyMarkListTile.square(
                     title: TextField(
                       key: BusyMarkFeedbackKeys.message,
                       controller: _messageController,
@@ -178,7 +177,7 @@ class _BusyMarkFeedbackDialogState
                       ),
                     ),
                   ),
-                  YaruListTile.square(
+                  BusyMarkListTile.square(
                     title: TextField(
                       key: BusyMarkFeedbackKeys.replyEmail,
                       controller: _replyEmailController,
@@ -203,7 +202,7 @@ class _BusyMarkFeedbackDialogState
               BusyMarkGroupedList(
                 filled: true,
                 children: [
-                  YaruCheckboxListTile(
+                  BusyMarkCheckboxListTile(
                     key: BusyMarkFeedbackKeys.technicalDetails,
                     value: _includeTechnicalDetails,
                     onChanged: _submitting

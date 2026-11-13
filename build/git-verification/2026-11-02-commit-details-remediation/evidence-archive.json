@@ -1,0 +1,8 @@
+{
+  "path": "/home/albert/busystack/.native-git-verification/commit-details-remediation/evidence.tar.gz",
+  "bytes": 5756167,
+  "sha256": "324964563f1d1a3ccfb0c61c1abeab4716d88ca1e40846f2963bb85d7d9223ca",
+  "captures": 51,
+  "note": "Raw investigation images, interaction trace and complete logs remain in this local archive; committed captures use the explicit accepted manifest. Final per-image acceptance is the curated runtime/native-captures.json; two early dark/light GTK-menu mismatches are excluded after image review.",
+  "finalAcceptedCaptures": 49
+}

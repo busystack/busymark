@@ -1,0 +1,26 @@
+{
+  "additionalInspectedCapture": {
+    "name": "commit-option-keyboard-focus.png",
+    "sha256": "726d748876bbbd61bf2263adb8e6def9e3baa7666d1fd11d07476bcf0e122326",
+    "event": {
+      "time": 1793558565.321898,
+      "request": {
+        "command": "screenshot",
+        "name": "commit-option-keyboard-focus"
+      },
+      "response": {
+        "result": {
+          "path": "/home/ubuntu/busystack-native-git-verification-20261031/commit-correction-ui/commit-option-keyboard-focus.png",
+          "sha256": "726d748876bbbd61bf2263adb8e6def9e3baa7666d1fd11d07476bcf0e122326",
+          "width": 1440,
+          "height": 1000
+        }
+      }
+    }
+  },
+  "earlyFrames": {
+    "git_log_inspector": "Correct information-before-files placement; file read was pending in this frame",
+    "multiple_independent_comparisons": "Early frame after opening the Unstaged tab; use commit-option-keyboard-focus.png for rendered content"
+  },
+  "nativeActionInspection": "Held pressed and keyboard focus rectangles inspected; actual adapter tests additionally cover all states"
+}

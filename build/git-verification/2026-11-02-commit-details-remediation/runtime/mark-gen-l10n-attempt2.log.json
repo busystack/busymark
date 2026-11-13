@@ -1,0 +1,5 @@
+{
+  "source": "mark-gen-l10n-attempt2.log",
+  "sha256": "97362974d3ec503ef18e205dbcc7d8e1ca57e5426c80a4966c6608571fa88609",
+  "text": "Because l10n.yaml exists, the options defined there will be used instead.\nTo use the command line arguments, delete the l10n.yaml file in the Flutter project.\n\n\n"
+}

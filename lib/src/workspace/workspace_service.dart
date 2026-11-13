@@ -1195,10 +1195,16 @@ class WorkspaceService {
     final file = File(path);
     final bytes = await file.readAsBytes();
     final stat = await file.stat();
-    final decoded = decodeUtf8Document(bytes);
+    final snapshot = _snapshotFromBytes(stat, bytes);
+    final DecodedUtf8Document decoded;
+    try {
+      decoded = decodeUtf8Document(bytes);
+    } on FormatException catch (error) {
+      throw WorkspaceFileDecodingException(error, snapshot);
+    }
     return WorkspaceFileLoad(
       text: decoded.text,
-      snapshot: _snapshotFromBytes(stat, bytes),
+      snapshot: snapshot,
       format: decoded.format,
     );
   }

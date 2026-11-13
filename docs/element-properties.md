@@ -7,11 +7,11 @@ does not open the pane, move the caret, change source, or add history. The
 formatting toolbar has no duplicate Properties button. The existing command
 palette command **Element Properties** opens the pane or inspects the current
 selection again when it is already open, including inline links, variables and
-shortcuts. In Source and Split, the command uses the Source selection. Use the
+shortcuts. In Source and Dual, the command uses the Source selection. Use the
 pane’s Close control to hide it.
 
 Ordinary clicks, caret movement, text selection, focus changes and scrolling do
-not switch the inspected owner. Switching between Editor, Source and Split for
+not switch the inspected owner. Switching between Editor, Source and Dual for
 the same document preserves the pane and its target. Changes to that owner,
 including Undo/Redo, refresh its values when its authored identity can be
 verified. A deleted or ambiguous target becomes unavailable; later edits cannot

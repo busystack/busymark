@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/application/git_gateway.dart';
+import 'package:busymark/src/git/application/git_workspace_eligibility.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
@@ -13,8 +14,253 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:busystack_git/busystack_git.dart' as shared;
 
 void main() {
+  test(
+    'shared status serves authoring refresh without another repository scan',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-shared-status-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final root = await directory.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'shared',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: root, rootPath: root);
+      controller.attachWorkspace(workspace);
+      await controller.associateSharedRepository(workspace, repository);
+      GitStatusSnapshot snapshot(String branch) => GitStatusSnapshot(
+        repositoryInfo: GitRepositoryInfo(
+          rootPath: root,
+          gitDirPath: '$root/.git',
+          identityKey: repository.key,
+          currentBranch: branch,
+          hasRemote: true,
+        ),
+        files: const [],
+      );
+      var latest = snapshot('main'), refreshes = 0, projections = 0;
+      expect(
+        controller.bindSharedStatusSource(
+          workspace,
+          repository,
+          stage: (_, _) async => throw StateError('Unexpected staging'),
+          refresh: () async {
+            refreshes++;
+            return latest;
+          },
+          current: () async {
+            projections++;
+            return latest;
+          },
+        ),
+        isTrue,
+      );
+      await controller.refresh();
+      expect(refreshes, 1);
+      expect(gateway.detectCalls, 0);
+      expect(gateway.statusCalls, 0);
+      expect(
+        container.read(gitControllerProvider).repositoryInfo!.hasRemote,
+        isTrue,
+      );
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+        reason:
+            'Sharing passive data does not grant executable repository trust.',
+      );
+      latest = snapshot('topic');
+      await controller.refreshFromSharedSnapshot();
+      expect(projections, 1);
+      expect(
+        refreshes,
+        1,
+        reason: 'A reconciled operation already has its snapshot.',
+      );
+      expect(
+        container.read(gitControllerProvider).repositoryInfo!.currentBranch,
+        'topic',
+      );
+      expect(gateway.detectCalls, 0);
+      expect(gateway.statusCalls, 0);
+      final beforeTrustRefreshes = refreshes;
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        refreshes,
+        beforeTrustRefreshes,
+        reason: 'Granting trust must not queue another working-tree scan.',
+      );
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isFalse,
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .revokeGitWorkspaceTrust(root);
+      await controller.refreshFromSharedSnapshot();
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+      );
+      await controller.stageFiles(['README.md']);
+      expect(gateway.stageCalls, 0);
+    },
+  );
+
+  test(
+    'late shared status cannot target a different authoring workspace',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-late-shared-status-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final root = await directory.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'shared',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: root, rootPath: root);
+      controller.attachWorkspace(workspace);
+      await controller.associateSharedRepository(workspace, repository);
+      final waiting = Completer<GitStatusSnapshot>();
+      final status = GitStatusSnapshot(
+        repositoryInfo: GitRepositoryInfo(
+          rootPath: root,
+          gitDirPath: '$root/.git',
+          identityKey: repository.key,
+        ),
+        files: const [],
+      );
+      expect(
+        controller.bindSharedStatusSource(
+          workspace,
+          repository,
+          stage: (_, _) async => throw StateError('Unexpected staging'),
+          refresh: () => waiting.future,
+          current: () => waiting.future,
+        ),
+        isTrue,
+      );
+      final pending = controller.refresh();
+      controller.attachWorkspace(
+        _workspace(id: 'another-workspace', rootPath: root),
+      );
+      waiting.complete(status);
+      await pending;
+      expect(
+        container.read(gitControllerProvider).attachedWorkspace!.id,
+        'another-workspace',
+      );
+      expect(container.read(gitControllerProvider).statusSnapshot, isNull);
+      expect(gateway.statusCalls, 0);
+    },
+  );
+
+  test('shared status rejects a substituted repository identity', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-shared-substitution-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final root = await directory.resolveSymbolicLinks();
+    final repository = shared.RepositoryId(
+      root: root,
+      gitDir: '$root/.git',
+      commonDir: '$root/.git',
+      objectFormat: 'sha1',
+      filesystemToken: 'shared',
+    );
+    final gateway = _AssociatedGitGateway(repository);
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    final workspace = _workspace(id: root, rootPath: root);
+    controller.attachWorkspace(workspace);
+    await controller.associateSharedRepository(workspace, repository);
+    final status = GitStatusSnapshot(
+      repositoryInfo: GitRepositoryInfo(
+        rootPath: '$root/other',
+        gitDirPath: '$root/other/.git',
+        identityKey: 'other',
+      ),
+      files: const [],
+    );
+    expect(
+      controller.bindSharedStatusSource(
+        workspace,
+        repository,
+        stage: (_, _) async => throw StateError('Unexpected staging'),
+        refresh: () async => status,
+        current: () async => status,
+      ),
+      isTrue,
+    );
+    await controller.refresh();
+    expect(container.read(gitControllerProvider).repositoryInfo, isNull);
+    expect(container.read(gitControllerProvider).lastError, isNotNull);
+    expect(gateway.detectCalls, 0);
+    expect(gateway.statusCalls, 0);
+  });
+
+  test(
+    'an ancestor grant cannot attach or authorize descendant workspace commands',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-git-scope-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final docs = await Directory('${directory.path}/docs').create();
+      final root = await directory.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'parent',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: docs.path, rootPath: docs.path);
+      controller.attachWorkspace(workspace);
+      await expectLater(
+        controller.associateSharedRepository(workspace, repository),
+        throwsA(isA<GitWorkspaceRootRequired>()),
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      await controller.refresh();
+      await controller.stageFiles(['README.md']);
+      expect(gateway.stageCalls, 0);
+      expect(gateway.statusCalls, 0);
+      expect(container.read(gitControllerProvider).repositoryInfo, isNull);
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .trustsGitWorkspace(docs.path),
+        isFalse,
+      );
+    },
+  );
   test('diff open target follows the current working-tree context', () {
     const repository = GitRepositoryInfo(
       rootPath: '/repo',
@@ -250,55 +496,84 @@ void main() {
     );
   }, skip: Platform.isWindows);
 
-  test('stage and unstage update state', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.stageFiles(['README.md']);
-    expect(
-      container
-          .read(gitControllerProvider)
-          .statusSnapshot
-          ?.stagedFiles
-          .single
-          .repoRelativePath,
-      'README.md',
-    );
-
-    await controller.unstageFiles(['README.md']);
-    expect(
-      container
-          .read(gitControllerProvider)
-          .statusSnapshot
-          ?.unstagedFiles
-          .single
-          .repoRelativePath,
-      'README.md',
-    );
-  });
-
   test(
-    'loads only the selected change comparison and reconciles after stage',
+    'Files Stage cannot fall back to a gateway without a canonical session',
     () async {
       final gateway = _FakeGitGateway();
       final container = _container(gateway);
       final controller = container.read(gitControllerProvider.notifier);
       controller.attachWorkspace(_workspace());
       await controller.refresh();
+      await controller.stageFiles(['README.md']);
+      await controller.unstageFiles(['README.md']);
+      expect(gateway.staged, isFalse);
+      expect(container.read(gitControllerProvider).lastError, isNotNull);
+    },
+  );
 
+  test(
+    'Files Stage and Unstage project the captured session result and reconcile comparison selection',
+    () async {
+      final folder = await Directory.systemTemp.createTemp(
+        'files-session-adapter-',
+      );
+      addTearDown(() => folder.delete(recursive: true));
+      final root = await folder.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: root, rootPath: root);
+      controller.attachWorkspace(workspace);
+      await controller.associateSharedRepository(workspace, repository);
+      var staged = false;
+      final requests = <(List<String>, bool)>[];
+      Future<GitStatusSnapshot> current() async => GitStatusSnapshot(
+        repositoryInfo: GitRepositoryInfo(
+          rootPath: root,
+          gitDirPath: repository.gitDir,
+          identityKey: repository.key,
+          currentBranch: 'main',
+        ),
+        files: [gateway._file(staged: staged, unstaged: !staged)],
+      );
+      controller.bindSharedStatusSource(
+        workspace,
+        repository,
+        current: current,
+        refresh: current,
+        stage: (paths, unstage) async {
+          requests.add((paths, unstage));
+          staged = !unstage;
+          await controller.refreshFromSharedSnapshot();
+        },
+      );
+      await controller.refreshFromSharedSnapshot();
       await controller.selectChange(
         const GitChangeSelection(
           path: 'README.md',
           comparison: GitComparisonType.unstaged,
         ),
       );
-      expect(gateway.diffRequests, [('README.md', false)]);
-
+      final scansBeforeStaging = gateway.statusCalls;
       await controller.stageFiles(['README.md']);
-
+      expect(
+        container
+            .read(gitControllerProvider)
+            .statusSnapshot!
+            .stagedFiles
+            .single
+            .repoRelativePath,
+        'README.md',
+      );
       expect(
         container.read(gitControllerProvider).selectedChange,
         const GitChangeSelection(
@@ -306,8 +581,19 @@ void main() {
           comparison: GitComparisonType.staged,
         ),
       );
-      expect(gateway.diffRequests.last, ('README.md', true));
-      expect(gateway.diffRequests.where((request) => request.$2), hasLength(1));
+      await controller.unstageFiles(['README.md']);
+      expect(
+        container
+            .read(gitControllerProvider)
+            .statusSnapshot!
+            .unstagedFiles
+            .single
+            .repoRelativePath,
+        'README.md',
+      );
+      expect(requests.map((r) => r.$2), [false, true]);
+      expect(gateway.stageCalls, 0);
+      expect(gateway.statusCalls, scansBeforeStaging);
     },
   );
 
@@ -1586,6 +1872,37 @@ class _TrustRequiredFakeGitGateway extends _FakeGitGateway {
 
   @override
   bool get requiresWorkspaceTrust => true;
+}
+
+class _AssociatedGitGateway extends _TrustRequiredFakeGitGateway {
+  _AssociatedGitGateway(this.repository);
+  shared.RepositoryId repository;
+  var stageCalls = 0;
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
+    detectCalls++;
+    return GitRepositoryInfo(
+      rootPath: repository.root,
+      gitDirPath: repository.gitDir,
+      identityKey: repository.key,
+      currentBranch: 'main',
+    );
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
+    final value = await super.status(repository);
+    return GitStatusSnapshot(repositoryInfo: repository, files: value.files);
+  }
+
+  @override
+  Future<GitOperationResult> stage(
+    GitRepositoryInfo repository,
+    List<String> paths,
+  ) async {
+    stageCalls++;
+    return super.stage(repository, paths);
+  }
 }
 
 class _RootedGitGateway extends _FakeGitGateway {

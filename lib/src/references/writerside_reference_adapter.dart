@@ -1,3 +1,5 @@
+import '../core/source_span.dart';
+import '../markdown/busymark_document.dart';
 import '../writerside/writerside_document_resolver.dart';
 import '../writerside/writerside_project.dart';
 import '../writerside/writerside_document.dart';
@@ -27,6 +29,22 @@ void addWritersideReferences(
       return node.attributes['title'] ?? symbol.name;
     }
     return symbol.name;
+  }
+
+  SourceSpan? symbolScope(WritersideSymbol symbol) {
+    final node = origins[symbol.moduleId]?.topics
+        .where((t) => t.filePath == symbol.filePath)
+        .firstOrNull
+        ?.document
+        .contentById(symbol.name)
+        ?.firstOrNull;
+    // A Markdown heading node spans its title, not its section. Let the
+    // existing index use neighboring headings for its Markdown range.
+    if (node is WritersideMarkdownBlockNode &&
+        node.block.kind == BusyBlockKind.heading) {
+      return null;
+    }
+    return node?.span;
   }
 
   for (final symbol in writerside.symbols.where(
@@ -59,13 +77,7 @@ void addWritersideReferences(
           label: symbolLabel(symbol),
           span: symbol.span,
           moduleId: symbol.moduleId,
-          scopeSpan: writerside.modulesById[symbol.moduleId]?.topics
-              .where((t) => t.filePath == symbol.filePath)
-              .firstOrNull
-              ?.document
-              .contentById(symbol.name)
-              ?.firstOrNull
-              ?.span,
+          scopeSpan: symbolScope(symbol),
         ),
       );
     }
@@ -152,13 +164,7 @@ void addWritersideReferences(
           label: symbolLabel(symbol),
           span: symbol.span,
           moduleId: symbol.moduleId,
-          scopeSpan: origins[symbol.moduleId]?.topics
-              .where((t) => t.filePath == symbol.filePath)
-              .firstOrNull
-              ?.document
-              .contentById(symbol.name)
-              ?.firstOrNull
-              ?.span,
+          scopeSpan: symbolScope(symbol),
         );
       }
       final module = origins[ref.moduleId];

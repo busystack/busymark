@@ -1,4 +1,6 @@
+import '../support/native_menu_probe.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -22,6 +24,7 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  late NativeMenuProbe nativeMenus;
   late Directory root;
   late ProviderContainer container;
   WorkspaceController controller() =>
@@ -94,6 +97,7 @@ void main() {
   });
 
   Future<void> start(WidgetTester tester) async {
+    nativeMenus = NativeMenuProbe(tester);
     tester.binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
     addTearDown(() {
       tester.binding.platformDispatcher.defaultRouteNameTestValue = '/';
@@ -116,9 +120,9 @@ void main() {
     );
     await _settle(tester);
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
-    await tester.tap(find.byTooltip('Sidebar view'));
+    await tester.tap(find.byTooltip('Sidebar view (Ctrl+Shift+F9)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Table of Contents'));
+    await nativeMenus.activate('Table of Contents');
     await tester.pumpAndSettle();
   }
 
@@ -128,6 +132,7 @@ void main() {
       buttons: kSecondaryMouseButton,
     );
     await tester.pumpAndSettle();
+    nativeMenus.close();
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
   }
@@ -135,7 +140,7 @@ void main() {
   Future<void> synchronizeTocAndEditor(WidgetTester tester) async {
     await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-menu')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Synchronize TOC and Editor'));
+    await nativeMenus.activate('Synchronize TOC and Editor');
     await tester.pumpAndSettle();
   }
 
@@ -145,7 +150,7 @@ void main() {
       buttons: kSecondaryMouseButton,
     );
     await tester.pumpAndSettle();
-    await tester.runAsync(() => tester.tap(find.text('Remove TOC Element')));
+    await tester.runAsync(() => nativeMenus.activate('Remove TOC Element'));
     await _settle(
       tester,
       until: () => find.text('Set redirect to:').evaluate().isNotEmpty,
@@ -168,12 +173,8 @@ void main() {
   Future<void> chooseHome(WidgetTester tester) async {
     await tester.tap(find.text('Choose a Home Page'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(
-        BusyMarkPopupMenuItem<WritersideHomePageReplacement>,
-        'guides/install.md',
-      ),
-    );
+    expect(nativeMenus.contains('guides/install.md'), isTrue);
+    await nativeMenus.activate('guides/install.md');
     await tester.pumpAndSettle();
   }
 
@@ -294,7 +295,7 @@ void main() {
         buttons: kSecondaryMouseButton,
       );
       await tester.pumpAndSettle();
-      await tester.runAsync(() => tester.tap(find.text('Remove TOC Element')));
+      await tester.runAsync(() => nativeMenus.activate('Remove TOC Element'));
       await _settle(
         tester,
         until: () => find
@@ -566,7 +567,7 @@ void main() {
       until: () => find.text('Unsaved changes').evaluate().isNotEmpty,
     );
     await tester.runAsync(
-      () => tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Save')),
+      () => tester.tap(find.widgetWithText(BusyMarkNativeActionButton, 'Save')),
     );
     await _settle(tester, until: () => homeSelector().evaluate().isNotEmpty);
     expect(
@@ -608,14 +609,15 @@ void main() {
         buttons: kSecondaryMouseButton,
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('New Topic'));
+      await nativeMenus.activate('New Topic');
       await tester.pumpAndSettle();
-      expect(find.text('Empty MD Topic'), findsOneWidget);
-      expect(find.text('Empty XML Topic'), findsOneWidget);
-      expect(find.text('Empty Group'), findsOneWidget);
-      expect(find.text('Topic from Template...'), findsOneWidget);
-      expect(find.text('Add Local Markdown Files'), findsOneWidget);
-      expect(find.text('Link Topic Files to TOC...'), findsOneWidget);
+      expect(nativeMenus.matching('Empty MD Topic'), hasLength(1));
+      expect(nativeMenus.matching('Empty XML Topic'), hasLength(1));
+      expect(nativeMenus.matching('Empty Group'), hasLength(1));
+      expect(nativeMenus.matching('Topic from Template...'), hasLength(1));
+      expect(nativeMenus.matching('Add Local Markdown Files'), hasLength(1));
+      expect(nativeMenus.matching('Link Topic Files to TOC...'), hasLength(1));
+      nativeMenus.close();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
@@ -625,10 +627,11 @@ void main() {
         buttons: kSecondaryMouseButton,
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('New Child Topic'));
+      await nativeMenus.activate('New Child Topic');
       await tester.pumpAndSettle();
-      expect(find.text('Add Local Markdown Files'), findsNothing);
-      expect(find.text('Link Topic Files to TOC...'), findsOneWidget);
+      expect(nativeMenus.matching('Add Local Markdown Files'), isEmpty);
+      expect(nativeMenus.matching('Link Topic Files to TOC...'), hasLength(1));
+      nativeMenus.close();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
@@ -637,8 +640,8 @@ void main() {
         find.byKey(const ValueKey('workspace-sidebar-new-topic-menu')),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Add Local Markdown Files'), findsOneWidget);
-      expect(find.text('Link Topic Files to TOC...'), findsOneWidget);
+      expect(nativeMenus.matching('Add Local Markdown Files'), hasLength(1));
+      expect(nativeMenus.matching('Link Topic Files to TOC...'), hasLength(1));
     },
   );
 
@@ -694,9 +697,9 @@ void main() {
           buttons: kSecondaryMouseButton,
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('New Topic'));
+        await nativeMenus.activate('New Topic');
         await tester.pumpAndSettle();
-        await tester.tap(find.text(choice));
+        await nativeMenus.activate(choice);
         await _settle(tester);
         final template = choice == 'Topic from Template...';
         if (template) {

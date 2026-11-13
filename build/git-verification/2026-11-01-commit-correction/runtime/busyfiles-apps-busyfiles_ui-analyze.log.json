@@ -1,0 +1,5 @@
+{
+  "rawFile": "runtime/busyfiles-apps-busyfiles_ui-analyze.log",
+  "sha256": "c3b60be70486a088a4c38fca1627eb2f833c62083f5ec5272010310a16d69273",
+  "transcript": "Analyzing busyfiles_ui...                                       \nNo issues found! (ran in 4.5s)\n"
+}

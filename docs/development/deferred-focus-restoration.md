@@ -1,0 +1,423 @@
+# Deferred dialog and document-selection focus
+
+## Scope and baseline
+
+This follow-up starts at `b8dd70c` with a clean worktree. It changes focus
+coordination only, not the heading/Enter/inline-image repair on this branch.
+The parser, document controller, serializers, dependency pins and native UI are
+unchanged. Repository Linux and compiled-application verification instructions
+were followed. No applicable `AGENTS.md` was present.
+
+The official SDK is `/home/albert/flutter-sdk`: Flutter 3.47.5,
+framework `6a19cca56475dbfba1478ee68d7bd0c2ef891da1`, engine revision
+`af7e796e161ae0bb1ff0758c71a7105418bd9ded`, Dart 3.13.4.
+`flutter pub get --enforce-lockfile` passed without changing either manifest.
+
+Evidence below is retained locally under `build/deferred-focus-evidence/` and
+the named native output directories. These ignored artifacts are not committed.
+The committed tests and probes reproduce the checks without those artifacts.
+
+## Independently confirmed findings
+
+| Finding | Reproduction and actual cause | Repair |
+| --- | --- | --- |
+| Delayed modal release can reclaim an older editor. | Close a production dialog, hold native barrier release, focus another field, then deactivate the application. The old guard accepts *any* `FocusScopeNode`, including the desktop root while the newer owner is suspended. A newer owner followed by unfocus also bypasses it. Capturing `closingFocus` after `pop()` additionally mistakes a newer control for the closing dialog. | Identify the actual closing route. A per-release permission observes focus ownership and lifecycle, permanently invalidating on a newer owner or inactivity. Only the previous owner, its ancestor scopes and that closing route are eligible. Flush pending FocusManager requests before the final check; remove listeners on invalidation or completion. |
+| Deferred cross-block selection extent can override another control or inactive desktop focus. | Perform a real production pointer drag across blocks; release it, then focus a search-like control or deactivate before the post-frame handoff. The original callback checks selection and generation but not owner/lifecycle. Table-ended ranges also have a second, unconditional child autofocus callback. | One guarded handoff owns ordinary and table-ended range input. Capture selection/request/document/navigation identities and the actual focus owner. Cancel on a competing owner or newer action; wait without focusing while the desktop suspends the owner. Resume only when FocusManager restores that same ownership. Remove the child's independent autofocus. |
+| A canceled toolbar dialog can bypass the shared dialog guard. | Hold release of the real Link toolbar dialog and focus another field. The shared guard can leave it alone, but toolbar `whenComplete` snapshots the new owner and schedules an editor return anyway. | Completion is not a new editing intent: check permission before scheduling toolbar restoration. |
+| A newer focus request can be pending, not yet primary. | Register a newer-control request earlier in the same post-frame phase, then queue `restoreEditingFocus()`. Without flushing FocusManager, the old callback sees the old primary and overwrites the newer request. | Apply pending focus changes before the existing request/document/selection/navigation checks. |
+
+Both supplied findings are confirmed, but not every neighboring path was broken.
+The existing resumed newer-owner modal case already passes. Document replacement,
+disposal, ordinary completion, intentional keyboard collapse and quick lifecycle
+round trips are retained as controls, not claimed as additional original defects.
+The existing canceled nested-menu regression is preserved; its ordinary
+cancellation is not evidence of a new defect.
+
+## Why editing and reading remain independent
+
+No repair moves a caret, fabricates composition, changes read-only state,
+unfocuses an editor, restores a viewport after a jump, or uses a timer/fixed
+frame-count suppression. The existing operation-scoped caret-reveal protection
+is unchanged. A passive handoff does not call its intentional `reveal()` API.
+Actual input and purposeful navigation continue through the original editing
+and reveal paths.
+
+Validation of the first repair exposed a necessary lifetime detail: an ordinary
+selection extent waiting through prolonged inactivity can leave the virtualized
+cache before its handoff. The pending operation now holds a keep-alive lease for
+that one target only, released on success, cancellation or disposal. Tests assert
+that the rest of the document remains virtualized. This is not whole-document
+retention, and the lease neither requests focus nor changes scrolling.
+
+## Regression evidence
+
+The final 56 new cases were copied into a separate `git archive b8dd70c`
+checkout. Its production editor/dialog blobs were verified unchanged
+(`52bb3fda7412e6c1de67d5ee2301a057108c02e1` and
+`a855768ad0c11853e1c8c974fa298c627ff0a1c0`, respectively).
+
+```sh
+# Run in the unchanged archive and in the repaired checkout:
+/home/albert/flutter-sdk/bin/flutter test --no-pub --reporter expanded \
+  test/src/busymark_dialogs_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart \
+  --name 'deferred modal focus|deferred extent|deferred toolbar'
+```
+
+The unchanged production code fails **29** cases; **27** controls pass
+(`before-definitive.log`, exit 1). The repaired checkout passes all 56 as part
+of the complete affected suites (`affected-final.log`, exit 0).
+
+Coverage includes both range directions, ordinary/table extents, competing
+owners before/after close, newer-owner-to-scope transitions, inactivity and
+resumption, cancellation, 90 inactive frames, disposal, document replacement,
+new caret navigation, and a newer request in the same post-frame phase.
+Off-cache reading tests measure actual visible geometry every frame with a
+0.1-logical-pixel tolerance. They assert unchanged range endpoints, source and
+undo history, deliver platform text input without tapping/refocusing, verify
+replacement at the correct target and deliberate reveal, then undo.
+
+The original lifecycle helper explicitly enables Linux FocusManager lifecycle
+listening and asserts inactive primary focus is the desktop root. It is not a
+test that merely changes an unrelated lifecycle value.
+
+An early pending-owner test did not schedule a frame, and early toolbar tests
+used an obstructed target/incorrect dialog finder. Those attempts are not
+regression evidence; `before-definitive.log` uses the corrected tests.
+
+One combined run encountered an existing test-harness pointer-ID collision:
+an old context-menu test fixes pointer 71, while newly auto-allocated gestures
+advanced to 71. The same GestureArena assertion was independently reproduced
+on unchanged production code by seeding the test pointer allocator to 71
+(`original-pointer-id-collision.log`). New tests use explicit noncolliding IDs;
+the old test and its assertions are unchanged. The final full affected run
+passes, as does the isolated old context-menu test.
+
+## Verification commands
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/busymark_dialogs_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart \
+  test/src/wysiwyg_session_test.dart test/src/source_editor_widget_test.dart
+
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/app_smoke_test.dart \
+  test/src/busymark_design_test.dart test/src/workspace_controller_test.dart \
+  test/src/workspace_document_context_test.dart \
+  test/src/writerside_toc_menu_test.dart test/src/source_commands_test.dart
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/busymark_document_test.dart \
+  --name 'WYSIWYG link dialog'
+
+/home/albert/flutter-sdk/bin/cache/dart-sdk/bin/dart format \
+  --output=none --set-exit-if-changed lib/src/app/busymark_dialogs.dart \
+  lib/src/editor/editor_focus_restoration.dart \
+  lib/src/editor/wysiwyg/wysiwyg_editor.dart \
+  test/src/busymark_dialogs_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart tools/focus_restoration_smoke.dart
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter analyze --no-pub
+/usr/bin/python3 -m py_compile tools/focus_restoration_native.py \
+  tools/deferred_focus_native.py
+/usr/bin/python3 -m unittest tools/test_owned_processes.py \
+  tools/test_application_close_smoke.py tools/test_run_owned_fixture.py \
+  tools/test_official_flutter_workflow.py
+
+PATH=/home/albert/.cache/JetBrains/Air/node-24.13.0/node-v24.13.0-linux-x64/bin:$PATH \
+  TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter build linux --release \
+  --no-pub -t lib/main.dart
+```
+
+The four affected suites pass **487 tests** in 3m24s (`affected-final.log`).
+The six broader integration suites pass **505 tests** in 4m56s
+(`integration-suites.log`), including existing menu cancellation, workspace
+navigation, search and view transitions. All **3** existing accepted Link-dialog
+editing tests pass (`accepted-dialog.log`). No assertions were weakened or new
+regressions skipped. The unrelated entire Flutter suite was not rerun.
+
+Formatting checks all six Dart files with zero changes (`format-final.log`).
+Static analysis reports no issues (`analyze-commit.log`, 26.0s). Both Python
+drivers compile; the existing process/acceptance/workflow tooling suites pass
+**92** tests (`tooling-final.log`). The normal `lib/main.dart` Linux release
+build passes (`linux-release-final.log`); its bundle is separately retained in
+`build/deferred-focus-shipping-bundle/` while compiling probes. The shipping
+engine SHA-256 matches the official SDK artifact:
+`d57449a5c2ee39e77b9e3488f0703b165c67e0b3c554089f388db96484ae62f1`.
+
+## Native Linux acceptance
+
+The probe uses the actual application and official engine, disposable Markdown,
+private GNOME/Mutter headless desktops, a separate GTK companion application,
+and real Mutter Alt-Tab/key injection. Profiles are isolated *before* starting
+the owned D-Bus broker; activated helpers inherit that isolation. The owned-tree
+supervisor checks cleanup and does not signal unrelated processes.
+
+Four application-switch cycles include a 15-second inactive interval. Every
+rendered frame records focus/lifecycle and reading geometry, never document
+contents. Native `z` input is delivered without clicking/refocusing the field.
+Deferred dialog setup deterministically closes the production Navigator route
+and gates its real barrier release; this is explicitly **programmatic dialog
+dismissal**, not proof of native Escape handling. Selection setup uses real
+native XTest pointer input on XWayland, accounting for GTK frame extents, and
+introduces a newer owner before the post-frame handoff.
+
+```sh
+# Build the alternate entry point, retain that bundle, then restore lib/main.dart.
+PATH=/home/albert/.cache/JetBrains/Air/node-24.13.0/node-v24.13.0-linux-x64/bin:$PATH \
+  TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter build linux --release \
+  --no-pub -t tools/focus_restoration_smoke.dart
+/usr/bin/python3 tools/deferred_focus_native.py \
+  build/deferred-focus-release-probe/busymark NEW_SHORT_OUTPUT x11 deferred-dialog
+# Backends: x11 (XWayland), wayland. Modes: editor, deferred-dialog,
+# deferred-selection, deferred-selection-table (selection gesture: x11 only).
+```
+
+The XWayland Editor control passes in debug (`build/df-xe/desktop/probe/`) and
+release (`build/df-xe2/desktop/probe/`): all
+passive geometry/focus/source/history checks, correct insertion and intentional
+reveal. Its supervisor exits 0 with no unresolved descendants. A too-long
+Wayland socket path and two native Escape-dismissal prerequisites failed in
+earlier attempts; none is counted as acceptance. Their logs are retained.
+The Editor control is explicitly retired by the supervisor after its focus/input
+measurements; it is not a successful natural-shutdown claim. The three deferred
+release cases below do require natural application exit.
+
+The final release XWayland delayed-dialog case passes
+(`build/df-xd4/desktop/probe/{frames.json,result.json}`): barrier completion while
+inactive leaves focus at the root, resumed input edits only the newer control,
+and all per-frame viewport, range, bytes/history/dirty/revision assertions pass.
+The application exits naturally with status 0; the owned-tree supervisor reports
+no unresolved descendants (`build/df-xd4/ownership.json`).
+
+Release XWayland ordinary and table-ended cross-block selections both pass
+(`build/df-xs4/desktop/probe/` and `build/df-xt/desktop/probe/`). The recorded
+native pointer-up coordinates equal the requested rendered caret positions;
+the production editor reports a cross-block range. Each case preserves the
+range and reading geometry through all four native focus cycles and directs
+native input only to the newer control. Both applications exit naturally with
+status 0 and both ownership reports contain no unresolved descendants.
+
+The native Wayland dialog case remains **unverified**: even after a real Alt-Tab
+activation attempt, GTK does not report the application's window active on
+this owned desktop (`build/df-wd3/desktop/probe/error.txt`). Earlier Mutter
+relative-pointer attempts also failed to deliver the native selection; those
+failed prerequisites are retained separately and not counted as passes.
+The final XTest cases do not weaken any production assertion. The native GTK
+Escape dismissal path is not established by the deterministic dialog prelude.
+
+Native acceptance is limited to the recorded owned headless desktops; it is not
+a claim about an untested physical desktop, strict Snap, minimize/restore, or
+window-chrome reactivation. The entire unrelated Flutter suite is not rerun by
+this focused follow-up.
+
+## Semantic-text cancellation follow-up (P2)
+
+Starting at `b139f51`, the remaining Writerside semantic-dialog caller was
+independently confirmed to bypass the async-toolbar completion preflight.
+After the production UI Control or File / Path dialog is canceled, hold its
+native-barrier release, focus a newer search-like control, then complete release
+while resumed. `_isDialogTargetCurrent()` still succeeds, and the semantic
+caller schedules `_restoreEditingFocusAfterFrame()` with that newer control as
+the captured owner. Its unchanged ownership at the deferred check is therefore
+mistaken for permission to return to editing.
+
+Only the null/empty-result branch of `_insertSemanticText()` changes: it now
+requires `_mayRestoreEditingFocus()` as well as the existing document validity
+guard before scheduling restoration, matching async toolbar completion. This
+does not change accepted semantic insertion, purposeful focus requests, the
+earlier Alt-Tab repair, or structural editing.
+
+Eight new regressions in `writerside_authoring_ui_test.dart` cover Markdown and
+XML topics, UI Control and File / Path, and ordinary versus newer-owner delayed
+cancellation. They use the production native-menu dispatch and semantic dialog,
+gating only the barrier service. They assert the document generation is still
+current, preserve the collapsed caret, source and undo history, check focus and
+actual reading geometry on every rendered frame (0.1 logical-pixel tolerance),
+and send text through the existing input connection without refocusing. Ordinary
+cancellation then edits the original target and exercises one-step undo/redo;
+newer-owner input affects only the newer control. Existing immediate semantic
+cancellation tests now also assert primary editor focus and an input client.
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/writerside_authoring_ui_test.dart \
+  --name 'delayed semantic cancellation|collapsed.*enters text and cancels neutrally'
+```
+
+The unchanged production implementation fails the four newer-owner cases; the
+four ordinary delayed controls and eight existing controls pass
+(`build/semantic-dialog-focus-evidence/before-framed.log`: 12 passed, 4 failed).
+An initial harness did not schedule a render after barrier release, so its
+deferred callback did not run; that attempt is not regression evidence. The
+final tests explicitly schedule rendered frames, not merely fake-clock ticks.
+
+The final focused command passes all **16** tests in 48 seconds
+(`after-final-focused.log`). The complete five affected suites pass **556**
+tests in 3m53s (`affected-suites.log`):
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/writerside_authoring_ui_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart \
+  test/src/busymark_dialogs_test.dart test/src/wysiwyg_session_test.dart \
+  test/src/source_editor_widget_test.dart
+```
+
+Follow-up logs are under `build/semantic-dialog-focus-evidence/`. Formatting
+checks both changed Dart files with zero changes (`format.log`); pinned
+`flutter analyze --no-pub` reports no issues (`analyze-final.log`, 43.7s).
+The normal pinned `flutter build linux --release --no-pub -t lib/main.dart`
+passes (`linux-release.log`), with the same official release-engine hash recorded
+above. Dependency pins and unrelated structural code remain unchanged.
+
+This follow-up does not repeat native semantic-dialog acceptance. The earlier
+native results above cover their recorded generic dialog/selection paths, not
+this additional semantic caller. No new native pass is claimed.
+
+## Toolbar-menu cancellation and passive-caller audit (P2)
+
+Starting at `8b9aa85` with a clean worktree, same-document cancellation of both
+Writerside and Text style menus was independently confirmed to bypass ownership
+checks. The production native-menu channel result was held while another text
+control acquired focus, then completed with null. Document identity and
+generation remained unchanged. `onMenuCanceled` passed its document guard and
+the deferred helper treated the newly captured owner as permission to return
+to the editor. A different toolbar menu's trigger could also be displaced.
+
+This asynchronous boundary is present in production, not just in the test
+double: `native_menu_deactivate_cb()` in `linux/runner/my_application.cc`
+schedules `native_menu_cleanup_idle_cb()` with `G_PRIORITY_DEFAULT_IDLE`;
+cleanup returns the result to Dart. GLib documents that idle work yields to
+ready higher-priority sources. This establishes the possible ordering, not a
+measurement of native race frequency. [GLib idle_add_full](https://docs.gtk.org/glib/func.idle_add_full.html)
+
+Passive completion is now an explicit policy on
+`_restoreEditingFocusAfterFrame(passive: true)`. It checks lifecycle and current
+ownership before capturing the request and again in the post-frame callback
+after pending FocusManager changes are applied. The originating menu context
+travels through `BusyMarkHeaderPopupMenuButton.onCanceled` and the toolbar.
+This allows return from **that menu's own trigger**, as well as the editor or
+its ordinary scopes, without permitting a different menu trigger or text field.
+It adds no widgets, focus nodes, timers, SDK changes, or native UI changes.
+
+The helper's callers were reviewed together:
+
+| Caller | Intent and policy |
+| --- | --- |
+| Writerside/Text style cancellation | Passive; document guard plus shared permission, with the exact closing menu's trigger context. |
+| Semantic-text dialog cancellation | Passive; existing document guard retained, previous ownership check moved into the shared policy. |
+| Async toolbar completion | Passive; previous preflight moved into the same shared policy, with execution-time revalidation too. |
+| Rich `restoreSpellingFocus()` after review | Passive; an additional real workspace-review dialog regression reproduced the same theft during delayed barrier release, and this entry point now uses the shared guard. |
+| Synchronous toolbar commands, accepted Writerside/semantic insertions, and explicit inspector-close focus return | Purposeful editing/navigation; retain the existing policy and request/document/selection checks. |
+
+The spelling finding was reproduced through the actual F7 review dialog and
+workspace `finally` path, not by directly calling a private helper. Source-mode
+spelling return does not use this helper and is not changed or claimed fixed.
+No spelling projection/worker algorithm or unrelated structural-editing code
+was changed.
+
+### Failing-before / passing-after evidence
+
+Artifacts are retained locally in `build/toolbar-menu-focus-evidence/`.
+
+- `before-menu-valid.log`: unchanged production fails **16** cases and passes
+  **16** ordinary controls. The 32 cases cover both menus, Writerside Markdown
+  and XML, collapsed/reversed local selections, ordinary editor return, return
+  from the exact trigger, a newer text control, and a different menu trigger.
+- `before-spelling-valid.log`: unchanged production fails the newer-owner
+  workspace-review case; ordinary review cancellation/input/undo passes.
+- `after-focused.log`: all **50** focused authoring cases pass, including the
+  menu matrix and previous semantic-dialog regressions/ordinary controls.
+- `after-spelling.log`: both focused workspace-review cases pass.
+
+The menu regressions explicitly render every deferred frame, measure the real
+visible anchor and scroll position within 0.1 logical pixel, and assert unchanged
+selection direction, source and undo history. They send two successive input
+updates over the newer control's existing connection without tapping/refocusing.
+Ordinary return types into the original target, reveals it, and preserves
+one-step undo/redo. Workspace-review cases also assert unchanged buffer revision,
+dirty state, undo and redo histories. No final-position-only workaround is used.
+
+An initial test tried to read `Focus.focusNode`, which is null when Flutter owns
+the internal node. That invalid trigger setup is not defect evidence. The final
+test uses the public `Focus.of()` lookup below the real trigger's Focus widget.
+
+### Verification
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --concurrency=2 --reporter expanded \
+  test/src/writerside_authoring_ui_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart \
+  test/src/busymark_dialogs_test.dart test/src/wysiwyg_session_test.dart \
+  test/src/source_editor_widget_test.dart test/src/spelling_workspace_test.dart \
+  test/src/busymark_design_test.dart test/src/native_menu_service_test.dart \
+  test/src/writerside_toc_menu_test.dart
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/app_smoke_test.dart \
+  --name 'Writerside|inspector|properties|focus|canceled|spelling|menu'
+```
+
+All **689** tests in the nine full suites pass in 3m51s (`affected-final.log`),
+and all **34** selected real-workspace controls pass (`workspace-controls.log`).
+The entire unrelated Flutter suite was not rerun.
+
+The initial loaded run had two failures (`affected-suites.log`): a new fixture's
+post-undo spelling debounce outliving its widget-test body, and an unchanged
+large Markdown spelling check timing out while analysis/build jobs competed.
+The new fixture now retires its session in the real async zone, before fake-clock
+timer invariants; native-worker shutdown itself has a real-I/O timeout and must
+not be moved onto that fake clock. No production spelling code or assertions
+were weakened. The unchanged large fixture and all **36** spelling workspace
+tests pass alone (`spelling-suite-verified.log`), and then the complete combined
+run also passes with controlled concurrency and no competing builds.
+
+Pinned `flutter analyze --no-pub` reports no issues (`analyze-final.log`, 35.7s).
+`dart format --output=none --set-exit-if-changed` checks all five changed Dart
+files with zero changes (`format.log`). The normal
+`flutter build linux --release --no-pub -t lib/main.dart` passes
+(`linux-release.log`), using the same Node PATH/TMPDIR and official toolchain
+commands recorded above. Dependency pins, SDK revision and the official engine
+hash remain unchanged.
+
+```sh
+/home/albert/flutter-sdk/bin/cache/dart-sdk/bin/dart format \
+  --output=none --set-exit-if-changed lib/src/app/busymark_design.dart \
+  lib/src/editor/wysiwyg/wysiwyg_toolbar.dart \
+  lib/src/editor/wysiwyg/wysiwyg_editor.dart \
+  test/src/writerside_authoring_ui_test.dart test/src/spelling_workspace_test.dart
+```
+
+The existing release-mode native Editor control passes on an owned GNOME
+headless XWayland desktop (`native-editor-control-retry.log`). It performs four
+real Alt-Tab cycles, including 15 seconds inactive, then types native `z` without
+refocusing. Per-frame passive viewport/reading geometry, focus/selection,
+bytes/dirty/revision and undo/redo checks pass; input edits the original target
+and intentionally reveals it. Retained measurements and ownership/actions are
+under `build/toolbar-menu-focus-evidence/native-control/`. The supervisor exits
+0 with no unresolved descendants. Like the earlier Editor control, it is retired
+after focus/input measurements, not claimed as a natural-shutdown acceptance.
+This control does **not** natively reproduce the gated GTK menu-result race or
+spelling-review race; those are production-widget/channel regressions above.
+Native Wayland and physical-desktop menu acceptance were not rerun.
+
+```sh
+# Build with the earlier pinned Node PATH and TMPDIR=/tmp, retain the probe
+# separately, then restore the normal lib/main.dart bundle.
+/home/albert/flutter-sdk/bin/flutter build linux --release --no-pub \
+  -t tools/focus_restoration_smoke.dart
+/usr/bin/python3 tools/deferred_focus_native.py \
+  /tmp/busymark-toolbar-focus-gKNPB3/release-probe/busymark \
+  /tmp/NEW_SHORT_FOCUS_OUTPUT x11 editor
+```
+
+The first native-control launch could not finish creating its isolated profile
+because staging duplicate bundles exhausted available workspace space; it did
+not reach supervisor launch. Three generated bundle copies were moved, without
+deletion, to `/tmp/busymark-toolbar-focus-gKNPB3/`. The successful retry kept its
+desktop/profile there too. The normal shipping bundle was restored to
+`build/linux/x64/release/bundle/` and compared byte-for-byte with the retained
+`/tmp/busymark-toolbar-focus-gKNPB3/shipping/` copy. No source or evidence logs
+were removed. The workspace volume remains nearly full (about 700 MiB available
+after relocation); the temporary copies can be regenerated from the pinned
+toolchain if `/tmp` is cleared.

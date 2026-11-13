@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-11-02T06:03:43.447901+00:00",
+  "initialAndFinal": {
+    "busyfiles-release24-20261005": "STOPPED",
+    "busydata-installed-20261003": "RUNNING",
+    "busynode-continuation-20261015": "RUNNING",
+    "busymax-acceptance-v031-20261011": "STOPPED"
+  },
+  "qaShutdown": "lxc stop --timeout 60 completed without force",
+  "guestHealthBeforeShutdown": "running; 0 failed units after task-owned cleanup; empty dpkg audit",
+  "environmentChanges": "No disk resize, security/accessibility/GPU configuration or unrelated workload change this correction"
+}

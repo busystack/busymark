@@ -1,0 +1,49 @@
+{
+  "time": 1793632069.232239,
+  "stop": {
+    "argv": [
+      "systemctl",
+      "stop",
+      "busystack-git-log-toolbar-native.service"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  "resetOwnRecordedFailures": {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "busystack-git-log-toolbar-refinement-checks.service",
+      "busystack-git-log-toolbar-refinement-completion.service",
+      "busystack-git-log-toolbar-files-release-final.service"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  "failedUnits": {
+    "argv": [
+      "systemctl",
+      "--failed",
+      "--no-pager"
+    ],
+    "exit": 0,
+    "output": "  UNIT LOAD ACTIVE SUB DESCRIPTION\n\n0 loaded units listed.\n"
+  },
+  "system": {
+    "argv": [
+      "systemctl",
+      "is-system-running"
+    ],
+    "exit": 0,
+    "output": "running\n"
+  },
+  "dpkgAudit": {
+    "argv": [
+      "dpkg",
+      "--audit"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  "diskFree": 17451741184
+}

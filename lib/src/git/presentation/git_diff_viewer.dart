@@ -498,10 +498,9 @@ class _DiffFileSection extends StatelessWidget {
                     ],
                   ),
                 ),
-                Divider(
+                SizedBox(
                   height: BusyMarkStroke.hairline,
-                  thickness: BusyMarkStroke.hairline,
-                  color: colors.subtleBorder,
+                  child: ColoredBox(color: colors.subtleBorder),
                 ),
               ],
               sourceBody,

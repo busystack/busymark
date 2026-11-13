@@ -69,7 +69,7 @@ opens the existing recovery preview. Recovery records stay outside ordinary sear
 
 ## Outline, Topics and Recent
 
-Ctrl+3 and the Outline sidebar button open ordinary Outline without a query or
+Ctrl+Shift+F9 followed by O and the Outline sidebar button open ordinary Outline without a query or
 remembered filter. Choosing Headings in the search category menu filters the same
 outline model. Explicit browsing closes search and focuses the Outline tree.
 
@@ -128,7 +128,7 @@ matching. `cat` finds `Cat` and `catalog`; `.*` finds those literal characters.
 Whitespace is searchable. Source coordinates remain offsets into the original
 buffer. Replacement text is literal too: `$1` inserts `$1`, without capture-group
 substitution. There are no case, whole-word or regex toggles in the sidebar or
-Source/Split controls.
+Source/Dual controls.
 
 Document Text, Workspace Text, Headings, Documents, Topics, Recent and Local
 History initially show **Enter text to search**. Empty queries do not start
@@ -151,7 +151,7 @@ custom assignments. Unassigned categories show no shortcut.
 
 ## Active document
 
-In Source or Split view, the search panel shows the full document match count.
+In Source or Dual view, the search panel shows the full document match count.
 Previous and next navigate every occurrence, including folded and off-screen
 content, and wrap only at the document boundaries. Previous without a selected
 match selects the final occurrence. The sidebar automatically loads and reveals
@@ -172,7 +172,7 @@ that pending navigation.
 
 Editor and Reading views show sidebar search results and navigate to matching
 content, but the active-document replacement controls are available in Source
-or Split view.
+or Dual view.
 
 ## Workspace search
 
@@ -235,7 +235,7 @@ update editor dispatch, Actions badges, menus and header metadata together.
 Writerside Source retains its existing Ctrl+B Go to Declaration precedence over
 formatting. The declaration, usages and rename bindings are configurable too.
 Select All uses the full source document, including folded content, in Source
-and Split. Modified Enter combinations reach their assigned commands; ordinary
+and Dual. Modified Enter combinations reach their assigned commands; ordinary
 Enter and autocomplete retain their local editing behavior.
 
 Settings stores only overrides keyed by command identity. Logical keys respect

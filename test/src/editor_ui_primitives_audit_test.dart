@@ -28,8 +28,13 @@ void main() {
       File('lib/src/search/search_option_button.dart').existsSync(),
       isFalse,
     );
-    expect(RegExp(r'YaruIconButton\(').allMatches(searchButtons).length, 1);
-    expect(searchButtons, contains('iconSize: 28'));
+    expect(
+      RegExp(r'BusyMarkCompactIconButton\(').allMatches(searchButtons).length,
+      1,
+    );
+    expect(searchButtons, isNot(contains('YaruIconButton(')));
+    expect(searchButtons, contains('size: 28'));
+    expect(searchButtons, contains('glyphSize: 14'));
     expect(searchButtons, isNot(contains('isSelected: selected')));
     expect(searchButtons, isNot(contains('WidgetStateProperty.resolveWith')));
     expect(searchButtons, isNot(contains('backgroundColor:')));

@@ -1,4 +1,4 @@
-import '../git/application/git_controller.dart';
+import '../git/application/shared_git_tabs.dart';
 import 'document_buffer.dart';
 import 'workspace_model.dart';
 
@@ -12,6 +12,9 @@ class WorkspaceTabEntry {
     this.bufferId,
     this.untitledName,
     this.dirty = false,
+    this.comparisonId,
+    this.comparisonLabel,
+    this.review,
   });
 
   const WorkspaceTabEntry.file({
@@ -29,17 +32,30 @@ class WorkspaceTabEntry {
          dirty: dirty,
        );
 
-  const WorkspaceTabEntry.gitDiff({required String path, required bool active})
-    : this._(kind: WorkspaceTabKind.gitDiff, path: path, active: active);
+  const WorkspaceTabEntry.gitDiff({
+    required String path,
+    required bool active,
+    required String comparisonId,
+    String? comparisonLabel,
+    required SharedGitReview review,
+  }) : this._(
+         kind: WorkspaceTabKind.gitDiff,
+         path: path,
+         active: active,
+         comparisonId: comparisonId,
+         comparisonLabel: comparisonLabel,
+         review: review,
+       );
 
   const WorkspaceTabEntry.localHistory({
+    bool active = true,
     required String revisionId,
     required String documentName,
   }) : this._(
          kind: WorkspaceTabKind.localHistory,
          path: documentName,
          bufferId: revisionId,
-         active: true,
+         active: active,
        );
 
   final WorkspaceTabKind kind;
@@ -48,20 +64,22 @@ class WorkspaceTabEntry {
   final String? bufferId;
   final String? untitledName;
   final bool dirty;
+  final String? comparisonId, comparisonLabel;
+  final SharedGitReview? review;
 
-  String get key => '${kind.name}:${bufferId ?? path}';
+  String get key => '${kind.name}:${comparisonId ?? bufferId ?? path}';
 }
 
 List<WorkspaceTabEntry> workspaceTabEntries({
   required Workspace workspace,
-  required GitState gitState,
+  SharedGitTabs gitTabs = const SharedGitTabs(),
   List<DocumentBuffer>? documentBuffers,
   String? activeBufferId,
   String? localHistoryRevisionId,
   String? localHistoryDocumentName,
 }) {
-  final diffActive = gitState.selectedDiffForDisplay != null;
-  final localHistoryActive = localHistoryRevisionId != null;
+  final diffActive = gitTabs.active != null;
+  final localHistoryActive = !diffActive && localHistoryRevisionId != null;
   return [
     if (documentBuffers != null)
       for (final buffer in documentBuffers)
@@ -82,18 +100,18 @@ List<WorkspaceTabEntry> workspaceTabEntries({
               !localHistoryActive &&
               path == workspace.activeFilePath,
         ),
-    for (final path in gitState.openDiffFilePaths)
+    for (final review in gitTabs.entries)
       WorkspaceTabEntry.gitDiff(
-        path: path,
-        active:
-            !localHistoryActive &&
-            diffActive &&
-            path == gitState.selectedCommitFilePath,
+        path: review.comparison.path.display,
+        comparisonId: review.id,
+        review: review,
+        comparisonLabel:
+            '${review.comparison.left.label} → ${review.comparison.right.label}',
+        active: review.id == gitTabs.activeId,
       ),
-    if (gitState.openDiffFilePaths.isEmpty && diffActive && !localHistoryActive)
-      const WorkspaceTabEntry.gitDiff(path: '', active: true),
     if (localHistoryRevisionId != null)
       WorkspaceTabEntry.localHistory(
+        active: localHistoryActive,
         revisionId: localHistoryRevisionId,
         documentName: localHistoryDocumentName ?? '',
       ),

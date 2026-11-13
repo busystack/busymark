@@ -10,7 +10,7 @@ These indices describe the packaged icons; graphics and media preparation still
 occurs in the confined application profile.
 
 The application plugs the standard desktop, display, audio, network, `home`,
-`removable-media`, `ssh-keys`, and `password-manager-service` interfaces. This
+`removable-media`, `ssh-keys`, `gpg-keys`, and `password-manager-service` interfaces. This
 supports documentation projects in ordinary home-directory locations and
 connected removable media. Interfaces that expose SSH keys or the system
 credential store are not automatically connected. Connect only the access you
@@ -18,6 +18,7 @@ need on the installed system:
 
 ```bash
 sudo snap connect busymark:ssh-keys
+sudo snap connect busymark:gpg-keys
 sudo snap connect busymark:password-manager-service
 ```
 
@@ -33,14 +34,57 @@ unavailable or locked credential store has no plaintext fallback. See
 
 Git inside a strict Snap has a private home directory and cannot assume that a
 host-level `~/.gitconfig` is visible. When a commit has no author name or email,
-BusyMark opens a native identity form, saves the identity through bundled Git,
-and retries the original commit. The user never needs to run `git config` from
-a terminal.
+BusyMark opens the shared identity form and saves the identity in that
+repository's local configuration. The commit draft remains intact; the user
+returns to it and explicitly commits. Identity recovery never changes global
+configuration or automatically repeats a possibly completed commit.
 
-The form can save the identity for only the current repository or globally.
-Inside the Snap, global scope means every repository opened by BusyMark because
-the configuration is stored in BusyMark's Snap data directory. Repository scope
-writes the standard local Git configuration for that repository.
+The bundled runtime is Git 2.56.0, built offline from the corresponding source
+archive supplied with `busystack_git`. Its GPL license and complete source must
+accompany application source distribution. The installed executable is
+`$SNAP/libexec/git-runtime/bin/git`; its exec-path is explicitly set to the same
+runtime's helpers. The native editor/askpass/byte-path helper is installed at
+`$SNAP/libexec/busymark/busystack-git-helper`. Neither helper requires an SDK.
+The runtime includes Git's libsecret helper for an explicitly configured
+`credential.helper=libsecret`; repository credentials are never added to the
+application's AI or Nextcloud account records. Git's other effective configured
+credential helpers remain in control. SSH uses the packaged OpenSSH client;
+GPG and pinentry are packaged, and `gpg-keys` controls access to GPG key files.
+TLS and SSH host verification remain enabled.
+
+The packaged GnuPG uses its documented `gpgconf.ctl` configuration to locate
+the packaged helpers and keep its agent socket beneath the Snap's private
+`$XDG_RUNTIME_DIR`. The `pinentry` alias selects packaged `pinentry-gnome3`.
+Both the graphical frontend and `pinentry-curses` are declared in the Snap recipe
+so clean builds contain the same signing helpers.
+The executables retain their upstream bytes. `GNUPGHOME` and Git's explicit
+signing-tool configuration remain effective; BusyMark does not import or copy
+private keys. This confined agent is separate from an existing desktop agent.
+Key access alone does not grant access to the desktop's GPG-agent socket.
+See the upstream [GnuPG configuration interface](https://www.gnupg.org/documentation/manuals/gnupg26/gpgconf.1.html).
+
+The `ssh-keys` connection grants key/configuration access; it does not grant
+access to the desktop SSH agent. In particular, snapd 2.77.1 on Ubuntu 26.04
+denies the GNOME GCR socket at `/run/user/<uid>/gcr/ssh` to the strict Snap.
+An already unlocked desktop key therefore does not establish that authentication
+will work inside BusyMark. The same isolated transport succeeds outside the
+Snap, while the confined client records an AppArmor socket-connect denial.
+Desktop-agent interoperability remains an installed acceptance blocker; do not
+disable confinement, copy private keys into repositories, or install a modified
+snapd policy to work around it. See Canonical's
+[SSH-agent interface discussion](https://forum.snapcraft.io/t/ssh-agent-plug-request/1250)
+and the current
+[`ssh-keys` interface](https://snapcraft.io/docs/reference/interfaces/ssh-keys-interface/).
+
+Shared source archives are verified against their pinned hashes. Snapcraft
+recreates their extracted siblings inside its managed part directory on each
+application build, so updating a pin cannot reuse an older extraction. The
+ordinary checkout helper preserves existing sibling working trees.
+
+The recipe explicitly stages the existing DejaVu core and monospace fonts
+alongside Noto. Depending on another package's alternative font dependency can
+omit DejaVu on a clean rebuild. Packaged verification must retain the approved
+font package versions and compare their actual payloads.
 
 Strict confinement cannot promise compatibility with arbitrary host-side Git
 hooks, signing programs, credential helpers, custom transports, or external

@@ -1,6 +1,7 @@
 import '../editor/wysiwyg/wysiwyg_commands.dart';
 import '../markdown/busymark_document.dart';
 import 'dart:async';
+import '../core/debug_log.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -68,6 +69,7 @@ enum BusyMarkCommandScope {
   tree,
   sourceSymbol,
   wysiwyg,
+  git,
 }
 
 enum BusyMarkCommandResourceContext { any, localWorkspace, notesWorkspace }
@@ -325,6 +327,13 @@ class BusyMarkCommandRegistry {
 
   Future<bool> execute(String id) async {
     final command = _byId[id];
+    if (isBusyMarkViewSelectorCommand(id)) {
+      busyMarkViewSelectorTrace('execute', {
+        'command': id,
+        'binding': command?.shortcut?.label,
+        'enabled': command?.canExecute ?? false,
+      });
+    }
     if (command == null || !command.canExecute) {
       return false;
     }
@@ -496,6 +505,8 @@ abstract final class BusyMarkCommandIds {
   static const closeTab = 'tabs.close';
   static const closeAllTabs = 'tabs.closeAll';
   static const toggleSidebar = 'view.toggleSidebar';
+  static const sidebarViewSelector = 'view.sidebarSelector';
+  static const contentViewSelector = 'view.contentSelector';
   static const elementProperties = 'view.elementProperties';
   static const viewEditor = 'view.editor';
   static const viewSource = 'view.source';
@@ -768,7 +779,6 @@ abstract final class BusyMarkCommandCatalog {
           label: (context) => _viewLabel(context, action),
           category: (context) => context.l10n.viewMode,
           scope: BusyMarkCommandScope.documentView,
-          shortcut: BusyMarkDocumentViewShortcuts.definitions[action],
         ),
       for (final action in BusyMarkTextEditingShortcutAction.values)
         command(
@@ -841,7 +851,6 @@ abstract final class BusyMarkCommandCatalog {
               BusyMarkCommandScope.application,
             _ => BusyMarkCommandScope.sidebar,
           },
-          shortcut: BusyMarkSidebarShortcuts.definitions[action],
           description: (context) => _sidebarDescription(context, action),
         ),
       command(
@@ -906,6 +915,10 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.closeTab => BusyMarkCommandIds.closeTab,
     BusyMarkAppShortcutAction.closeAllTabs => BusyMarkCommandIds.closeAllTabs,
     BusyMarkAppShortcutAction.toggleSidebar => BusyMarkCommandIds.toggleSidebar,
+    BusyMarkAppShortcutAction.sidebarViewSelector =>
+      BusyMarkCommandIds.sidebarViewSelector,
+    BusyMarkAppShortcutAction.contentViewSelector =>
+      BusyMarkCommandIds.contentViewSelector,
   };
 
   static String _appLabel(
@@ -931,6 +944,10 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.closeTab => context.l10n.shortcutCloseTab,
     BusyMarkAppShortcutAction.closeAllTabs => context.l10n.shortcutCloseAllTabs,
     BusyMarkAppShortcutAction.toggleSidebar => context.l10n.toggleSidebar,
+    BusyMarkAppShortcutAction.sidebarViewSelector =>
+      context.l10n.sidebarViewMenu,
+    BusyMarkAppShortcutAction.contentViewSelector =>
+      context.l10n.contentViewMenu,
   };
 
   static String _appCategory(
@@ -944,8 +961,10 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.previousTab ||
     BusyMarkAppShortcutAction.closeTab ||
     BusyMarkAppShortcutAction.closeAllTabs => context.l10n.tabs,
-    BusyMarkAppShortcutAction.toggleSidebar =>
+    BusyMarkAppShortcutAction.toggleSidebar ||
+    BusyMarkAppShortcutAction.sidebarViewSelector =>
       context.l10n.shortcutGroupSidebar,
+    BusyMarkAppShortcutAction.contentViewSelector => context.l10n.viewMode,
     _ => context.l10n.shortcutGroupGeneral,
   };
 

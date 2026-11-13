@@ -1,3 +1,5 @@
+import 'package:busystack_git/busystack_git.dart' as shared;
+
 enum GitFileChangeStatus {
   unmodified,
   modified,
@@ -126,6 +128,7 @@ class GitRepositoryInfo {
   const GitRepositoryInfo({
     required this.rootPath,
     required this.gitDirPath,
+    this.identityKey,
     this.currentBranch,
     this.detachedHeadCommit,
     this.upstreamBranch,
@@ -141,6 +144,7 @@ class GitRepositoryInfo {
 
   final String rootPath;
   final String gitDirPath;
+  final String? identityKey;
   final String? currentBranch;
   final String? detachedHeadCommit;
   final String? upstreamBranch;
@@ -156,6 +160,7 @@ class GitRepositoryInfo {
   GitRepositoryInfo copyWith({
     String? rootPath,
     String? gitDirPath,
+    Object? identityKey = _unset,
     Object? currentBranch = _unset,
     Object? detachedHeadCommit = _unset,
     Object? upstreamBranch = _unset,
@@ -171,6 +176,9 @@ class GitRepositoryInfo {
     return GitRepositoryInfo(
       rootPath: rootPath ?? this.rootPath,
       gitDirPath: gitDirPath ?? this.gitDirPath,
+      identityKey: identical(identityKey, _unset)
+          ? (rootPath == null && gitDirPath == null ? this.identityKey : null)
+          : identityKey as String?,
       currentBranch: identical(currentBranch, _unset)
           ? this.currentBranch
           : currentBranch as String?,
@@ -242,10 +250,22 @@ class GitFileStatus {
 }
 
 class GitStatusSnapshot {
-  const GitStatusSnapshot({required this.repositoryInfo, required this.files});
+  const GitStatusSnapshot({
+    required this.repositoryInfo,
+    required this.files,
+    this.unrepresentedPathCount = 0,
+    this.source,
+  });
 
   final GitRepositoryInfo repositoryInfo;
   final List<GitFileStatus> files;
+
+  /// Retain byte paths and repository identity for shared presentation.
+  final shared.GitSnapshot? source;
+
+  /// Byte-named entries are reviewed in the shared Git surfaces. String-only
+  /// authoring decorations must not turn their escaped labels into paths.
+  final int unrepresentedPathCount;
 
   List<GitFileStatus> get stagedFiles =>
       files.where((file) => file.staged && !file.conflicted).toList();
@@ -260,7 +280,7 @@ class GitStatusSnapshot {
   List<GitFileStatus> get conflictedFiles =>
       files.where((file) => file.conflicted).toList();
 
-  bool get clean => files.isEmpty;
+  bool get clean => files.isEmpty && unrepresentedPathCount == 0;
 }
 
 class GitCommitSummary {

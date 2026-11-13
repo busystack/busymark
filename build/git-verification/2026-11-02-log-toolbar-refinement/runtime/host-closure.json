@@ -1,0 +1,17 @@
+{
+  "qa": "busyfiles-release24-20261005",
+  "initialQaState": "STOPPED",
+  "finalQaState": "STOPPED",
+  "protectedStates": {
+    "busydata-installed-20261003": "RUNNING",
+    "busynode-continuation-20261015": "RUNNING",
+    "busymax-acceptance-v031-20261011": "STOPPED"
+  },
+  "hostFreeGiB": 36,
+  "guestFreeBytes": 17451741184,
+  "ownedNativeProcesses": "exited before recorder stop",
+  "failedUnitJournals": "retained before resetting only three task-owned failed units",
+  "securityAndAccessibility": "unchanged",
+  "sdk": "official Flutter 3.47.5/Dart 3.13.4, clean tracked and untracked status",
+  "vmConfiguration": "unchanged"
+}

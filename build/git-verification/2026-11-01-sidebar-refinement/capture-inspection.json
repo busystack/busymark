@@ -1,0 +1,29 @@
+{
+  "source": "bad4554005bec134b52e2b83b7721ee776767876",
+  "inspectedNativeImages": 38,
+  "hashesVerified": true,
+  "logsLossless": true,
+  "native": [
+    "exclusive trust, accurate confirmation, cancel, restart, revoke",
+    "short/long flat branch, action tooltip, complete modal and native menus",
+    "Refresh menu without duplicate Branches",
+    "separate unstage held press, checked/unchecked native Amend and keyboard toggle",
+    "spaced footer; 900px German window; Japanese dark; Arabic RTL",
+    "independent Git/Local History mouse and Ctrl+Tab; retained unsaved document",
+    "ordinary main.dart debug; Git Log inspector/modal; descendant rejection"
+  ],
+  "automated": [
+    "all action interaction-state shape and hit geometry",
+    "disabled checkbox and action semantics",
+    "en/de/ja/ar footer at scale 1/1.5/2",
+    "en/ar tree marker/action region at scale 1/2",
+    "root/worktree/submodule, deterministic trust races, draft/index/tab/editor regressions"
+  ],
+  "limitations": [
+    "AT-SPI body tree unavailable: application/frame only; setting left unchanged",
+    "Fractional Wayland and enlarged desktop text not verified in Xvfb",
+    "Release SIGABRT on shutdown and FlutterEngineRemoveView debug-close warning reproduced; UI operation and builds passed",
+    "Initial Dart test hook startup stalled on external port 443; existing resolved-package runner passed the same IPC tests",
+    "BusyFiles production packaging was outside this bounded correction; prior qualifications remain separate"
+  ]
+}

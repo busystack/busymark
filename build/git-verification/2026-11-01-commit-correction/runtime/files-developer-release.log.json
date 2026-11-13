@@ -1,0 +1,5 @@
+{
+  "rawFile": "runtime/files-developer-release.log",
+  "sha256": "b230c406e36d8184d186efbd5957d4bfc3ca42948326ba9766b1e27ae8e7dec9",
+  "transcript": "Building Linux application...                                   \n✓ Built build/linux/x64/release/bundle/busyfiles\nBusyFiles requires official Flutter 3.47.5 / Dart 3.13.4: Production engine/package producer must be Ubuntu 26.04\n"
+}

@@ -1,0 +1,5 @@
+{
+  "rawFile": "runtime/mark-audit-selftest.log",
+  "sha256": "05435324636609704c11c9e12f907be13576c03d902253db35f5328c5a1ab2b2",
+  "transcript": "Resolved workspace Git scope audit self-tests passed.\n"
+}

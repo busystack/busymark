@@ -1,13 +1,17 @@
 name: busymark
 description: Local-first Markdown and Writerside-compatible documentation editor.
 publish_to: 'none'
-version: 0.6.3
+version: 0.7.0
 
 environment:
   sdk: ">=3.12.1 <4.0.0"
   flutter: 3.47.5
 
 dependencies:
+  busystack_git:
+    path: ../busystack_git
+  busystack_git_flutter:
+    path: ../busystack_git_flutter
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -25,7 +29,7 @@ dependencies:
   go_router: ^17.3.0
   html: ^0.15.6
   http: ^1.6.0
-  intl: ^0.20.0
+  intl: 0.20.3
   markdown: ^7.3.1
   package_info_plus: ^10.1.0
   path: ^1.9.0
@@ -38,7 +42,7 @@ dependencies:
   unorm_dart: ^0.3.2
   window_manager: ^0.5.1
   xml: ^7.0.1
-  yaru: ^10.1.0
+  yaru: 10.2.0
 
 dev_dependencies:
   flutter_test:

@@ -69,7 +69,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final ValueChanged<BusyAdmonitionStyle>? onAdmonitionCommand;
   final ValueChanged<BusyWritersideInsertCommand>? onWritersideInsert;
   final bool Function(BusyWritersideInsertCommand)? isWritersideInsertEnabled;
-  final VoidCallback? onMenuCanceled;
+  final ValueChanged<BuildContext>? onMenuCanceled;
   final ValueChanged<BusyWysiwygInlineCommand> onInlineCommand;
   final VoidCallback onLinkCommand;
   final VoidCallback? onInlineMathCommand;

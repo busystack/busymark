@@ -1,0 +1,5 @@
+{
+  "rawFile": "captures/files-correction-ui.log",
+  "sha256": "49cfc14085b2fa63eae701b23756f16ebbfde4c1633b88be1abfe534f6eaa619",
+  "transcript": "libEGL warning: DRI3 error: Could not get DRI3 device\nlibEGL warning: Ensure your X server supports DRI3 to get accelerated rendering\n[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).\nembedder.cc (2615): 'FlutterEngineRemoveView' returned 'kInvalidArguments'. Remove view info was invalid. The implicit view cannot be removed.\n"
+}

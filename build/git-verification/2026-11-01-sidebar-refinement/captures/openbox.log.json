@@ -1,0 +1,5 @@
+{
+  "sha256": "87b1df609f4a6423971e5fe3d237f7052cea5f5bb11b7ff847b002282b06cfba",
+  "encoding": "utf-8",
+  "text": "Openbox-Message: Unable to find a valid menu file \"/var/lib/openbox/debian-menu.xml\"\nXIO:  fatal IO error 4 (Interrupted system call) on X server \":99\"\r\n      after 8793 requests (8793 known processed) with 0 events remaining.\r\n"
+}

@@ -1,0 +1,5 @@
+{
+  "source": "mark-debug.log",
+  "sha256": "458109597c4db04648a7a2355cf999697a78d43d764c917a27eec856499498ab",
+  "text": "Building Linux application...                                   \n✓ Built build/linux/x64/debug/bundle/busymark\n"
+}

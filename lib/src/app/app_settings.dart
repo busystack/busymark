@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../export/export_options.dart';
+import '../core/debug_log.dart';
 import '../spellcheck/spelling_language.dart';
 import 'app_locale.dart';
 import 'shortcut_binding.dart';
@@ -629,6 +630,7 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
   @override
   Future<Map<String, Object?>> load() async {
     final file = await _settingsFile();
+    busyMarkViewSelectorTrace('settings-file', {'path': file.path});
     final type = await FileSystemEntity.type(file.path);
     if (type != FileSystemEntityType.file &&
         type != FileSystemEntityType.notFound) {
@@ -652,7 +654,19 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
     if (content.trim().isEmpty) {
       return <String, Object?>{};
     }
-    return (jsonDecode(content) as Map).cast<String, Object?>();
+    final settings = (jsonDecode(content) as Map).cast<String, Object?>();
+    if (debugBusyMarkLogging) {
+      final overrides = settings['shortcutOverrides'];
+      busyMarkViewSelectorTrace('settings-overrides', {
+        for (final id in ['view.sidebarSelector', 'view.contentSelector'])
+          id: overrides is Map && overrides.containsKey(id)
+              ? overrides[id] == null
+                    ? 'unassigned'
+                    : 'custom'
+              : 'absent',
+      });
+    }
+    return settings;
   }
 
   @override
@@ -1006,6 +1020,17 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> clearTrustedGitWorkspaces() {
     return _mutate(
       (settings) => settings.copyWith(trustedGitWorkspacePaths: []),
+    );
+  }
+
+  Future<void> revokeGitWorkspaceTrust(String workspacePath) {
+    final key = _normalizedGitWorkspacePath(workspacePath);
+    return _mutate(
+      (settings) => settings.copyWith(
+        trustedGitWorkspacePaths: settings.trustedGitWorkspacePaths
+            .where((path) => path != key)
+            .toList(),
+      ),
     );
   }
 

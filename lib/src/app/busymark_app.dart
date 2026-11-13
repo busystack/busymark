@@ -1,3 +1,4 @@
+import '../git/application/shared_git_tabs.dart';
 import '../workspace/recent_presentation.dart';
 import '../search/welcome_notes_action.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
@@ -6,9 +7,13 @@ import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
 import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../references/reference_controller.dart';
 import 'dart:async';
+import '../core/debug_log.dart';
+import '../editor/editor_text_context_menu.dart';
 
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
@@ -50,6 +55,8 @@ import 'busymark_toast.dart';
 import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
+import 'git_dismissal.dart';
+import 'document_view_availability.dart';
 import 'linux/linux_window_host.dart';
 
 final _busyMarkDefaultCommandRegistryProvider =
@@ -96,6 +103,8 @@ final _busyMarkDefaultCommandRegistryProvider =
       final defaults = BusyMarkCommandCatalog.create(
         executions: {
           for (final id in [
+            BusyMarkCommandIds.sidebarViewSelector,
+            BusyMarkCommandIds.contentViewSelector,
             BusyMarkCommandIds.sidebarFiles,
             BusyMarkCommandIds.sidebarToc,
             BusyMarkCommandIds.sidebarOutline,
@@ -124,11 +133,44 @@ final _busyMarkDefaultCommandRegistryProvider =
             },
         },
         enabled: {
+          for (final (id, mode) in [
+            (BusyMarkCommandIds.viewEditor, DocumentViewModePreference.editor),
+            (BusyMarkCommandIds.viewSource, DocumentViewModePreference.source),
+            (
+              BusyMarkCommandIds.viewReading,
+              DocumentViewModePreference.preview,
+            ),
+            (BusyMarkCommandIds.viewSplit, DocumentViewModePreference.split),
+          ])
+            id: () {
+              final state = ref.read(workspaceControllerProvider);
+              return ref
+                      .read(searchSessionProvider.notifier)
+                      .workspaceVisible &&
+                  busyMarkDocumentViewAvailable(
+                    state.workspace,
+                    state.activeBuffer,
+                    mode,
+                  );
+            },
           for (final id in BusyMarkCommandCatalog.notesWorkspaceCommandIds)
             id: () =>
                 ref.read(searchSessionProvider.notifier).workspaceVisible &&
                 ref.read(workspaceControllerProvider).workspace?.isRemote ==
                     true,
+          BusyMarkCommandIds.sidebarViewSelector: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.contentViewSelector: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).activeBuffer != null &&
+              ref
+                      .read(sharedGitReviewProvider)[ref
+                          .read(workspaceControllerProvider)
+                          .workspace
+                          ?.id]
+                      ?.activeId ==
+                  null,
           BusyMarkCommandIds.sidebarFiles: () =>
               ref.read(searchSessionProvider.notifier).workspaceVisible &&
               ref.read(workspaceControllerProvider).workspace != null,
@@ -148,10 +190,6 @@ final _busyMarkDefaultCommandRegistryProvider =
           for (final id in [
             BusyMarkCommandIds.elementProperties,
             BusyMarkCommandIds.references,
-            BusyMarkCommandIds.viewEditor,
-            BusyMarkCommandIds.viewSource,
-            BusyMarkCommandIds.viewReading,
-            BusyMarkCommandIds.viewSplit,
             BusyMarkCommandIds.nextTab,
             BusyMarkCommandIds.previousTab,
             BusyMarkCommandIds.closeTab,
@@ -188,10 +226,26 @@ final _busyMarkDefaultCommandRegistryProvider =
 final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   ref,
 ) {
-  return effectiveCommandRegistry(
-    ref.watch(_busyMarkDefaultCommandRegistryProvider),
-    ref.watch(appSettingsControllerProvider.select((s) => s.shortcutOverrides)),
+  final defaults = ref.watch(_busyMarkDefaultCommandRegistryProvider);
+  final overrides = ref.watch(
+    appSettingsControllerProvider.select((s) => s.shortcutOverrides),
   );
+  final effective = effectiveCommandRegistry(defaults, overrides);
+  if (debugBusyMarkLogging) {
+    for (final id in [
+      BusyMarkCommandIds.sidebarViewSelector,
+      BusyMarkCommandIds.contentViewSelector,
+    ]) {
+      busyMarkViewSelectorTrace('registry', {
+        'command': id,
+        'default': defaults[id]?.shortcut?.label,
+        'overridePresent': overrides.containsKey(id),
+        'override': overrides[id]?.label,
+        'effective': effective[id]?.shortcut?.label,
+      });
+    }
+  }
+  return effective;
 });
 
 class BusyMarkApp extends ConsumerWidget {
@@ -237,6 +291,16 @@ class BusyMarkApp extends ConsumerWidget {
       darkTheme: buildBusyMarkTheme(
         brightness: Brightness.dark,
         accentColor: accent,
+      ),
+      highContrastTheme: buildBusyMarkTheme(
+        brightness: Brightness.light,
+        accentColor: accent,
+        highContrast: true,
+      ),
+      highContrastDarkTheme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: accent,
+        highContrast: true,
       ),
       themeMode: settings.themeMode,
       locale: settings.locale,
@@ -828,13 +892,14 @@ class BusyMarkApp extends ConsumerWidget {
   }) async {
     final workspaceState = ref.read(workspaceControllerProvider);
     final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
     if (workspace == null) {
       return;
     }
     final tabs = workspaceTabEntries(
       workspace: workspace,
-      gitState: gitState,
+      gitTabs:
+          ref.read(sharedGitReviewProvider)[workspace.id] ??
+          const SharedGitTabs(),
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
       localHistoryRevisionId: ref
@@ -862,13 +927,14 @@ class BusyMarkApp extends ConsumerWidget {
   ) async {
     final workspaceState = ref.read(workspaceControllerProvider);
     final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
     if (workspace == null) {
       return;
     }
     final tabs = workspaceTabEntries(
       workspace: workspace,
-      gitState: gitState,
+      gitTabs:
+          ref.read(sharedGitReviewProvider)[workspace.id] ??
+          const SharedGitTabs(),
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
       localHistoryRevisionId: ref
@@ -903,19 +969,26 @@ class BusyMarkApp extends ConsumerWidget {
     final gitController = ref.read(gitControllerProvider.notifier);
     switch (tab.kind) {
       case WorkspaceTabKind.file:
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
         ref.read(localHistoryControllerProvider.notifier).clearComparison();
         await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(tab.bufferId!);
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
-        if (tab.path.isEmpty) {
-          return;
-        }
-        await gitController.activateDiffFile(tab.path);
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .activate(
+              ref.read(workspaceControllerProvider).workspace!.id,
+              tab.comparisonId!,
+            );
       case WorkspaceTabKind.localHistory:
-        return;
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
+        gitController.deactivateDiffFile();
     }
   }
 
@@ -1058,11 +1131,15 @@ class _BusyMarkWindowLifecycleState
   late final WindowControlService _windowControlService;
   late final AppLifecycleListener _notesLifecycle;
   late final GoRouter _notesRouter;
+  late final VoidCallback _unregisterMessageGuard;
 
   @override
   void initState() {
     super.initState();
     _windowControlService = ref.read(windowControlServiceProvider);
+    _unregisterMessageGuard = ref
+        .read(busyMarkGitDismissalProvider)
+        .register(_mayDismissMessageDrafts);
     _notesRouter = ref.read(appRouterProvider);
     _notesRouter.routeInformationProvider.addListener(_notesRouteChanged);
     _notesLifecycle = AppLifecycleListener(
@@ -1091,6 +1168,7 @@ class _BusyMarkWindowLifecycleState
     _notesRouter.routeInformationProvider.removeListener(_notesRouteChanged);
     _notesLifecycle.dispose();
     _windowControlService.unregisterCloseHandler();
+    _unregisterMessageGuard();
     super.dispose();
   }
 
@@ -1110,11 +1188,34 @@ class _BusyMarkWindowLifecycleState
         );
   }
 
+  Future<bool> _mayDismissMessageDrafts() async {
+    final context = rootNavigatorKey.currentContext ?? this.context;
+    if (!mounted || !context.mounted) return false;
+    return shared.gitMayDismissMessageDrafts(
+      context,
+      ref.read(busyMarkGitDraftFlushProvider).liveSessions,
+    );
+  }
+
   Future<void> _handleWindowClose() async {
     final context = rootNavigatorKey.currentContext ?? this.context;
     if (!context.mounted) {
       return;
     }
+    final drafts = ref.read(busyMarkGitDraftFlushProvider);
+    await drafts.flush();
+    if (!mounted || !context.mounted) return;
+    if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
+        !mounted ||
+        !context.mounted) {
+      return;
+    }
+    final reviewedMessages = <(shared.GitDraftStore, String), Map<String, int>>{
+      for (final session in drafts.liveSessions())
+        (session.host.drafts, session.repository.presentationKey): Map.of(
+          session.messageDraftRevisions,
+        ),
+    };
     final controller = ref.read(workspaceControllerProvider.notifier);
     await controller.waitForWorkspaceOpening();
     if (!mounted || !context.mounted) return;
@@ -1136,6 +1237,24 @@ class _BusyMarkWindowLifecycleState
       saveChanges: () => _saveAllDirtyDocuments(context),
       beforeClose: controller.markCleanShutdown,
       discardChanges: controller.discardRecoveryForShutdown,
+      finalCloseGuard: () async {
+        // Document metadata can await I/O after the message discard consent.
+        // Drain later writes, then veto only newly unsaved message revisions.
+        await drafts.flush();
+        for (final session in drafts.liveSessions()) {
+          if (!session.hasUnpersistedMessageDrafts) continue;
+          final reviewed =
+              reviewedMessages[(
+                session.host.drafts,
+                session.repository.presentationKey,
+              )];
+          if (reviewed == null ||
+              !mapEquals(reviewed, session.messageDraftRevisions)) {
+            return false;
+          }
+        }
+        return true;
+      },
     );
   }
 
@@ -1227,6 +1346,8 @@ class _BusyMarkSearchShortcutHandler extends ConsumerStatefulWidget {
 
 class _BusyMarkSearchShortcutHandlerState
     extends ConsumerState<_BusyMarkSearchShortcutHandler> {
+  final _editorContextKeys = BusyMarkContextMenuKeys();
+  BusyMarkMenuSession? _editorContextMenuSession;
   @override
   void initState() {
     super.initState();
@@ -1235,11 +1356,60 @@ class _BusyMarkSearchShortcutHandlerState
 
   @override
   void dispose() {
+    _editorContextKeys.clear();
+    unawaited(_editorContextMenuSession?.dismiss());
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     super.dispose();
   }
 
+  KeyEventResult _handleEditorContextMenu(FocusNode node, KeyEvent event) {
+    final editable = FocusManager.instance.primaryFocus?.context
+        ?.findAncestorStateOfType<EditableTextState>();
+    if (BusyMarkShortcutCapture.suppressing ||
+        editable?.textEditingValue.composing.isValid == true) {
+      _editorContextKeys.clear();
+      return KeyEventResult.ignored;
+    }
+    return _editorContextKeys.handle(
+          event,
+          editable == null
+              ? null
+              : () {
+                  if (editable.mounted && editable.widget.focusNode.hasFocus) {
+                    busyMarkViewSelectorTrace('editable-context-menu', {});
+                    unawaited(_editorContextMenuSession?.dismiss());
+                    final session = BusyMarkMenuSession();
+                    _editorContextMenuSession = session;
+                    unawaited(
+                      showBusyMarkEditableContextMenu(
+                        editable,
+                        session: session,
+                      ).whenComplete(() {
+                        if (identical(_editorContextMenuSession, session)) {
+                          _editorContextMenuSession = null;
+                        }
+                      }),
+                    );
+                  }
+                },
+        )
+        ? KeyEventResult.handled
+        : KeyEventResult.ignored;
+  }
+
   bool _handleKeyEvent(KeyEvent event) {
+    if (debugBusyMarkLogging &&
+        (event.logicalKey == LogicalKeyboardKey.f9 ||
+            event.logicalKey == LogicalKeyboardKey.f10)) {
+      final keyboard = HardwareKeyboard.instance;
+      busyMarkViewSelectorTrace('key-received', {
+        'key': event.logicalKey.keyLabel,
+        'type': event.runtimeType.toString(),
+        'control': keyboard.isControlPressed,
+        'shift': keyboard.isShiftPressed,
+        'captured': BusyMarkShortcutCapture.suppressing,
+      });
+    }
     // Capture owns the event in FocusManager's early handler, including the
     // release that ends suppression. Yield here so native key delivery can
     // reach that handler instead of treating it as an application command.
@@ -1317,7 +1487,13 @@ class _BusyMarkSearchShortcutHandlerState
         }
       }),
     );
-    return widget.child;
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      includeSemantics: false,
+      onKeyEvent: _handleEditorContextMenu,
+      child: widget.child,
+    );
   }
 }
 

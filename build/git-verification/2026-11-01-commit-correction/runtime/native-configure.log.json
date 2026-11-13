@@ -1,0 +1,5 @@
+{
+  "rawFile": "runtime/native-configure.log",
+  "sha256": "25e7935ce6343c678604e422a6b2c9c741eeee19eae6e0472a960f2c9a83a501",
+  "transcript": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/ubuntu/busystack-native-git-verification-20261031/inputs/busystack_git_flutter/build/native\n"
+}

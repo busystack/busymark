@@ -29,6 +29,75 @@ List<BusyBlock> lists(BusyDocument d) =>
     walk(d.blocks).where((b) => b.attributes['element'] == 'list').toList();
 
 void main() {
+  for (final marker in ['-', '3.', '- [ ]']) {
+    for (final clear in [false, true]) {
+      test(
+        'leading Enter retains native $marker parent ownership after publication clear=$clear',
+        () {
+          final indent = marker == '3.' ? '   ' : '  ';
+          final c = BusyMarkWysiwygDocumentController(
+            document: parse(
+              '$marker Parent\n$indent- Child\n$indent  - Grandchild\n\n{id="owner"}\n',
+            ),
+          );
+          addTearDown(c.dispose);
+          final parent = walk(
+            c.document.blocks,
+          ).singleWhere((b) => b.plainText == 'Parent');
+          final childIds = walk(parent.children).map((b) => b.id).toList();
+          if (clear) {
+            c.updateBlockText(parent.id, '');
+            c.rebaseCommittedSource(c.markdown);
+          }
+          final result = c.applyEnterAt(parent.id, 0);
+          expect(result?.blockId, parent.id);
+          final published = c.markdown;
+          c.rebaseCommittedSource(published);
+          expect(c.markdown, published);
+          final retained = c.blockById(parent.id)!;
+          expect(retained.kind, parent.kind);
+          if (marker == '3.') expect(retained.attributes['marker'], '4.');
+          expect(
+            walk(
+              retained.children,
+            ).where((b) => childIds.contains(b.id)).map((b) => b.id),
+            childIds,
+          );
+          final owner = c.elementPath(parent.id).reversed.skip(1).first;
+          expect(owner.attributes['busymark-list-form'], 'markdown');
+          expect(owner.attributes['id'], 'owner');
+          expect(owner.children.first.id, isNot(parent.id));
+          expect(owner.children.first.children, isEmpty);
+          final reopened = parse(published);
+          expect(
+            walk(reopened.blocks).where((b) => b.plainText == 'Child'),
+            hasLength(1),
+          );
+          expect(
+            walk(reopened.blocks).where((b) => b.plainText == 'Grandchild'),
+            hasLength(1),
+          );
+        },
+      );
+    }
+  }
+
+  test('an authored empty paragraph is not discarded by heading Backspace', () {
+    final c = BusyMarkWysiwygDocumentController(
+      document: parse('# Topic\n\nClear\n{id="authored"}\n\n## Heading\n'),
+    );
+    addTearDown(c.dispose);
+    final paragraph = c.document.blocks.singleWhere(
+      (b) => b.kind == BusyBlockKind.paragraph,
+    );
+    final heading = c.document.blocks.last;
+    c.updateBlockText(paragraph.id, '');
+    final result = c.applyBackspaceAtStart(heading.id);
+    expect(result?.blockId, paragraph.id);
+    expect(c.blockById(paragraph.id)!.attributes['id'], 'authored');
+    expect(c.markdown, contains('id="authored"'));
+  });
+
   test(
     'block lookup follows edits and replacement revisions with reused IDs',
     () {

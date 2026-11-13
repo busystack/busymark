@@ -353,7 +353,9 @@ void main() {
             find.descendant(of: radio, matching: find.byType(YaruToggleButton)),
           )
           .hasFocusBorder,
-      isTrue,
+      isFalse,
+      reason:
+          'BusyMark owns the shared modality-aware indicator around the upstream control',
     );
     expect(
       find.descendant(of: radio, matching: find.byType(YaruFocusBorder)),
@@ -587,15 +589,15 @@ void main() {
 
   test('sidebar header and list compose the shared vertical gap', () {
     final header = BusyMarkInsets.sidebarHeader.resolve(TextDirection.ltr);
-    final tocLtr = BusyMarkInsets.tocHeader.resolve(TextDirection.ltr);
-    final tocRtl = BusyMarkInsets.tocHeader.resolve(TextDirection.rtl);
+    final tocLtr = BusyMarkInsets.sidebarViewHeader.resolve(TextDirection.ltr);
+    final tocRtl = BusyMarkInsets.sidebarViewHeader.resolve(TextDirection.rtl);
 
     expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
-    expect(tocLtr.top, 0);
-    expect(tocLtr.left, 0);
-    expect(tocLtr.right, 0);
-    expect(tocRtl.left, 0);
-    expect(tocRtl.right, 0);
+    expect(tocLtr.top, BusyMarkSpacing.sm);
+    expect(tocLtr.left, BusyMarkSpacing.md);
+    expect(tocLtr.right, BusyMarkSpacing.md);
+    expect(tocRtl.left, BusyMarkSpacing.md);
+    expect(tocRtl.right, BusyMarkSpacing.md);
   });
 
   testWidgets('header controls delegate geometry and elevation to Yaru', (
@@ -657,11 +659,11 @@ void main() {
       ),
     );
 
-    IconButton iconButton(String key) {
-      return tester.widget<IconButton>(
+    YaruIconButton iconButton(String key) {
+      return tester.widget<YaruIconButton>(
         find.descendant(
           of: find.byKey(ValueKey(key)),
-          matching: find.byType(IconButton),
+          matching: find.byType(YaruIconButton),
         ),
       );
     }
@@ -675,17 +677,13 @@ void main() {
         theme.cardTheme.elevation ?? BusyMarkElevation.surface;
     final colors = theme.extension<BusyMarkSurfaceColors>()!;
 
-    expect(
-      elevatedIcon.style?.fixedSize?.resolve({}),
-      const Size.square(BusyMarkSizes.iconButton),
-    );
+    expect(elevatedIcon.iconSize, BusyMarkSizes.iconButton);
     expect(elevatedIcon.isSelected, isFalse);
-    expect(elevatedIcon.style?.tapTargetSize, MaterialTapTargetSize.shrinkWrap);
     expect(
       tester.getSize(
         find.descendant(
           of: find.byKey(const ValueKey('elevated-icon-button')),
-          matching: find.byType(IconButton),
+          matching: find.byType(YaruIconButton),
         ),
       ),
       const Size.square(BusyMarkSizes.iconButton),
@@ -694,7 +692,7 @@ void main() {
       tester.getSize(
         find.descendant(
           of: find.byKey(const ValueKey('elevated-popup-button')),
-          matching: find.byType(IconButton),
+          matching: find.byType(YaruIconButton),
         ),
       ),
       const Size.square(BusyMarkSizes.iconButton),
@@ -745,7 +743,7 @@ void main() {
     );
   });
 
-  testWidgets('dark header menu delegates its tooltip to IconButton', (
+  testWidgets('dark header menu delegates its tooltip to YaruIconButton', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -769,10 +767,10 @@ void main() {
       ),
     );
 
-    final iconButton = tester.widget<IconButton>(
+    final iconButton = tester.widget<YaruIconButton>(
       find.descendant(
         of: find.byType(BusyMarkHeaderPopupMenuButton<String>),
-        matching: find.byType(IconButton),
+        matching: find.byType(YaruIconButton),
       ),
     );
     expect(iconButton.tooltip, 'Dark menu');
@@ -894,6 +892,70 @@ void main() {
     );
   }
 
+  for (final brightness in Brightness.values) {
+    for (final alignment in [Alignment.topLeft, Alignment.bottomRight]) {
+      testWidgets(
+        'long directory tooltip stays inside the window: $brightness $alignment',
+        (tester) async {
+          const message =
+              'Git changes: 2 directly in this directory, 3 in nested directories; 1 deleted. Review paths in Git Changes.';
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: buildBusyMarkTheme(
+                brightness: brightness,
+                accentColor: const Color(0xFF3584E4),
+              ),
+              home: Scaffold(
+                body: MediaQuery(
+                  data: const MediaQueryData(
+                    textScaler: TextScaler.linear(1.5),
+                  ),
+                  child: Align(
+                    alignment: alignment,
+                    child: SizedBox(
+                      width: 120,
+                      child: Builder(
+                        builder: (context) => BusyMarkTooltipStyle.wrap(
+                          context,
+                          message: message,
+                          child: const Text('topics'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          final pointer = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await pointer.addPointer(location: const Offset(400, 300));
+          await pointer.moveTo(tester.getCenter(find.text('topics')));
+          await tester.pump(const Duration(milliseconds: 600));
+          await tester.pump();
+          final text = find.text(message);
+          expect(text, findsOneWidget);
+          final bounds = tester.getRect(text);
+          expect(bounds.left, greaterThanOrEqualTo(0));
+          expect(bounds.top, greaterThanOrEqualTo(0));
+          expect(bounds.right, lessThanOrEqualTo(800));
+          expect(bounds.bottom, lessThanOrEqualTo(600));
+          final paragraph = tester.renderObject<RenderParagraph>(text);
+          expect(paragraph.didExceedMaxLines, isFalse);
+          expect(
+            bounds.height,
+            greaterThan(30),
+            reason: 'The full explanation wraps.',
+          );
+          expect(tester.takeException(), isNull);
+          await pointer.removePointer();
+          await tester.pumpAndSettle();
+        },
+      );
+    }
+  }
+
   testWidgets('desktop tooltips use one explicit natural-width geometry', (
     tester,
   ) async {
@@ -995,10 +1057,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-            .widget<IconButton>(
+            .widget<YaruIconButton>(
               find.descendant(
                 of: find.byType(BusyMarkHeaderPopupMenuButton<String>),
-                matching: find.byType(IconButton),
+                matching: find.byType(YaruIconButton),
               ),
             )
             .isSelected,
@@ -1071,7 +1133,7 @@ void main() {
                   ),
                   BusyMarkPopupMenuItem<String>(
                     value: 'split',
-                    label: 'Split',
+                    label: 'Dual',
                     icon: BusyMarkGlyphs.splitView,
                     shortcut: 'Ctrl+4',
                     trailingCheck: true,
@@ -1121,7 +1183,7 @@ void main() {
           'separator': false,
         },
         {
-          'label': 'Split',
+          'label': 'Dual',
           'icon': 'sidebar-show-right-symbolic',
           'shortcut': 'Ctrl+4',
           'enabled': true,
@@ -1376,7 +1438,12 @@ void main() {
       );
       expect(
         theme.inputDecorationTheme.focusedBorder,
-        base.inputDecorationTheme.focusedBorder,
+        base.inputDecorationTheme.focusedBorder?.copyWith(
+          borderSide: BorderSide(
+            color: colors.foreground.withValues(alpha: .65),
+            width: BusyMarkStroke.focus,
+          ),
+        ),
       );
       expect(
         theme.inputDecorationTheme.contentPadding,
@@ -2383,8 +2450,8 @@ void main() {
         isTrue,
       );
 
-      final renderedButtons = tester.widgetList<IconButton>(
-        find.descendant(of: toolbar, matching: find.byType(IconButton)),
+      final renderedButtons = tester.widgetList<YaruIconButton>(
+        find.descendant(of: toolbar, matching: find.byType(YaruIconButton)),
       );
       expect(renderedButtons, isNotEmpty);
       final expectedElevation =
@@ -2412,7 +2479,7 @@ void main() {
 
       final actionButton = find.ancestor(
         of: find.byIcon(BusyMarkGlyphs.unorderedList),
-        matching: find.byType(IconButton),
+        matching: find.byType(YaruIconButton),
       );
       expect(actionButton, findsOneWidget);
       final buttonSize = tester.getSize(actionButton);
@@ -2439,7 +2506,7 @@ void main() {
       await mouse.moveTo(Offset.zero);
       rebuild(() => blockCommandsEnabled = false);
       await tester.pumpAndSettle();
-      expect(tester.widget<IconButton>(actionButton).onPressed, isNull);
+      expect(tester.widget<YaruIconButton>(actionButton).onPressed, isNull);
       final disabledPixels = await _capturePixels(tester, boundaryKey);
       final disabled = _pixelAtLocal(
         tester,
@@ -2811,10 +2878,10 @@ void main() {
       ),
     );
 
-    final surface = tester.widget<Material>(
+    final surface = tester.widget<ColoredBox>(
       find.descendant(
         of: find.byType(BusyMarkSidebarSurface),
-        matching: find.byType(Material),
+        matching: find.byType(ColoredBox),
       ),
     );
     final box = tester.widget<DecoratedBox>(

@@ -1,3 +1,4 @@
+import '../support/native_menu_probe.dart';
 import 'dart:async';
 import 'package:busymark/src/search/search_session.dart';
 import 'package:busymark/src/search/search_sidebar.dart';
@@ -1533,6 +1534,7 @@ void main() {
   testWidgets(
     'pointer and keyboard multiselection preserves reviewed context targets after resorting',
     (tester) async {
+      final menu = NativeMenuProbe(tester);
       late NextcloudNote alpha, beta, gamma;
       await tester.runAsync(() async {
         final account = repository.accountById(accountId)!;
@@ -1587,7 +1589,7 @@ void main() {
         ),
       );
       await settleStorage(tester);
-      await tester.tap(find.text('Move to category'));
+      await menu.activate('Move to category');
       await settleStorage(tester);
       final review = find.byType(BusyMarkDialogShell);
       expect(review, findsOneWidget);
@@ -1615,8 +1617,9 @@ void main() {
   );
 
   testWidgets(
-    'overflow keyboard sessions capture their own note, including the first opening',
+    'context keyboard sessions capture their own note, including the first opening',
     (tester) async {
+      final menu = NativeMenuProbe(tester);
       late NextcloudNote alpha, beta;
       await tester.runAsync(() async {
         final account = repository.accountById(accountId)!;
@@ -1626,43 +1629,47 @@ void main() {
         beta = await repository.create(accountId, title: 'Beta');
       });
       await pump(tester);
-      Finder button(NextcloudNote note) => find.descendant(
+      Finder row(NextcloudNote note) =>
+          find.byKey(ValueKey('nextcloud-note-${note.localId}'));
+      Finder surface(NextcloudNote note) => find.descendant(
         of: find.byKey(ValueKey('nextcloud-note-${note.localId}')),
-        matching: find.byType(BusyMarkCompactIconButton),
+        matching: find.byType(BusyMarkSidebarRowSurface),
       );
       Future<void> keyboardOpen(NextcloudNote note) async {
         final focus = tester
-            .widget<BusyMarkCompactIconButton>(button(note))
+            .widget<BusyMarkSidebarRowSurface>(surface(note))
             .focusNode!;
         for (var i = 0; i < 40 && !focus.hasPrimaryFocus; i++) {
           await tester.sendKeyEvent(LogicalKeyboardKey.tab);
           await tester.pump();
         }
         expect(focus.hasPrimaryFocus, isTrue);
-        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
         await tester.pumpAndSettle();
       }
 
       await keyboardOpen(beta);
-      await tester.tap(find.text('Favorites').last);
+      await menu.activate('Favorites');
       await settleStorage(tester);
       expect(repository.noteById(beta.localId)!.favorite, isTrue);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
-      await tester.tap(button(alpha));
+      await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
       await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      menu.close();
       await tester.pumpAndSettle();
       await keyboardOpen(beta);
-      await tester.tap(find.text('Remove favorite'));
+      await menu.activate('Remove favorite');
       await settleStorage(tester);
       expect(repository.noteById(beta.localId)!.favorite, isFalse);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
-      await tester.tap(button(alpha));
+      await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
       await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      menu.close();
       await tester.pumpAndSettle();
       await keyboardOpen(beta);
-      await tester.tap(find.text('Note Properties'));
+      await menu.activate('Note Properties');
       await settleStorage(tester);
       final field = find.descendant(
         of: find.byType(BusyMarkGroupedTextEntry).first,
@@ -2027,11 +2034,7 @@ void main() {
       final row = find.byKey(
         const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
       );
-      await tester.tap(
-        find.descendant(of: row, matching: find.byTooltip('Note actions')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Note Properties'));
+      await openNativeNoteProperties(tester, row);
       await settleStorage(tester);
       final title = find.descendant(
         of: find.byType(BusyMarkGroupedTextEntry).first,
@@ -2101,11 +2104,7 @@ void main() {
       final row = find.byKey(
         const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
       );
-      await tester.tap(
-        find.descendant(of: row, matching: find.byTooltip('Note actions')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Note Properties'));
+      await openNativeNoteProperties(tester, row);
       await settleStorage(tester);
       final attachment = find.widgetWithText(BusyMarkActionRow, 'report.pdf');
       expect(
@@ -2245,18 +2244,12 @@ void main() {
     'read-only metadata stays read-only while favorite is writable and export is explicit',
     (tester) async {
       await pump(tester);
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(
-            const ValueKey(
-              'nextcloud-note-323e4567-e89b-42d3-a456-426614174000',
-            ),
-          ),
-          matching: find.byTooltip('Note actions'),
+      await openNativeNoteProperties(
+        tester,
+        find.byKey(
+          const ValueKey('nextcloud-note-323e4567-e89b-42d3-a456-426614174000'),
         ),
       );
-      await settleStorage(tester);
-      await tester.tap(find.text('Note Properties'));
       await settleStorage(tester);
       final fields = tester
           .widgetList<TextField>(
@@ -2279,18 +2272,12 @@ void main() {
     'attachment deletion warns about links and cancellation retains the file',
     (tester) async {
       await pump(tester);
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(
-            const ValueKey(
-              'nextcloud-note-223e4567-e89b-42d3-a456-426614174000',
-            ),
-          ),
-          matching: find.byTooltip('Note actions'),
+      await openNativeNoteProperties(
+        tester,
+        find.byKey(
+          const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
         ),
       );
-      await settleStorage(tester);
-      await tester.tap(find.text('Note Properties'));
       await settleStorage(tester);
       for (
         var attempt = 0;
@@ -3005,5 +2992,21 @@ class _WindowDraftSettings extends NotesSettingsController {
       draft: state.draft,
       phase: saving ? NotesSettingsPhase.saving : NotesSettingsPhase.ready,
     );
+  }
+}
+
+Future<void> openNativeNoteProperties(WidgetTester tester, Finder row) async {
+  final menu = NativeMenuProbe(tester);
+  try {
+    expect(
+      find.descendant(of: row, matching: find.byTooltip('Note actions')),
+      findsNothing,
+    );
+    await tester.tap(row, buttons: kSecondaryMouseButton);
+    await tester.pump();
+    expect(menu.contains('Note Properties'), isTrue);
+    await menu.choose('Note Properties', settle: false);
+  } finally {
+    menu.dispose();
   }
 }

@@ -1,0 +1,182 @@
+[
+  {
+    "name": "mark-final-04da6dd-application-close-guard.png",
+    "sha256": "8e9d412317a59cdd76c81f2be172985a347b424a1985aaa29c615639bd9feca5",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-arabic-commit-125.png",
+    "sha256": "87d11dd691ae6ccf2e0485076bcf7ebaf60dadeb8243c1dff2be0534904a2d76",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "ar",
+    "textScale": 1.25,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-arabic-rtl-comparison-125.png",
+    "sha256": "bcea871dde9cf3f0af7d40d4147f67710ef1db56d13f2e399c0b9c5c9be163ba",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "ar",
+    "textScale": 1.25,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-commit-comparison.png",
+    "sha256": "77154644a0817369b7689df657d29debac40c59f2bf62f6544bd14a21dea4530",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-document-retained.png",
+    "sha256": "25b3800e4ef784a86980122d80b7e589f486648a8d1732fc74300a7d0ac99f89",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-german-commit-125.png",
+    "sha256": "1a7483adfa156b13f3aab5ebe7fdeb12df76684bfee2728b54b7d632fa30ef68",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "de",
+    "textScale": 1.25,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-german-comparison-125.png",
+    "sha256": "82054545d1708136b316c00f4d4eb7772557416193a2d31b37cfce7f70e1fa63",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "de",
+    "textScale": 1.25,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-historical-comparison.png",
+    "sha256": "5ad5179e5490ce5aef2ff71addbee5563d5b60f4ad5b104a20e1233d0f0bb631",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-history-selector.png",
+    "sha256": "0ad97f541a3cbdf155c768e0bb4b3f80295d3c8f67771c3eda699f0766fce181",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-independent-staged-unstaged.png",
+    "sha256": "75429fa76dc75d155f28a5b1a92d3d27118e264ef92cb1425f198860b971b7d9",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-japanese-dark-comparison-150.png",
+    "sha256": "cd64f2f1b40874ef3c2898a7221efa37848509a9344a405a71642ef839f804b2",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "ja",
+    "textScale": 1.5,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-japanese-narrow-inspector-150.png",
+    "sha256": "06a1431745a6542b77b8bc3ff4fdb79cb91beefd53956edc780fe0b6645a8a5d",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "ja",
+    "textScale": 1.5,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-log-information-before-files.png",
+    "sha256": "6177348279e98d5b3a608e93099721ae3ddd937436db9922b90e817fcfdaad35",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-multiple-comparison-tabs.png",
+    "sha256": "f4d39fb20a9ac8b9f1a2a1f37a82dd9e653db185a761dd0a12296d8b1aaa5d34",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-native-tab-context-menu.png",
+    "sha256": "db71a0c012a542189c93ce284828da3f616ea188231b6f5544748040d8f22729",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-new-sidebar-keeps-historical-tab.png",
+    "sha256": "c913f09cbe2edc836efd230d20e10540086e84c17bbbc1aca7514156f718710e",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-normal-debug-comparison.png",
+    "sha256": "290ef6d590b209945bb67db0e0b31fbda7624ec3b4c85ffe14fa30ee06db1d0c",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "debug",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  },
+  {
+    "name": "mark-final-04da6dd-unsaved-document.png",
+    "sha256": "a6d1ef2f80a42375f15b6c2908f725e7046dc52b31468bb026e683cf247d63cb",
+    "source": "04da6dd5df5f6c2b4c8031b03867a9394f883600",
+    "language": "en",
+    "textScale": 1.0,
+    "mode": "release",
+    "backend": "X11/Xvfb",
+    "deviceScale": 1.0
+  }
+]

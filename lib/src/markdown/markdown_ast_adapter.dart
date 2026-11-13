@@ -1649,7 +1649,9 @@ class MarkdownAstAdapter {
       if (child is md.Element && child.tag == 'input') {
         return child.attributes['checked'] == 'true';
       }
-      if (child is md.Element && child.children != null) {
+      // markdown's task marker belongs directly to this li or its caption p.
+      // Descendant lists/containers own their own checkboxes.
+      if (child is md.Element && child.tag == 'p' && child.children != null) {
         final nested = _taskChecked(child.children!);
         if (nested != null) {
           return nested;
@@ -1664,7 +1666,9 @@ class MarkdownAstAdapter {
       for (final child in children)
         if (child is md.Element && child.tag == 'input')
           ...const <md.Node>[]
-        else if (child is md.Element && child.children != null)
+        else if (child is md.Element &&
+            child.tag == 'p' &&
+            child.children != null)
           md.Element(child.tag, _withoutTaskCheckbox(child.children!))
             ..attributes.addAll(child.attributes)
         else

@@ -1,0 +1,58 @@
+{
+  "source": "cf29cd125d650d831284f96439f8662bd69abc52",
+  "processes": {
+    "mark-cf29cd1-release": {
+      "pid": 29682,
+      "exit": 0
+    },
+    "input-1793529782093705012": {
+      "pid": 29778,
+      "exit": 0
+    },
+    "keys-1793529823912462583": {
+      "pid": 29935,
+      "exit": 0
+    },
+    "keys-1793529854632889969": {
+      "pid": 29975,
+      "exit": 0
+    },
+    "mark-cf29cd1-debug-main": {
+      "pid": 30057,
+      "exit": 0
+    }
+  },
+  "repository": {
+    "unchanged": true,
+    "files": 8,
+    "head": "5e2a71de28929e91d795cbf2677de579e712428d",
+    "indexSha256": "59e89e944800d6dad631304921d976f45116b0c64ca7f4d1bb666ba8cfa43c09"
+  },
+  "captures": {
+    "source": "cf29cd125d650d831284f96439f8662bd69abc52",
+    "trackedChanges": "",
+    "backend": "X11/Xvfb, Openbox",
+    "width": 1440,
+    "height": 1000,
+    "dpi": 96,
+    "deviceScale": 1.0,
+    "textScale": 1.0,
+    "locale": "en_US.UTF-8",
+    "theme": "light, GTK_THEME=Yaru-blue",
+    "runtimeDirectory": "/tmp/bsgit-cf29-runtime",
+    "kernel": "Linux busyfiles-release24-20261005 6.8.0-142-generic #142-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep  2 14:24:27 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+    "nativePackages": "libglib2.0-0t64:amd64\t2.80.0-6ubuntu3.9\nlibgtk-3-0t64:amd64\t3.24.41-4ubuntu1.3\nlibx11-6:amd64\t2:1.8.7-1ubuntu0.1\nlibxtst6:amd64\t2:1.2.3-1.1ubuntu0.1\n",
+    "captures": {
+      "cf29-unsaved-close-guard.png": "6c3d11474a0a7078dd469978d1018828a64ffecf073dd7c742956f8def487be3",
+      "cf29-close-cancel-retains-tabs.png": "5cf282acd723ae22a7a19f91231b5b6fc06348b143b096b501972d3d0e65b65b",
+      "cf29-history-mouse.png": "91d7bb053168fb28733795707cd1a29d78dfb9b5c3f1c38b6a2a8167fca6e4d8",
+      "cf29-git-active.png": "3039a648e9b892c37c70f9b554976727505289bfbdc5eff3d8dd1f4b4d5c9daa",
+      "cf29-history-list.png": "58655bfbcc3c412374b92f631af91b59f957c08d26f586d40bcb033f89d2e34e",
+      "cf29-ordinary-debug-comparison.png": "a175f7aa8943fbdc8ad74c9916cab027375c8bf24d05eb1c82549bead3c98a90",
+      "cf29-ordinary-debug-git.png": "78ed15f5dd998442fcf47c3825bf094b17911fc350aad7c56cb58ff9e33bcea4",
+      "cf29-git-keyboard.png": "3039a648e9b892c37c70f9b554976727505289bfbdc5eff3d8dd1f4b4d5c9daa",
+      "cf29-history-keyboard.png": "798d6bfa8f93d39c8f113d3d202d585f3be166bb8a1231ea55b1a61dd43cbad6",
+      "cf29-local-history-first.png": "a6d9f8fbca04ddf22b20ad8b0820594169629c75388065b9e7c57538d8d6d2c6"
+    }
+  }
+}

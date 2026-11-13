@@ -8,7 +8,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib', 'linux', 'test'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
       File('README.md'),
@@ -157,7 +157,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib', 'test'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
     ];
@@ -182,8 +182,6 @@ void main() {
       ).allMatches(glyphs).map((match) => match.group(0)),
       orderedEquals(<String>[
         'Icons'
-            '.fork_right',
-        'Icons'
             '.functions',
       ]),
     );
@@ -193,7 +191,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib', 'linux'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
     ];
@@ -231,7 +229,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
     ];
@@ -364,11 +362,9 @@ void main() {
       expect(theme, contains('BusyMarkSurfaceColors.fromTheme(base)'));
       expect(
         theme,
-        contains(
-          'final inputDecorationTheme = '
-          'base.inputDecorationTheme',
-        ),
+        contains('final inputDecorationTheme = BusyMarkFocusStyle.inputs('),
       );
+      expect(theme, isNot(contains('package:busystack_git_flutter')));
       expect(theme, isNot(contains('_semanticInputDecorationTheme')));
       expect(theme, isNot(contains('filled: true')));
       expect(theme, isNot(contains('fillColor: colors.control')));
@@ -875,7 +871,12 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: selectedTabMenuItem.icon!'));
+    expect(workspace, contains('icon: BusyMarkGlyphs.sidebarViews'));
+    expect(
+      File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
+      contains('sidebarViews = YaruIcons.display_layout'),
+    );
+    expect(workspace, isNot(contains('icon: selectedTabMenuItem.icon')));
     expect(workspace, contains('transparent: true'));
     expect(
       workspace,
@@ -885,7 +886,8 @@ void main() {
       workspace,
       matches(RegExp(r'icon: _sidebarTabIcon\(tab, direction\)')),
     );
-    expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
+    expect(workspace, contains('shortcut: _sidebarTabMnemonic(tab)'));
+    expect(workspace, contains('mnemonic: _sidebarTabMnemonic(tab)'));
     expect(
       workspace,
       isNot(contains('BusyMarkSidebarShortcuts.history.activator')),
@@ -970,13 +972,14 @@ void main() {
       r'class BusyMarkHeaderIconButton[\s\S]*?class '
       r'BusyMarkCompactIconButton',
     ).firstMatch(design)!.group(0)!;
-    expect(headerIcon, contains('final button = IconButton('));
-    expect(headerIcon, contains('style: style.merge(yaruDefaults)'));
+    expect(headerIcon, contains('final button = YaruIconButton('));
+    expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));
-    expect(headerIcon, contains('YaruFocusBorder.primary('));
+    expect(headerIcon, contains('BusyMarkFocusIndicator('));
+    expect(headerIcon, isNot(contains('git.NativeFocusIndicator(')));
     expect(headerIcon, contains('YaruTheme.maybeOf(context)?.focusBorders'));
-    expect(headerIcon, isNot(contains('return YaruIconButton(')));
+    expect(headerIcon, isNot(contains('final button = IconButton(')));
     expect(headerIcon, isNot(contains('DecoratedBox(')));
     expect(headerIcon, isNot(contains('BoxShadow(')));
     expect(popupItem, contains('extends PopupMenuItem<T>'));
@@ -987,12 +990,21 @@ void main() {
     expect(popupItem, isNot(contains('InkWell(')));
   });
 
-  test('Git actions use the shared workspace-header popup', () {
+  test('Git header delegates to shared workflows', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
     final gitSidebar = File(
-      'lib/src/git/presentation/git_sidebar_tab.dart',
+      'lib/src/git/application/shared_git_integration.dart',
+    ).readAsStringSync();
+    final sharedFeature = File(
+      '../busystack_git_flutter/lib/src/feature.dart',
+    ).readAsStringSync();
+    final sharedWorkflow = File(
+      '../busystack_git_flutter/lib/src/workflow_ui.dart',
+    ).readAsStringSync();
+    final sharedCommit = File(
+      '../busystack_git_flutter/lib/src/commit_view.dart',
     ).readAsStringSync();
     final outlineMenu = RegExp(
       r'enum _OutlineDocumentAction[\s\S]*?'
@@ -1005,36 +1017,32 @@ void main() {
     final outlineActions = '$outlineMenu\n$outlineHeader';
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    for (final retired in [
+      'BusyMarkHeaderPopupMenuButton<_GitMenuAction>',
+      '_loadWorkspaceGitMenuItems',
+      '_sidebarGitMenuItems',
+      '_performWorkspaceGitAction',
+      '_SelectGitViewMenuAction',
+      "ValueKey('workspace-sidebar-branch-menu')",
+      'controller.loadBranches()',
+    ]) {
+      expect(workspace, isNot(contains(retired)));
+    }
+    expect(workspace, contains('selectedTab == _SidebarTab.gitLog'));
+    expect(sharedFeature, contains('GitCommitView('));
     expect(
-      workspace,
-      contains('BusyMarkHeaderPopupMenuButton<_GitMenuAction>'),
+      sharedFeature,
+      contains('GitWorkflowUi(context, session).branches()'),
     );
-    expect(workspace, contains('_loadWorkspaceGitMenuItems'));
-    expect(workspace, contains('_sidebarGitMenuItems'));
-    expect(workspace, contains('_performWorkspaceGitAction'));
-    expect(workspace, contains('controller.loadBranches()'));
-    expect(workspace, contains('_SelectGitViewMenuAction(GitView.changes)'));
-    expect(
-      workspace,
-      contains('_SelectGitViewMenuAction(GitView.projectHistory)'),
-    );
-    expect(
-      workspace,
-      contains('_SelectGitViewMenuAction(GitView.fileHistory)'),
-    );
-    expect(workspace, contains('checked: selectedView == GitView.changes'));
-    expect(workspace, contains('trailingCheck: true'));
-    expect(workspace, contains('label: context.l10n.gitNewBranch'));
-    expect(workspace, contains('label: context.l10n.gitFetch'));
-    expect(workspace, contains('label: context.l10n.gitPull'));
-    expect(workspace, contains('label: context.l10n.gitPush'));
-    expect(workspace, contains('value: const _FetchBranchMenuAction()'));
-    expect(workspace, contains('value: const _PullBranchMenuAction()'));
-    expect(workspace, contains('value: const _PushBranchMenuAction()'));
-    expect(workspace, contains('enabled: repository.upstreamBranch != null'));
-    expect(workspace, contains('enabled: repository.hasRemote'));
-    expect(workspace, contains('tooltip: context.l10n.gitActions'));
-    expect(workspace, contains("ValueKey('workspace-sidebar-branch-menu')"));
+    expect(sharedFeature, contains('GitWorkflowUi(anchor, session).more('));
+    for (final action in [
+      "'fetch': GitMessages.fetch2",
+      "'pull': GitMessages.pull",
+      "'push': GitMessages.push2",
+    ]) {
+      expect(sharedWorkflow, contains(action));
+    }
+    expect(sharedWorkflow, contains('GitFetchView(session: session)'));
     expect(workspace, isNot(contains('_showWorkspaceBranchMenu')));
     expect(workspace, isNot(contains('_showSidebarBranchMenu')));
     expect(workspace, isNot(contains('_sidebarMenuLeft')));
@@ -1045,8 +1053,8 @@ void main() {
     expect(
       RegExp(
         r"ValueKey\('workspace-sidebar-first-content'\)",
-      ).allMatches(workspace).length,
-      greaterThanOrEqualTo(4),
+      ).allMatches(outlineHeader).length,
+      2,
     );
     expect(workspace, contains('text: _workspaceDisplayName(context'));
     expect(workspace, contains("ValueKey('workspace-sidebar-outline-tree')"));
@@ -1102,10 +1110,7 @@ void main() {
       workspace,
       contains('tooltip: busyMarkLtrIsolateFor(context, path)'),
     );
-    expect(
-      workspace,
-      contains('selectedTab == _SidebarTab.files && path.isNotEmpty'),
-    );
+    expect(workspace, contains('selectedTab == _SidebarTab.files)'));
     expect(workspace, contains('selectedTab == _SidebarTab.outline'));
     expect(
       workspace,
@@ -1125,16 +1130,36 @@ void main() {
     expect(outlineActions, isNot(contains('onExport()')));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
-    expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
+    expect(sharedCommit, contains('GitLogHeader('));
+    expect(sharedCommit, contains('title: GitMessages.commit'));
+    final nativeGitHeader =
+        RegExp(r'Widget logHeader[\s\S]*?Widget historyLayout')
+            .firstMatch(
+              File(
+                '../busystack_git_flutter/lib/src/linux_native.dart',
+              ).readAsStringSync(),
+            )!
+            .group(0)!;
+    expect(nativeGitHeader, contains('NativeSidebarHeader('));
+    expect(
+      nativeGitHeader,
+      contains('control.title == git.GitMessages.commit'),
+    );
+    expect(nativeGitHeader, contains('YaruIcons.share'));
+    expect(nativeGitHeader, contains('YaruIcons.history'));
     expect(workspace, isNot(contains('boldLeadingIcon')));
     expect(workspace, isNot(contains('_BoldBranchIcon')));
     expect(workspace, isNot(contains('_BoldBranchIconPainter')));
-    expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
-    expect(workspace, contains('repository.behindCount > 0'));
-    expect(workspace, contains('context.l10n.gitBehindCount'));
-    expect(workspace, contains('repository.aheadCount > 0'));
-    expect(workspace, contains('context.l10n.gitAheadCount'));
-    expect(workspace, contains('class _BranchSyncIndicator'));
+    expect(workspace, isNot(contains('_branchSyncIndicators')));
+    expect(workspace, isNot(contains('class _BranchSyncIndicator')));
+    for (final metadata in [
+      'snapshot.upstream',
+      'snapshot.ahead',
+      'snapshot.behind',
+      'snapshot.trackingCountsKnown',
+    ]) {
+      expect(sharedCommit, contains(metadata));
+    }
     expect(gitSidebar, isNot(contains('_RepositoryStrip')));
     expect(
       gitSidebar,
@@ -1149,10 +1174,7 @@ void main() {
     expect(gitSidebar, isNot(contains('color: colors.secondarySidebar')));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
-      contains(
-        'branch = Icons'
-        '.fork_right',
-      ),
+      contains('branch = YaruIcons.share'),
     );
     expect(gitSidebar, isNot(contains('OutlinedButton(')));
     expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));
@@ -1160,70 +1182,38 @@ void main() {
     expect(gitSidebar, isNot(contains('git_branches_view.dart')));
   });
 
-  test('Git changes view uses an integrated commit panel', () {
-    final gitChanges = File(
-      'lib/src/git/presentation/git_changes_view.dart',
+  test('Git screens and controls have one shared owner', () {
+    final integration = File(
+      'lib/src/git/application/shared_git_integration.dart',
     ).readAsStringSync();
-    final gitFileStatusColors = File(
-      'lib/src/git/presentation/git_file_status_colors.dart',
+    final feature = File(
+      '../busystack_git_flutter/lib/src/feature.dart',
     ).readAsStringSync();
-    final commitPanel = RegExp(
-      r'class _CommitPanel[\s\S]*?class GitCommitActions',
-    ).firstMatch(gitChanges)!.group(0)!;
-
-    expect(gitChanges, contains('class _CommitPanel'));
-    expect(gitChanges, contains('context.l10n.gitCommitMessage'));
-    expect(gitChanges, contains('BusyMarkCheckbox('));
-    expect(gitChanges, isNot(contains('_CommitSelectionCheckbox')));
-    expect(gitChanges, isNot(contains('YaruCheckbox(')));
-    expect(
-      File('lib/src/app/busymark_design.dart').readAsStringSync(),
-      contains('YaruCheckbox('),
-    );
-    expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
-    expect(gitChanges, contains('context.l10n.gitRemoveFromCommit'));
-    expect(gitChanges, contains('context.l10n.gitStagedFileCount'));
-    expect(gitChanges, contains('context.l10n.gitUnsavedChangesBanner'));
-    expect(gitChanges, contains('stagedFiles: snapshot.stagedFiles'));
-    expect(gitChanges, isNot(contains('gitCommitSelectedFiles')));
-    expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
-    expect(gitChanges, contains('busyMarkVcsFileColorForChangeStatus(status)'));
-    expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
-    expect(gitChanges, contains('BusyMarkPushButton.suggested('));
-    expect(gitChanges, isNot(contains('BusyMarkDialogButton(')));
-    expect(gitChanges, isNot(contains('context.l10n.git${'Include'}InCommit')));
-    expect(
-      gitChanges,
-      isNot(contains('context.l10n.git${'Exclude'}FromCommit')),
-    );
-    expect(gitChanges, isNot(contains('context.l10n.git${'Not'}Included')));
-    expect(gitChanges, isNot(contains('_FileAction.${'include'}')));
-    expect(gitChanges, isNot(contains('_FileAction.${'exclude'}')));
-    expect(gitChanges, isNot(contains('FilledButton.icon')));
-    expect(gitChanges, isNot(contains('showDialog<void>')));
-    expect(gitChanges, isNot(contains('GitCommitDialog')));
-    expect(commitPanel, contains('BusyMarkGroupedList('));
-    expect(commitPanel, contains('BusyMarkGroupedTextEntry('));
-    expect(commitPanel, contains('context.l10n.gitCommitMessage'));
-    expect(commitPanel, contains('BusyMarkPushButton.standard('));
-    expect(commitPanel, contains('context.l10n.aiDraftWithAi'));
-    expect(commitPanel, isNot(contains('BusyMarkPushButton.standardIcon(')));
-    expect(commitPanel, isNot(contains('BusyMarkGlyphs.ai')));
-    expect(commitPanel, contains('BusyMarkPushButton.suggested('));
-    expect(commitPanel, contains('BusyMarkStatusBox('));
-    expect(commitPanel, isNot(contains('TextField(')));
-    expect(commitPanel, isNot(contains('TextFormField(')));
-    expect(commitPanel, isNot(contains('BusyMarkCompactIconButton(')));
-    expect(commitPanel, isNot(contains('BusyMarkHeaderIconButton(')));
-  });
-
-  test('Git sidebar actions use the shared semantic button adapter', () {
-    final gitSidebar = File(
-      'lib/src/git/presentation/git_sidebar_tab.dart',
+    final commit = File(
+      '../busystack_git_flutter/lib/src/commit_view.dart',
     ).readAsStringSync();
-
-    expect(gitSidebar, contains('BusyMarkPushButton.standard('));
-    expect(gitSidebar, isNot(contains('FilledButton(')));
+    final native = File(
+      '../busystack_git_flutter/lib/src/linux_native.dart',
+    ).readAsStringSync();
+    expect(integration, contains('shared.GitFeatureSidebar('));
+    expect(integration, contains('shared.GitReviewSurface('));
+    expect(feature, contains('GitCommitView('));
+    expect(feature, contains('GitLogView('));
+    expect(commit, contains('GitMessages.commitAndPush'));
+    expect(commit, contains('GitMessages.amendLastCommit'));
+    expect(native, contains('NativeGitTextEntry('));
+    expect(native, contains('NativeGitCheckbox('));
+    for (final retired in [
+      'git_sidebar_tab.dart',
+      'git_changes_view.dart',
+      'git_history_view.dart',
+      'git_author_identity_dialog.dart',
+    ]) {
+      expect(File('lib/src/git/presentation/$retired').existsSync(), isFalse);
+    }
+    expect(integration, isNot(contains('shared.GitCommitView(')));
+    expect(integration, isNot(contains('shared.GitLogView(')));
+    expect(integration, isNot(contains('shared.GitDiffView(')));
   });
 
   test('settings selectors delegate to the shared native menu', () {
@@ -1298,7 +1288,10 @@ void main() {
     expect(design, contains('class BusyMarkModalEditorScaffold'));
     expect(design, contains('busyMarkGroupedTextFieldDecoration('));
     expect(settings, contains('BusyMarkPopupSelector<String>('));
-    expect(RegExp(r'YaruListTile\.square\(').allMatches(feedback).length, 3);
+    expect(
+      RegExp(r'BusyMarkListTile\.square\(').allMatches(feedback).length,
+      3,
+    );
     expect(feedback, contains('BusyMarkModalEditorScaffold('));
     expect(feedback, contains('BusyMarkComboRow<FeedbackCategory?>('));
     expect(
@@ -1306,7 +1299,7 @@ void main() {
       contains('values: const [null, ...FeedbackCategory.values]'),
     );
     expect(feedback, contains('busyMarkGroupedTextFieldDecoration('));
-    expect(feedback, contains('YaruCheckboxListTile('));
+    expect(feedback, contains('BusyMarkCheckboxListTile('));
     expect(feedback, contains('CallbackShortcuts('));
     expect(feedback, isNot(contains('BusyMarkDialogShell(')));
     expect(feedback, isNot(contains('BusyMarkDialogButton(')));
@@ -1342,8 +1335,17 @@ void main() {
     final entries = RegExp(
       r'class BusyMarkGroupedTextEntry[\s\S]*?class BusyMarkClamp',
     ).firstMatch(design)!.group(0)!;
-    expect(entries, contains('return YaruListTile.square('));
-    expect(entries, contains('title: TextFormField('));
+    expect(entries, contains('return BusyMarkListTile.square('));
+    expect(entries, contains('final field = TextFormField('));
+    expect(
+      entries,
+      contains(
+        'BusyMarkListTile.square(title: field, trailing: widget.trailing)',
+      ),
+    );
+    expect(entries, contains('controller: widget.controller'));
+    expect(entries, contains('undoController: widget.undoController'));
+    expect(entries, contains('scrollController: widget.scrollController'));
     expect(entries, contains('busyMarkGroupedTextFieldDecoration('));
     expect(entries, contains('trailing: widget.trailing'));
     expect(entries, isNot(contains('EditableText(')));
@@ -1389,7 +1391,7 @@ void main() {
     expect(templates, contains('BusyMarkSearchField('));
     expect(templates, contains('BusyMarkSidebarSurface('));
     expect(templates, contains('YaruExpandable('));
-    expect(templates, contains('YaruMasterTile('));
+    expect(templates, contains('BusyMarkMasterTile('));
     expect(templates, contains('BusyMarkGroupedTextEntry('));
     expect(templates, contains('BusyMarkActionRow('));
     expect(templates, contains('YaruLinearProgressIndicator('));
@@ -1437,13 +1439,13 @@ void main() {
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
-    expect(workspace, contains('_FileTreeVcsStatusColors.fromSnapshot'));
-    expect(workspace, contains('vcsColor: vcsStatusColors.colorForNode(node)'));
-    expect(
-      shared,
-      contains('busyMarkVcsFileStatusColor(context, widget.vcsColor!)'),
-    );
-    expect(workspace, contains('busyMarkVcsFileColorForGitStatus(status)'));
+    expect(workspace, contains('busyMarkFileTreeDecorations('));
+    expect(workspace, isNot(contains('_dominantVcsFileColor')));
+    expect(workspace, isNot(contains('_vcsFileColorPriority')));
+    expect(workspace, contains('gitDecoration: decoration'));
+    expect(workspace, contains('tooltip: decoration?.description(context)'));
+    expect(shared, contains('shared.gitTreeDecorationStyle('));
+    expect(shared, isNot(contains('enum BusyMarkVcsFileColor')));
     expect(workspace, contains('_isOpenableTextDocument(file)'));
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
@@ -1496,7 +1498,11 @@ void main() {
     expect(workspace, contains('renameWorkspaceEntity('));
     expect(workspace, contains('moveWorkspaceEntity('));
     expect(workspace, contains('deleteWorkspaceEntity('));
-    expect(workspace, contains('stageFiles(['));
+    expect(
+      workspace,
+      contains('stageBusyMarkFiles(context, ref, [relativePath])'),
+    );
+    expect(workspace, isNot(contains('stageFiles([')));
     expect(workspace, contains('label: context.l10n.copyName'));
     expect(workspace, contains('label: context.l10n.copyPath'));
     expect(workspace, contains('label: context.l10n.openInFiles'));
@@ -1505,7 +1511,35 @@ void main() {
     expect(workspace, isNot(contains('_fileHistoryFile')));
     expect(workspace, isNot(contains('onBack: _closeFileHistory')));
     expect(workspace, contains('label: context.l10n.fileHistory'));
-    expect(workspace, contains('loadFileHistory('));
+    expect(workspace, contains('showBusyMarkSharedGitAction('));
+    final gitIntegration = File(
+      'lib/src/git/application/shared_git_integration.dart',
+    ).readAsStringSync();
+    expect(
+      gitIntegration,
+      contains('final result = await session.stagePaths('),
+    );
+    expect(gitIntegration, contains('reviewed: reviewed'));
+    expect(gitIntegration, contains('controller.refreshFromSharedSnapshot()'));
+    final gitController = File(
+      'lib/src/git/application/git_controller.dart',
+    ).readAsStringSync();
+    final stagingAdapter = gitController.substring(
+      gitController.indexOf('Future<void> stageFiles('),
+      gitController.indexOf('Future<void> rollbackFiles('),
+    );
+    expect(
+      stagingAdapter,
+      contains('source.stage(List.unmodifiable(paths), unstage)'),
+    );
+    expect(stagingAdapter, isNot(contains('_gateway.')));
+    expect(gitIntegration, contains("case 'fileHistory':"));
+    expect(gitIntegration, contains('shared.GitFileHistoryView('));
+    expect(gitIntegration, contains('path: shared.RepoPath.text'));
+    expect(
+      gitIntegration,
+      contains('p.relative(absolutePath, from: repository.root)'),
+    );
     expect(workspace, contains('file.absolutePath'));
     final tocHeader = RegExp(
       r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',
@@ -1520,7 +1554,10 @@ void main() {
     );
     expect(tocHeader, contains('class _WritersideInstanceSelector'));
     expect(tocHeader, contains('BusyMarkMenuButton<String>'));
-    expect(tocHeader, contains('BusyMarkSidebarRowSurface'));
+    expect(tocHeader, contains('BusyMarkHeaderIconButton('));
+    expect(tocHeader, contains('tooltip: context.l10n.selectInstance'));
+    expect(tocHeader, contains('icon: BusyMarkGlyphs.selectContext'));
+    expect(tocHeader, isNot(contains('BusyMarkSidebarRowSurface')));
     expect(tocHeader, isNot(contains('BusyMarkPopupSelector<String>')));
     expect(tocHeader, isNot(contains('FilledButton')));
     expect(tocHeader, contains('iconColor: writersideInstanceIconColorValue'));
@@ -1541,7 +1578,8 @@ void main() {
     );
     expect(tocHeader, contains("ValueKey('workspace-sidebar-new-topic-menu')"));
     expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
-    expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
+    expect(tocHeader, contains('tooltip: context.l10n.actions'));
+    expect(tocHeader, isNot(contains('tooltip: context.l10n.tocActions')));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
     expect(tocHeader, contains('highlightWhenOpen: false'));
     expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
@@ -1563,8 +1601,8 @@ void main() {
     expect(tocHeader, isNot(contains('onExport')));
     expect(
       tocHeader,
-      contains(
-        'case _TocHeaderAction.synchronize:\n                        onSynchronize();',
+      matches(
+        RegExp(r'case _TocHeaderAction\.synchronize:\s+onSynchronize\(\);'),
       ),
     );
     expect(
@@ -1579,7 +1617,12 @@ void main() {
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));
     expect(workspace, contains('label: context.l10n.newChildTopic'));
-    expect(workspace, contains('compactHierarchyIndent: true'));
+    expect(workspace, isNot(contains('compactHierarchyIndent: true')));
+    expect(shared, contains('const expanderGap = BusyMarkSpacing.xs'));
+    expect(
+      shared,
+      contains('const expanderWidth = BusyMarkSizes.sidebarTreeControl'),
+    );
     expect(workspace, contains('_SidebarTab.git,'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));
@@ -1970,7 +2013,9 @@ void main() {
       File(
         'lib/src/workspace/presentation/workspace_screen.dart',
       ).readAsStringSync(),
-      File('lib/src/git/presentation/git_history_view.dart').readAsStringSync(),
+      File(
+        '../busystack_git_flutter/lib/src/historical_change_tree.dart',
+      ).readAsStringSync(),
       File('lib/src/editor/wysiwyg/wysiwyg_editor.dart').readAsStringSync(),
     ];
 

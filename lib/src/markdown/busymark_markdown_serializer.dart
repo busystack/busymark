@@ -820,7 +820,13 @@ class BusyMarkMarkdownSerializer {
       }
       return source.toString();
     }
-    final line = content.isEmpty ? marker : '$marker $content';
+    // The pinned Markdown checkbox syntax requires whitespace after ']'.
+    // Without it an empty editable task reparses as an ordinary list item.
+    final line = contentPrefix != null && text.isEmpty
+        ? '$marker $contentPrefix '
+        : content.isEmpty
+        ? marker
+        : '$marker $content';
     if (children.isEmpty) return line;
     final source = StringBuffer(line);
     for (final child in children) {
@@ -898,6 +904,13 @@ class BusyMarkMarkdownSerializer {
   bool _requiresTextWhitespacePreservation(BusyBlock block) {
     return block.attributes[busyMarkPreserveTextWhitespaceAttribute] ==
             'true' ||
+        block.kind == BusyBlockKind.taskListItem &&
+            block.inlines.every(
+              (inline) =>
+                  inline.kind == BusyInlineKind.text &&
+                  inline.text.isEmpty &&
+                  inline.children.isEmpty,
+            ) ||
         block.children.any(_requiresTextWhitespacePreservation);
   }
 

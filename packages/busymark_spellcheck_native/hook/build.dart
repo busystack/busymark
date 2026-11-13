@@ -4,8 +4,9 @@ import 'package:code_assets/code_assets.dart';
 import 'package:native_toolchain_c/native_toolchain_c.dart';
 import 'package:hooks/hooks.dart';
 
-void main(List<String> args) async {
+Future<void> main(List<String> args) async {
   await build(args, (input, output) async {
+    if (!input.config.buildCodeAssets) return;
     if (input.config.code.targetOS != OS.linux) {
       throw UnsupportedError(
         'BusyMark spelling currently targets the GTK Linux application.',

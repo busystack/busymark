@@ -5,6 +5,11 @@ abstract class GitRepositoryDetector {
   Future<GitRepositoryInfo?> detectRepository(String workspacePath);
 }
 
+/// Optional controlled, non-executing discovery for the application policy.
+abstract interface class GitWorkspaceRootInspector {
+  Future<void> requireWorkspaceRoot(String workspacePath);
+}
+
 abstract class GitRepositoryGateway implements GitRepositoryDetector {
   /// Whether this gateway can execute repository-controlled configuration.
   ///

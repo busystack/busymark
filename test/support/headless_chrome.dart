@@ -99,6 +99,9 @@ Future<Uri> browserDevToolsEndpoint(
 /// Preserve an explicitly supplied ordinary Fontconfig configuration.
 Map<String, String> chromeProcessEnvironment(Map<String, String> parent) {
   final environment = Map<String, String>.of(parent);
+  // A headless browser is a separate desktop client. Its private bus below
+  // must not inherit a missing, stale or deliberately invalid test-runner bus.
+  environment.remove('DBUS_SESSION_BUS_ADDRESS');
   final config = environment['FONTCONFIG_FILE'];
   if (config != null &&
       p.basename(config) == 'fonts.conf' &&
@@ -131,6 +134,11 @@ Future<Object?> _evaluateInChrome(
         p.absolute('tools/run_owned_fixture.py'),
         '--report',
         report.path,
+        '--',
+        // Unified headless Chrome initializes desktop D-Bus clients too. A
+        // private session gives them a valid bus and retires activated services
+        // with this browser instead of using the runner's desktop session.
+        'dbus-run-session',
         '--',
         browserExecutable,
         '--headless=new',

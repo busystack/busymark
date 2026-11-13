@@ -1,0 +1,919 @@
+{
+  "time": 1793641021.1151388,
+  "processes": {
+    "mark-commit-details-release": {
+      "pid": 30673,
+      "exit": 0
+    },
+    "focus-1793639138144497127": {
+      "pid": 4222,
+      "exit": 1
+    },
+    "position-1793639139249798116": {
+      "pid": 4242,
+      "exit": 1
+    },
+    "resize-1793639139366262618": {
+      "pid": 4248,
+      "exit": 1
+    },
+    "keys-1793639140488647864": {
+      "pid": 4264,
+      "exit": 0
+    },
+    "click-1793639179946446004": {
+      "pid": 5170,
+      "exit": 0
+    },
+    "keys-1793639202870131138": {
+      "pid": 5244,
+      "exit": 0
+    },
+    "click-1793639206451496356": {
+      "pid": 5358,
+      "exit": 0
+    },
+    "click-1793639227844695422": {
+      "pid": 5432,
+      "exit": 0
+    },
+    "click-1793639231257153761": {
+      "pid": 5478,
+      "exit": 0
+    },
+    "keys-1793639232509174084": {
+      "pid": 5483,
+      "exit": 0
+    },
+    "click-1793639236752681241": {
+      "pid": 5566,
+      "exit": 0
+    },
+    "keys-1793639240164292029": {
+      "pid": 5571,
+      "exit": 0
+    },
+    "keys-1793639243679155555": {
+      "pid": 5588,
+      "exit": 0
+    },
+    "click-1793639298153847410": {
+      "pid": 5890,
+      "exit": 0
+    },
+    "keys-1793639299382634844": {
+      "pid": 5893,
+      "exit": 0
+    },
+    "click-1793639364867903902": {
+      "pid": 6191,
+      "exit": 0
+    },
+    "keys-1793639366100835830": {
+      "pid": 6195,
+      "exit": 0
+    },
+    "keys-1793639367509485554": {
+      "pid": 6198,
+      "exit": 0
+    },
+    "keys-1793639373381878025": {
+      "pid": 6207,
+      "exit": 0
+    },
+    "keys-1793639374688608019": {
+      "pid": 6210,
+      "exit": 0
+    },
+    "click-1793639375990444069": {
+      "pid": 6212,
+      "exit": 0
+    },
+    "click-1793639379423310026": {
+      "pid": 6246,
+      "exit": 0
+    },
+    "keys-1793639380673650598": {
+      "pid": 6257,
+      "exit": 0
+    },
+    "click-1793639384128590645": {
+      "pid": 6268,
+      "exit": 0
+    },
+    "keys-1793639385420668233": {
+      "pid": 6308,
+      "exit": 0
+    },
+    "keys-1793639506046491306": {
+      "pid": 8778,
+      "exit": 0
+    },
+    "click-1793639507412896037": {
+      "pid": 8795,
+      "exit": 0
+    },
+    "click-1793639508725790399": {
+      "pid": 8824,
+      "exit": 0
+    },
+    "keys-1793639510034935123": {
+      "pid": 8837,
+      "exit": 0
+    },
+    "click-1793639513614798609": {
+      "pid": 8851,
+      "exit": 0
+    },
+    "keys-1793639514901971422": {
+      "pid": 8855,
+      "exit": 0
+    },
+    "click-1793639516473922511": {
+      "pid": 8861,
+      "exit": 0
+    },
+    "keys-1793639517767775450": {
+      "pid": 8863,
+      "exit": 0
+    },
+    "scroll-1793639521636088640": {
+      "pid": 8867,
+      "exit": 0
+    },
+    "keys-1793639524060938863": {
+      "pid": 8875,
+      "exit": 0
+    },
+    "keys-1793639532163374097": {
+      "pid": 8886,
+      "exit": 0
+    },
+    "keys-1793639535919380377": {
+      "pid": 8928,
+      "exit": 0
+    },
+    "click-1793639537204412203": {
+      "pid": 8940,
+      "exit": 0
+    },
+    "click-1793639808565125612": {
+      "pid": 9479,
+      "exit": 0
+    },
+    "click-1793639809922275248": {
+      "pid": 9507,
+      "exit": 0
+    },
+    "keys-1793639811217022172": {
+      "pid": 9518,
+      "exit": 0
+    },
+    "click-1793639812636355308": {
+      "pid": 9531,
+      "exit": 0
+    },
+    "keys-1793639813966809057": {
+      "pid": 9535,
+      "exit": 0
+    },
+    "resize-1793639815825900962": {
+      "pid": 9539,
+      "exit": 0
+    },
+    "keys-1793639819110471826": {
+      "pid": 9543,
+      "exit": 0
+    },
+    "resize-1793639820466901631": {
+      "pid": 9549,
+      "exit": 0
+    },
+    "keys-1793639821598174512": {
+      "pid": 9554,
+      "exit": 0
+    },
+    "focus-1793639830478927761": {
+      "pid": 9604,
+      "exit": 0
+    },
+    "position-1793639831697821168": {
+      "pid": 9606,
+      "exit": 0
+    },
+    "resize-1793639831951735716": {
+      "pid": 9608,
+      "exit": 0
+    },
+    "click-1793639848055466654": {
+      "pid": 9776,
+      "exit": 0
+    },
+    "keys-1793639849448060173": {
+      "pid": 9783,
+      "exit": 0
+    },
+    "click-1793639853676197877": {
+      "pid": 9924,
+      "exit": 0
+    },
+    "keys-1793639857178240787": {
+      "pid": 9933,
+      "exit": 0
+    },
+    "keys-1793639861188759682": {
+      "pid": 9944,
+      "exit": 0
+    },
+    "keys-1793639862541856675": {
+      "pid": 9949,
+      "exit": 0
+    },
+    "focus-1793639879558970180": {
+      "pid": 10019,
+      "exit": 0
+    },
+    "position-1793639880744695337": {
+      "pid": 10055,
+      "exit": 0
+    },
+    "resize-1793639881001515729": {
+      "pid": 10061,
+      "exit": 0
+    },
+    "click-1793639882187386207": {
+      "pid": 10109,
+      "exit": 0
+    },
+    "keys-1793639883523983645": {
+      "pid": 10157,
+      "exit": 0
+    },
+    "click-1793639885588433757": {
+      "pid": 10256,
+      "exit": 0
+    },
+    "click-1793639886858192193": {
+      "pid": 10287,
+      "exit": 0
+    },
+    "keys-1793639888109067682": {
+      "pid": 10316,
+      "exit": 0
+    },
+    "click-1793639889563696375": {
+      "pid": 10330,
+      "exit": 0
+    },
+    "keys-1793639893079603966": {
+      "pid": 10337,
+      "exit": 0
+    },
+    "keys-1793639897141310037": {
+      "pid": 10384,
+      "exit": 0
+    },
+    "keys-1793639898561924276": {
+      "pid": 10394,
+      "exit": 0
+    },
+    "focus-1793639912841222465": {
+      "pid": 10746,
+      "exit": 0
+    },
+    "position-1793639914116503133": {
+      "pid": 10759,
+      "exit": 0
+    },
+    "resize-1793639914378932917": {
+      "pid": 10766,
+      "exit": 0
+    },
+    "click-1793639915667103763": {
+      "pid": 10790,
+      "exit": 0
+    },
+    "keys-1793639917147091843": {
+      "pid": 10850,
+      "exit": 0
+    },
+    "click-1793639945061153262": {
+      "pid": 11467,
+      "exit": 0
+    },
+    "keys-1793639948616156761": {
+      "pid": 11841,
+      "exit": 0
+    },
+    "scroll-1793639952812964538": {
+      "pid": 12007,
+      "exit": 0
+    },
+    "keys-1793639955408040648": {
+      "pid": 12010,
+      "exit": 0
+    },
+    "keys-1793639956941721941": {
+      "pid": 12013,
+      "exit": 0
+    },
+    "focus-1793639970983964162": {
+      "pid": 12330,
+      "exit": 0
+    },
+    "position-1793639972205201496": {
+      "pid": 12448,
+      "exit": 0
+    },
+    "resize-1793639972493870403": {
+      "pid": 12480,
+      "exit": 0
+    },
+    "click-1793639973760124257": {
+      "pid": 12660,
+      "exit": 0
+    },
+    "keys-1793639975265948491": {
+      "pid": 12863,
+      "exit": 0
+    },
+    "click-1793639977410266712": {
+      "pid": 13169,
+      "exit": 0
+    },
+    "keys-1793639981139185133": {
+      "pid": 13672,
+      "exit": 0
+    },
+    "scroll-1793639985320304756": {
+      "pid": 14202,
+      "exit": 0
+    },
+    "keys-1793639987705212658": {
+      "pid": 14525,
+      "exit": 0
+    },
+    "keys-1793639989042717514": {
+      "pid": 14714,
+      "exit": 0
+    },
+    "focus-1793640037965157372": {
+      "pid": 19458,
+      "exit": 0
+    },
+    "position-1793640039183089976": {
+      "pid": 19501,
+      "exit": 0
+    },
+    "resize-1793640039361339057": {
+      "pid": 19510,
+      "exit": 0
+    },
+    "click-1793640040519898322": {
+      "pid": 19568,
+      "exit": 0
+    },
+    "keys-1793640041860852774": {
+      "pid": 19589,
+      "exit": 0
+    },
+    "click-1793640053337702501": {
+      "pid": 19724,
+      "exit": 0
+    },
+    "keys-1793640075138524141": {
+      "pid": 19806,
+      "exit": 0
+    },
+    "scroll-1793640079470036342": {
+      "pid": 19819,
+      "exit": 0
+    },
+    "keys-1793640082125788105": {
+      "pid": 19823,
+      "exit": 0
+    },
+    "keys-1793640083647102039": {
+      "pid": 19829,
+      "exit": 0
+    },
+    "focus-1793640092841712571": {
+      "pid": 19934,
+      "exit": 0
+    },
+    "position-1793640094106216633": {
+      "pid": 19946,
+      "exit": 0
+    },
+    "resize-1793640094440860290": {
+      "pid": 19962,
+      "exit": 0
+    },
+    "click-1793640106539413749": {
+      "pid": 20088,
+      "exit": 0
+    },
+    "keys-1793640107971106386": {
+      "pid": 20094,
+      "exit": 0
+    },
+    "click-1793640114849750781": {
+      "pid": 20233,
+      "exit": 0
+    },
+    "keys-1793640118570007495": {
+      "pid": 20236,
+      "exit": 0
+    },
+    "scroll-1793640122905887354": {
+      "pid": 20243,
+      "exit": 0
+    },
+    "keys-1793640125610128062": {
+      "pid": 20246,
+      "exit": 0
+    },
+    "keys-1793640127162268146": {
+      "pid": 20250,
+      "exit": 0
+    },
+    "focus-1793640136537370282": {
+      "pid": 20303,
+      "exit": 0
+    },
+    "position-1793640137953114249": {
+      "pid": 20325,
+      "exit": 0
+    },
+    "resize-1793640138383756213": {
+      "pid": 20337,
+      "exit": 0
+    },
+    "click-1793640139788127220": {
+      "pid": 20388,
+      "exit": 0
+    },
+    "keys-1793640141343116143": {
+      "pid": 20438,
+      "exit": 0
+    },
+    "click-1793640151424358562": {
+      "pid": 20579,
+      "exit": 0
+    },
+    "keys-1793640155203046813": {
+      "pid": 20583,
+      "exit": 0
+    },
+    "scroll-1793640159691120322": {
+      "pid": 20597,
+      "exit": 0
+    },
+    "keys-1793640162182734132": {
+      "pid": 20600,
+      "exit": 0
+    },
+    "keys-1793640163599881619": {
+      "pid": 20604,
+      "exit": 0
+    },
+    "focus-1793640181153043657": {
+      "pid": 20660,
+      "exit": 0
+    },
+    "position-1793640182543268232": {
+      "pid": 20680,
+      "exit": 0
+    },
+    "resize-1793640182858890294": {
+      "pid": 20692,
+      "exit": 0
+    },
+    "click-1793640184325747938": {
+      "pid": 20753,
+      "exit": 0
+    },
+    "keys-1793640185996507773": {
+      "pid": 20795,
+      "exit": 0
+    },
+    "click-1793640191596885111": {
+      "pid": 20929,
+      "exit": 0
+    },
+    "keys-1793640195548217762": {
+      "pid": 20934,
+      "exit": 0
+    },
+    "scroll-1793640200232221758": {
+      "pid": 20941,
+      "exit": 0
+    },
+    "keys-1793640203083817322": {
+      "pid": 20947,
+      "exit": 0
+    },
+    "keys-1793640204777718511": {
+      "pid": 20953,
+      "exit": 0
+    },
+    "focus-1793640216343139255": {
+      "pid": 21004,
+      "exit": 0
+    },
+    "position-1793640217766439409": {
+      "pid": 21027,
+      "exit": 0
+    },
+    "resize-1793640218268734810": {
+      "pid": 21037,
+      "exit": 0
+    },
+    "click-1793640219608620939": {
+      "pid": 21084,
+      "exit": 0
+    },
+    "keys-1793640221381093731": {
+      "pid": 21138,
+      "exit": 0
+    },
+    "click-1793640237343058855": {
+      "pid": 21279,
+      "exit": 0
+    },
+    "keys-1793640241391422899": {
+      "pid": 21286,
+      "exit": 0
+    },
+    "scroll-1793640245737951936": {
+      "pid": 21290,
+      "exit": 0
+    },
+    "keys-1793640248529789957": {
+      "pid": 21295,
+      "exit": 0
+    },
+    "keys-1793640250048410722": {
+      "pid": 21298,
+      "exit": 0
+    },
+    "focus-1793640269421394975": {
+      "pid": 21352,
+      "exit": 0
+    },
+    "position-1793640270896345999": {
+      "pid": 21375,
+      "exit": 0
+    },
+    "resize-1793640271518423435": {
+      "pid": 21383,
+      "exit": 0
+    },
+    "click-1793640272901788660": {
+      "pid": 21441,
+      "exit": 0
+    },
+    "keys-1793640274730512979": {
+      "pid": 21485,
+      "exit": 0
+    },
+    "click-1793640294968230753": {
+      "pid": 21617,
+      "exit": 0
+    },
+    "keys-1793640299036971689": {
+      "pid": 21625,
+      "exit": 0
+    },
+    "scroll-1793640303613180560": {
+      "pid": 21635,
+      "exit": 0
+    },
+    "keys-1793640306395143186": {
+      "pid": 21638,
+      "exit": 0
+    },
+    "keys-1793640308002852063": {
+      "pid": 21679,
+      "exit": 0
+    },
+    "focus-1793640311836049556": {
+      "pid": 21731,
+      "exit": 0
+    },
+    "position-1793640313384300862": {
+      "pid": 21759,
+      "exit": 0
+    },
+    "resize-1793640313999238248": {
+      "pid": 21775,
+      "exit": 0
+    },
+    "click-1793640318233429442": {
+      "pid": 21865,
+      "exit": 0
+    },
+    "keys-1793640319962778186": {
+      "pid": 21870,
+      "exit": 0
+    },
+    "click-1793640343420704566": {
+      "pid": 22014,
+      "exit": 0
+    },
+    "keys-1793640345116423941": {
+      "pid": 22018,
+      "exit": 0
+    },
+    "keys-1793640349800597200": {
+      "pid": 22022,
+      "exit": 0
+    },
+    "keys-1793640351680928538": {
+      "pid": 22026,
+      "exit": 0
+    },
+    "mark-commit-details-private-release": {
+      "pid": 22056,
+      "exit": 0
+    },
+    "focus-1793640393336026624": {
+      "pid": 22088,
+      "exit": 1
+    },
+    "position-1793640394635542565": {
+      "pid": 22128,
+      "exit": 0
+    },
+    "resize-1793640395176498584": {
+      "pid": 22132,
+      "exit": 0
+    },
+    "keys-1793640420832316224": {
+      "pid": 22265,
+      "exit": 0
+    },
+    "focus-1793640586556709074": {
+      "pid": 23239,
+      "exit": 0
+    },
+    "position-1793640588219017802": {
+      "pid": 23274,
+      "exit": 0
+    },
+    "resize-1793640588624876393": {
+      "pid": 23287,
+      "exit": 0
+    },
+    "click-1793640590062429559": {
+      "pid": 23393,
+      "exit": 0
+    },
+    "keys-1793640591845381245": {
+      "pid": 23620,
+      "exit": 0
+    },
+    "click-1793640614227384649": {
+      "pid": 24380,
+      "exit": 0
+    },
+    "keys-1793640618228809548": {
+      "pid": 24936,
+      "exit": 0
+    },
+    "keys-1793640622977742835": {
+      "pid": 25622,
+      "exit": 0
+    },
+    "keys-1793640624785622260": {
+      "pid": 25834,
+      "exit": 0
+    },
+    "focus-1793640656191730418": {
+      "pid": 30852,
+      "exit": 0
+    },
+    "position-1793640657721397636": {
+      "pid": 31061,
+      "exit": 0
+    },
+    "resize-1793640658009763972": {
+      "pid": 31114,
+      "exit": 0
+    },
+    "click-1793640659429054278": {
+      "pid": 31271,
+      "exit": 0
+    },
+    "keys-1793640661366855238": {
+      "pid": 31285,
+      "exit": 0
+    },
+    "click-1793640670506289871": {
+      "pid": 31436,
+      "exit": 0
+    },
+    "keys-1793640674645048661": {
+      "pid": 31478,
+      "exit": 0
+    },
+    "keys-1793640679204152590": {
+      "pid": 31492,
+      "exit": 0
+    },
+    "keys-1793640681417170259": {
+      "pid": 31497,
+      "exit": 0
+    },
+    "mark-commit-details-debug-main": {
+      "pid": 32634,
+      "exit": 0
+    },
+    "focus-1793640947245206827": {
+      "pid": 33007,
+      "exit": 0
+    },
+    "position-1793640948457291786": {
+      "pid": 33009,
+      "exit": 0
+    },
+    "resize-1793640948677165869": {
+      "pid": 33011,
+      "exit": 0
+    },
+    "click-1793640949929747227": {
+      "pid": 33015,
+      "exit": 0
+    },
+    "keys-1793640951363180875": {
+      "pid": 33018,
+      "exit": 0
+    },
+    "click-1793640977499645164": {
+      "pid": 33150,
+      "exit": 0
+    },
+    "keys-1793640979096327196": {
+      "pid": 33155,
+      "exit": 0
+    },
+    "keys-1793640983483728388": {
+      "pid": 33158,
+      "exit": 0
+    },
+    "keys-1793640985016691263": {
+      "pid": 33192,
+      "exit": 0
+    }
+  },
+  "diskFree": 16799948800,
+  "dpkgAudit": {
+    "argv": [
+      "dpkg",
+      "--audit"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  "failedUnits": {
+    "argv": [
+      "systemctl",
+      "--failed",
+      "--no-pager"
+    ],
+    "exit": 0,
+    "output": "  UNIT                                        LOAD   ACTIVE SUB    DESCRIPTION\n\u25cf busystack-git-commit-details-checks.service loaded failed failed /usr/bin/python3 /home/ubuntu/busystack-native-git-verification-20261031/commit_details_checks.py\n\nLegend: LOAD   \u2192 Reflects whether the unit definition was properly loaded.\n        ACTIVE \u2192 The high-level unit activation state, i.e. generalization of SUB.\n        SUB    \u2192 The low-level unit activation state, values depend on unit type.\n\n1 loaded units listed.\n"
+  },
+  "defaultTextScale": {
+    "argv": [
+      "runuser",
+      "-u",
+      "ubuntu",
+      "--",
+      "gsettings",
+      "get",
+      "org.gnome.desktop.interface",
+      "text-scaling-factor"
+    ],
+    "exit": 0,
+    "output": "1.0\n"
+  },
+  "defaultAccessibility": {
+    "argv": [
+      "runuser",
+      "-u",
+      "ubuntu",
+      "--",
+      "gsettings",
+      "get",
+      "org.gnome.desktop.interface",
+      "toolkit-accessibility"
+    ],
+    "exit": 0,
+    "output": "false\n"
+  },
+  "sdkStatus": {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  "sources": {
+    "busymark": {
+      "head": {
+        "argv": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit": 0,
+        "output": "0b92f501330478e44ffb22db31779c45f10efdf3\n"
+      },
+      "status": {
+        "argv": [
+          "git",
+          "status",
+          "--porcelain"
+        ],
+        "exit": 0,
+        "output": ""
+      }
+    },
+    "busyfiles": {
+      "head": {
+        "argv": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit": 0,
+        "output": "1d414dc44495428bbe21eb664db924d433042821\n"
+      },
+      "status": {
+        "argv": [
+          "git",
+          "status",
+          "--porcelain"
+        ],
+        "exit": 0,
+        "output": ""
+      }
+    }
+  },
+  "units": {
+    "busystack-git-commit-details-checks": {
+      "argv": [
+        "systemctl",
+        "show",
+        "busystack-git-commit-details-checks.service",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "Result",
+        "-p",
+        "ExecMainStatus"
+      ],
+      "exit": 0,
+      "output": "Result=exit-code\nExecMainStatus=1\nActiveState=failed\nSubState=failed\n"
+    },
+    "busystack-git-commit-details-completion": {
+      "argv": [
+        "systemctl",
+        "show",
+        "busystack-git-commit-details-completion.service",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "Result",
+        "-p",
+        "ExecMainStatus"
+      ],
+      "exit": 0,
+      "output": "Result=success\nExecMainStatus=0\nActiveState=inactive\nSubState=dead\n"
+    },
+    "busystack-git-commit-details-native": {
+      "argv": [
+        "systemctl",
+        "show",
+        "busystack-git-commit-details-native.service",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "Result",
+        "-p",
+        "ExecMainStatus"
+      ],
+      "exit": 0,
+      "output": "Result=success\nExecMainStatus=0\nActiveState=active\nSubState=running\n"
+    }
+  }
+}

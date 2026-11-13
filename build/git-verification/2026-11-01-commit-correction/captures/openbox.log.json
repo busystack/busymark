@@ -1,0 +1,5 @@
+{
+  "rawFile": "captures/openbox.log",
+  "sha256": "95c0b23fa7dc08a3a7816a44ed0ed418004ac3c72977f69174eb7220d35f35ae",
+  "transcript": "Openbox-Message: Unable to find a valid menu file \"/var/lib/openbox/debian-menu.xml\"\nX connection to :99 broken (explicit kill or server shutdown).\r\n"
+}

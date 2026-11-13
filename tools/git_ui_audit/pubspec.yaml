@@ -1,0 +1,10 @@
+name: busymark_git_ui_audit
+publish_to: none
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+dependencies:
+  # The exact analyzer already pinned by the shared Git architecture check.
+  analyzer: 12.1.0
+dev_dependencies:
+  # Match the host's approved lint pin when inheriting its analysis options.
+  flutter_lints: 6.0.0

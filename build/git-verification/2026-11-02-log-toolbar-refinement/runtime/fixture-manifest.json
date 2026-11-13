@@ -1,0 +1,8 @@
+{
+  "head": "082222fb2d1564fb657df5cecdc438f57d7d4202",
+  "ordinary": "03f33c877d90ca3f32dc7c39ba00e9634160b771",
+  "root": "2dbd38fb8218b53ef8a230eb674f3b7fb63c7bab",
+  "message": "Preserve grouped historical review and independent comparisons with a long subject that remains available in full\n\nBody paragraph 1: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 2: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 3: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 4: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 5: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 6: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 7: complete metadata remains available through Details while Changed Files keeps its own usable space.\n\nBody paragraph 8: complete metadata remains available through Details while Changed Files keeps its own usable space.",
+  "status": "D docs/deleted.md\nMM docs/review.md\n?? docs/untracked.md",
+  "parents": "d0df227af4488797a854aa43b6597d78ff862bf8 03f33c877d90ca3f32dc7c39ba00e9634160b771"
+}

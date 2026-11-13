@@ -1,0 +1,5 @@
+{
+  "sha256": "d3f69965331480885fb498ae9099be4365ea4eb64febc7c39bf83db8ecd44b79",
+  "encoding": "utf-8",
+  "transcript": "[1/3] Building CXX object CMakeFiles/busystack_git_accessibility_test.dir/git_table_test.cc.o\n[2/3] Building CXX object CMakeFiles/busystack_git_accessibility.dir/git_table.cc.o\n[3/3] Linking CXX executable busystack_git_accessibility_test\n"
+}

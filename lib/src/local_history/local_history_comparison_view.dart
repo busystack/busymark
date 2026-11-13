@@ -98,8 +98,14 @@ class _LocalHistoryComparisonViewState
       currentSourceVersion: matchingBuffer?.revision ?? cachedNote?.revision,
       currentSource: matchingBuffer?.text ?? cachedNote?.content,
       currentPath: document.currentPath,
+      sourceGeneration: history.comparisonRevision,
+      deleted: document.deleted,
     );
     if (_request != request) {
+      if (_request?.documentId != request.documentId ||
+          _request?.revisionId != request.revisionId) {
+        _recoveryError = null;
+      }
       _request = request;
       _future = _buildSnapshot(document, revision, request);
     }
@@ -134,10 +140,11 @@ class _LocalHistoryComparisonViewState
           onClose: () => ref
               .read(localHistoryControllerProvider.notifier)
               .clearComparison(),
-          onRestoreAll: actionsAreCurrent && data.canRestore
-              ? () => _restore(document, revision)
+          onRestoreAll: !_recovering && actionsAreCurrent && data.canRestore
+              ? () => _restore(document, revision, comparison: data.comparison)
               : null,
-          onRestoreChange: actionsAreCurrent && data.canRestoreChange
+          onRestoreChange:
+              !_recovering && actionsAreCurrent && data.canRestoreChange
               ? (change) => _restore(
                   document,
                   revision,
@@ -146,9 +153,13 @@ class _LocalHistoryComparisonViewState
                 )
               : null,
           onRestoreOriginal:
-              document.remoteNote != null && actionsAreCurrent && data.missing
+              !_recovering &&
+                  document.remoteNote != null &&
+                  actionsAreCurrent &&
+                  data.missing
               ? () => unawaited(_recoverRemote(document, revision))
-              : actionsAreCurrent &&
+              : !_recovering &&
+                    actionsAreCurrent &&
                     data.missing &&
                     (document.currentPath ?? revision.summary.historicalPath) !=
                         null
@@ -159,7 +170,10 @@ class _LocalHistoryComparisonViewState
                 )
               : null,
           onRestoreNewLocation:
-              document.remoteNote == null && actionsAreCurrent && data.missing
+              !_recovering &&
+                  document.remoteNote == null &&
+                  actionsAreCurrent &&
+                  data.missing
               ? () => _chooseRestoreLocation(document, revision)
               : null,
         );
@@ -217,15 +231,53 @@ class _LocalHistoryComparisonViewState
     LocalHistoryRevision revision, {
     SourceComparison? comparison,
     SourceComparisonChange? change,
-  }) async {
-    await ref
-        .read(workspaceControllerProvider.notifier)
-        .restoreLocalHistoryRevision(
-          document: document,
-          revision: revision,
-          comparison: comparison,
-          change: change,
+  }) => _runRestore(() async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    final path = document.currentPath;
+    final needsWorkspaceNavigation =
+        controller.localHistoryBufferForDocument(document, revision) == null &&
+        (document.remoteNote != null
+            ? workspace?.nextcloudAccountId != document.remoteNote!.accountId
+            : path != null &&
+                  (workspace == null ||
+                      workspace.isRemote ||
+                      !(p.equals(workspace.rootPath, path) ||
+                          p.isWithin(workspace.rootPath, path))));
+    if (needsWorkspaceNavigation &&
+        (!await confirmSafeToContinue(context, ref) || !mounted)) {
+      return null;
+    }
+    return controller.restoreLocalHistoryRevision(
+      document: document,
+      revision: revision,
+      comparison: comparison,
+      change: change,
+    );
+  });
+
+  Future<void> _runRestore(Future<bool?> Function() operation) async {
+    if (_recovering) return;
+    setState(() {
+      _recovering = true;
+      _recoveryError = null;
+    });
+    try {
+      final restored = await operation();
+      if (mounted && restored == false) {
+        setState(
+          () => _recoveryError = context.l10n.localHistoryRestoreUnavailable,
         );
+      }
+    } on Object {
+      if (mounted) {
+        setState(
+          () => _recoveryError = context.l10n.localHistoryRestoreUnavailable,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _recovering = false);
+    }
   }
 
   Future<void> _chooseRestoreLocation(
@@ -298,11 +350,11 @@ class _LocalHistoryComparisonViewState
     LocalHistoryDocument document,
     LocalHistoryRevision revision,
     String path,
-  ) async {
-    if (!await confirmSafeToContinue(context, ref) || !mounted) return;
+  ) => _runRestore(() async {
+    if (!await confirmSafeToContinue(context, ref) || !mounted) return null;
     final controller = ref.read(workspaceControllerProvider.notifier);
     final exists = await controller.localHistoryRestorePathExists(path);
-    if (!mounted) return;
+    if (!mounted) return null;
     var overwrite = false;
     if (exists) {
       overwrite =
@@ -326,15 +378,15 @@ class _LocalHistoryComparisonViewState
             ),
           ) ??
           false;
-      if (!overwrite || !mounted) return;
+      if (!overwrite || !mounted) return null;
     }
-    await controller.restoreMissingLocalHistoryRevision(
+    return controller.restoreMissingLocalHistoryRevision(
       document: document,
       revision: revision,
       destinationPath: path,
       overwriteExisting: overwrite,
     );
-  }
+  });
 }
 
 class _ComparisonRequest {
@@ -346,6 +398,8 @@ class _ComparisonRequest {
     required this.currentSourceVersion,
     required this.currentSource,
     required this.currentPath,
+    required this.sourceGeneration,
+    required this.deleted,
   });
 
   final String documentId;
@@ -355,6 +409,8 @@ class _ComparisonRequest {
   final int? currentSourceVersion;
   final String? currentSource;
   final String? currentPath;
+  final int sourceGeneration;
+  final bool deleted;
 
   @override
   bool operator ==(Object other) =>
@@ -365,7 +421,9 @@ class _ComparisonRequest {
       other.currentBufferId == currentBufferId &&
       other.currentSourceVersion == currentSourceVersion &&
       other.currentSource == currentSource &&
-      other.currentPath == currentPath;
+      other.currentPath == currentPath &&
+      other.sourceGeneration == sourceGeneration &&
+      other.deleted == deleted;
 
   @override
   int get hashCode => Object.hash(
@@ -376,6 +434,8 @@ class _ComparisonRequest {
     currentSourceVersion,
     currentSource,
     currentPath,
+    sourceGeneration,
+    deleted,
   );
 }
 

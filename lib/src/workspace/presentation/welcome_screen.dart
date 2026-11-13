@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
-import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
@@ -131,6 +130,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
             ExcludeFocus(
               excluding: search.active,
               child: SearchResultList(
+                recordDensity: BusyMarkRecordDensity.comfortable,
                 results: [
                   for (final r in settings.recentWorkspaces)
                     RecentSearchResult(r),
@@ -720,7 +720,7 @@ class _BusyMarkCreateWritersideProjectDialogState
             title: context.l10n.location,
             filled: true,
             children: [
-              YaruListTile.square(
+              BusyMarkListTile.square(
                 title: Directionality(
                   textDirection: TextDirection.ltr,
                   child: SelectableText(

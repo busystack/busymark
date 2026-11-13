@@ -2573,36 +2573,43 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
   }
 
+  bool hasParagraphBreakEdit(String blockId, String text) {
+    final block = blockById(blockId);
+    return block != null &&
+        _shouldSplitNewlines(block.kind) &&
+        _paragraphBreakEdit(
+          _normalizeLineEndings(block.plainText),
+          _normalizeLineEndings(text),
+        ).breaks.isNotEmpty;
+  }
+
   BusyWysiwygTextSplitResult? replaceBlockTextWithParagraphs(
     String blockId,
     String text,
     int cursorOffset, {
     bool preserveTextWhitespace = false,
     bool allowListExit = true,
+    bool replaceWholeBlock = false,
   }) {
     final block = blockById(blockId);
-    if (block == null || !_shouldSplitNewlines(block.kind)) {
+    if (block == null ||
+        !_canStructurallyEdit(blockId) ||
+        !_shouldSplitNewlines(block.kind)) {
       return null;
     }
     final normalizedText = _normalizeLineEndings(text);
     final previousText = _normalizeLineEndings(block.plainText);
-    final editStart = _commonPrefixLength(previousText, normalizedText);
-    final editSuffix = _commonSuffixLength(
-      previousText,
-      normalizedText,
-      editStart,
-    );
-    final editEnd = normalizedText.length - editSuffix;
-    final paragraphBreaks = [
-      for (final match in '\n'.allMatches(normalizedText))
-        if (match.start >= editStart && match.start < editEnd) match,
-    ];
+    final edit = _paragraphBreakEdit(previousText, normalizedText);
+    final paragraphBreaks = edit.breaks;
     if (paragraphBreaks.isEmpty) {
       return null;
     }
     if (allowListExit &&
         _isListItemKind(block.kind) &&
-        normalizedText.trim().isEmpty) {
+        normalizedText.trim().isEmpty &&
+        _canExitEmptyListItem(
+          _blockWithEditedText(block, normalizedText.replaceAll('\n', '')),
+        )) {
       if (_wouldDiscardNativeListOwner(blockId)) return null;
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
@@ -2620,59 +2627,46 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         ? 0
         : paragraphBreaks[focusIndex - 1].end;
     final focusOffset = safeOffset - focusStart;
-    final ranges = _remapRangesForTextEdit(
-      oldText: block.plainText,
-      newText: normalizedText,
-      ranges: busyInlineStyleRanges(block.inlines),
+    // Rebuild once, including semantic objects, then partition the actual
+    // inline tree. Text/style ranges alone cannot represent empty-alt images.
+    final retainRight = _retainsOriginalAfterLeadingBreak(
+      block,
+      paragraphBreaks.first.start,
+      normalizedText.substring(paragraphBreaks.first.end),
     );
-    final replacements = <BusyBlock>[];
+    var remaining = _blockWithEditedText(
+      block,
+      normalizedText,
+      leadingAnchorsAfterEdit: retainRight,
+    ).inlines;
+    final parts = <List<BusyInline>>[];
     var partStart = 0;
-    for (var index = 0; index <= paragraphBreaks.length; index++) {
-      final partEnd = index < paragraphBreaks.length
-          ? paragraphBreaks[index].start
-          : normalizedText.length;
-      final part = normalizedText.substring(partStart, partEnd);
-      final inlines = _inlinesFromStyleRangesWithHardBreaks(
-        part,
-        _styleRangesForSlice(ranges, partStart, partEnd),
+    for (final lineBreak in paragraphBreaks) {
+      final length = lineBreak.start - partStart;
+      final partition = _partitionInlinesForReplacement(
+        remaining,
+        length,
+        length + 1,
       );
-      if (index == 0) {
-        replacements.add(
-          block.copyWith(
-            inlines: inlines,
-            attributes: _attributesForText(
-              _sourceBackedSplitAttributes(block.attributes),
-              block.kind,
-              part,
-              preserveTextWhitespace: preserveTextWhitespace,
-            ),
-            preserveRaw: false,
-            dirty: true,
-          ),
-        );
-      } else {
-        final splitKind = _splitKindFor(block.kind);
-        replacements.add(
-          BusyBlock(
-            id: _nextGeneratedBlockId(_newBlockPrefixFor(block.kind)),
-            kind: splitKind,
-            inlines: inlines,
-            attributes: _attributesForText(
-              _sourceBackedSplitAttributes(
-                _splitAttributesFor(block, splitKind, orderedOffset: index),
-              ),
-              splitKind,
-              part,
-              preserveTextWhitespace: preserveTextWhitespace,
-            ),
-            dirty: true,
-          ),
-        );
-      }
-      if (index < paragraphBreaks.length) {
-        partStart = paragraphBreaks[index].end;
-      }
+      parts.add(partition.before);
+      remaining = partition.after;
+      partStart = lineBreak.end;
     }
+    parts.add(remaining);
+    // A whole textual heading replaced by newlines is a replacement, not an
+    // insertion before an untouched heading. Prefix replacements retain it.
+    final replacedHeading =
+        block.kind == BusyBlockKind.heading &&
+        (replaceWholeBlock ||
+            previousText.isNotEmpty && edit.prefix == 0 && edit.suffix == 0);
+    final replacements = _blocksForSplit(
+      replacedHeading
+          ? block.copyWith(kind: BusyBlockKind.paragraph, attributes: const {})
+          : block,
+      parts,
+      retainRight: retainRight && !replacedHeading,
+      preserveTextWhitespace: preserveTextWhitespace,
+    );
     _document = _document.copyWith(
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
     );
@@ -3026,6 +3020,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void _insertHardBreaks(String blockId, int offset, {required int count}) {
+    if (!_canStructurallyEdit(blockId)) return;
     _replaceBlock(blockId, (block) {
       final text = block.plainText;
       final safeOffset = offset.clamp(0, text.length).toInt();
@@ -3037,7 +3032,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         replacementLength: count,
       );
       return block.copyWith(
-        inlines: _inlinesFromStyleRangesWithHardBreaks(nextText, ranges),
+        inlines: _restoreSemanticInlineAnchors(
+          originalInlines: block.inlines,
+          oldText: text,
+          newText: nextText,
+          insertion: (offset: safeOffset, length: count),
+          rebuiltInlines: _inlinesFromStyleRangesWithHardBreaks(
+            nextText,
+            ranges,
+          ),
+        ),
         preserveRaw: false,
         dirty: true,
       );
@@ -3827,65 +3831,143 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     bool recognizeUrls = false,
   }) {
     final block = blockById(blockId);
-    if (block == null) {
+    if (block == null || !_canStructurallyEdit(blockId)) {
       return null;
     }
     final text = block.plainText;
     final safeOffset = offset.clamp(0, text.length).toInt();
-    final leftText = text.substring(0, safeOffset);
     final rightText = text.substring(safeOffset);
     final inlinePartition = _partitionInlinesForReplacement(
       block.inlines,
       safeOffset,
       safeOffset,
     );
-    final nextBlockId = _nextGeneratedBlockId(_newBlockPrefixFor(block.kind));
-    final nextKind = _splitKindFor(block.kind);
-    final currentBlock = BusyBlock(
-      id: block.id,
-      kind: block.kind,
-      inlines: inlinePartition.before.isEmpty
-          ? _textInlines('')
-          : recognizeUrls && _supportsBareUrlRecognition(block)
-          ? _recognizeBareUrls(inlinePartition.before, mode: _document.mode)
-          : inlinePartition.before,
-      children: block.children,
-      attributes: _attributesForText(
-        _sourceBackedSplitAttributes(block.attributes),
-        block.kind,
-        leftText,
-      ),
-      dirty: true,
+    final retainRight = _retainsOriginalAfterLeadingBreak(
+      block,
+      safeOffset,
+      rightText,
     );
-    final nextBlock = BusyBlock(
-      id: nextBlockId,
-      kind: nextKind,
-      inlines: inlinePartition.after.isEmpty
-          ? _textInlines('')
-          : inlinePartition.after,
-      attributes: _attributesForText(
-        _sourceBackedSplitAttributes(
-          _splitAttributesFor(block, nextKind, orderedOffset: 1),
-        ),
-        nextKind,
-        rightText,
-      ),
-      dirty: true,
-    );
+    final before = retainRight ? _textInlines('') : inlinePartition.before;
+    final replacements = _blocksForSplit(block, [
+      recognizeUrls && _supportsBareUrlRecognition(block)
+          ? _recognizeBareUrls(before, mode: _document.mode)
+          : before,
+      retainRight ? block.inlines : inlinePartition.after,
+    ], retainRight: retainRight);
     _document = _document.copyWith(
-      blocks: _replaceBlockWithMany(_document.blocks, blockId, [
-        currentBlock,
-        nextBlock,
-      ]),
+      blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
     );
     notifyListeners();
-    return nextBlockId;
+    return replacements.last.id;
   }
 
-  BusyWysiwygTextSplitResult? applyEnterAt(String blockId, int offset) {
+  /// The retained fragment owns the original editing identity, authored
+  /// attributes and subtree. A leading split inserts a sibling *before* an
+  /// existing heading/list parent; other splits retain the original on the left.
+  List<BusyBlock> _blocksForSplit(
+    BusyBlock block,
+    List<List<BusyInline>> parts, {
+    required bool retainRight,
+    bool preserveTextWhitespace = false,
+  }) {
+    var retained = 0;
+    if (retainRight) {
+      retained = 1;
+      while (retained < parts.length - 1 &&
+          parts[retained].every(_isEmptyTextInline)) {
+        retained++;
+      }
+    }
+    return [
+      for (var index = 0; index < parts.length; index++)
+        BusyBlock(
+          id: index == retained
+              ? block.id
+              : _nextGeneratedBlockId(_newBlockPrefixFor(block.kind)),
+          kind: index == retained ? block.kind : _splitKindFor(block.kind),
+          inlines: parts[index].isEmpty ? _textInlines('') : parts[index],
+          children: index == retained ? block.children : const [],
+          attributes: _attributesForText(
+            _sourceBackedSplitAttributes(
+              index == retained
+                  ? block.kind == BusyBlockKind.orderedListItem
+                        ? {
+                            ...block.attributes,
+                            'marker': _incrementOrderedMarker(
+                              block.attributes['marker'],
+                              index,
+                            ),
+                          }
+                        : block.attributes
+                  : _splitAttributesFor(
+                      block,
+                      _splitKindFor(block.kind),
+                      orderedOffset: index,
+                    ),
+            ),
+            index == retained ? block.kind : _splitKindFor(block.kind),
+            parts[index].map((inline) => inline.plainText).join(),
+            preserveTextWhitespace: preserveTextWhitespace,
+          ),
+          dirty: true,
+        ),
+    ];
+  }
+
+  bool _canStructurallyEdit(String blockId) {
+    final path = _actualElementPath(_document.blocks, blockId);
+    return path.isNotEmpty &&
+        !path.any(
+          (b) =>
+              b.isSourceProtected ||
+              b.isSourceOnly ||
+              b.isGenerated ||
+              b.preserveRaw ||
+              b.kind == BusyBlockKind.table,
+        ) &&
+        !_isReadOnlySelectionEndpoint(path.last);
+  }
+
+  BusyWysiwygTextSplitResult? applyEnterAt(
+    String blockId,
+    int offset, {
+    int? selectionEnd,
+  }) {
     final block = blockById(blockId);
-    if (block == null) {
+    if (block == null || !_canStructurallyEdit(blockId)) {
       return null;
+    }
+    final start = offset.clamp(0, block.plainText.length).toInt();
+    final end = (selectionEnd ?? start)
+        .clamp(start, block.plainText.length)
+        .toInt();
+    if (end > start) {
+      // Stage both operations: rejection of list exit must not publish the
+      // selection deletion, change the field, or create an undo entry.
+      final staged = BusyMarkWysiwygDocumentController(document: _document);
+      try {
+        staged.updateBlockText(
+          blockId,
+          block.plainText.replaceRange(start, end, ''),
+        );
+        if (block.kind == BusyBlockKind.heading &&
+            start == 0 &&
+            end == block.plainText.length) {
+          staged._replaceBlock(
+            blockId,
+            (b) =>
+                b.copyWith(kind: BusyBlockKind.paragraph, attributes: const {}),
+          );
+        }
+        final result = staged.applyEnterAt(blockId, start);
+        if (result != null) {
+          _document = staged.document;
+          notifyListeners();
+        }
+        return result;
+      } finally {
+        staged.dispose();
+      }
     }
     if (_document.isXmlTopic &&
         busyMarkIsWritersideContainer(block) &&
@@ -3923,7 +4005,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         offset: safeOffset + 1,
       );
     }
-    if (_isListItemKind(block.kind) && block.plainText.trim().isEmpty) {
+    if (_isListItemKind(block.kind) && _canExitEmptyListItem(block)) {
       if (_wouldDiscardNativeListOwner(blockId)) return null;
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
@@ -3976,16 +4058,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   BusyWysiwygTextSplitResult? applyBackspaceAtStart(String blockId) {
-    final path = elementPath(blockId);
+    if (!_canStructurallyEdit(blockId)) return null;
+    final path = _actualElementPath(_document.blocks, blockId);
     final owner = path.length < 2 ? null : path[path.length - 2];
-    final native = owner?.attributes['busymark-list-form'] == 'markdown';
-    final blocks = native ? owner!.children : _document.blocks;
+    final blocks = owner?.children ?? _document.blocks;
     void publish(List<BusyBlock> members) {
       _document = _document.copyWith(
-        blocks: native
+        blocks: owner != null
             ? _replaceInBlocks(
                 _document.blocks,
-                owner!.id,
+                owner.id,
                 (b) => b.copyWith(children: members, dirty: true),
               )
             : members,
@@ -3998,6 +4080,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     final previous = blocks[index - 1];
     final current = blocks[index];
+    if (!_canStructurallyEdit(previous.id)) return null;
+    if (_isSafelyRemovableParagraph(previous)) {
+      // Removing a sibling invalidates the source gap even when the retained
+      // heading itself is unchanged. A committed Writerside heading is clean;
+      // retaining its old span would let source patching keep the deleted gap.
+      final retained = _withoutSourceSpan(current, dirty: true);
+      publish([...blocks.take(index - 1), retained, ...blocks.skip(index + 1)]);
+      notifyListeners();
+      return BusyWysiwygTextSplitResult(blockId: current.id, offset: 0);
+    }
     if (!_isMergeableTextBlock(previous) || !_isMergeableTextBlock(current)) {
       return null;
     }
@@ -4676,8 +4768,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final firstBlock = blockById(firstBlockId);
     final selectedIds = removedBlockIds.toSet();
     final destinationBlockFullySelected =
-        replacementScope == BusyWysiwygReplacementScope.documentRange &&
         firstBlock != null &&
+        (replacementScope == BusyWysiwygReplacementScope.documentRange ||
+            firstBlock.kind == BusyBlockKind.heading &&
+                replacementText.contains(RegExp(r'[\r\n]'))) &&
         selectedIds.contains(firstBlockId) &&
         firstStartOffset <= 0 &&
         (firstBlockId != lastBlockId ||
@@ -5380,6 +5474,11 @@ Map<String, String> _splitAttributesFor(
   BusyBlockKind kind, {
   int orderedOffset = 0,
 }) {
+  // New paragraphs do not own any of their heading's authored properties or
+  // projection/source bindings. The retained heading keeps the complete map.
+  if (block.kind == BusyBlockKind.heading && kind == BusyBlockKind.paragraph) {
+    return {};
+  }
   final attributes = {...block.attributes};
   if (kind != BusyBlockKind.heading) {
     attributes.remove('level');
@@ -5943,6 +6042,40 @@ BusyBlockKind _splitKindFor(BusyBlockKind kind) {
   };
 }
 
+bool _isEmptyTextInline(BusyInline inline) =>
+    inline.kind == BusyInlineKind.text &&
+    inline.text.isEmpty &&
+    inline.attributes.isEmpty &&
+    inline.children.every(_isEmptyTextInline);
+
+bool _retainsOriginalAfterLeadingBreak(
+  BusyBlock block,
+  int offset,
+  String rightText,
+) =>
+    offset == 0 &&
+    (block.kind == BusyBlockKind.heading || _isListItemKind(block.kind)) &&
+    (block.plainText.isNotEmpty && rightText.isNotEmpty ||
+        block.children.isNotEmpty ||
+        busyInlineSemanticAnchors(block.inlines).isNotEmpty);
+
+bool _canExitEmptyListItem(BusyBlock block) =>
+    block.plainText.trim().isEmpty &&
+    block.children.isEmpty &&
+    block.inlines.every(
+      (inline) =>
+          inline.kind == BusyInlineKind.text &&
+          inline.attributes.isEmpty &&
+          inline.children.isEmpty,
+    ) &&
+    WritersideEditingAdapter.sourceAttributes(block).isEmpty;
+
+bool _isSafelyRemovableParagraph(BusyBlock block) =>
+    block.kind == BusyBlockKind.paragraph &&
+    block.children.isEmpty &&
+    block.inlines.every(_isEmptyTextInline) &&
+    WritersideEditingAdapter.sourceAttributes(block).isEmpty;
+
 String _newBlockPrefixFor(BusyBlockKind kind) {
   return switch (kind) {
     BusyBlockKind.unorderedListItem => 'unordered-list-item',
@@ -6287,6 +6420,7 @@ BusyBlock _blockWithEditedText(
   Iterable<BusyInlineKind> activeInlineKinds = const [],
   bool preserveTextWhitespace = false,
   bool normalizePastedFormatting = false,
+  bool leadingAnchorsAfterEdit = false,
 }) {
   final oldText = block.plainText;
   final oldRanges = busyInlineStyleRanges(block.inlines);
@@ -6311,6 +6445,7 @@ BusyBlock _blockWithEditedText(
     oldText: oldText,
     newText: nextText,
     rebuiltInlines: rebuiltInlines,
+    leadingAnchorsAfterEdit: leadingAnchorsAfterEdit,
   );
   if (normalizePastedFormatting) {
     final prefix = _commonPrefixLength(oldText, nextText);
@@ -6338,24 +6473,56 @@ String _normalizeLineEndings(String text) {
   return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 }
 
+({int prefix, int suffix, List<Match> breaks}) _paragraphBreakEdit(
+  String oldText,
+  String newText,
+) {
+  final prefix = _commonPrefixLength(oldText, newText);
+  final suffix = _commonSuffixLength(oldText, newText, prefix);
+  return (
+    prefix: prefix,
+    suffix: suffix,
+    breaks: [
+      for (final match in '\n'.allMatches(newText))
+        if (match.start >= prefix && match.start < newText.length - suffix)
+          match,
+    ],
+  );
+}
+
 List<BusyInline> _restoreSemanticInlineAnchors({
   required List<BusyInline> originalInlines,
   required String oldText,
   required String newText,
   required List<BusyInline> rebuiltInlines,
+  bool leadingAnchorsAfterEdit = false,
+  ({int offset, int length})? insertion,
 }) {
   final anchors = busyInlineSemanticAnchors(originalInlines);
   if (anchors.isEmpty) {
     return rebuiltInlines;
   }
-  final prefix = _commonPrefixLength(oldText, newText);
-  final suffix = _commonSuffixLength(oldText, newText, prefix);
-  final oldEditEnd = oldText.length - suffix;
-  final newEditEnd = newText.length - suffix;
-  final delta = newText.length - oldText.length;
+  final int prefix;
+  final int oldEditEnd;
+  final int newEditEnd;
+  final int delta;
+  if (insertion != null) {
+    // Repeated characters (especially existing hard breaks) make a text diff
+    // ambiguous. Commands with a known insertion must retain that position.
+    prefix = oldEditEnd = insertion.offset;
+    newEditEnd = insertion.offset + insertion.length;
+    delta = insertion.length;
+  } else {
+    prefix = _commonPrefixLength(oldText, newText);
+    final suffix = _commonSuffixLength(oldText, newText, prefix);
+    oldEditEnd = oldText.length - suffix;
+    newEditEnd = newText.length - suffix;
+    delta = newText.length - oldText.length;
+  }
   var result = rebuiltInlines;
   for (final anchor in anchors) {
     final offset = switch (anchor.offset) {
+      0 when leadingAnchorsAfterEdit && prefix == 0 => newEditEnd,
       final value when value <= prefix => value,
       final value when value >= oldEditEnd => value + delta,
       _ => newEditEnd,
@@ -6363,7 +6530,10 @@ List<BusyInline> _restoreSemanticInlineAnchors({
     final partition = _partitionInlinesForReplacement(result, offset, offset);
     result = [...partition.before, anchor.inline, ...partition.after];
   }
-  return result;
+  // Reinsertion splits enclosing wrappers. Rejoin equivalent adjacent runs so
+  // serialization does not emit invalid repeated emphasis delimiters around
+  // zero-width objects (and thereby lose their formatting on reparse).
+  return _mergeAdjacentInlineStyles(result);
 }
 
 BusyBlock _withoutSourceSpan(BusyBlock block, {required bool dirty}) {

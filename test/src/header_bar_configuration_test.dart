@@ -492,7 +492,7 @@ const _labels = HeaderBarLabels(
   editor: 'Editor',
   source: 'Source',
   preview: 'Preview',
-  split: 'Split',
+  split: 'Dual',
   viewMode: 'View mode',
   editorShortcut: 'Ctrl+1',
   editorGtkAccelerator: '<Primary>1',

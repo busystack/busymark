@@ -1,0 +1,20 @@
+{
+  "source": "309a230f59f1e2bd7cc22ab36bd1d65d9353528e",
+  "status": {
+    "files-log-toolbar-daemon": {
+      "pid": 44833,
+      "exit": null
+    },
+    "files-log-toolbar-ui": {
+      "pid": 44849,
+      "exit": null
+    }
+  },
+  "files": {
+    "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busyfiles/apps/busyfiles_ui/build/linux/x64/debug/bundle/busyfiles": "542e4119b6b32e2f671c31cb4c180c5f157d7d3331f718fcf7a4c5cd96b8ae3d",
+    "/home/ubuntu/busystack-native-git-verification-20261031/log-toolbar-refinement-20261102/files-developer-daemon-final/bundle/bin/busyfilesd": "40a828f62f3545a797317112cdf23fe4e4840fba5955334bc2e24336d1497186",
+    "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busyfiles/native/build/libbusyfiles_gio/libbusyfiles_gio.so": "9e00b9fa830cd24e56a048d334dbb37556398b4df757755c712d0220eb57460c"
+  },
+  "kind": "Final source debug build on Ubuntu 24.04, official debug engine; production release gate remains blocked on Ubuntu 26.04 baseline",
+  "ipc": "Separate same-user authenticated typed daemon, explicit private runtime socket; no direct UI Git execution"
+}

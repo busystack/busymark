@@ -119,7 +119,15 @@ abstract interface class LocalHistoryStore {
   Future<void> clearAllOnce({required String operationId}) => clearAll();
 }
 
-class FileLocalHistoryStore implements LocalHistoryStore {
+/// Reads a bounded group under one store lock and one authoritative index.
+abstract interface class LocalHistoryBatchReader {
+  Future<List<LocalHistoryRevision>> readRevisions(
+    Iterable<String> revisionIds,
+  );
+}
+
+class FileLocalHistoryStore
+    implements LocalHistoryStore, LocalHistoryBatchReader {
   FileLocalHistoryStore({
     Future<Directory> Function()? rootDirectory,
     String Function()? createId,
@@ -203,17 +211,25 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           if (index.tombstones.contains(captureId)) {
             throw const LocalHistoryClearConflict();
           }
-          final existing = index.revisions
+          final indexed = index.revisions
               .where((revision) => revision.id == captureId)
               .firstOrNull;
+          final orphan = indexed == null
+              ? await _findUnindexedCapture(root, captureId)
+              : null;
+          final existing = indexed ?? orphan?.revision.summary;
           if (existing != null) {
-            final document = index.documents
-                .where((candidate) => candidate.id == existing.documentId)
-                .firstOrNull;
-            final revision = await _readRevisionFile(
-              _revisionFile(root, existing.documentId, existing.id),
-              expected: existing,
-            );
+            final document =
+                index.documents
+                    .where((candidate) => candidate.id == existing.documentId)
+                    .firstOrNull ??
+                orphan?.document;
+            final revision =
+                orphan?.revision ??
+                await _readRevisionFile(
+                  _revisionFile(root, existing.documentId, existing.id),
+                  expected: existing,
+                );
             if (document == null ||
                 existing.checksum != checksum ||
                 revision == null ||
@@ -231,7 +247,76 @@ class FileLocalHistoryStore implements LocalHistoryStore {
                 when target.documentId != document.id) {
               throw const LocalHistoryReconciliationConflict();
             }
+            if (orphan != null) {
+              // Finish only the exact retained capture whose record committed
+              // before its index. Preserve later authoritative identity changes.
+              // The controller may retry a saved capture as a checkpoint. Its
+              // stable identity, source and format still describe the accepted
+              // capture; retain the original reason stored in the record.
+              if (orphan.document.remoteNote != request.remoteNote ||
+                  (request.path != null &&
+                      existing.historicalPath != request.path &&
+                      !orphan.document.historicalPaths.any(
+                        (path) => p.equals(path, request.path!),
+                      ))) {
+                throw const LocalHistoryStorageException(
+                  'Local History capture identity collision.',
+                );
+              }
+              if (existing.storageBytes > policy.maximumBytes) {
+                throw const LocalHistoryStorageException(
+                  'The revision is larger than the Local History storage limit.',
+                );
+              }
+              final path = document.currentPath;
+              if (!document.deleted &&
+                  path != null &&
+                  index.documents.any(
+                    (candidate) =>
+                        candidate.id != document.id &&
+                        _ownsActivePath(candidate, path),
+                  )) {
+                throw const LocalHistoryReconciliationConflict();
+              }
+              _requireCaptureStillAccepted(request);
+              index = index.withCapture(document, existing);
+            }
             _requireCaptureStillAccepted(request);
+            if (request.reason ==
+                LocalHistoryCaptureReason.beforeHistoryTraversal) {
+              return _reuseTraversalProtection(
+                root,
+                index,
+                document,
+                existing,
+                request,
+                policy,
+                indexBeforeRecovery: orphan == null ? null : originalIndex,
+              );
+            }
+            if (orphan != null) {
+              await _publishIndex(root, index);
+              if (!_captureStillAccepted(request)) {
+                await _publishIndex(
+                  root,
+                  originalIndex.copyWith(
+                    tombstones: {...originalIndex.tombstones, captureId},
+                  ),
+                );
+                await _deleteFileBestEffort(
+                  _revisionFile(root, existing.documentId, captureId),
+                );
+                throw const LocalHistoryCaptureCancelled();
+              }
+              await _applyRetention(
+                root,
+                index,
+                policy,
+                captureId,
+                request.capturedAt.toUtc(),
+              );
+              _requireCaptureStillAccepted(request);
+            }
             return LocalHistoryCaptureResult(
               document: document,
               revision: existing,
@@ -275,18 +360,40 @@ class FileLocalHistoryStore implements LocalHistoryStore {
               null,
               (latest, revision) =>
                   latest == null ||
-                      revision.capturedAt.isAfter(latest.capturedAt)
+                      !revision.capturedAt.isBefore(latest.capturedAt)
                   ? revision
                   : latest,
             );
-        if (!request.force && adjacent?.checksum == checksum) {
-          final adjacentRevision = await _readRevisionFile(
-            _revisionFile(root, document.id, adjacent!.id),
-            expected: adjacent,
+        // Reuse validates the complete record while holding the store lock.
+        // Traversal also renews retention eligibility before releasing its
+        // retained owner; original timeline timestamps remain unchanged.
+        final candidates =
+            request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal
+            ? index.revisions.where(
+                (r) => r.documentId == document!.id && r.checksum == checksum,
+              )
+            : [if (adjacent?.checksum == checksum) adjacent!];
+        for (final candidate
+            in request.force ? <LocalHistoryRevisionSummary>[] : candidates) {
+          final existing = await _readRevisionFile(
+            _revisionFile(root, document.id, candidate.id),
+            expected: candidate,
           );
-          if (adjacentRevision != null &&
-              _sameTextFormat(adjacentRevision.format, request.format)) {
+          if (existing != null &&
+              existing.source == request.source &&
+              _sameTextFormat(existing.format, request.format)) {
             _requireCaptureStillAccepted(request);
+            if (request.reason ==
+                LocalHistoryCaptureReason.beforeHistoryTraversal) {
+              return _reuseTraversalProtection(
+                root,
+                index,
+                document,
+                candidate,
+                request,
+                policy,
+              );
+            }
             index = index.withDocument(document);
             await _publishIndex(root, index);
             if (!_captureStillAccepted(request)) {
@@ -295,16 +402,10 @@ class FileLocalHistoryStore implements LocalHistoryStore {
             }
             return LocalHistoryCaptureResult(
               document: document,
-              revision: adjacent,
+              revision: candidate,
               deduplicated: true,
             );
           }
-        }
-        final estimatedBytes = utf8.encode(request.source).length + 2048;
-        if (estimatedBytes > policy.maximumBytes) {
-          throw const LocalHistoryStorageException(
-            'The revision is larger than the Local History storage limit.',
-          );
         }
         final revisionId = request.captureId ?? _safeNewId();
         var summary = LocalHistoryRevisionSummary(
@@ -319,9 +420,15 @@ class FileLocalHistoryStore implements LocalHistoryStore {
               ? request.path
               : identity.path,
         );
+        final encoded = _revisionJson(document, summary, request);
+        final storageBytes = utf8.encode(encoded).length;
+        if (storageBytes > policy.maximumBytes) {
+          throw const LocalHistoryStorageException(
+            'The revision is larger than the Local History storage limit.',
+          );
+        }
         final target = _revisionFile(root, document.id, revisionId);
         await target.parent.create(recursive: true);
-        final encoded = _revisionJson(document, summary, request);
         _requireCaptureStillAccepted(request);
         await _publishNewFile(target, encoded);
         if (!_captureStillAccepted(request)) {
@@ -334,16 +441,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           await _deleteFileBestEffort(target);
           throw const LocalHistoryCaptureCancelled();
         }
-        summary = LocalHistoryRevisionSummary(
-          id: summary.id,
-          documentId: summary.documentId,
-          capturedAt: summary.capturedAt,
-          reason: summary.reason,
-          checksum: summary.checksum,
-          storageBytes: await target.length(),
-          sourceLength: summary.sourceLength,
-          historicalPath: summary.historicalPath,
-        );
+        summary = summary.copyWith(storageBytes: storageBytes);
         index = index.withCapture(document, summary);
         // A complete revision exists before the index points to it.
         await _publishIndex(root, index);
@@ -369,6 +467,88 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     });
   }
 
+  Future<LocalHistoryCaptureResult> _reuseTraversalProtection(
+    Directory root,
+    _Index index,
+    LocalHistoryDocument document,
+    LocalHistoryRevisionSummary previous,
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy, {
+    _Index? indexBeforeRecovery,
+  }) async {
+    if (previous.storageBytes > policy.maximumBytes) {
+      throw const LocalHistoryStorageException(
+        'The revision is larger than the Local History storage limit.',
+      );
+    }
+    var renewed = _renewedTraversalProtection(previous, request.capturedAt);
+    final target = _revisionFile(root, document.id, previous.id);
+    final previousRecord = identical(renewed, previous)
+        ? null
+        : await target.readAsString();
+    Future<void> cancelRenewal({required bool indexPublished}) async {
+      if (indexBeforeRecovery != null) {
+        await _publishIndex(
+          root,
+          indexBeforeRecovery.copyWith(
+            tombstones: {...indexBeforeRecovery.tombstones, previous.id},
+          ),
+        );
+        await _deleteFileBestEffort(target);
+      } else {
+        if (previousRecord != null) {
+          await _publishReplacingFile(target, previousRecord);
+        }
+        if (indexPublished) await _publishIndex(root, index);
+      }
+    }
+
+    _requireCaptureStillAccepted(request);
+    if (previousRecord != null) {
+      // Publish the complete record first so an index rebuild retains the
+      // protection. A failed index publication leaves the caller owning its
+      // independent source and retry work, just like a new revision write.
+      final encoded = _revisionJson(document, renewed, request);
+      final bytes = utf8.encode(encoded).length;
+      if (bytes > policy.maximumBytes) {
+        throw const LocalHistoryStorageException(
+          'The revision is larger than the Local History storage limit.',
+        );
+      }
+      await _publishReplacingFile(target, encoded);
+      renewed = renewed.copyWith(storageBytes: bytes);
+    }
+    if (!_captureStillAccepted(request)) {
+      await cancelRenewal(indexPublished: false);
+      throw const LocalHistoryCaptureCancelled();
+    }
+    final updated = index
+        .withDocument(document)
+        .copyWith(
+          revisions: [
+            for (final revision in index.revisions)
+              if (revision.id == previous.id) renewed else revision,
+          ],
+        );
+    await _publishIndex(root, updated);
+    if (!_captureStillAccepted(request)) {
+      await cancelRenewal(indexPublished: true);
+      throw const LocalHistoryCaptureCancelled();
+    }
+    await _applyRetention(
+      root,
+      updated,
+      policy,
+      renewed.id,
+      request.capturedAt.toUtc(),
+    );
+    return LocalHistoryCaptureResult(
+      document: document,
+      revision: renewed,
+      deduplicated: true,
+    );
+  }
+
   @override
   Future<LocalHistoryRevision?> readRevision(String revisionId) => _serialized(
     (root) => _withFileLock(root, () async {
@@ -385,6 +565,32 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         _revisionFile(root, document.id, summary.id),
         expected: summary,
       );
+    }),
+  );
+
+  @override
+  Future<List<LocalHistoryRevision>> readRevisions(
+    Iterable<String> revisionIds,
+  ) => _serialized(
+    (root) => _withFileLock(root, () async {
+      final index = await _loadIndexUnlocked(root, repair: true);
+      final summaries = {
+        for (final revision in index.revisions) revision.id: revision,
+      };
+      final documents = index.documents.map((document) => document.id).toSet();
+      final result = <LocalHistoryRevision>[];
+      for (final id in revisionIds) {
+        final summary = summaries[id];
+        if (summary == null || !documents.contains(summary.documentId)) {
+          continue;
+        }
+        final revision = await _readRevisionFile(
+          _revisionFile(root, summary.documentId, id),
+          expected: summary,
+        );
+        if (revision != null) result.add(revision);
+      }
+      return result;
     }),
   );
 
@@ -931,7 +1137,12 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     final file = File(p.join(root.path, 'index.json'));
     try {
       if (!await file.exists()) {
-        return repair ? await _rebuildIndex(root) : const _Index();
+        if (!repair) return const _Index();
+        final rebuilt = await _rebuildIndex(root);
+        if (rebuilt.revisions.isNotEmpty || rebuilt.tombstones.isNotEmpty) {
+          await _publishIndex(root, rebuilt);
+        }
+        return rebuilt;
       }
       final json = jsonDecode(await file.readAsString());
       if (json is! Map) throw const FormatException('Invalid history index');
@@ -939,7 +1150,29 @@ class FileLocalHistoryStore implements LocalHistoryStore {
       if (map['version'] != formatVersion) {
         throw UnsupportedLocalHistoryFormat(map['version']);
       }
-      return _Index.fromJson(map);
+      var index = _Index.fromJson(map);
+      final tombstones = await _readIndexTombstones(
+        root,
+        indexed: index.tombstones,
+      );
+      index = index.copyWith(
+        tombstones: tombstones,
+        revisions: index.revisions
+            .where((revision) => !tombstones.contains(revision.id))
+            .toList(growable: false),
+      );
+      final identities = await _readDocumentIdentities(root);
+      if (identities == null) {
+        // Migrate a legacy store before its rebuildable index can be lost.
+        await _publishDocumentIdentities(root, index.documents);
+        return index;
+      }
+      return index.copyWith(
+        documents: identities.values.toList(growable: false),
+        revisions: index.revisions
+            .where((revision) => identities.containsKey(revision.documentId))
+            .toList(growable: false),
+      );
     } on UnsupportedLocalHistoryFormat {
       rethrow;
     } on Object {
@@ -954,11 +1187,15 @@ class FileLocalHistoryStore implements LocalHistoryStore {
 
   Future<_Index> _rebuildIndex(Directory root) async {
     final existing = await _readIndexTombstones(root);
+    final identities = await _readDocumentIdentities(root);
     final documents = <String, LocalHistoryDocument>{};
     final revisions = <LocalHistoryRevisionSummary>[];
     final directory = Directory(p.join(root.path, 'revisions'));
     if (!await directory.exists()) return _Index(tombstones: existing);
-    await for (final entity in directory.list(recursive: true)) {
+    await for (final entity in directory.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is! File || p.extension(entity.path) != '.json') continue;
       final relative = p.relative(entity.path, from: directory.path);
       final parts = p.split(relative);
@@ -971,39 +1208,38 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         continue;
       }
       try {
-        final map = (jsonDecode(await entity.readAsString()) as Map)
-            .cast<String, Object?>();
-        if (map['version'] != formatVersion) continue;
-        final document = LocalHistoryDocument.fromJson(
-          (map['document'] as Map).cast<String, Object?>(),
-        );
-        final summary = LocalHistoryRevisionSummary.fromJson(
-          (map['revision'] as Map).cast<String, Object?>(),
-        );
-        if (document.id != documentId ||
-            summary.id != revisionId ||
-            summary.documentId != documentId) {
-          continue;
+        final record = await _readRevisionRecord(entity);
+        if (record == null) continue;
+        final document = identities?[documentId] ?? record.document;
+        // An authoritative journal also records absence after clear/retention.
+        if (identities != null && !identities.containsKey(documentId)) continue;
+        final previous = documents[documentId];
+        if (previous == null ||
+            !document.updatedAt.isBefore(previous.updatedAt)) {
+          documents[documentId] = document;
         }
-        final source = map['source'];
-        if (source is! String || sourceChecksum(source) != summary.checksum) {
-          continue;
-        }
-        documents[document.id] = document;
-        revisions.add(
-          LocalHistoryRevisionSummary(
-            id: summary.id,
-            documentId: summary.documentId,
-            capturedAt: summary.capturedAt,
-            reason: summary.reason,
-            checksum: summary.checksum,
-            storageBytes: await entity.length(),
-            sourceLength: summary.sourceLength,
-            historicalPath: summary.historicalPath,
-          ),
-        );
+        revisions.add(record.revision.summary);
       } on Object {
         // A malformed record cannot invalidate independently intact records.
+      }
+    }
+    // Legacy records have no independent identity authority. Resolve duplicate
+    // path claims deterministically instead of exposing two live owners.
+    if (identities == null) {
+      final ordered = documents.values.toList()
+        ..sort((a, b) {
+          final order = b.updatedAt.compareTo(a.updatedAt);
+          return order != 0 ? order : a.id.compareTo(b.id);
+        });
+      final owners = <String>[];
+      for (final document in ordered) {
+        final path = document.currentPath;
+        if (document.deleted || path == null) continue;
+        if (owners.any((owner) => p.equals(owner, path))) {
+          documents[document.id] = document.copyWith(deleted: true);
+        } else {
+          owners.add(path);
+        }
       }
     }
     return _Index(
@@ -1013,8 +1249,103 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     );
   }
 
-  Future<Set<String>> _readIndexTombstones(Directory root) async {
-    final result = <String>{};
+  Future<Map<String, LocalHistoryDocument>?> _readDocumentIdentities(
+    Directory root,
+  ) async {
+    final file = File(p.join(root.path, 'documents.json'));
+    if (!await file.exists()) return null;
+    final map = (jsonDecode(await file.readAsString()) as Map)
+        .cast<String, Object?>();
+    if (map['version'] != formatVersion) {
+      throw UnsupportedLocalHistoryFormat(map['version']);
+    }
+    final documents = (map['documents'] as List).map(
+      (value) =>
+          LocalHistoryDocument.fromJson((value as Map).cast<String, Object?>()),
+    );
+    return {for (final document in documents) document.id: document};
+  }
+
+  Future<void> _publishDocumentIdentities(
+    Directory root,
+    List<LocalHistoryDocument> documents,
+  ) async {
+    final file = File(p.join(root.path, 'documents.json'));
+    final content = const JsonEncoder.withIndent(' ').convert({
+      'version': formatVersion,
+      'documents': [for (final document in documents) document.toJson()],
+    });
+    if (!await _journalMatches(file, content)) {
+      await _publishReplacingFile(file, content);
+    }
+  }
+
+  Future<_RevisionRecord?> _findUnindexedCapture(
+    Directory root,
+    String captureId,
+  ) async {
+    final directory = Directory(p.join(root.path, 'revisions'));
+    if (!await directory.exists()) return null;
+    _RevisionRecord? found;
+    await for (final entity in directory.list(followLinks: false)) {
+      if (entity is! Directory || !_validId(p.basename(entity.path))) continue;
+      final file = File(p.join(entity.path, '$captureId.json'));
+      if (!await file.exists()) continue;
+      final record = await _readRevisionRecord(file);
+      if (record == null || found != null) {
+        throw const LocalHistoryStorageException(
+          'Local History capture identity collision.',
+        );
+      }
+      found = record;
+    }
+    return found;
+  }
+
+  Future<_RevisionRecord?> _readRevisionRecord(File file) async {
+    try {
+      final map = (jsonDecode(await file.readAsString()) as Map)
+          .cast<String, Object?>();
+      if (map['version'] != formatVersion) {
+        throw UnsupportedLocalHistoryFormat(map['version']);
+      }
+      final document = LocalHistoryDocument.fromJson(
+        (map['document'] as Map).cast<String, Object?>(),
+      );
+      final summary = LocalHistoryRevisionSummary.fromJson(
+        (map['revision'] as Map).cast<String, Object?>(),
+      );
+      final source = map['source'];
+      if (document.id != p.basename(file.parent.path) ||
+          summary.id != p.basenameWithoutExtension(file.path) ||
+          summary.documentId != document.id ||
+          source is! String ||
+          source.length != summary.sourceLength ||
+          sourceChecksum(source) != summary.checksum) {
+        return null;
+      }
+      return _RevisionRecord(
+        document: document,
+        revision: LocalHistoryRevision(
+          summary: summary.copyWith(storageBytes: await file.length()),
+          source: source,
+          format: TextFormatMetadata.fromJson(
+            (map['format'] as Map).cast<String, Object?>(),
+          ),
+        ),
+      );
+    } on UnsupportedLocalHistoryFormat {
+      rethrow;
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<Set<String>> _readIndexTombstones(
+    Directory root, {
+    Set<String>? indexed,
+  }) async {
+    final result = <String>{...?indexed};
     final journal = File(p.join(root.path, 'tombstones.json'));
     try {
       final values = jsonDecode(await journal.readAsString());
@@ -1024,6 +1355,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     } on Object {
       // A damaged journal does not make intact revision records unreadable.
     }
+    if (indexed != null) return result;
     final file = File(p.join(root.path, 'index.json'));
     try {
       final map = (jsonDecode(await file.readAsString()) as Map)
@@ -1042,34 +1374,21 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     File file, {
     required LocalHistoryRevisionSummary expected,
   }) async {
-    try {
-      final map = (jsonDecode(await file.readAsString()) as Map)
-          .cast<String, Object?>();
-      if (map['version'] != formatVersion) {
-        throw UnsupportedLocalHistoryFormat(map['version']);
-      }
-      final summary = LocalHistoryRevisionSummary.fromJson(
-        (map['revision'] as Map).cast<String, Object?>(),
-      );
-      final source = map['source'];
-      if (summary.id != expected.id ||
-          summary.documentId != expected.documentId ||
-          source is! String ||
-          sourceChecksum(source) != expected.checksum) {
-        return null;
-      }
-      return LocalHistoryRevision(
-        summary: expected,
-        source: source,
-        format: TextFormatMetadata.fromJson(
-          (map['format'] as Map).cast<String, Object?>(),
-        ),
-      );
-    } on UnsupportedLocalHistoryFormat {
-      rethrow;
-    } on Object {
+    final record = await _readRevisionRecord(file);
+    if (record == null ||
+        record.revision.summary.id != expected.id ||
+        record.document.id != expected.documentId ||
+        record.revision.summary.checksum != expected.checksum ||
+        record.revision.summary.sourceLength != expected.sourceLength ||
+        record.revision.summary.capturedAt != expected.capturedAt ||
+        record.revision.summary.reason != expected.reason) {
       return null;
     }
+    return LocalHistoryRevision(
+      summary: expected,
+      source: record.revision.source,
+      format: record.revision.format,
+    );
   }
 
   Future<void> _applyRetention(
@@ -1080,8 +1399,9 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     DateTime now,
   ) async {
     final cutoff = now.subtract(policy.retentionAge);
-    final ordered = [...index.revisions]
-      ..sort((left, right) => left.capturedAt.compareTo(right.capturedAt));
+    final ordered = [
+      ...index.revisions,
+    ]..sort((left, right) => left.retentionTime.compareTo(right.retentionTime));
     var total = ordered.fold<int>(
       0,
       (value, revision) => value + revision.storageBytes,
@@ -1089,7 +1409,8 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     final removed = <String>{};
     for (final revision in ordered) {
       if (revision.id == protectedRevisionId) continue;
-      if (revision.capturedAt.isBefore(cutoff) || total > policy.maximumBytes) {
+      if (revision.retentionTime.isBefore(cutoff) ||
+          total > policy.maximumBytes) {
         removed.add(revision.id);
         total -= revision.storageBytes;
       }
@@ -1101,10 +1422,17 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     final retainedDocumentIds = {
       for (final revision in revisions) revision.documentId,
     };
-    final documents = [
-      for (final document in index.documents)
-        if (retainedDocumentIds.contains(document.id)) document,
-    ];
+    final knownRevisionIds = {
+      for (final revision in index.revisions) revision.id,
+      ...index.tombstones,
+    };
+    final documents = <LocalHistoryDocument>[];
+    for (final document in index.documents) {
+      if (retainedDocumentIds.contains(document.id) ||
+          await _hasUnindexedRevision(root, document.id, knownRevisionIds)) {
+        documents.add(document);
+      }
+    }
     if (removed.isEmpty && documents.length == index.documents.length) {
       return;
     }
@@ -1126,6 +1454,26 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     // identical index afterward adds two flushes without another state change.
   }
 
+  Future<bool> _hasUnindexedRevision(
+    Directory root,
+    String documentId,
+    Set<String> knownRevisionIds,
+  ) async {
+    final directory = Directory(p.join(root.path, 'revisions', documentId));
+    if (!await directory.exists()) return false;
+    await for (final entity in directory.list(followLinks: false)) {
+      if (entity is! File || p.extension(entity.path) != '.json') continue;
+      final id = p.basenameWithoutExtension(entity.path);
+      if (!_validId(id) || knownRevisionIds.contains(id)) continue;
+      // An interrupted capture can still own independently retained work.
+      // Preserve its document's authoritative rename/deletion metadata until
+      // that record is indexed or explicitly cleared, even with no other
+      // indexed revisions left after retention.
+      if (await _readRevisionRecord(entity) != null) return true;
+    }
+    return false;
+  }
+
   Future<void> _publishIndex(Directory root, _Index index) async {
     final journal = File(p.join(root.path, 'tombstones.json'));
     final tombstones = const JsonEncoder.withIndent(
@@ -1137,6 +1485,9 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     if (!await _journalMatches(journal, tombstones)) {
       await _publishReplacingFile(journal, tombstones);
     }
+    // Identity changes may have no content revision. Keep them independently
+    // durable before publishing the disposable revision index.
+    await _publishDocumentIdentities(root, index.documents);
     await _publishReplacingFile(
       File(p.join(root.path, 'index.json')),
       const JsonEncoder.withIndent(' ').convert(index.toJson()),
@@ -1224,6 +1575,13 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     }
     return value;
   }
+}
+
+class _RevisionRecord {
+  const _RevisionRecord({required this.document, required this.revision});
+
+  final LocalHistoryDocument document;
+  final LocalHistoryRevision revision;
 }
 
 class _ClearIntent {
@@ -1389,6 +1747,13 @@ bool _sameTextFormat(TextFormatMetadata left, TextFormatMetadata right) =>
     left.lfCount == right.lfCount &&
     left.crlfCount == right.crlfCount &&
     left.crCount == right.crCount;
+
+LocalHistoryRevisionSummary _renewedTraversalProtection(
+  LocalHistoryRevisionSummary previous,
+  DateTime time,
+) => time.toUtc().isAfter(previous.retentionTime)
+    ? previous.copyWith(protectedAt: time.toUtc())
+    : previous;
 
 LocalHistoryDocument _updatedDocument(
   LocalHistoryDocument document,
@@ -1736,6 +2101,15 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
           throw const LocalHistoryReconciliationConflict();
         }
         _requireCaptureStillAccepted(request);
+        if (request.reason ==
+            LocalHistoryCaptureReason.beforeHistoryTraversal) {
+          return _reuseTraversalProtection(
+            document,
+            existing.summary,
+            request,
+            policy,
+          );
+        }
         return LocalHistoryCaptureResult(
           document: document,
           revision: existing.summary,
@@ -1783,17 +2157,36 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
         .fold<LocalHistoryRevisionSummary?>(
           null,
           (latest, revision) =>
-              latest == null || revision.capturedAt.isAfter(latest.capturedAt)
+              latest == null || !revision.capturedAt.isBefore(latest.capturedAt)
               ? revision
               : latest,
         );
-    if (!request.force && adjacent?.checksum == checksum) {
-      final adjacentRevision = _revisions[adjacent!.id];
-      if (adjacentRevision != null &&
-          _sameTextFormat(adjacentRevision.format, request.format)) {
+    final candidates =
+        request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal
+        ? _revisions.values
+              .map((r) => r.summary)
+              .where(
+                (r) => r.documentId == document!.id && r.checksum == checksum,
+              )
+        : [if (adjacent?.checksum == checksum) adjacent!];
+    for (final candidate
+        in request.force ? <LocalHistoryRevisionSummary>[] : candidates) {
+      final existing = _revisions[candidate.id];
+      if (existing != null &&
+          existing.source == request.source &&
+          _sameTextFormat(existing.format, request.format)) {
+        if (request.reason ==
+            LocalHistoryCaptureReason.beforeHistoryTraversal) {
+          return _reuseTraversalProtection(
+            document,
+            candidate,
+            request,
+            policy,
+          );
+        }
         return LocalHistoryCaptureResult(
           document: document,
-          revision: adjacent,
+          revision: candidate,
           deduplicated: true,
         );
       }
@@ -1825,6 +2218,27 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
     return LocalHistoryCaptureResult(document: document, revision: summary);
   }
 
+  LocalHistoryCaptureResult _reuseTraversalProtection(
+    LocalHistoryDocument document,
+    LocalHistoryRevisionSummary previous,
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) {
+    final renewed = _renewedTraversalProtection(previous, request.capturedAt);
+    _requireCaptureStillAccepted(request);
+    _revisions[previous.id] = LocalHistoryRevision(
+      summary: renewed,
+      source: request.source,
+      format: request.format,
+    );
+    _applyMemoryRetention(policy, request.capturedAt.toUtc(), renewed.id);
+    return LocalHistoryCaptureResult(
+      document: document,
+      revision: renewed,
+      deduplicated: true,
+    );
+  }
+
   void _applyMemoryRetention(
     LocalHistoryPolicy policy,
     DateTime now,
@@ -1833,7 +2247,7 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
     final ordered = _revisions.values.toList()
       ..sort(
         (left, right) =>
-            left.summary.capturedAt.compareTo(right.summary.capturedAt),
+            left.summary.retentionTime.compareTo(right.summary.retentionTime),
       );
     var total = ordered.fold<int>(
       0,
@@ -1843,7 +2257,8 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
     for (final revision in ordered) {
       final summary = revision.summary;
       if (summary.id == protectedId) continue;
-      if (summary.capturedAt.isBefore(cutoff) || total > policy.maximumBytes) {
+      if (summary.retentionTime.isBefore(cutoff) ||
+          total > policy.maximumBytes) {
         _revisions.remove(summary.id);
         total -= summary.storageBytes;
       }

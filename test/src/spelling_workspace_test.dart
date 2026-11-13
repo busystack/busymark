@@ -38,6 +38,7 @@ import 'package:path/path.dart' as p;
 
 import '../support/spelling_test_bundle.dart';
 import '../support/widget_async.dart';
+import '../support/desktop_focus.dart';
 
 void main() {
   final l10n = AppLocalizationsEn();
@@ -79,7 +80,146 @@ void main() {
     }
   });
 
-  testWidgets(
+  for (final newerOwner in [false, true]) {
+    inWorkspace(
+      'delayed spelling review return respects newerOwner=$newerOwner',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final barrier = _ReviewFocusBarrier();
+        addTearDown(() {
+          if (!barrier.release.isCompleted) barrier.release.complete();
+          barrier.dispose();
+        });
+        const original = 'helo world\n';
+        final harness = await _pumpWorkspace(
+          tester,
+          source: original,
+          headerBarService: barrier,
+        );
+        await _until(
+          tester,
+          () =>
+              harness.spelling.state.complete &&
+              harness.spelling.misspellings.isNotEmpty,
+        );
+        final field = find.byWidgetPredicate(
+          (w) => w is TextField && w.controller?.text == 'helo world',
+        );
+        await tester.tap(field, pointer: 1401);
+        final body = tester.widget<TextField>(field);
+        await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+        final dialog = find.byType(BusyMarkSpellingReviewDialog);
+        await _until(tester, () => dialog.evaluate().isNotEmpty);
+        final selection = body.controller!.selection;
+        final before = harness.workspace.activeBuffer!;
+        final newer = FocusNode(debugLabel: 'Search after spelling review');
+        final search = TextEditingController(text: 'Search');
+        OverlayEntry? entry;
+        addTearDown(() {
+          entry?.remove();
+          entry?.dispose();
+          newer.dispose();
+          search.dispose();
+        });
+        await tester.tap(
+          find.descendant(of: dialog, matching: find.text(l10n.close)),
+          pointer: 1402,
+        );
+        await _until(
+          tester,
+          () => barrier.releaseStarted && dialog.evaluate().isEmpty,
+        );
+        if (newerOwner) {
+          entry = OverlayEntry(
+            builder: (_) => Positioned(
+              left: 1000,
+              top: 30,
+              width: 220,
+              height: 40,
+              child: Material(
+                child: TextField(focusNode: newer, controller: search),
+              ),
+            ),
+          );
+          Overlay.of(
+            tester.element(find.byType(BusyMarkWysiwygEditor)),
+          ).insert(entry);
+          await tester.pumpAndSettle();
+          newer.requestFocus();
+          await tester.pumpAndSettle();
+          expect(FocusManager.instance.primaryFocus, same(newer));
+        }
+        barrier.release.complete();
+        for (var frame = 0; frame < 30; frame++) {
+          tester.binding.scheduleFrame();
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(newerOwner ? newer : body.focusNode),
+          );
+        }
+        final after = harness.workspace.activeBuffer!;
+        expect(after.text, original);
+        expect(after.revision, before.revision);
+        expect(after.dirty, before.dirty);
+        expect(
+          after.editorState.undoState.undo,
+          before.editorState.undoState.undo,
+        );
+        expect(
+          after.editorState.undoState.redo,
+          before.editorState.undoState.redo,
+        );
+        expect(body.controller!.selection, selection);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        final value = body.controller!.value;
+        final text = newerOwner
+            ? 'Search!'
+            : value.text.replaceRange(selection.start, selection.end, 'Z');
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(
+              offset: newerOwner ? 7 : selection.start + 1,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        if (newerOwner) {
+          expect(search.text, 'Search!');
+          expect(harness.workspace.activeText, original);
+          expect(FocusManager.instance.primaryFocus, same(newer));
+        } else {
+          expect(harness.workspace.activeText, '$text\n');
+          harness.controller.undoActiveBuffer();
+          await _until(tester, () => harness.workspace.activeText == original);
+          await _until(
+            tester,
+            () =>
+                harness.spelling.state.complete &&
+                harness.spelling.misspellings.any(
+                  (word) =>
+                      word.run.snapshot.contentRevision ==
+                      harness.workspace.activeBuffer!.revision,
+                ),
+          );
+        }
+        if (entry != null) {
+          entry.remove();
+          await tester.pump();
+          entry.dispose();
+          entry = null;
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        // Cancel post-undo preparation before the fake-clock invariants, but
+        // retire the native worker in the real async zone like provider teardown.
+        await tester.runAsync(() async => harness.spelling.dispose());
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+
+  inWorkspace(
     'Writerside list hard break supports underlines and spelling review',
     (tester) async {
       const source = '1. helo  \n**world**\n\n2. hello\n';
@@ -120,7 +260,7 @@ void main() {
     },
   );
 
-  testWidgets(
+  inWorkspace(
     'Writerside nested TOC and comment retain rich spelling through correction',
     (tester) async {
       const source =
@@ -167,7 +307,7 @@ void main() {
     },
   );
 
-  testWidgets('rich image review preserves authored source through undo and redo', (
+  inWorkspace('rich image review preserves authored source through undo and redo', (
     tester,
   ) async {
     const source = 'hello ![hello `wrld`](image.png)\n';
@@ -229,7 +369,7 @@ void main() {
           '\n',
     ),
   ]) {
-    testWidgets('rich review preserves ${fixture.name} through undo and redo', (
+    inWorkspace('rich review preserves ${fixture.name} through undo and redo', (
       tester,
     ) async {
       final source = fixture.source;
@@ -287,7 +427,7 @@ void main() {
     });
   }
 
-  testWidgets(
+  inWorkspace(
     'Ctrl+N typing paints live spelling targets and corrects with undo',
     (tester) async {
       final harness = await _pumpWorkspace(tester);
@@ -420,7 +560,7 @@ void main() {
     },
   );
 
-  testWidgets('confirmed spelling underline survives continued typing', (
+  inWorkspace('confirmed spelling underline survives continued typing', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(tester);
@@ -541,7 +681,7 @@ void main() {
     'helo  \nworld\n\nwrld\n',
     '| helo caf&#233; |\n| --- |\n| hello |\n\nwrld\n',
   ]) {
-    testWidgets(
+    inWorkspace(
       'real rich review retains later visits after serialization: $source',
       (tester) async {
         final harness = await _pumpWorkspace(tester, source: source);
@@ -626,7 +766,7 @@ void main() {
     DocumentViewModePreference.editor,
     DocumentViewModePreference.split,
   ]) {
-    testWidgets(
+    inWorkspace(
       'missing dictionary uses one integrated banner in ${viewMode.name}',
       (tester) async {
         final harness = await _pumpWorkspace(
@@ -690,7 +830,7 @@ void main() {
     );
   }
 
-  testWidgets(
+  inWorkspace(
     'language-required state uses compact document status instead of a banner',
     (tester) async {
       final harness = await _pumpWorkspace(
@@ -759,7 +899,7 @@ void main() {
     },
   );
 
-  testWidgets('general Markdown fixture finishes automatic rich spelling', (
+  inWorkspace('general Markdown fixture finishes automatic rich spelling', (
     tester,
   ) async {
     final source = File('test/fixtures/markdown/basic.md').readAsStringSync();
@@ -792,7 +932,7 @@ void main() {
     DocumentViewModePreference.editor,
     DocumentViewModePreference.source,
   ]) {
-    testWidgets(
+    inWorkspace(
       'pasted formatted job finishes automatic spelling in ${mode.name}',
       (tester) async {
         final html = File(
@@ -872,7 +1012,7 @@ void main() {
     );
   }
 
-  testWidgets('new rich document checks spelling after choosing its language', (
+  inWorkspace('new rich document checks spelling after choosing its language', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(tester, defaultLanguage: null);
@@ -951,7 +1091,7 @@ void main() {
     expect(_spellingUnderlineOverlay(), findsOneWidget);
   });
 
-  testWidgets(
+  inWorkspace(
     'new source document checks spelling after choosing its language',
     (tester) async {
       final harness = await _pumpWorkspace(
@@ -1066,7 +1206,7 @@ void main() {
   );
 
   for (final viewMode in DocumentViewModePreference.values) {
-    testWidgets('uses one document status strip in ${viewMode.name} mode', (
+    inWorkspace('uses one document status strip in ${viewMode.name} mode', (
       tester,
     ) async {
       final harness = await _pumpWorkspace(
@@ -1093,7 +1233,7 @@ void main() {
     });
   }
 
-  testWidgets('spelling-off status remains an actionable language control', (
+  inWorkspace('spelling-off status remains an actionable language control', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(tester, source: 'helo\n');
@@ -1130,7 +1270,7 @@ void main() {
     );
   });
 
-  testWidgets('status initializes the chooser when automatic spelling is off', (
+  inWorkspace('status initializes the chooser when automatic spelling is off', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
@@ -1166,7 +1306,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('banner installs the required dictionary and then conceals', (
+  inWorkspace('banner installs the required dictionary and then conceals', (
     tester,
   ) async {
     var downloadCount = 0;
@@ -1231,7 +1371,7 @@ void main() {
     );
   });
 
-  testWidgets('failed banner installation keeps the unresolved state', (
+  inWorkspace('failed banner installation keeps the unresolved state', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
@@ -1277,7 +1417,7 @@ void main() {
     expect(find.text(l10n.spellingDictionaryInstallFailed), findsOneWidget);
   });
 
-  testWidgets('routine checking does not create persistent editor chrome', (
+  inWorkspace('routine checking does not create persistent editor chrome', (
     tester,
   ) async {
     final coordinator = Completer<SpellingCoordinator>();
@@ -1302,7 +1442,7 @@ void main() {
     );
   });
 
-  testWidgets('automatic spelling failure is visible in the compact banner', (
+  inWorkspace('automatic spelling failure is visible in the compact banner', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
@@ -1325,7 +1465,7 @@ void main() {
     );
   });
 
-  testWidgets(
+  inWorkspace(
     'automatic incomplete projection is visible in the compact banner',
     (tester) async {
       final harness = await _pumpWorkspace(
@@ -1347,7 +1487,7 @@ void main() {
     },
   );
 
-  testWidgets('native spelling submenu applies immediate language choices', (
+  inWorkspace('native spelling submenu applies immediate language choices', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
@@ -1436,7 +1576,7 @@ void main() {
     await _until(tester, () => harness.spelling.state.complete);
   });
 
-  testWidgets('cancelling document dictionary install preserves override', (
+  inWorkspace('cancelling document dictionary install preserves override', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
@@ -1466,7 +1606,7 @@ void main() {
     expect(harness.spelling.catalog?.installedById('fr-Test'), isNull);
   });
 
-  testWidgets('document language changes only after dictionary installation', (
+  inWorkspace('document language changes only after dictionary installation', (
     tester,
   ) async {
     final releaseDownload = Completer<void>();
@@ -1525,7 +1665,7 @@ void main() {
     expect(harness.spelling.effectiveLanguage, 'fr-Test');
   });
 
-  testWidgets('failed document dictionary install preserves override', (
+  inWorkspace('failed document dictionary install preserves override', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
@@ -1563,6 +1703,36 @@ void main() {
   });
 }
 
+// Monitor subscriptions and the real spelling worker belong to each workspace.
+// Unmount consumers first, then dispose in the real I/O zone: worker shutdown
+// uses an IPC timeout. Both must finish owning their timers before testWidgets
+// checks for pending work; filesystem deletion follows in addTearDown.
+final _workspaceContainers = <ProviderContainer>[];
+
+void inWorkspace(
+  String description,
+  WidgetTesterCallback callback, {
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgets(description, (tester) async {
+    _workspaceContainers.clear();
+    try {
+      await callback(tester);
+    } finally {
+      try {
+        await tester.pumpWidget(const SizedBox());
+      } finally {
+        await tester.runAsync(() async {
+          for (final container in _workspaceContainers.reversed) {
+            container.dispose();
+          }
+          _workspaceContainers.clear();
+        });
+      }
+    }
+  }, variant: variant);
+}
+
 Future<_Harness> _pumpWorkspace(
   WidgetTester tester, {
   String? source,
@@ -1575,6 +1745,7 @@ Future<_Harness> _pumpWorkspace(
   bool automaticSpelling = true,
   SpellingDictionaryFileDownload? downloadFile,
   SpellingCoordinatorStarter? coordinatorStarter,
+  LinuxHeaderBarService? headerBarService,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1400, 1000));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1629,13 +1800,15 @@ Future<_Harness> _pumpWorkspace(
       documentRecoveryStoreProvider.overrideWithValue(
         MemoryDocumentRecoveryStore(),
       ),
-      linuxHeaderBarServiceProvider.overrideWithValue(_HeaderBar()),
+      linuxHeaderBarServiceProvider.overrideWithValue(
+        headerBarService ?? _HeaderBar(),
+      ),
       systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
       spellingSessionControllerProvider.overrideWith((ref) => spelling),
     ],
   );
+  _workspaceContainers.add(container);
   addTearDown(() async {
-    container.dispose();
     await root.delete(recursive: true);
   });
   await tester.pumpWidget(
@@ -1761,6 +1934,19 @@ class _HeaderBar extends LinuxHeaderBarService {
   bool get usesNativeHeaderBar => false;
   @override
   Stream<HeaderBarAction> get actions => const Stream.empty();
+}
+
+class _ReviewFocusBarrier extends _HeaderBar {
+  final release = Completer<void>();
+  bool releaseStarted = false;
+
+  @override
+  Future<void> setModalBarrierDepth(int depth) async {
+    if (depth == 0) {
+      releaseStarted = true;
+      await release.future;
+    }
+  }
 }
 
 Future<void> _copyDictionaryDownload({

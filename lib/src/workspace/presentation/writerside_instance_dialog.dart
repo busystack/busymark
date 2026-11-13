@@ -353,7 +353,7 @@ class _BusyMarkWritersideInstanceDialogState
       description: importError,
       filled: true,
       children: [
-        YaruListTile.square(
+        BusyMarkListTile.square(
           title: Wrap(
             spacing: BusyMarkSpacing.sm,
             children: [

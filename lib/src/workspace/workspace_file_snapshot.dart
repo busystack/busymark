@@ -35,6 +35,15 @@ class WorkspaceFileSnapshot {
   }
 }
 
+/// Carries the snapshot of the exact bytes that could not be decoded.
+/// Destructive operations can validate that source without retaining it as text.
+class WorkspaceFileDecodingException extends FormatException {
+  WorkspaceFileDecodingException(FormatException cause, this.snapshot)
+    : super(cause.message, cause.source, cause.offset);
+
+  final WorkspaceFileSnapshot snapshot;
+}
+
 class WorkspaceFileLoad {
   const WorkspaceFileLoad({
     required this.text,

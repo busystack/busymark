@@ -1113,6 +1113,169 @@ void main() {
       await tester.pump();
     }
 
+    for (final entryPath in ['plain paste', 'text input']) {
+      testWidgets(
+        'whole-heading $entryPath newline replacement with identical suffix is not a prepend',
+        (tester) async {
+          const original = '## About the job\n';
+          BusyDocument? live;
+          var source = original;
+          await mount(
+            tester,
+            'heading-identical-suffix',
+            original,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          final field = tester.widget<TextField>(
+            find.widgetWithText(TextField, 'About the job'),
+          );
+          field.controller!.selection = const TextSelection(
+            baseOffset: 0,
+            extentOffset: 13,
+          );
+          await tester.pump();
+          if (entryPath == 'plain paste') {
+            systemData = {'text': '\nAbout the job'};
+            await key(tester, LogicalKeyboardKey.keyV, shift: true);
+          } else {
+            tester.testTextInput.updateEditingValue(
+              const TextEditingValue(
+                text: '\nAbout the job',
+                selection: TextSelection.collapsed(offset: 14),
+              ),
+            );
+          }
+          await tester.pumpAndSettle();
+          expect(
+            live!.blocks.map((b) => b.kind),
+            everyElement(BusyBlockKind.paragraph),
+          );
+          expect(source, isNot(contains('##')));
+          await key(tester, LogicalKeyboardKey.keyZ);
+          await tester.pumpAndSettle();
+          expect(source, original);
+        },
+      );
+
+      for (final end in [0, 5, 13]) {
+        testWidgets(
+          'heading boundary $entryPath replaces prefix $end without losing structure',
+          (tester) async {
+            const original = '## About the job {id="job"}\n';
+            var source = original;
+            BusyDocument? live;
+            var publications = 0;
+            await mount(tester, 'heading-boundary', original, (value) {
+              source = value;
+              publications++;
+            }, onDocumentChanged: (value) => live = value);
+            final field = tester.widget<TextField>(
+              find.widgetWithText(TextField, 'About the job'),
+            );
+            field.controller!.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: end,
+            );
+            await tester.pump();
+            if (entryPath == 'plain paste') {
+              systemData = {'text': '\n'};
+              await key(tester, LogicalKeyboardKey.keyV, shift: true);
+            } else {
+              tester.testTextInput.updateEditingValue(
+                TextEditingValue(
+                  text: '\n${'About the job'.substring(end)}',
+                  selection: const TextSelection.collapsed(offset: 1),
+                ),
+              );
+            }
+            await tester.pumpAndSettle();
+            expect(publications, 1);
+            expect(live!.blocks.first.kind, BusyBlockKind.paragraph);
+            if (end < 13) {
+              final heading = live!.blocks.last;
+              expect(heading.kind, BusyBlockKind.heading);
+              expect(heading.attributes['id'], 'job');
+              expect(heading.plainText, 'About the job'.substring(end));
+              final target = tester.widget<TextField>(
+                find.widgetWithText(TextField, heading.plainText),
+              );
+              expect(target.focusNode!.hasFocus, isTrue);
+              expect(
+                target.controller!.selection,
+                const TextSelection.collapsed(offset: 0),
+              );
+              tester.testTextInput.updateEditingValue(
+                TextEditingValue(
+                  text: 'X${heading.plainText}',
+                  selection: const TextSelection.collapsed(offset: 1),
+                ),
+              );
+              await tester.pumpAndSettle();
+              expect(source, contains('## X${heading.plainText}'));
+              await key(tester, LogicalKeyboardKey.keyZ);
+              await tester.pumpAndSettle();
+            } else {
+              expect(
+                live!.blocks.where((b) => b.kind == BusyBlockKind.heading),
+                isEmpty,
+              );
+            }
+            await key(tester, LogicalKeyboardKey.keyZ);
+            await tester.pumpAndSettle();
+            expect(source, original);
+            await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+            await tester.pumpAndSettle();
+            expect(live!.blocks.first.kind, BusyBlockKind.paragraph);
+            expect(
+              live!.blocks.last.kind,
+              end < 13 ? BusyBlockKind.heading : BusyBlockKind.paragraph,
+            );
+          },
+        );
+      }
+    }
+
+    testWidgets(
+      'accepted replacement does not leave stale full-heading selection context',
+      (tester) async {
+        var source = '## About the job\n';
+        BusyDocument? live;
+        await mount(
+          tester,
+          'heading-selection-context',
+          source,
+          (value) => source = value,
+          onDocumentChanged: (value) => live = value,
+        );
+        final field = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'About the job'),
+        );
+        field.controller!.selection = const TextSelection(
+          baseOffset: 0,
+          extentOffset: 13,
+        );
+        await tester.pump();
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'Other the job',
+            selection: TextSelection.collapsed(offset: 13),
+          ),
+        );
+        await tester.pumpAndSettle();
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'Other the job\n',
+            selection: TextSelection.collapsed(offset: 14),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(live!.blocks.first.kind, BusyBlockKind.heading);
+        expect(live!.blocks.first.plainText, 'Other the job');
+        expect(source, startsWith('## Other the job\n'));
+      },
+    );
+
     for (final plainText in [false, true]) {
       testWidgets(
         'text-only URL paste then ordinary Enter recognizes a live link (plainText=$plainText)',

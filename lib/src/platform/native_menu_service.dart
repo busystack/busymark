@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../core/debug_log.dart';
 
 @visibleForTesting
 const nativeMenuChannelName = 'busymark/native_menus';
@@ -26,6 +27,7 @@ final class NativeMenuEntry {
     this.iconColorArgb,
     this.shortcut,
     this.gtkAccelerator,
+    this.mnemonic,
     this.enabled = true,
     this.checkable = false,
     this.selected = false,
@@ -41,6 +43,7 @@ final class NativeMenuEntry {
        iconColorArgb = null,
        shortcut = null,
        gtkAccelerator = null,
+       mnemonic = null,
        checkable = false,
        selected = false,
        mutuallyExclusive = false,
@@ -52,6 +55,7 @@ final class NativeMenuEntry {
       iconColorArgb = null,
       shortcut = null,
       gtkAccelerator = null,
+      mnemonic = null,
       enabled = false,
       checkable = false,
       selected = false,
@@ -64,6 +68,7 @@ final class NativeMenuEntry {
   final int? iconColorArgb;
   final String? shortcut;
   final String? gtkAccelerator;
+  final String? mnemonic;
   final bool enabled;
   final bool checkable;
   final bool selected;
@@ -79,6 +84,7 @@ final class NativeMenuEntry {
       if (shortcut != null && shortcut!.isNotEmpty) 'shortcut': shortcut!,
       if (gtkAccelerator != null && gtkAccelerator!.isNotEmpty)
         'gtkAccelerator': gtkAccelerator!,
+      if (mnemonic != null) 'mnemonic': mnemonic!,
       'enabled': enabled,
       'checkable': checkable,
       'selected': selected,
@@ -119,6 +125,14 @@ class NativeMenuService {
     bool preferAbove = false,
     TextDirection? textDirection,
   }) async {
+    final selector = entries.any((entry) => entry.mnemonic != null);
+    if (selector) {
+      busyMarkViewSelectorTrace('native-request', {
+        'session': session.id,
+        'items': entries.length,
+        'focusFirst': focusFirst,
+      });
+    }
     try {
       final selectedIndex = await _channel.invokeMethod<int>('show', {
         'sessionId': session.id,
@@ -133,10 +147,31 @@ class NativeMenuService {
         'preferredPosition': preferAbove ? 'top' : 'bottom',
         if (textDirection != null) 'textDirection': textDirection.name,
       });
+      if (selector) {
+        busyMarkViewSelectorTrace('native-response', {
+          'session': session.id,
+          'available': true,
+          'selectedIndex': selectedIndex,
+        });
+      }
       return NativeMenuResult.available(selectedIndex: selectedIndex);
     } on MissingPluginException {
+      if (selector) {
+        busyMarkViewSelectorTrace('native-response', {
+          'session': session.id,
+          'available': false,
+          'reason': 'missing-plugin',
+        });
+      }
       return const NativeMenuResult.unavailable();
     } on PlatformException catch (error) {
+      if (selector) {
+        busyMarkViewSelectorTrace('native-response', {
+          'session': session.id,
+          'available': false,
+          'reason': error.code,
+        });
+      }
       if (error.code == 'unavailable') {
         return const NativeMenuResult.unavailable();
       }

@@ -133,13 +133,22 @@ class WindowControlService extends ChangeNotifier {
     required Future<bool> Function() saveChanges,
     Future<void> Function()? beforeClose,
     Future<void> Function()? discardChanges,
+    Future<bool> Function()? finalCloseGuard,
   }) async {
+    Future<void> finish() async {
+      if (finalCloseGuard != null && !await finalCloseGuard()) {
+        await _nativeWindow.setPreventClose(true);
+        return;
+      }
+      await closeWindow();
+    }
+
     if (_closeInProgress) {
       return;
     }
     if (!hasUnsavedChanges || !confirmCloseWithUnsavedChanges) {
       await beforeClose?.call();
-      await closeWindow();
+      await finish();
       return;
     }
 
@@ -147,11 +156,11 @@ class WindowControlService extends ChangeNotifier {
     switch (action) {
       case WindowCloseAction.discard:
         await discardChanges?.call();
-        await closeWindow();
+        await finish();
       case WindowCloseAction.save:
         if (await saveChanges()) {
           await beforeClose?.call();
-          await closeWindow();
+          await finish();
         } else {
           await _nativeWindow.setPreventClose(true);
         }

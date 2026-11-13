@@ -1,0 +1,737 @@
+{
+  "collected": 1793641037.8962176,
+  "sources": {
+    "sdk": {
+      "frameworkVersion": "3.47.5",
+      "channel": "stable",
+      "repositoryUrl": "https://github.com/flutter/flutter.git",
+      "frameworkRevision": "6a19cca56475dbfba1478ee68d7bd0c2ef891da1",
+      "frameworkCommitDate": "2026-09-17 14:13:22 -0400",
+      "engineRevision": "af7e796e161ae0bb1ff0758c71a7105418bd9ded",
+      "engineCommitDate": "2026-09-16 18:35:09.000Z",
+      "engineContentHash": "ab598368592da0064197e2bc15c7f5b0a2c6bb1f",
+      "engineBuildDate": "2026-09-16 12:35:21.428",
+      "dartSdkVersion": "3.13.4",
+      "devToolsVersion": "2.60.0",
+      "flutterVersion": "3.47.5",
+      "flutterRoot": "/home/ubuntu/busystack-native-git-verification-20261031/flutter"
+    },
+    "mark": "0b92f501330478e44ffb22db31779c45f10efdf3",
+    "files": "1d414dc44495428bbe21eb664db924d433042821",
+    "dependencies": {
+      "schema": 1,
+      "layout": "sibling-working-trees",
+      "dependencies": [
+        {
+          "name": "busystack_git",
+          "path": "../busystack_git",
+          "archive": "tool/source-dependencies/busystack_git.tar.gz",
+          "sha256": "e3069f64edd7e5dfad7919c7338119f1246f1595c3bc962bfa0e393a4e479453",
+          "tree_sha256": "b19ca9d79557fe3645578e08745e37cb1994ab16e96a96f92d0d9046a5ca59f4",
+          "repository": "https://github.com/busystack/busystack_git.git",
+          "revision": "7d8e55d8034aeb85cddac1c0f498b0f3cc33105b"
+        },
+        {
+          "name": "busystack_git_flutter",
+          "path": "../busystack_git_flutter",
+          "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
+          "sha256": "f9290243c30539129bf000b82b0b723dde24e5d9cf3f8db3d6d7af52410f9b66",
+          "tree_sha256": "c9873bd7ad2dc67abe4a41ff1e7aa962742d21c9e2b8f919b238f72e7d333b60",
+          "repository": "https://github.com/busystack/busystack_git_flutter.git",
+          "revision": "eefe2b1c54f7c92f5de00f4df4effa8e435357c3"
+        }
+      ]
+    }
+  },
+  "trackedChanges": {
+    "busymark": "",
+    "busyfiles": ""
+  },
+  "backend": "X11/Xvfb with Openbox",
+  "screen": [
+    1440,
+    1000
+  ],
+  "dpi": 96,
+  "devicePixelRatio": 1,
+  "textScale": "Native accepted images are actual default 1.0. Private GIO keyfile requested 1.5, but the portal-backed application did not enlarge; those probes are investigation, not scale acceptance. Widget tests exercise actual host routes at 1 and 2.",
+  "accent": "Yaru-blue",
+  "processLocale": "en_US.UTF-8",
+  "accessibilitySetting": "false",
+  "osRelease": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+  "kernel": "Linux busyfiles-release24-20261005 6.8.0-147-generic #147-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep 24 11:33:16 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+  "packages": "libglib2.0-0t64:amd64\t2.80.0-6ubuntu3.9\nlibgtk-3-0t64:amd64\t3.24.41-4ubuntu1.3\nlibx11-6:amd64\t2:1.8.7-1ubuntu0.1\nlibxtst6:amd64\t2:1.2.3-1.1ubuntu0.1",
+  "captures": {
+    "untrusted-en.png": {
+      "target": "untrusted-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "3a9f715d8413ca19b02857316093d8705a13474ab7187d9f6191fb415eefd978",
+      "gtkTheme": "Yaru-blue"
+    },
+    "trust-dialog-en.png": {
+      "target": "trust-dialog-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "ec4a59b690a6ed1bf4c266e388eb4783ac0876013c20a92838f2aeeb96a37439",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-native-branch-en.png": {
+      "target": "commit-native-branch-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "2938a37fef3cc9ae4aed9b2b708cfac86fa2ee0e331d942236ee75deb1e5b2cc",
+      "gtkTheme": "Yaru-blue"
+    },
+    "merge-inspector-en.png": {
+      "target": "merge-inspector-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "f0b65008308d0fcdc75f8cf93c4f0fd8fdf4d48dfcbae7d26186811d11b7bdc6",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-actions-en.png": {
+      "target": "commit-actions-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "fc48935df94df75cb9d61f67629872972ca06e3017a76d73d13522c56a9b99fd",
+      "gtkTheme": "Yaru-blue"
+    },
+    "copy-hash-highlight-en.png": {
+      "target": "copy-hash-highlight-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "64f3a48d5bd38ebf0196d8a989427743a7f8ba25735ab798a137c050ff0b2f4b",
+      "gtkTheme": "Yaru-blue"
+    },
+    "merge-details-en.png": {
+      "target": "merge-details-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "ed869adc88f99a07d6e9a48d213841011243b98ec9dfbfefe5d84d6368b4b39c",
+      "gtkTheme": "Yaru-blue"
+    },
+    "selected-message-en.png": {
+      "target": "selected-message-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "2af871717e52a1dfc9aab7385090f9b19c031e4525b5b50453588b633487cc1c",
+      "gtkTheme": "Yaru-blue"
+    },
+    "native-text-copy-menu-en.png": {
+      "target": "native-text-copy-menu-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "a8d4d771be3cbc0a0a31e1cd181f406cea7fb373171668bc61046b44012574c0",
+      "gtkTheme": "Yaru-blue"
+    },
+    "history-selector-en.png": {
+      "target": "history-selector-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "aa2d3955f0a0dd06b2734bf6121bc2561f1d13e540e16fe381ee467948473119",
+      "gtkTheme": "Yaru-blue"
+    },
+    "ordinary-root-inspector-en.png": {
+      "target": "ordinary-root-inspector-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "aa63f491d21147014ac3a9613f9439e1c2549b9301149c1c1130e2bc826d74d0",
+      "gtkTheme": "Yaru-blue"
+    },
+    "short-details-en.png": {
+      "target": "short-details-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "d234bf09b08cfd87c2a83f07f366e2bab6c373b319f96608db88079610dea439",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-inspector-en.png": {
+      "target": "long-inspector-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "5e6cdbd2c0bfdc59019bf4a0a7a56877dad31100a0835929688945156f3fdc44",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-top-en.png": {
+      "target": "long-details-top-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "8ad01130f9881d78aabcbf11e140fada73b5733c390cd31113530e68f6655b4a",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-bottom-en.png": {
+      "target": "long-details-bottom-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "869a794b3f19bf3b404607bbd155fe16872c68fd91cd8a0fdefc8c6bf0fa1704",
+      "gtkTheme": "Yaru-blue"
+    },
+    "file-actions-hover-en.png": {
+      "target": "file-actions-hover-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "8242be9466d5894fc9e3a5338fb423ccef9039a39a013aeee5306aec802088f3",
+      "gtkTheme": "Yaru-blue"
+    },
+    "file-actions-pressed-en.png": {
+      "target": "file-actions-pressed-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "5b6f1167f0edd97016b73e10d26ced856514920efe8fbbdcf71fd8df568e5081",
+      "gtkTheme": "Yaru-blue"
+    },
+    "historical-file-menu-en.png": {
+      "target": "historical-file-menu-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "536ae558f7936dbf90700b0cd87313b0f96662de59dc9f1881a66f8fae330a97",
+      "gtkTheme": "Yaru-blue"
+    },
+    "historical-file-secondary-en.png": {
+      "target": "historical-file-secondary-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "68e81cc50729227a7af40a3431f3855a3f91d0703c8b8ea67e1c5326e8fe47c6",
+      "gtkTheme": "Yaru-blue"
+    },
+    "historical-comparison-en.png": {
+      "target": "historical-comparison-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": null,
+      "sha256": "ae6a45f57cc20a32310a93db1860767b90e80d59f75509bb032c54a000d470da",
+      "gtkTheme": "Yaru-blue"
+    },
+    "short-details-narrow-en.png": {
+      "target": "short-details-narrow-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        900,
+        740
+      ],
+      "actualTextScale": 1.0,
+      "record": "root/short",
+      "sha256": "eb660414ec4bd6e4c1d0efa0243db10582401f4557a3f1b304da93d0c4456861",
+      "gtkTheme": "Yaru-blue"
+    },
+    "merge-inspector-dark-en.png": {
+      "target": "short-inspector-dark-en.png",
+      "locale": "en",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "root/short",
+      "sha256": "8a924171714f12a43f6d147bb50bf1e55d0cc42b8ef15f2def965219418a011c",
+      "gtkTheme": "Yaru-blue"
+    },
+    "merge-details-dark-en.png": {
+      "target": "short-details-dark-en.png",
+      "locale": "en",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "root/short",
+      "sha256": "8c5a98e1c3f7e49767639df2d7b17ce08e56154c1ca3ca049867bd34fad753f4",
+      "gtkTheme": "Yaru-blue"
+    },
+    "verified-commit-actions-de.png": {
+      "target": "verified-commit-actions-de.png",
+      "locale": "de",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "9fa2fce527d81995e647733ef40748874c886ba1c10f7ce5c49ec94d04e30709",
+      "gtkTheme": "Yaru-blue"
+    },
+    "verified-long-details-de.png": {
+      "target": "verified-long-details-de.png",
+      "locale": "de",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "a39aef7e0ef489bf886260b0b7291c742c859ea297f19a1f5f3420b87270cc8f",
+      "gtkTheme": "Yaru-blue"
+    },
+    "verified-details-bottom-de.png": {
+      "target": "verified-details-bottom-de.png",
+      "locale": "de",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "3a58872e6a1b827ae4523bda43d88af5fa5fb4058f371eb30d072d4386139523",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-actions-ja.png": {
+      "target": "commit-actions-ja.png",
+      "locale": "ja",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "236233aa7e97c33e40a233caab1a246c90dbbdd47d42440e4adb67c424b88660",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-ja.png": {
+      "target": "long-details-ja.png",
+      "locale": "ja",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "4b5beefb7d501e524f87e4dd5ab0a201f8feb552660ea1ad325a461b905bf1a0",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-bottom-ja.png": {
+      "target": "long-details-bottom-ja.png",
+      "locale": "ja",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "cc196a7bd0e5658e70a455153020200a597bd4523bacdbb1636729430f057c2d",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-ar.png": {
+      "target": "long-details-ar.png",
+      "locale": "ar",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "817bd3ce91db9866ab387b42dccf57ef67d1b6cdc5faabe92a7abd8cbcb7156e",
+      "gtkTheme": "Yaru-blue"
+    },
+    "details-bottom-ar.png": {
+      "target": "details-bottom-ar.png",
+      "locale": "ar",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "7ff83725428bf55b597134b6d294cc4cfdbfb87bb765a0c81e2feca7e02045b0",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-actions-fr.png": {
+      "target": "commit-actions-fr.png",
+      "locale": "fr",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "49e9fa0772ce407ffa191e32a8e375cf3e217a5349d5c2e6bdf00767985f41b7",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-fr.png": {
+      "target": "long-details-fr.png",
+      "locale": "fr",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "4b8e9ccd1237197d0b6551c9e5aa4632722df2a9d0c1a21e9cb7217162cde497",
+      "gtkTheme": "Yaru-blue"
+    },
+    "details-bottom-fr.png": {
+      "target": "details-bottom-fr.png",
+      "locale": "fr",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "d5d5f01717ebfd712ba1a82441b31b60fbd74eef6f3be60554c6a026eee57948",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-actions-pt.png": {
+      "target": "commit-actions-pt.png",
+      "locale": "pt",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "68df3a8239d506caf5653ae83f51f7e1f618c26ebb707dc2136f1b47320a312c",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-pt.png": {
+      "target": "long-details-pt.png",
+      "locale": "pt",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "dcfa83fba206278b2a957c4afc6d43a01d9fecdf14acb68aa477667c06e86a52",
+      "gtkTheme": "Yaru-blue"
+    },
+    "details-bottom-pt.png": {
+      "target": "details-bottom-pt.png",
+      "locale": "pt",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "17f428a2a4dd5e0e6f3c61d80809c5e1ac17d5df6b5afaadb77e58c9deb7029c",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-actions-ru.png": {
+      "target": "commit-actions-ru.png",
+      "locale": "ru",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "9f60a3b7d382b0f51c1a4842d69bca9f2f091005fec8cee700ce2338dba768af",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-ru.png": {
+      "target": "long-details-ru.png",
+      "locale": "ru",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "2c7d064e1262b65d512ca63839494be0a874d9ac0c5e115600339703b3f34f3d",
+      "gtkTheme": "Yaru-blue"
+    },
+    "details-bottom-ru.png": {
+      "target": "details-bottom-ru.png",
+      "locale": "ru",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "42fc62024155afd47bae9d33eaf9dfbc2a6e439ed2fe1f86949a7180619cac6b",
+      "gtkTheme": "Yaru-blue"
+    },
+    "commit-actions-uk.png": {
+      "target": "commit-actions-uk.png",
+      "locale": "uk",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "35542978c3a9ff37b794e32c3c8bff508084dbed3445e386c8d5f17beed41053",
+      "gtkTheme": "Yaru-blue"
+    },
+    "long-details-uk.png": {
+      "target": "long-details-uk.png",
+      "locale": "uk",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "d55a3f8bf19869e5f57f62a95e2f10fe19468fbd773a9095edd9b46fcc9aca55",
+      "gtkTheme": "Yaru-blue"
+    },
+    "details-bottom-uk.png": {
+      "target": "details-bottom-uk.png",
+      "locale": "uk",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "0cd420446c8a8dea95d2be198a054cc4bab687ddafb67c1aafd8a03523c024ca",
+      "gtkTheme": "Yaru-blue"
+    },
+    "native-dark-commit-actions-ar.png": {
+      "target": "native-dark-commit-actions-ar.png",
+      "locale": "ar",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "4b658a9056f1f5cbb78df05ab56aaa7860e6f9300f19c400eae8cf1ba7f6a93e",
+      "gtkTheme": "Yaru-blue-dark"
+    },
+    "native-dark-details-ar.png": {
+      "target": "native-dark-details-ar.png",
+      "locale": "ar",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "0f2845096998cf650513d9f7255144f2ecaafae1e56c32868599701c84f5e69f",
+      "gtkTheme": "Yaru-blue-dark"
+    },
+    "native-dark-commit-actions-en.png": {
+      "target": "native-dark-commit-actions-en.png",
+      "locale": "en",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "32f33720e3152c2d5d549e9c71fe5139a291f39b9ae5e91cfadc541684cacddb",
+      "gtkTheme": "Yaru-blue-dark"
+    },
+    "native-dark-long-details-en.png": {
+      "target": "native-dark-long-details-en.png",
+      "locale": "en",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "14b7bba3d0f637d11172d7e2f30a0bf4d53b4bbc72a7b6d566761028d71921c9",
+      "gtkTheme": "Yaru-blue-dark"
+    },
+    "debug-main-inspector-en.png": {
+      "target": "debug-main-loading-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "8bc3048e51083927f2817186406a5d862e7906763eb5a3aae2f3275eac14c6f4",
+      "gtkTheme": "Yaru-blue",
+      "stage": "honest historical inspector loading during ordinary debug startup"
+    },
+    "debug-main-details-en.png": {
+      "target": "debug-main-details-en.png",
+      "locale": "en",
+      "theme": "light",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "3320cc541013c19e6a6b3dd7b038cd314dad0d58051c39567bc725497d771fa5",
+      "gtkTheme": "Yaru-blue"
+    }
+  },
+  "limitations": [
+    "Native enlarged/fractional desktop, Wayland and Windows remain unqualified",
+    "Existing AT-SPI body exposure and native shutdown/mutex failures retained; no runtime/security/accessibility modification",
+    "Strict Snap, network/signing and dedicated performance qualification remain separate"
+  ],
+  "excludedAfterRenderedReview": {
+    "commit-actions-dark-en.png": {
+      "target": "commit-actions-dark-en.png",
+      "locale": "en",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "root/short",
+      "sha256": "9be485f392ce753e34824b66664637f8c9150330fda26475620060eb0e9d7864",
+      "reason": "Earlier probe forced light GTK menus while app theme was dark; use final native-dark menu captures instead."
+    },
+    "commit-actions-ar.png": {
+      "target": "commit-actions-ar.png",
+      "locale": "ar",
+      "theme": "dark",
+      "window": [
+        1280,
+        720
+      ],
+      "actualTextScale": 1.0,
+      "record": "long",
+      "sha256": "3f32d2eaea731e5953c59b3a31c936a079953df7d258a9ce1fa9c2b4782dac37",
+      "reason": "Earlier probe forced light GTK menus while app theme was dark; use final native-dark menu captures instead."
+    }
+  }
+}

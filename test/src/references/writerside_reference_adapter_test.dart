@@ -6,6 +6,55 @@ import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('Markdown heading scope includes links until the next heading', () async {
+    final root = await Directory.systemTemp.createTemp('reference-heading-');
+    addTearDown(() => root.delete(recursive: true));
+    final topics = Directory('${root.path}/topics')..createSync();
+    await File('${root.path}/writerside.cfg').writeAsString(
+      '<ihp><module name="main"/><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+    );
+    await File('${root.path}/guide.tree').writeAsString(
+      '<instance-profile id="guide" start-page="home.md"><toc-element topic="home.md"/><toc-element topic="target.md"/></instance-profile>',
+    );
+    await File('${topics.path}/home.md').writeAsString(
+      '# Introduction\n\n## Getting started\n\n[First](target.md)\n\n## Details\n\n[Second](target.md)',
+    );
+    await File('${topics.path}/target.md').writeAsString('# Target');
+    final project = await const WritersideProjectService().load(root.path);
+    final values = project.modules.expand((m) => m.topics).toList();
+    final index = ReferenceIndex(
+      root: root.path,
+      parsed: [
+        for (final topic in values)
+          ParsedReferenceDocument(
+            ReferenceDocument(
+              identity: topic.filePath,
+              path: topic.filePath,
+              title: topic.title ?? topic.fileName,
+              source: topic.document.source,
+            ),
+          ),
+      ],
+      ownedPaths: values.map((t) => t.filePath).toSet(),
+    );
+    addWritersideReferences(index, project.index, 'guide');
+    final home = '${topics.path}/home.md';
+    expect(index.query(home).total, 2);
+    final scoped = index.query(home, anchor: 'getting-started');
+    expect(scoped.total, 1);
+    final boundary = index.documents[home]!.source.indexOf('## Details');
+    expect(
+      scoped.values.single.authored.occurrence.startOffset,
+      lessThan(boundary),
+    );
+    final details = index.query(home, anchor: 'details');
+    expect(details.total, 1);
+    expect(
+      details.values.single.authored.occurrence.startOffset,
+      greaterThan(boundary),
+    );
+  });
+
   test(
     'authored include origins, explicit IDs, ambiguity and instance availability share the existing resolver',
     () async {

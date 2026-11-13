@@ -338,6 +338,9 @@ class _FakeDevTools {
       final socket = await WebSocketTransformer.upgrade(request);
       sockets.add(socket);
       socket.listen((data) {
+        // A queued request can arrive after the readiness deadline has closed
+        // this connection. A server cannot reply to an already closed socket.
+        if (socket.readyState != WebSocket.open) return;
         final message = jsonDecode(data as String) as Map<String, dynamic>;
         onEvaluate(socket, message);
       });

@@ -261,6 +261,13 @@ def expect_svg(response: dict[str, object]) -> None:
         raise AssertionError(response.get("message", "SVG was not returned"))
 
 
+def expect_mermaid_math(response: dict[str, object]) -> None:
+    expect_svg(response)
+    root = et.fromstring(response["svg"])
+    if not any(node.tag.rsplit("}", 1)[-1] == "math" for node in root.iter()):
+        raise AssertionError("Official Mermaid math did not produce MathML")
+
+
 def expect_math_all_svg(response: dict[str, object]) -> None:
     if response.get("mathJaxVersion") != "4.1.3":
         raise AssertionError(f"Unexpected MathJax version: {response}")
@@ -491,6 +498,26 @@ def main() -> int:
                 "theme": "dark",
             },
             "validator": expect_svg,
+        },
+        {
+            "name": "Published Mermaid flowchart math",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMermaid",
+                "source": 'flowchart LR\n A["$$x^2 + y^2 = z^2$$"] --> B[Result]',
+                "theme": "light",
+            },
+            "validator": expect_mermaid_math,
+        },
+        {
+            "name": "Published Mermaid sequence math",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMermaid",
+                "source": 'sequenceDiagram\n participant A\n participant B\n A->>B: $$x^2$$',
+                "theme": "dark",
+            },
+            "validator": expect_mermaid_math,
         },
         {
             "name": "MathJax NewCM double-struck",

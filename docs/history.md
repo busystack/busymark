@@ -49,7 +49,7 @@ plain-text fallbacks outside BusyMark.
 
 ## Local History
 
-Open **Local History** from the sidebar (Ctrl+5 by default), Actions search, an
+Open **Local History** from the sidebar (Ctrl+Shift+F9, then L by default), Actions search, an
 editor or document-tab context menu, or a file-tree context menu. The revision
 list normally follows the active document.
 

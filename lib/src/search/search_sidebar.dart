@@ -413,8 +413,10 @@ class SearchResultList extends ConsumerStatefulWidget {
     this.selected = -1,
     required this.onActivate,
     this.groupActions = false,
+    this.recordDensity = BusyMarkRecordDensity.compact,
   });
   final bool groupActions;
+  final BusyMarkRecordDensity recordDensity;
   final List<SidebarSearchResult> results;
   final int selected;
   final Future<void> Function(SidebarSearchResult) onActivate;
@@ -592,7 +594,8 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                 ? BusyMarkGlyphs.history
                 : BusyMarkGlyphs.document,
             selected: selected,
-            compact: true,
+            compact: widget.recordDensity == BusyMarkRecordDensity.compact,
+            density: widget.recordDensity,
             focusNode: _focusNodes.putIfAbsent(result.identity, FocusNode.new),
             onFocusChange: (focused) {
               if (focused &&

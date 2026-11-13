@@ -1,0 +1,11 @@
+{
+  "readOnly": true,
+  "expressions": {
+    "textScale": "WidgetsBinding.instance.platformDispatcher.textScaleFactor.toString()",
+    "devicePixelRatio": "WidgetsBinding.instance.platformDispatcher.views.single.devicePixelRatio.toString()"
+  },
+  "values": {
+    "textScale": "1.0",
+    "devicePixelRatio": "1.0"
+  }
+}
