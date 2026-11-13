@@ -203,15 +203,10 @@ class DesktopRun:
         self.activate_message('gitUiSelectAnotherBranch')
         self.branch_box = self.modal(400)
     def log_view(self, rtl):
-        self.activate_message('sidebarViewMenu')
-        self.wait_accessible(lambda rows: any(row['role'] == 'check menu item'
-            and row['name'] == self.catalog['gitHostGitLog'] for row in rows), '_view-menu-ready')
-        # This fixture is a Markdown folder: Files, Outline, Commit, Git Log.
-        # Retain real keyboard selection, then verify the selected shared view.
-        self.key('Home')
-        for _ in range(3):
-            self.key('Down')
-        self.key('Return')
+        # The native selector has fixed mnemonics and unavailable entries.
+        # Its accessible name also includes the effective shortcut. Use the
+        # real selector binding and Git Log mnemonic, then verify its content.
+        self.sidebar_view('G')
         self.wait_accessible(lambda rows: not any(row['role'] == 'check menu item' for row in rows)
             and any(row['role'] == 'panel' and row['name'].split('\n', 1)[0] ==
                     self.catalog['gitUiGitLog'] for row in rows), '_log-view-ready')

@@ -5,6 +5,7 @@ import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 // Only real application mounting/lifetime sites may consume Git UI contracts.
@@ -20,6 +21,13 @@ const mounts = <String, Set<String>>{
     'GitSidebarView',
     'GitReviewTabs',
     'GitReview',
+    // Files rows consume shared status classification, not Git workflow UI.
+    'GitFileTreeDecorations',
+    'GitTreeDecoration',
+  },
+  'src/app/busymark_design.dart': {
+    'GitTreeDecoration',
+    'gitTreeDecorationStyle',
   },
   'src/app/busymark_app.dart': {
     'gitMayDismissMessageDrafts',
@@ -56,6 +64,7 @@ const presentationMounts = <String, Set<String>>{
     'GitDiffViewer',
     'busyMarkVcsFileColorForGitStatus',
     'busyMarkVcsFileColorForChangeStatus',
+    'busyMarkFileTreeDecorations',
   },
 };
 
@@ -101,6 +110,43 @@ class Boundary extends RecursiveAstVisitor<void> {
     check(node, node.element);
     super.visitConstructorName(node);
   }
+
+  @override
+  void visitNamedType(NamedType node) {
+    // Compare the actual class behind typedefs with the exact shared mount
+    // contracts, including BusyMark's document-tab aliases.
+    final type = node.type;
+    check(node, type is InterfaceType ? type.element : node.element);
+    super.visitNamedType(node);
+  }
+}
+
+List<String> auditUnit(String relative, CompilationUnit unit) {
+  final visitor = Boundary(relative);
+  unit.accept(visitor);
+  final errors = [...visitor.errors];
+  // Imports and re-exports with no use must also fail. Exact mount permission
+  // still checks every resolved symbol; it never permits generic primitives.
+  for (final directive in unit.directives.whereType<UriBasedDirective>()) {
+    final target = switch (directive) {
+      ImportDirective() =>
+        directive.libraryImport?.importedLibrary?.uri.toString(),
+      ExportDirective() =>
+        directive.libraryExport?.exportedLibrary?.uri.toString(),
+      _ => null,
+    };
+    if (target?.startsWith('package:busystack_git_flutter/') == true &&
+            (directive is ExportDirective || !mounts.containsKey(relative)) ||
+        target ==
+                'package:busymark/src/git/application/shared_git_presentation.dart' &&
+            (directive is ExportDirective ||
+                !presentationMounts.containsKey(relative))) {
+      errors.add(
+        '$relative:${directive.offset}: unauthorized Git UI import/export',
+      );
+    }
+  }
+  return errors;
 }
 
 Future<List<String>> audit(Directory root, {List<File>? only}) async {
@@ -139,30 +185,7 @@ Future<List<String>> audit(Directory root, {List<File>? only}) async {
         continue;
       }
       final relative = path.substring('${root.path}/lib/'.length);
-      final visitor = Boundary(relative);
-      result.unit.accept(visitor);
-      errors.addAll(visitor.errors);
-      // Imports and re-exports with no use must also fail. A selective show
-      // list cannot authorize a generic primitive at a legitimate mount.
-      for (final directive
-          in result.unit.directives.whereType<UriBasedDirective>()) {
-        final target = switch (directive) {
-          ImportDirective() =>
-            directive.libraryImport?.importedLibrary?.uri.toString(),
-          ExportDirective() =>
-            directive.libraryExport?.exportedLibrary?.uri.toString(),
-          _ => null,
-        };
-        if (target?.startsWith('package:busystack_git_flutter/') == true &&
-                !mounts.containsKey(relative) ||
-            target ==
-                    'package:busymark/src/git/application/shared_git_presentation.dart' &&
-                !presentationMounts.containsKey(relative)) {
-          errors.add(
-            '$relative:${directive.offset}: unauthorized Git UI import/export',
-          );
-        }
-      }
+      errors.addAll(auditUnit(relative, result.unit));
     }
   } finally {
     await collection.dispose();
@@ -198,10 +221,13 @@ Future<void> main(List<String> args) async {
         'direct': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; final bad = g.NativeFocusStyle.color;",
         'alias': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; typedef Renamed = g.NativeSidebarHeader;",
         'export': "export 'package:busystack_git_flutter/busystack_git_flutter.dart' show NativeFocusIndicator;",
+        'export_all': "export 'package:busystack_git_flutter/busystack_git_flutter.dart';",
         'helper': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; Object wrapper() => g.GitContextMenuKeys();",
         'indirect': "import 'helper.dart'; final hidden = wrapper;",
         'adapter': "import 'package:busymark/src/git/application/shared_git_presentation.dart' as g; const hidden = g.BusyMarkGitPresentation();",
         'good': "import 'package:busymark/src/app/busymark_design.dart'; const good = BusyMarkSidebarHeader(title: 'Files');",
+        'decoration_style': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; final style = g.gitTreeDecorationStyle;",
+        'decoration_data': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; import 'package:busymark/src/git/application/shared_git_decorations.dart'; g.GitTreeDecoration? decoration; g.GitFileTreeDecorations? decorations; final adapt = busyMarkFileTreeDecorations;",
       };
       final files = <String, File>{};
       for (final entry in fixtures.entries) {
@@ -209,7 +235,14 @@ Future<void> main(List<String> args) async {
           ..writeAsStringSync(entry.value);
       }
       final errors = await audit(root, only: files.values.toList());
-      for (final key in ['direct', 'alias', 'export', 'helper', 'adapter']) {
+      for (final key in [
+        'direct',
+        'alias',
+        'export',
+        'export_all',
+        'helper',
+        'adapter',
+      ]) {
         if (!errors.any((e) => e.contains('/$key.dart:'))) {
           throw StateError('Violation escaped: $key');
         }
@@ -219,6 +252,54 @@ Future<void> main(List<String> args) async {
       }
       if (errors.any((e) => e.startsWith('Cannot resolve'))) {
         throw StateError('Adversarial fixture failed to resolve: $errors');
+      }
+      final collection = AnalysisContextCollection(
+        includedPaths: [folder.absolute.path],
+      );
+      try {
+        for (final entry in {
+          'src/app/busymark_design.dart': 'decoration_style',
+          'src/workspace/presentation/workspace_screen.dart': 'decoration_data',
+        }.entries) {
+          Future<List<String>> checkFixture(String key) async {
+            final path = files[key]!.absolute.path;
+            final result = await collection
+                .contextFor(path)
+                .currentSession
+                .getResolvedUnit(path);
+            if (result is! ResolvedUnitResult ||
+                result.diagnostics.any(
+                  (d) => d.diagnosticCode.severity == DiagnosticSeverity.ERROR,
+                )) {
+              throw StateError('Cannot resolve mount fixture: $key');
+            }
+            return auditUnit(entry.key, result.unit);
+          }
+
+          if ((await checkFixture(entry.value)).isNotEmpty) {
+            throw StateError('Files VCS decoration rejected at ${entry.key}');
+          }
+          for (final key in [
+            'direct',
+            'alias',
+            'export',
+            'export_all',
+            'helper',
+          ]) {
+            if ((await checkFixture(key)).isEmpty) {
+              throw StateError('Git primitive escaped at ${entry.key}: $key');
+            }
+          }
+          if ((await checkFixture(
+            entry.value == 'decoration_style'
+                ? 'decoration_data'
+                : 'decoration_style',
+          )).isEmpty) {
+            throw StateError('Files decoration escaped its exact mount');
+          }
+        }
+      } finally {
+        await collection.dispose();
       }
       stdout.writeln('Design dependency adversarial fixtures passed.');
     } finally {
