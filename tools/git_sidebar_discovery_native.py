@@ -3,7 +3,7 @@
 
 Requires BUSYSTACK_NATIVE_RECEIPT for the sealed binary. --installed uses the
 ordinary confined Snap launcher and private profile/bus. --project copies a
-local reproduction project, including its index and unsaved-on-disk changes.
+local reproduction project, including its index and working files.
 """
 import argparse
 import json
@@ -37,6 +37,8 @@ def visible(rows, text):
 
 
 def select(desktop, view):
+    wait_state(desktop, lambda rows: visible(rows,
+        desktop.catalog['sidebarViewMenu']), '_sidebar-ready')
     desktop.key('Control_L', 'Shift_L', 'F9')
     rows = wait_state(desktop, lambda rows: any(row['showing'] and
         row['role'] == 'check menu item' for row in rows), '_selector-open')
