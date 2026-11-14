@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 
 from git_native_smoke import DesktopRun
 from sidebar_native_acceptance import wait_state
@@ -123,6 +124,12 @@ def main():
     args = parser.parse_args()
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=True)
+    # A plain fixture below this checkout would discover BusyMark's ancestor
+    # repository. Snap fixtures also need a path visible through confinement.
+    fixture_parent = Path.home() / 'snap/busymark/common' if args.installed else Path('/tmp')
+    fixture_parent.mkdir(parents=True, exist_ok=True)
+    fixtures = Path(tempfile.mkdtemp(prefix='git-sidebar-fixtures-', dir=fixture_parent))
+    (args.output / 'fixtures-root.txt').write_text(str(fixtures))
     cases = [('markdown', False, 'git'), ('writerside', True, 'git'),
              ('plain-markdown', False, 'plain'), ('plain-writerside', True, 'plain'),
              ('ancestor-writerside', True, 'ancestor')]
@@ -132,7 +139,7 @@ def main():
     for name, writerside, outcome in cases:
         for initial in ['Commit', 'Git Log']:
             case = args.output / (name + '-' + initial.replace(' ', '-'))
-            parent = case / 'fixture'
+            parent = fixtures / case.name
             parent.mkdir(parents=True)
             root = parent / 'workspace'
             if name == 'project-copy':
