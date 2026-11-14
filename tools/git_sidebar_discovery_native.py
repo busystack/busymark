@@ -46,7 +46,8 @@ def select(desktop, view):
         matches = [row for row in entries if row['name'] == label]
         if len(matches) != 1 or not matches[0]['enabled']:
             raise RuntimeError('Git entry unavailable before discovery: ' + label)
-    desktop.capture('selector-' + view.replace(' ', '-'))
+    desktop.selector_count = getattr(desktop, 'selector_count', 0) + 1
+    desktop.capture(f'selector-{desktop.selector_count}-' + view.replace(' ', '-'))
     desktop.key('c' if view == 'Commit' else 'g')
     wait_state(desktop, lambda rows: not any(row['showing'] and
         row['role'] == 'check menu item' for row in rows), '_selector-closed')
