@@ -3665,8 +3665,13 @@ void main() {
   test(
     'cancelled named Save As detaches source history and reopens separately',
     () async {
-      final sourcePath = p.join(root.path, 'A.md');
-      final destinationPath = p.join(root.path, 'B.md');
+      // Keep the history store outside the watched authoring workspace, as in
+      // the application, so its staging renames are not external file moves.
+      final workspaceRoot = await Directory(
+        p.join(root.path, 'workspace'),
+      ).create();
+      final sourcePath = p.join(workspaceRoot.path, 'A.md');
+      final destinationPath = p.join(workspaceRoot.path, 'B.md');
       await File(sourcePath).writeAsString('Original A\n');
       final historyRoot = Directory(p.join(root.path, 'history'));
       final diskStore = FileLocalHistoryStore(
@@ -3688,6 +3693,12 @@ void main() {
       final history = harness.container.read(
         localHistoryControllerProvider.notifier,
       );
+      // Provider disposal cancels future work but cannot await accepted I/O.
+      // Settle it before disposing either controller or deleting historyRoot.
+      addTearDown(() async {
+        expect(await history.flushAll(harness.state.documentBuffers), isTrue);
+        await harness.controller.flushPersistence();
+      });
       await harness.controller.openPath(sourcePath);
       final sourceId = (await diskStore.load()).documents.single.id;
       harness.controller.updateActiveText('Save As B\n');
@@ -3772,6 +3783,13 @@ void main() {
       final reopenedHistory = reopened.container.read(
         localHistoryControllerProvider.notifier,
       );
+      addTearDown(() async {
+        expect(
+          await reopenedHistory.flushAll(reopened.state.documentBuffers),
+          isTrue,
+        );
+        await reopened.controller.flushPersistence();
+      });
       await reopened.controller.openPath(sourcePath);
       await _waitFor(
         () =>
