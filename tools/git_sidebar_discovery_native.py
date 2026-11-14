@@ -98,9 +98,7 @@ def run(binary, output, root, initial, outcome, installed):
             desktop.send('activateAccessible', name=trust)
             wait_state(desktop, lambda rows: visible(rows,
                 catalog['gitTrustRequiredMessage']), '_trust-confirmation-again')
-            # The underlying notice and the modal both expose the same caption;
-            # keyboard confirmation targets the modal's suggested action.
-            desktop.key('Return')
+            desktop.send('activateAccessible', name=trust)
             wait_state(desktop, lambda rows: not visible(rows, notice) and
                 visible(rows, catalog['gitUiCommitAndPush']), '_trusted-commit')
             desktop.capture('trusted-commit')
