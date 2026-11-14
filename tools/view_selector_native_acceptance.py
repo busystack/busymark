@@ -150,7 +150,7 @@ def run(binary, output, writerside, git, remapped):
             if [row['name'] for row in rows if row['checked']] != [previous_sidebar]:
                 raise RuntimeError('Sidebar mnemonic did not activate its fixed view')
             matching = [row for row in rows if row['name'] == label]
-            available = (letter != 'T' or writerside) and (letter not in 'CG' or git)
+            available = letter != 'T' or writerside
             if available and (len(matching) != 1 or not matching[0]['enabled']):
                 raise RuntimeError('Available native view is missing or disabled: ' + label)
             if not available and any(row['enabled'] for row in matching):
@@ -160,6 +160,13 @@ def run(binary, output, writerside, git, remapped):
                 closed()
                 desktop.capture('sidebar-' + letter)
                 previous_sidebar = label
+                if letter in 'CG' and not git:
+                    wait_state(desktop, lambda rows: all(any(
+                        row['showing'] and text in row['name'] for row in rows)
+                        for text in [desktop.catalog['gitNotRepositoryMessage'],
+                                     desktop.catalog['gitHostInitializeHere'],
+                                     desktop.catalog['gitHostCloneRepository2']]),
+                        '_non-git-discovery-ready')
             else:
                 wait_state(desktop, lambda rows: bool(menu_rows(rows)), '_unavailable-still-open')
                 desktop.key('Escape'); closed()

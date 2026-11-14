@@ -192,8 +192,9 @@ void main() {
       expect({
         for (final e in menus.entries) e['label']: e['mnemonic'],
       }, expected);
-      expect(menus.enabled('Commit'), isFalse);
-      expect(menus.enabled('Git Log'), isFalse);
+      expect(container.read(gitControllerProvider).repositoryInfo, isNull);
+      expect(menus.enabled('Commit'), isTrue);
+      expect(menus.enabled('Git Log'), isTrue);
       expect(menus.enabled('Files'), isTrue);
       menus.close();
       await tester.pumpAndSettle();
@@ -7669,6 +7670,9 @@ code
     bool descendantWorkspace = false,
     bool switchingWorkspace = false,
     bool delayDiscovery = false,
+    bool repositoryDiscovered = true,
+    bool hasRepository = true,
+    bool nestedRepository = false,
     WorkspaceKind kind = WorkspaceKind.markdownFolder,
   }) async {
     final temp = Directory.systemTemp.createTempSync('busymark_tab_actions_');
@@ -7689,7 +7693,12 @@ code
             paths: paths,
             kind: kind,
           );
-    final sharedClient = _SearchableGitReadFixture(_gitDiffState(temp.path));
+    final repositoryRoot = nestedRepository ? '${temp.path}/nested' : temp.path;
+    Directory(repositoryRoot).createSync(recursive: true);
+    final gitState = _gitDiffState(repositoryRoot);
+    final sharedClient = _SearchableGitReadFixture(
+      hasRepository ? gitState : const GitState(),
+    );
     if (delayDiscovery) sharedClient.discoveryGate = Completer<void>();
     final container = ProviderContainer(
       overrides: [
@@ -7717,7 +7726,10 @@ code
         startupPathProvider.overrideWithValue(workspaceRoot),
         if (git)
           gitControllerProvider.overrideWith(
-            () => _PresetGitController(_gitDiffState(temp.path)),
+            () => _PresetGitController(
+              gitState,
+              initiallyDiscovered: repositoryDiscovered,
+            ),
           ),
       ],
     );
@@ -7790,6 +7802,191 @@ code
       sharedClient: sharedClient,
       paths: paths,
     );
+  }
+
+  for (final kind in [
+    WorkspaceKind.markdownFolder,
+    WorkspaceKind.writersideModule,
+  ]) {
+    for (final view in ['Commit', 'Git Log']) {
+      testWidgets(
+        '${kind.name} Sidebar selector opens $view before discovery and confirms trust explicitly',
+        (tester) async {
+          tester.view.physicalSize = const Size(1440, 1000);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final fixture = await tabWorkspace(
+            tester,
+            git: true,
+            openGitComparisons: false,
+            trustGit: false,
+            delayDiscovery: true,
+            repositoryDiscovered: false,
+            kind: kind,
+          );
+          final container = fixture.container;
+          final workspace = container
+              .read(workspaceControllerProvider)
+              .workspace!;
+          final buffer = container
+              .read(workspaceControllerProvider)
+              .activeBuffer;
+          expect(container.read(gitControllerProvider).repositoryInfo, isNull);
+          expect(fixture.sharedClient.discoveryEntered.isCompleted, isFalse);
+          final menus = NativeMenuProbe(tester);
+          await tester.tap(
+            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+          );
+          await tester.pumpAndSettle();
+          expect(menus.enabled('Commit'), isTrue);
+          expect(menus.enabled('Git Log'), isTrue);
+          await menus.choose(view, settle: false);
+          await pumpUntil(
+            tester,
+            () => fixture.sharedClient.discoveryEntered.isCompleted,
+            operation: 'start $view discovery through the Sidebar selector',
+          );
+          expect(container.read(gitControllerProvider).repositoryInfo, isNull);
+          expect(find.byType(shared.GitFeatureSidebar), findsNothing);
+          fixture.sharedClient.discoveryGate!.complete();
+          await pumpUntil(
+            tester,
+            () => find.byType(shared.GitFeatureSidebar).evaluate().isNotEmpty,
+            operation: 'discover the authoring workspace root',
+          );
+          final sidebar = tester.widget<shared.GitFeatureSidebar>(
+            find.byType(shared.GitFeatureSidebar),
+          );
+          expect(
+            sidebar.view,
+            view == 'Git Log'
+                ? shared.GitSidebarView.log
+                : shared.GitSidebarView.commit,
+          );
+          expect(
+            sidebar.controller.session.repository.root,
+            workspace.rootPath,
+          );
+          expect(fixture.sharedClient.statusReads, greaterThan(0));
+          expect(sidebar.trusted, isFalse);
+          expect(
+            container
+                .read(appSettingsControllerProvider)
+                .trustsGitWorkspace(workspace.rootPath),
+            isFalse,
+          );
+          if (view == 'Git Log') {
+            expect(find.byType(shared.GitLogView), findsOneWidget);
+            await tester.tap(
+              find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+            );
+            await tester.pumpAndSettle();
+            await menus.choose('Commit');
+          }
+          expect(find.text(l10n.gitOperationsRequireTrust), findsOneWidget);
+          expect(find.byType(shared.GitCommitView), findsNothing);
+          await tester.tap(find.text(l10n.gitTrustWorkspace));
+          await pumpUntil(
+            tester,
+            () => find.byType(shared.GitNativeDialog).evaluate().isNotEmpty,
+            operation: 'show explicit trust confirmation',
+          );
+          expect(
+            container
+                .read(appSettingsControllerProvider)
+                .trustsGitWorkspace(workspace.rootPath),
+            isFalse,
+          );
+          expect(find.textContaining(workspace.rootPath), findsOneWidget);
+          await tester.tap(
+            find.byKey(const ValueKey('busy-mark-git-trust-confirm')),
+          );
+          await pumpUntil(
+            tester,
+            () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+            operation: 'show authorized Commit after confirmation',
+          );
+          expect(
+            container
+                .read(appSettingsControllerProvider)
+                .trustsGitWorkspace(workspace.rootPath),
+            isTrue,
+          );
+          expect(
+            container.read(workspaceControllerProvider).activeBuffer,
+            same(buffer),
+          );
+          expect(fixture.service.saveCount, 0);
+          expect(_comparisonTabs(container).entries, isEmpty);
+          expect(tester.takeException(), isNull);
+        },
+      );
+
+      for (final outcome in ['non-Git', 'failure', 'ancestor', 'nested']) {
+        testWidgets(
+          '${kind.name} Sidebar selector opens $view with $outcome discovery UI',
+          (tester) async {
+            tester.view.physicalSize = const Size(1440, 1000);
+            tester.view.devicePixelRatio = 1;
+            addTearDown(tester.view.resetPhysicalSize);
+            addTearDown(tester.view.resetDevicePixelRatio);
+            final fixture = await tabWorkspace(
+              tester,
+              git: true,
+              openGitComparisons: false,
+              trustGit: false,
+              repositoryDiscovered: false,
+              hasRepository: outcome != 'non-Git',
+              descendantWorkspace: outcome == 'ancestor',
+              nestedRepository: outcome == 'nested',
+              kind: kind,
+            );
+            expect(
+              fixture.container.read(gitControllerProvider).repositoryInfo,
+              isNull,
+            );
+            if (outcome == 'failure') {
+              fixture.sharedClient.discoveryError = const shared.GitException(
+                shared.GitErrorCode.disconnected,
+              );
+            }
+            await _chooseNativeSidebar(tester, view);
+            await pumpUntil(
+              tester,
+              () => switch (outcome) {
+                'non-Git' =>
+                  find.text(l10n.gitNotRepositoryMessage).evaluate().isNotEmpty,
+                'failure' =>
+                  find.byType(shared.GitFailurePanel).evaluate().isNotEmpty,
+                _ =>
+                  find
+                      .text(l10n.gitWorkspaceRootRequired)
+                      .evaluate()
+                      .isNotEmpty,
+              },
+              operation: 'retain the existing $outcome discovery UI',
+            );
+            expect(fixture.sharedClient.discoveryEntered.isCompleted, isTrue);
+            expect(fixture.sharedClient.statusReads, 0);
+            expect(find.byType(shared.GitCommitView), findsNothing);
+            expect(find.byType(shared.GitLogView), findsNothing);
+            expect(find.text(l10n.gitTrustWorkspace), findsNothing);
+            expect(
+              find.text(l10n.gitHostInitializeHere),
+              outcome == 'non-Git' ? findsOneWidget : findsNothing,
+            );
+            expect(
+              find.text(l10n.gitHostCloneRepository2),
+              outcome == 'non-Git' ? findsOneWidget : findsNothing,
+            );
+            expect(fixture.service.saveCount, 0);
+            expect(_comparisonTabs(fixture.container).entries, isEmpty);
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
   }
 
   testWidgets(
@@ -22885,9 +23082,10 @@ class _DeferredWorkspaceSearchService extends WorkspaceService {
 }
 
 class _PresetGitController extends GitController {
-  _PresetGitController(this.initialState);
+  _PresetGitController(this.initialState, {this.initiallyDiscovered = true});
 
   final GitState initialState;
+  final bool initiallyDiscovered;
   String? loadedFileHistoryPath;
   List<String> stagedPaths = const [];
   int branchLoadCount = 0;
@@ -22895,7 +23093,7 @@ class _PresetGitController extends GitController {
   int commitComparisonCount = 0;
 
   @override
-  GitState build() => initialState;
+  GitState build() => initiallyDiscovered ? initialState : const GitState();
 
   void replaceStatus(GitStatusSnapshot status) {
     state = state.copyWith(statusSnapshot: status);
@@ -22919,6 +23117,9 @@ class _PresetGitController extends GitController {
     // real association and metadata replacement have separate Git regressions.
     expect(repository.root, initialState.repositoryInfo!.rootPath);
     expect(repository.gitDir, initialState.repositoryInfo!.gitDirPath);
+    if (!initiallyDiscovered) {
+      state = initialState.copyWith(attachedWorkspace: workspace);
+    }
   }
 
   @override
@@ -23832,6 +24033,7 @@ Future<void> _chooseNativeSidebar(WidgetTester tester, String label) async {
       (entry) => (entry as Map)['label'] == label,
     );
     expect(index, greaterThanOrEqualTo(0));
+    expect((entries[index] as Map)['enabled'], isTrue);
     selected = true;
     return index;
   });

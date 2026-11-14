@@ -2354,8 +2354,8 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
 }
 
 bool _sidebarTabAvailable(WidgetRef ref, _SidebarTab tab) => switch (tab) {
-  _SidebarTab.git ||
-  _SidebarTab.gitLog => ref.read(gitControllerProvider).repositoryInfo != null,
+  // The folder workspace tabs expose Git before discovery; selecting either
+  // view starts the shared sidebar's discovery and trust flow.
   _SidebarTab.outline =>
     ref.read(workspaceControllerProvider).activeBuffer != null,
   _ => true,
