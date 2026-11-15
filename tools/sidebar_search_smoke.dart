@@ -1946,11 +1946,14 @@ pix.savev(sys.argv[1], 'png', [], [])
         .read(workspaceControllerProvider)
         .activeText;
     await contentView('S');
+    // Selector mnemonics are fixed view actions, independent of direct keys.
+    await wait(
+      () => widgets<BusyMarkSourceEditor>().isNotEmpty,
+      'Source remains selectable without a direct shortcut',
+    );
     check(
-      widgets<BusyMarkSourceEditor>().isEmpty &&
-          ref.read(workspaceControllerProvider).activeText ==
-              beforeUnassignedView,
-      'old unassigned view key cannot switch modes',
+      ref.read(workspaceControllerProvider).activeText == beforeUnassignedView,
+      'selecting an unbound view preserves document bytes',
     );
     check(
       ref
