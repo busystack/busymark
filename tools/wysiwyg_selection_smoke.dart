@@ -826,10 +826,19 @@ class _ProbeState extends State<_Probe> {
     }
   }
 
-  Future<void> _undoSynthetic(String label, String source) async {
+  Future<void> _undoSynthetic(
+    String label,
+    String source, {
+    bool selectionCleared = false,
+  }) async {
     final expectedEdits = _acceptedEdits;
     await _key(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
-    await _recordEdit('$label-undo', source, expectedEdits);
+    await _recordEdit(
+      '$label-undo',
+      source,
+      expectedEdits,
+      selectionCleared: selectionCleared,
+    );
   }
 
   Future<void> _runEditableCases() async {
@@ -988,7 +997,11 @@ class _ProbeState extends State<_Probe> {
       caretText: '你🧭 next',
       caretOffset: 8,
     );
-    await _undoSynthetic('21-table-input-continued', '你🧭\n');
+    await _undoSynthetic(
+      '21-table-input-continued',
+      '你🧭\n',
+      selectionCleared: true,
+    );
     await _undoSynthetic('20-table-input-commit', _syntheticTable);
 
     const surrounded = 'Before stays.\n\n$_syntheticTable\nAfter stays.\n';
@@ -1125,7 +1138,11 @@ class _ProbeState extends State<_Probe> {
           caretText: continued,
           caretOffset: 14,
         );
-        await _undoSynthetic('$label-continued', '$replaced\n');
+        await _undoSynthetic(
+          '$label-continued',
+          '$replaced\n',
+          selectionCleared: true,
+        );
         await _undoSynthetic('$label-commit', fixture.source);
         await _key(
           PhysicalKeyboardKey.keyZ,
