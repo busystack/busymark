@@ -214,6 +214,15 @@ class _TraceHistoryStore extends FileLocalHistoryStore {
     reads++;
     return super.readRevision(revisionId);
   }
+
+  @override
+  Future<List<LocalHistoryRevision>> readRevisions(
+    Iterable<String> revisionIds,
+  ) {
+    final ids = revisionIds.toList();
+    reads += ids.length;
+    return super.readRevisions(ids);
+  }
 }
 
 class _Driver extends ConsumerStatefulWidget {
