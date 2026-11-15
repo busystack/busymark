@@ -1,6 +1,5 @@
 import '../git/application/shared_git_tabs.dart';
 import 'document_buffer.dart';
-import 'workspace_model.dart';
 
 enum WorkspaceTabKind { file, gitDiff, localHistory }
 
@@ -71,9 +70,8 @@ class WorkspaceTabEntry {
 }
 
 List<WorkspaceTabEntry> workspaceTabEntries({
-  required Workspace workspace,
   SharedGitTabs gitTabs = const SharedGitTabs(),
-  List<DocumentBuffer>? documentBuffers,
+  required List<DocumentBuffer> documentBuffers,
   String? activeBufferId,
   String? localHistoryRevisionId,
   String? localHistoryDocumentName,
@@ -81,25 +79,15 @@ List<WorkspaceTabEntry> workspaceTabEntries({
   final diffActive = gitTabs.active != null;
   final localHistoryActive = !diffActive && localHistoryRevisionId != null;
   return [
-    if (documentBuffers != null)
-      for (final buffer in documentBuffers)
-        WorkspaceTabEntry.file(
-          path: buffer.filePath ?? '',
-          bufferId: buffer.id,
-          untitledName: buffer.untitledName,
-          dirty: buffer.isDirty,
-          active:
-              !diffActive && !localHistoryActive && buffer.id == activeBufferId,
-        )
-    else
-      for (final path in workspace.openFilePaths)
-        WorkspaceTabEntry.file(
-          path: path,
-          active:
-              !diffActive &&
-              !localHistoryActive &&
-              path == workspace.activeFilePath,
-        ),
+    for (final buffer in documentBuffers)
+      WorkspaceTabEntry.file(
+        path: buffer.filePath ?? '',
+        bufferId: buffer.id,
+        untitledName: buffer.untitledName,
+        dirty: buffer.isDirty,
+        active:
+            !diffActive && !localHistoryActive && buffer.id == activeBufferId,
+      ),
     for (final review in gitTabs.entries)
       WorkspaceTabEntry.gitDiff(
         path: review.comparison.path.display,

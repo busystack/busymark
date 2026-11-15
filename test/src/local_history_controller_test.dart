@@ -2052,10 +2052,9 @@ void main() {
         contains('authentication'),
       );
 
-      controller.browseDocuments();
       final contents = await controller.findRetained(query: 'authentication');
       var state = container.read(localHistoryControllerProvider);
-      expect(state.browsingDocuments, isTrue);
+
       expect(contents!.matches.map((m) => m.document.id).toSet(), {
         state.snapshot.documents.single.id,
       });
@@ -2097,7 +2096,6 @@ void main() {
           .read(localHistoryControllerProvider)
           .selectedDocumentId;
 
-      controller.browseDocuments();
       final matches = await controller.findRetained(query: 'Unique retained');
       var state = container.read(localHistoryControllerProvider);
       final deleted = state.snapshot.documents.singleWhere(
@@ -2116,7 +2114,7 @@ void main() {
       await controller.selectDocumentForBuffer(current);
       state = container.read(localHistoryControllerProvider);
       expect(state.inspectingRetainedDocument, isFalse);
-      expect(state.browsingDocuments, isFalse);
+
       expect(state.selectedDocumentId, currentId);
       expect(state.selectedRevisions, isNotEmpty);
     },
@@ -2164,7 +2162,7 @@ void main() {
       await tester.runAsync(() => workspace.openPath(currentPath));
       final history = container.read(localHistoryControllerProvider.notifier);
       await tester.runAsync(history.refresh);
-      history.browseDocuments();
+
       expect(
         (await tester.runAsync(
           () => history.findRetained(query: 'Unique retained'),

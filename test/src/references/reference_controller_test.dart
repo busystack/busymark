@@ -8,6 +8,7 @@ import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class IndexedWorkspace extends WorkspaceController {
@@ -19,6 +20,88 @@ class IndexedWorkspace extends WorkspaceController {
 }
 
 void main() {
+  test('editor state leaves the reference corpus untouched', () async {
+    final root = await Directory.systemTemp.createTemp('reference-inputs-');
+    addTearDown(() => root.delete(recursive: true));
+    final source = File('${root.path}/source.md');
+    final target = File('${root.path}/target.md');
+    await source.writeAsString('[target](target.md#old)');
+    await target.writeAsString('# Old');
+    final workspace = await const WorkspaceService().openPath(root.path);
+    final buffer = DocumentBuffer(
+      id: 'open',
+      filePath: source.path,
+      text: await source.readAsString(),
+      lastSavedText: await source.readAsString(),
+      dirty: false,
+    );
+    final controller = IndexedWorkspace(
+      WorkspaceState(
+        workspace: workspace,
+        documentBuffers: [buffer],
+        activeBufferId: buffer.id,
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        workspaceControllerProvider.overrideWith(() => controller),
+        nextcloudNotesRepositoryProvider.overrideWith(
+          (_) async => throw StateError('Local fixture'),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(referenceIndexProvider, (_, _) {});
+    addTearDown(subscription.close);
+    Future<ReferenceIndex> settle(bool Function(ReferenceIndex) ready) async {
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (DateTime.now().isBefore(deadline)) {
+        final index = container.read(referenceIndexProvider).value;
+        if (index != null && ready(index)) return index;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+      throw StateError('Reference index did not settle.');
+    }
+
+    final initial = await settle((index) => index.documents.length == 2);
+    controller.publish(
+      container
+          .read(workspaceControllerProvider)
+          .copyWith(
+            documentBuffers: [
+              buffer.copyWith(
+                editorState: buffer.editorState.copyWith(
+                  selection: const TextSelection.collapsed(offset: 2),
+                  scrollOffset: 42,
+                  foldedRegionKeys: const {'heading'},
+                ),
+              ),
+            ],
+          ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    expect(container.read(referenceIndexProvider).value, same(initial));
+
+    controller.publish(
+      container
+          .read(workspaceControllerProvider)
+          .copyWith(
+            documentBuffers: [buffer.edited('[target](target.md#new)')],
+          ),
+    );
+    await settle(
+      (index) => index.references.single.authored.destination.endsWith('#new'),
+    );
+    final monitor = container.read(workspaceFileMonitorProvider);
+    await monitor.start(rootPath: root.path, openFilePaths: [source.path]);
+    await target.writeAsString('# New');
+    final external = await settle(
+      (index) =>
+          index.references.single.resolution == ReferenceResolution.resolved,
+    );
+    expect(external.references.single.target!.anchor, 'new');
+  });
+
   test(
     'edits during initial indexing reuse accepted batches and reject obsolete results',
     () async {
@@ -175,10 +258,10 @@ void main() {
             i.references.singleOrNull?.authored.destination == 'target.md#new',
       );
       expect(await source.readAsString(), '[old](target.md#old)');
+      await container
+          .read(workspaceFileMonitorProvider)
+          .start(rootPath: root.path, openFilePaths: [source.path]);
       await target.writeAsString('# New');
-      controller.publish(
-        container.read(workspaceControllerProvider).copyWith(),
-      );
       await settle(
         (i) =>
             i.references.singleOrNull?.resolution ==

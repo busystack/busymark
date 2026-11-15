@@ -13,7 +13,6 @@ import '../app/busymark_dialogs.dart';
 import '../app/localization.dart';
 import '../math/math_providers.dart';
 import '../markdown/markdown_model.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../visualization/visualization_providers.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
@@ -56,7 +55,6 @@ Future<void> exportWorkspaceToHtml(
         ).context;
   if (!context.mounted) return;
 
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final configuration =
       configuredSelection ??
       await showExportOptions(
@@ -112,7 +110,6 @@ Future<void> exportWorkspaceToHtml(
     overwrite =
         await showBusyMarkModalDialog<bool>(
           context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
           builder: (context) => BusyMarkDialogShell(
             title: context.l10n.warning,
             actions: [
@@ -154,7 +151,6 @@ Future<void> exportWorkspaceToHtml(
   final outcome = await showBusyMarkModalDialog<_Outcome>(
     context,
     barrierDismissible: false,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => _Progress(
       token: token,
       operation: (progress) => site
@@ -179,7 +175,6 @@ Future<void> exportWorkspaceToHtml(
   final result = outcome.result;
   await showBusyMarkModalDialog<void>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: result == null
           ? context.l10n.htmlExportFailed

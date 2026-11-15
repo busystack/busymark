@@ -155,7 +155,6 @@ void main() {
           document: document,
           documentId: buffer().id,
           undoClock: clock,
-          useExternalUndoHistory: true,
           readEditBase: history.readBase,
           readSessionState: () => buffer().editorState.wysiwygState,
           onUndo: history.controller.undoActiveBuffer,
@@ -254,7 +253,6 @@ void main() {
               key: key,
               document: document,
               documentId: history.buffer.id,
-              useExternalUndoHistory: true,
               readEditBase: history.readBase,
               readSessionState: () => history.buffer.editorState.wysiwygState,
               onUndo: history.controller.undoActiveBuffer,
@@ -349,7 +347,6 @@ void main() {
           BusyMarkWysiwygEditor(
             document: parse(source),
             documentId: 'one',
-            useExternalUndoHistory: true,
             onSourceChanged: (_, value) => published = value,
           ),
         );
@@ -476,7 +473,6 @@ void main() {
               documentId: 'same',
               contentRevision: revision,
               initialSessionState: input,
-              useExternalUndoHistory: true,
               onSessionChanged: (_, value) => session = value,
               onSourceChanged: (_, value) => source = value,
             ),
@@ -910,7 +906,6 @@ void main() {
         BusyMarkWysiwygEditor(
           document: document,
           documentId: 'one',
-          useExternalUndoHistory: true,
           onUndo: () => undoCalls++,
           onSourceChanged: (_, _) {},
         ),

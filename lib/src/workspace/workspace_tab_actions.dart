@@ -3,7 +3,6 @@ import '../git/application/shared_git_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../git/application/git_controller.dart';
 import '../local_history/local_history_controller.dart';
 import 'workspace_controller.dart';
 import 'workspace_model.dart';
@@ -19,7 +18,6 @@ List<WorkspaceTabEntry> _tabs(WidgetRef ref, WorkspaceState state) {
   if (workspace == null) return const [];
   final history = ref.read(localHistoryControllerProvider);
   return workspaceTabEntries(
-    workspace: workspace,
     gitTabs:
         ref.read(sharedGitReviewProvider)[workspace.id] ??
         const SharedGitTabs(),
@@ -125,7 +123,6 @@ Future<bool> _closeTabs(
   };
   // Capture controllers before destructive awaits. Callers must supply a ref
   // owned by WorkspaceScreen or the app, never the disappearing tab strip.
-  final git = ref.read(gitControllerProvider.notifier);
   final history = ref.read(localHistoryControllerProvider.notifier);
   var operationWorkspace = initial.workspace!;
   var documentsFinished = false;
@@ -268,7 +265,6 @@ Future<bool> _closeTabs(
           !currentWorkspace()) {
         return false;
       }
-      git.deactivateDiffFile();
     }
     final remaining = _tabs(ref, ref.read(workspaceControllerProvider));
     if (remaining.isNotEmpty &&

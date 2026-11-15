@@ -19,12 +19,11 @@ import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/comparison/source_comparison.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
-import 'package:busymark/src/git/data/git_cli_gateway.dart';
+import 'package:busymark/src/git/data/git_shared_gateway.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_panel.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -101,7 +100,6 @@ Future<void> main(List<String> arguments) async {
   }
 
   await windowManager.ensureInitialized();
-  await LinuxHeaderBarService.instance.initialize();
   final settings = AppSettings.defaults().copyWith(
     themeModePreference: mode == 'writerside'
         ? BusyMarkThemeModePreference.dark

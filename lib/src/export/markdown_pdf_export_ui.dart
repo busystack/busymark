@@ -13,7 +13,6 @@ import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../math/math_providers.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_controller.dart';
@@ -113,7 +112,6 @@ Future<void> exportActiveMarkdownToPdf(
         ).context;
   if (!context.mounted) return;
 
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final document =
       documentSnapshot ?? await prepareMarkdownPdfSnapshot(snapshot);
   if (!context.mounted) return;
@@ -160,11 +158,7 @@ Future<void> exportActiveMarkdownToPdf(
   }
   var overwrite = false;
   if (targetType != FileSystemEntityType.notFound) {
-    final confirmed = await _confirmPdfOverwrite(
-      context,
-      headerBar,
-      destinationPath,
-    );
+    final confirmed = await _confirmPdfOverwrite(context, destinationPath);
     if (!confirmed || !context.mounted) {
       return;
     }
@@ -188,7 +182,6 @@ Future<void> exportActiveMarkdownToPdf(
   );
   final outcome = await showBusyMarkModalDialog<_PdfExportOutcome>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     barrierDismissible: false,
     builder: (context) => _MarkdownPdfProgressDialog(
       cancellationToken: cancellationToken,
@@ -203,7 +196,7 @@ Future<void> exportActiveMarkdownToPdf(
   final failure = outcome.failure;
   if (failure != null) {
     if (failure.code != MarkdownPdfFailureCode.cancelled) {
-      await showMarkdownPdfExportError(context, headerBar, failure);
+      await showMarkdownPdfExportError(context, failure);
     }
     return;
   }
@@ -255,14 +248,9 @@ String _withPdfExtension(String path) {
       : '$normalized.pdf';
 }
 
-Future<bool> _confirmPdfOverwrite(
-  BuildContext context,
-  LinuxHeaderBarService headerBar,
-  String path,
-) async {
+Future<bool> _confirmPdfOverwrite(BuildContext context, String path) async {
   return await showBusyMarkModalDialog<bool>(
         context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
         builder: (context) => BusyMarkDialogShell(
           title: context.l10n.warning,
           actions: [
@@ -285,7 +273,6 @@ Future<bool> _confirmPdfOverwrite(
 @visibleForTesting
 Future<void> showMarkdownPdfExportError(
   BuildContext context,
-  LinuxHeaderBarService headerBar,
   MarkdownPdfExportException failure,
 ) {
   final message = switch (failure.code) {
@@ -301,7 +288,6 @@ Future<void> showMarkdownPdfExportError(
   };
   return showBusyMarkModalDialog<void>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: context.l10n.exportAsPdf,
       actions: [

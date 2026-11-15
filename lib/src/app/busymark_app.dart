@@ -25,7 +25,6 @@ import '../../l10n/generated/app_localizations.dart';
 import '../export/workspace_export_ui.dart';
 import '../clipboard/clipboard_history_controller.dart';
 import '../git/application/git_controller.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../platform/gtk_animation_settings_service.dart';
 import '../platform/gtk_header_icon_service.dart';
 import '../local_history/local_history_controller.dart';
@@ -39,7 +38,6 @@ import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
 import '../search/search_session.dart';
-import '../search/search_activation.dart';
 import '../workspace/recent_navigation.dart';
 import 'command_registry.dart';
 import 'command_shortcuts.dart';
@@ -266,13 +264,6 @@ class BusyMarkApp extends ConsumerWidget {
         ref.watch(gtkAnimationsEnabledProvider).asData?.value ??
         ref.watch(initialGtkAnimationsEnabledProvider) ??
         true;
-    ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((event) {
-        if (event.action == HeaderBarAction.fullScreen) {
-          unawaited(windowControls.toggleFullScreen());
-        }
-      });
-    });
     final fallbackAccent = ref.watch(initialSystemAccentColorProvider);
     final accent = ref
         .watch(systemAccentColorProvider)
@@ -315,291 +306,268 @@ class BusyMarkApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
         final commandRegistry = ref.watch(busyMarkCommandRegistryProvider);
-        final headerBarDefaults = _nativeHeaderBarDefaults(
-          context,
-          settings,
-          commandRegistry,
-          fullScreen: windowControls.isFullScreen,
-        );
-        final appContent = HeaderBarConfigurationDefaults(
-          configuration: headerBarDefaults,
-          child: _BusyMarkWindowLifecycle(
-            child: BusyMarkCommandShortcuts(
-              shortcuts: commandRegistry.shortcutIntents(
-                excludedIds: searchCommandDestinations.keys.toSet(),
-                scopes: const {
-                  BusyMarkCommandScope.application,
-                  BusyMarkCommandScope.documentView,
-                },
-                intentFor: BusyMarkCommandIntent.new,
-              ),
-              child: Actions(
-                actions: {
-                  _NotesWorkspaceActionIntent:
-                      CallbackAction<_NotesWorkspaceActionIntent>(
-                        onInvoke: (intent) {
-                          final target = rootNavigatorKey.currentContext;
-                          final workspace = ref
-                              .read(workspaceControllerProvider)
-                              .workspace;
-                          if (target == null ||
-                              !ref
-                                  .read(searchSessionProvider.notifier)
-                                  .workspaceVisible ||
-                              workspace?.isRemote != true) {
-                            return null;
-                          }
-                          switch (intent.commandId) {
-                            case BusyMarkCommandIds.syncNotes:
-                              unawaited(
-                                ref
-                                    .read(workspaceControllerProvider.notifier)
-                                    .refreshNextcloudNotes(),
-                              );
-                            case BusyMarkCommandIds.exportNotes:
-                              final repository = ref
-                                  .read(nextcloudNotesRepositoryProvider)
-                                  .value;
-                              if (repository == null) return null;
-                              unawaited(
-                                showNotesExport(target, ref, [
-                                  for (final note in repository.notes)
-                                    if (note.accountId ==
-                                            workspace!.nextcloudAccountId &&
-                                        !isNotesRecovery(note))
-                                      note.localId,
-                                ]),
-                              );
-                            case BusyMarkCommandIds.importNotesFolder:
-                              unawaited(showNotesImport(target, ref));
-                            case BusyMarkCommandIds.importNotesFile:
-                              unawaited(
-                                showNotesImport(target, ref, folder: false),
-                              );
-                          }
+        final appContent = _BusyMarkWindowLifecycle(
+          child: BusyMarkCommandShortcuts(
+            shortcuts: commandRegistry.shortcutIntents(
+              excludedIds: searchCommandDestinations.keys.toSet(),
+              scopes: const {
+                BusyMarkCommandScope.application,
+                BusyMarkCommandScope.documentView,
+              },
+              intentFor: BusyMarkCommandIntent.new,
+            ),
+            child: Actions(
+              actions: {
+                _NotesWorkspaceActionIntent:
+                    CallbackAction<_NotesWorkspaceActionIntent>(
+                      onInvoke: (intent) {
+                        final target = rootNavigatorKey.currentContext;
+                        final workspace = ref
+                            .read(workspaceControllerProvider)
+                            .workspace;
+                        if (target == null ||
+                            !ref
+                                .read(searchSessionProvider.notifier)
+                                .workspaceVisible ||
+                            workspace?.isRemote != true) {
                           return null;
-                        },
-                      ),
-                  BusyMarkCommandIntent: CallbackAction<BusyMarkCommandIntent>(
-                    onInvoke: (intent) {
-                      if (searchCommandDestinations.containsKey(
-                            intent.commandId,
-                          ) &&
-                          (rootNavigatorKey.currentState?.canPop() ?? false)) {
+                        }
+                        switch (intent.commandId) {
+                          case BusyMarkCommandIds.syncNotes:
+                            unawaited(
+                              ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .refreshNextcloudNotes(),
+                            );
+                          case BusyMarkCommandIds.exportNotes:
+                            final repository = ref
+                                .read(nextcloudNotesRepositoryProvider)
+                                .value;
+                            if (repository == null) return null;
+                            unawaited(
+                              showNotesExport(target, ref, [
+                                for (final note in repository.notes)
+                                  if (note.accountId ==
+                                          workspace!.nextcloudAccountId &&
+                                      !isNotesRecovery(note))
+                                    note.localId,
+                              ]),
+                            );
+                          case BusyMarkCommandIds.importNotesFolder:
+                            unawaited(showNotesImport(target, ref));
+                          case BusyMarkCommandIds.importNotesFile:
+                            unawaited(
+                              showNotesImport(target, ref, folder: false),
+                            );
+                        }
                         return null;
-                      }
-                      unawaited(commandRegistry.execute(intent.commandId));
+                      },
+                    ),
+                BusyMarkCommandIntent: CallbackAction<BusyMarkCommandIntent>(
+                  onInvoke: (intent) {
+                    if (searchCommandDestinations.containsKey(
+                          intent.commandId,
+                        ) &&
+                        (rootNavigatorKey.currentState?.canPop() ?? false)) {
                       return null;
-                    },
-                  ),
-                  _NotesActionIntent: CallbackAction<_NotesActionIntent>(
-                    onInvoke: (intent) {
-                      final target = rootNavigatorKey.currentContext;
-                      if (target != null) {
-                        unawaited(
-                          performWelcomeNotesAction(target, ref, intent.action),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _NewWorkspaceIntent: CallbackAction<_NewWorkspaceIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(
-                          _showNewChooser(navigatorContext, ref, router),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(
-                          _showOpenChooser(navigatorContext, ref, router),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
-                    onInvoke: (intent) {
-                      final state = ref.read(workspaceControllerProvider);
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (state.workspace != null && navigatorContext != null) {
-                        unawaited(
-                          saveActiveWithOverwriteConfirmation(
-                            navigatorContext,
-                            ref,
-                          ),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _ExportIntent: CallbackAction<_ExportIntent>(
-                    onInvoke: (intent) {
-                      final state = ref.read(workspaceControllerProvider);
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null &&
-                          canExportWorkspace(state)) {
-                        unawaited(exportWorkspace(navigatorContext, ref));
-                      }
-                      return null;
-                    },
-                  ),
-                  _ToggleFullScreenIntent:
-                      CallbackAction<_ToggleFullScreenIntent>(
-                        onInvoke: (intent) {
-                          unawaited(windowControls.toggleFullScreen());
-                          return null;
-                        },
-                      ),
-                  _BackIntent: CallbackAction<_BackIntent>(
-                    onInvoke: (intent) {
-                      unawaited(_navigateBack(ref, router));
-                      return null;
-                    },
-                  ),
-                  _KeyboardShortcutsIntent:
-                      CallbackAction<_KeyboardShortcutsIntent>(
-                        onInvoke: (intent) {
-                          final navigatorContext =
-                              rootNavigatorKey.currentContext;
-                          if (navigatorContext != null) {
-                            openKeyboardShortcutsSettings(navigatorContext);
-                          }
-                          return null;
-                        },
-                      ),
-                  _SettingsIntent: CallbackAction<_SettingsIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        GoRouter.of(navigatorContext).go(
-                          settingsLocationForUri(
-                            router.routeInformationProvider.value.uri,
-                          ),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _SyntaxReferenceIntent:
-                      CallbackAction<_SyntaxReferenceIntent>(
-                        onInvoke: (intent) {
-                          final navigatorContext =
-                              rootNavigatorKey.currentContext;
-                          if (navigatorContext != null) {
-                            showBusyMarkSyntaxReferenceDialog(navigatorContext);
-                          }
-                          return null;
-                        },
-                      ),
-                  _OpenClipboardHistoryIntent:
-                      CallbackAction<_OpenClipboardHistoryIntent>(
-                        onInvoke: (intent) {
-                          ref
-                              .read(
-                                clipboardHistoryOpenRequestProvider.notifier,
-                              )
-                              .request();
-                          return null;
-                        },
-                      ),
-                  _OpenLocalHistoryIntent:
-                      CallbackAction<_OpenLocalHistoryIntent>(
-                        onInvoke: (intent) {
-                          ref
-                              .read(localHistoryOpenRequestProvider.notifier)
-                              .request();
-                          return null;
-                        },
-                      ),
-                  _NextTabIntent: CallbackAction<_NextTabIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(
-                          _activateOpenFileTab(
-                            navigatorContext,
-                            ref,
-                            next: true,
-                          ),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _PreviousTabIntent: CallbackAction<_PreviousTabIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(
-                          _activateOpenFileTab(
-                            navigatorContext,
-                            ref,
-                            next: false,
-                          ),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _CloseTabIntent: CallbackAction<_CloseTabIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(
-                          _closeActiveOpenFileTab(navigatorContext, ref),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _CloseAllTabsIntent: CallbackAction<_CloseAllTabsIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(_closeAllOpenFileTabs(navigatorContext, ref));
-                      }
-                      return null;
-                    },
-                  ),
-                  _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
-                    onInvoke: (intent) {
-                      _toggleSidebar(
-                        ref,
-                        allowWithoutWorkspace:
-                            router.routeInformationProvider.value.uri.path ==
-                            '/',
+                    }
+                    unawaited(commandRegistry.execute(intent.commandId));
+                    return null;
+                  },
+                ),
+                _NotesActionIntent: CallbackAction<_NotesActionIntent>(
+                  onInvoke: (intent) {
+                    final target = rootNavigatorKey.currentContext;
+                    if (target != null) {
+                      unawaited(
+                        performWelcomeNotesAction(target, ref, intent.action),
                       );
-                      return null;
-                    },
-                  ),
-                  _DocumentViewModeIntent:
-                      CallbackAction<_DocumentViewModeIntent>(
-                        onInvoke: (intent) {
+                    }
+                    return null;
+                  },
+                ),
+                _NewWorkspaceIntent: CallbackAction<_NewWorkspaceIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(_showNewChooser(navigatorContext, ref, router));
+                    }
+                    return null;
+                  },
+                ),
+                _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(
+                        _showOpenChooser(navigatorContext, ref, router),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
+                  onInvoke: (intent) {
+                    final state = ref.read(workspaceControllerProvider);
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (state.workspace != null && navigatorContext != null) {
+                      unawaited(
+                        saveActiveWithOverwriteConfirmation(
+                          navigatorContext,
+                          ref,
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _ExportIntent: CallbackAction<_ExportIntent>(
+                  onInvoke: (intent) {
+                    final state = ref.read(workspaceControllerProvider);
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null && canExportWorkspace(state)) {
+                      unawaited(exportWorkspace(navigatorContext, ref));
+                    }
+                    return null;
+                  },
+                ),
+                _ToggleFullScreenIntent:
+                    CallbackAction<_ToggleFullScreenIntent>(
+                      onInvoke: (intent) {
+                        unawaited(windowControls.toggleFullScreen());
+                        return null;
+                      },
+                    ),
+                _BackIntent: CallbackAction<_BackIntent>(
+                  onInvoke: (intent) {
+                    unawaited(_navigateBack(ref, router));
+                    return null;
+                  },
+                ),
+                _KeyboardShortcutsIntent:
+                    CallbackAction<_KeyboardShortcutsIntent>(
+                      onInvoke: (intent) {
+                        final navigatorContext =
+                            rootNavigatorKey.currentContext;
+                        if (navigatorContext != null) {
+                          openKeyboardShortcutsSettings(navigatorContext);
+                        }
+                        return null;
+                      },
+                    ),
+                _SettingsIntent: CallbackAction<_SettingsIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      GoRouter.of(navigatorContext).go(
+                        settingsLocationForUri(
+                          router.routeInformationProvider.value.uri,
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _SyntaxReferenceIntent: CallbackAction<_SyntaxReferenceIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      showBusyMarkSyntaxReferenceDialog(navigatorContext);
+                    }
+                    return null;
+                  },
+                ),
+                _OpenClipboardHistoryIntent:
+                    CallbackAction<_OpenClipboardHistoryIntent>(
+                      onInvoke: (intent) {
+                        ref
+                            .read(clipboardHistoryOpenRequestProvider.notifier)
+                            .request();
+                        return null;
+                      },
+                    ),
+                _OpenLocalHistoryIntent:
+                    CallbackAction<_OpenLocalHistoryIntent>(
+                      onInvoke: (intent) {
+                        ref
+                            .read(localHistoryOpenRequestProvider.notifier)
+                            .request();
+                        return null;
+                      },
+                    ),
+                _NextTabIntent: CallbackAction<_NextTabIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(
+                        _activateOpenFileTab(navigatorContext, ref, next: true),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _PreviousTabIntent: CallbackAction<_PreviousTabIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(
+                        _activateOpenFileTab(
+                          navigatorContext,
+                          ref,
+                          next: false,
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _CloseTabIntent: CallbackAction<_CloseTabIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(_closeActiveOpenFileTab(navigatorContext, ref));
+                    }
+                    return null;
+                  },
+                ),
+                _CloseAllTabsIntent: CallbackAction<_CloseAllTabsIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(_closeAllOpenFileTabs(navigatorContext, ref));
+                    }
+                    return null;
+                  },
+                ),
+                _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
+                  onInvoke: (intent) {
+                    _toggleSidebar(
+                      ref,
+                      allowWithoutWorkspace:
+                          router.routeInformationProvider.value.uri.path == '/',
+                    );
+                    return null;
+                  },
+                ),
+                _DocumentViewModeIntent:
+                    CallbackAction<_DocumentViewModeIntent>(
+                      onInvoke: (intent) {
+                        ref
+                            .read(workspaceControllerProvider.notifier)
+                            .updateActiveEditorMode(intent.mode);
+                        unawaited(
                           ref
-                              .read(workspaceControllerProvider.notifier)
-                              .updateActiveEditorMode(intent.mode);
-                          unawaited(
-                            ref
-                                .read(appSettingsControllerProvider.notifier)
-                                .setDocumentViewMode(intent.mode),
-                          );
-                          return null;
-                        },
-                      ),
-                },
-                child: _BusyMarkSearchShortcutHandler(
-                  child: ColoredBox(
-                    color: BusyMarkSurfaceColors.of(context).window,
-                    child: child ?? const SizedBox.shrink(),
-                  ),
+                              .read(appSettingsControllerProvider.notifier)
+                              .setDocumentViewMode(intent.mode),
+                        );
+                        return null;
+                      },
+                    ),
+              },
+              child: _BusyMarkSearchShortcutHandler(
+                child: ColoredBox(
+                  color: BusyMarkSurfaceColors.of(context).window,
+                  child: child ?? const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -649,7 +617,6 @@ class BusyMarkApp extends ConsumerWidget {
     WidgetRef ref,
     GoRouter router,
   ) async {
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final recentWorkspaces = ref
         .read(appSettingsControllerProvider)
         .recentWorkspaces;
@@ -669,7 +636,6 @@ class BusyMarkApp extends ConsumerWidget {
     };
     final choice = await showBusyMarkModalDialog<_OpenChooserChoice>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => BusyMarkDialogShell(
         title: context.l10n.open,
         maxWidth: BusyMarkSizes.dialog,
@@ -778,10 +744,8 @@ class BusyMarkApp extends ConsumerWidget {
     final startsWorkspace =
         settingsReturnTargetForUri(router.routeInformationProvider.value.uri) ==
         SettingsReturnTarget.welcome;
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final choice = await showBusyMarkModalDialog<_NewChooserChoice>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => BusyMarkDialogShell(
         title: context.l10n.create,
         maxWidth: BusyMarkSizes.dialog,
@@ -854,10 +818,8 @@ class BusyMarkApp extends ConsumerWidget {
     if (parentPath == null || !context.mounted) {
       return;
     }
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final created = await showBusyMarkModalEditorDialog<bool>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       maxWidth: BusyMarkSizes.dialogWide,
       builder: (context) => BusyMarkCreateWritersideProjectDialog(
         parentDirectoryPath: parentPath,
@@ -896,7 +858,6 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     final tabs = workspaceTabEntries(
-      workspace: workspace,
       gitTabs:
           ref.read(sharedGitReviewProvider)[workspace.id] ??
           const SharedGitTabs(),
@@ -931,7 +892,6 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     final tabs = workspaceTabEntries(
-      workspace: workspace,
       gitTabs:
           ref.read(sharedGitReviewProvider)[workspace.id] ??
           const SharedGitTabs(),
@@ -966,7 +926,6 @@ class BusyMarkApp extends ConsumerWidget {
     WidgetRef ref,
     WorkspaceTabEntry tab,
   ) async {
-    final gitController = ref.read(gitControllerProvider.notifier);
     switch (tab.kind) {
       case WorkspaceTabKind.file:
         ref
@@ -976,7 +935,6 @@ class BusyMarkApp extends ConsumerWidget {
         await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(tab.bufferId!);
-        gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
         ref
             .read(sharedGitReviewProvider.notifier)
@@ -988,7 +946,6 @@ class BusyMarkApp extends ConsumerWidget {
         ref
             .read(sharedGitReviewProvider.notifier)
             .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
-        gitController.deactivateDiffFile();
     }
   }
 
@@ -1037,82 +994,6 @@ class BusyMarkApp extends ConsumerWidget {
       WorkspaceKind.nextcloudNotes ||
       WorkspaceKind.writersideModule => true,
     };
-  }
-
-  HeaderBarConfiguration _nativeHeaderBarDefaults(
-    BuildContext context,
-    AppSettings settings,
-    BusyMarkCommandRegistry commandRegistry, {
-    required bool fullScreen,
-  }) {
-    final material = MaterialLocalizations.of(context);
-    final l10n = context.l10n;
-    final theme = HeaderBarTheme.fromContext(context);
-    final textDirection = Directionality.maybeOf(context) ?? TextDirection.ltr;
-    BusyMarkCommand command(String id) => commandRegistry[id]!;
-    String label(String id) => command(id).label(context);
-    String shortcut(String id) => command(id).shortcut?.label ?? '';
-    String accelerator(String id) => command(id).shortcut?.gtkAccelerator ?? '';
-    final labels = HeaderBarLabels(
-      editor: label(BusyMarkCommandIds.viewEditor),
-      source: label(BusyMarkCommandIds.viewSource),
-      preview: label(BusyMarkCommandIds.viewReading),
-      split: label(BusyMarkCommandIds.viewSplit),
-      viewMode: l10n.viewMode,
-      editorShortcut: shortcut(BusyMarkCommandIds.viewEditor),
-      editorGtkAccelerator: accelerator(BusyMarkCommandIds.viewEditor),
-      sourceShortcut: shortcut(BusyMarkCommandIds.viewSource),
-      sourceGtkAccelerator: accelerator(BusyMarkCommandIds.viewSource),
-      previewShortcut: shortcut(BusyMarkCommandIds.viewReading),
-      previewGtkAccelerator: accelerator(BusyMarkCommandIds.viewReading),
-      splitShortcut: shortcut(BusyMarkCommandIds.viewSplit),
-      splitGtkAccelerator: accelerator(BusyMarkCommandIds.viewSplit),
-      search: material.searchFieldLabel,
-      searchShortcut: '',
-      refresh: l10n.validate,
-      menu: l10n.mainMenu,
-      sidebar: settings.sidebarVisible ? l10n.hideSidebar : l10n.showSidebar,
-      sidebarShortcut: shortcut(BusyMarkCommandIds.toggleSidebar),
-      back: material.backButtonTooltip,
-      backShortcut: shortcut(BusyMarkCommandIds.back),
-      save: label(BusyMarkCommandIds.save),
-      export: label(BusyMarkCommandIds.export),
-      exportShortcut: shortcut(BusyMarkCommandIds.export),
-      exportGtkAccelerator: accelerator(BusyMarkCommandIds.export),
-      fullScreen: label(BusyMarkCommandIds.fullScreen),
-      fullScreenShortcut: shortcut(BusyMarkCommandIds.fullScreen),
-      fullScreenGtkAccelerator: accelerator(BusyMarkCommandIds.fullScreen),
-      settings: label(BusyMarkCommandIds.settings),
-      settingsShortcut: shortcut(BusyMarkCommandIds.settings),
-      settingsGtkAccelerator: accelerator(BusyMarkCommandIds.settings),
-      syntaxReference: label(BusyMarkCommandIds.syntaxReference),
-      syntaxReferenceShortcut: shortcut(BusyMarkCommandIds.syntaxReference),
-      syntaxReferenceGtkAccelerator: accelerator(
-        BusyMarkCommandIds.syntaxReference,
-      ),
-      reportIssue: l10n.reportIssue,
-      aboutBusyMark: l10n.aboutBusyMark,
-    );
-    return HeaderBarConfiguration(
-      title: l10n.appTitle,
-      viewMode: AppViewMode.editor,
-      searchQuery: '',
-      textDirection: textDirection,
-      canRefresh: false,
-      canExportPdf: false,
-      canExportHtml: false,
-      documentControlsVisible: false,
-      searchActive: false,
-      searchVisible: false,
-      sidebarVisible: false,
-      sidebarToggleVisible: false,
-      backVisible: false,
-      fullScreen: fullScreen,
-      modalBarrierDepth: 0,
-      sidebarWidth: BusyMarkSizes.sidebarWidth,
-      labels: labels,
-      theme: theme,
-    );
   }
 }
 
@@ -1277,11 +1158,9 @@ class _BusyMarkWindowLifecycleState
 
   Future<WindowCloseAction?> _showWindowCloseDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final dirtyBuffers = ref.read(workspaceControllerProvider).dirtyBuffers;
     return showBusyMarkModalDialog<WindowCloseAction>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => BusyMarkDialogShell(
         title: l10n.closeUnsavedChangesTitle,
         maxWidth: BusyMarkSizes.dialog,
@@ -1463,30 +1342,6 @@ class _BusyMarkSearchShortcutHandlerState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(
-      headerBarSearchEventsProvider,
-      (_, next) => next.whenData((event) {
-        final controller = ref.read(searchSessionProvider.notifier);
-        if (!ref.read(searchSessionProvider).active &&
-            (event is HeaderBarSearchQueryChanged ||
-                event is HeaderBarSearchSubmitted)) {
-          controller.open();
-        }
-        switch (event) {
-          case HeaderBarSearchQueryChanged(:final query):
-            controller.query(query);
-          case HeaderBarSearchSubmitted(:final query):
-            controller.query(query);
-            unawaited(activateSelectedSearchResult(context, ref));
-          case HeaderBarSearchCleared():
-            controller.query('');
-          case HeaderBarSearchEscapePressed():
-            controller.close();
-          case HeaderBarSearchFocusChanged():
-            break;
-        }
-      }),
-    );
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,

@@ -8,7 +8,6 @@ import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_service.dart';
 import 'package:busymark/src/export/html_export_ui.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/material.dart';
@@ -213,11 +212,6 @@ Widget _harness(HtmlExportService service, void Function(WidgetRef) ready) =>
       overrides: [
         htmlExportServiceProvider.overrideWithValue(service),
         localSettingsStoreProvider.overrideWithValue(_Settings()),
-        linuxHeaderBarServiceProvider.overrideWithValue(
-          LinuxHeaderBarService(
-            channel: const MethodChannel('html-test-header'),
-          ),
-        ),
       ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,

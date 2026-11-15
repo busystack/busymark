@@ -11,7 +11,6 @@ void main() {
       const repo = authoring.GitRepositoryInfo(
         rootPath: '/repo',
         gitDirPath: '/repo/.git',
-        currentBranch: 'main',
       );
       authoring.GitFileStatus file(String relative, String absolute) =>
           authoring.GitFileStatus(

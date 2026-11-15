@@ -8,13 +8,11 @@ import 'dart:io';
 import 'package:busymark/main.dart' as application;
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:window_manager/window_manager.dart';
@@ -49,7 +47,6 @@ class _Driver with WidgetsBindingObserver {
   final frames = <Map<String, Object?>>[];
   TextField? target;
   TextField? documentTarget;
-  _DelayedNativeBarrier? barrier;
   OverlayEntry? competingEntry;
   FocusNode? competingFocus;
   TextEditingController? competingController;
@@ -64,12 +61,6 @@ class _Driver with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     File('${output.path}/lifecycle').writeAsStringSync(state.name);
-    final pending = barrier;
-    if (state != AppLifecycleState.resumed &&
-        pending?.releaseStarted == true &&
-        !pending!.release.isCompleted) {
-      pending.release.complete();
-    }
   }
 
   double? topOf(Element? element) {
@@ -162,11 +153,9 @@ class _Driver with WidgetsBindingObserver {
     Overlay.of(context).insert(competingEntry!);
     await waitFor(() => focus.context?.mounted == true);
     if (mode == 'deferred-dialog') {
-      final gate = barrier = _DelayedNativeBarrier();
       unawaited(
         showBusyMarkModalDialog<void>(
           context,
-          headerBarService: gate,
           builder: (_) =>
               const AlertDialog(content: Text('Native deferred focus check')),
         ),
@@ -186,7 +175,6 @@ class _Driver with WidgetsBindingObserver {
       await proceed('dismiss-dialog');
       if (!context.mounted) throw StateError('Dialog host detached');
       Navigator.of(context, rootNavigator: true).pop();
-      await waitFor(() => gate.releaseStarted);
       focus.requestFocus();
       FocusManager.instance.applyFocusChangesIfNeeded();
     } else {
@@ -498,27 +486,9 @@ class _Driver with WidgetsBindingObserver {
       }
       competingFocus?.dispose();
       competingController?.dispose();
-      barrier?.dispose();
       if (deferred && File('${output.path}/result.json').existsSync()) {
         await windowManager.close();
       }
-    }
-  }
-}
-
-class _DelayedNativeBarrier extends LinuxHeaderBarService {
-  _DelayedNativeBarrier()
-    : super(
-        channel: const MethodChannel('com.busymark.test/deferred-native-focus'),
-      );
-  final release = Completer<void>();
-  bool releaseStarted = false;
-  @override
-  Future<void> setModalBarrierDepth(int depth) async {
-    await LinuxHeaderBarService.instance.setModalBarrierDepth(depth);
-    if (depth == 0) {
-      releaseStarted = true;
-      await release.future;
     }
   }
 }

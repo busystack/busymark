@@ -1,4 +1,3 @@
-import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:busymark/src/workspace/presentation/keyboard_shortcuts_settings.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 // Native Linux search workflows with disposable files and a cached offline
@@ -1944,13 +1943,14 @@ pix.savev(sys.argv[1], 'png', [], [])
               beforeUnassignedView,
       'old unassigned view key cannot switch modes',
     );
-    // The shared Flutter page frame publishes this configuration even when
-    // the legacy native header service is unavailable on the current runner.
-    final labels =
-        widgets<HeaderBarConfigurationPublisher>().single.configuration.labels;
     check(
-      labels.sourceShortcut.isEmpty && labels.sourceGtkAccelerator.isEmpty,
-      'mounted header removes unassigned view metadata',
+      ref
+              .read(
+                busyMarkCommandRegistryProvider,
+              )[BusyMarkCommandIds.viewSource]
+              ?.shortcut ==
+          null,
+      'mounted command removes unassigned view metadata',
     );
     await assign('search.find', 'F12');
     await key('ctrl+f', verifySearch: false);

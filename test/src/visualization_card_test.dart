@@ -1,6 +1,5 @@
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
@@ -38,14 +37,12 @@ void main() {
         cache: _MemoryVisualizationCache(cacheDirectory),
       );
       addTearDown(coordinator.dispose);
-      final barrier = _VisualizationModalBarrier();
       final previousFocus = FocusNode();
       addTearDown(previousFocus.dispose);
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             visualizationCoordinatorProvider.overrideWithValue(coordinator),
-            linuxHeaderBarServiceProvider.overrideWithValue(barrier),
           ],
           child: _App(
             child: Focus(
@@ -64,7 +61,6 @@ void main() {
       final previewTransform = preview.transformationController!.value.clone();
       await tester.tap(find.byTooltip('Full Screen'));
       await tester.pumpAndSettle();
-      expect(barrier.depths, [1]);
       expect(find.byType(BusyMarkModalShortcutBoundary), findsOneWidget);
       expect(find.byType(BusyMarkDialogTitleBar), findsOneWidget);
       final viewer = tester.widget<InteractiveViewer>(
@@ -85,7 +81,6 @@ void main() {
       expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 2);
       await tester.tap(find.bySemanticsLabel('Close').last);
       await tester.pumpAndSettle();
-      expect(barrier.depths, [1, 0]);
       expect(find.byType(BusyMarkDialogTitleBar), findsNothing);
       expect(preview.transformationController!.value, previewTransform);
       expect(previousFocus.hasFocus, isTrue);
@@ -94,7 +89,6 @@ void main() {
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(barrier.depths, [1, 0, 1, 0]);
       expect(find.byType(InteractiveViewer), findsOneWidget);
       expect(previousFocus.hasFocus, isTrue);
     },
@@ -517,10 +511,4 @@ class _OpenReferenceHost implements WebRenderHost {
     required VisualizationTheme theme,
     required VisualizationCancellationToken cancellationToken,
   }) => throw UnimplementedError();
-}
-
-class _VisualizationModalBarrier extends LinuxHeaderBarService {
-  final depths = <int>[];
-  @override
-  Future<void> setModalBarrierDepth(int value) async => depths.add(value);
 }

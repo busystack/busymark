@@ -445,42 +445,6 @@ SourceSearchResult _decodeSearchResult(
   );
 }
 
-class SourceWorkspaceSearchFileResult {
-  const SourceWorkspaceSearchFileResult({
-    required this.filePath,
-    required this.matches,
-  });
-
-  final String filePath;
-  final List<SourceSearchMatch> matches;
-}
-
-List<SourceWorkspaceSearchFileResult> searchWorkspaceSources({
-  required Map<String, String> files,
-  required SourceSearchOptions options,
-  int maxFiles = 80,
-}) {
-  final results = <SourceWorkspaceSearchFileResult>[];
-  final sortedPaths = files.keys.toList()..sort();
-  for (final path in sortedPaths) {
-    if (!_isAuthoringContentPath(path)) {
-      continue;
-    }
-    final document = SourceDocument(fullText: files[path]!);
-    final result = searchSourceDocument(document, options);
-    if (result.matches.isEmpty) {
-      continue;
-    }
-    results.add(
-      SourceWorkspaceSearchFileResult(filePath: path, matches: result.matches),
-    );
-    if (results.length >= maxFiles) {
-      break;
-    }
-  }
-  return List.unmodifiable(results);
-}
-
 SourceSearchResult searchSourceDocument(
   SourceDocument document,
   SourceSearchOptions options, {
@@ -590,20 +554,6 @@ Iterable<({int start, int end})> _plainMatches(
 bool _isHighSurrogate(int unit) => unit >= 0xD800 && unit <= 0xDBFF;
 
 bool _isLowSurrogate(int unit) => unit >= 0xDC00 && unit <= 0xDFFF;
-
-bool _isAuthoringContentPath(String path) {
-  final lower = path.toLowerCase();
-  return lower.endsWith('.md') ||
-      lower.endsWith('.topic') ||
-      lower.endsWith('.tree') ||
-      lower.endsWith('.cfg') ||
-      lower.endsWith('.list') ||
-      lower.endsWith('.xml') ||
-      lower.endsWith('.properties') ||
-      lower.endsWith('.yaml') ||
-      lower.endsWith('.yml') ||
-      lower.endsWith('.json');
-}
 
 bool _matchesEqual(
   List<SourceSearchMatch> left,

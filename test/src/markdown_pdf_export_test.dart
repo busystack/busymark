@@ -11,11 +11,9 @@ import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -40,12 +38,8 @@ void main() {
         ),
       ),
     );
-    final headerBar = LinuxHeaderBarService(
-      channel: const MethodChannel('markdown-pdf-error-test'),
-    );
     final dialog = showMarkdownPdfExportError(
       context,
-      headerBar,
       const MarkdownPdfExportException(
         MarkdownPdfFailureCode.compilerFailed,
         detail: 'Typst could not load the bundled template.',

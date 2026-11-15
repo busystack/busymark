@@ -482,37 +482,37 @@ void main() {
     },
   );
 
-  test('native search action toggles workspace search UI', () {
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
+  test(
+    'workspace search uses the mounted command and shared search controls',
+    () {
+      final workspace = File(
+        'lib/src/workspace/presentation/workspace_screen.dart',
+      ).readAsStringSync();
 
-    expect(
-      workspace,
-      contains('case HeaderBarAction.search:\n        _toggleSearch(ref);'),
-    );
-    expect(workspace, contains('backVisible: !searchState.active'));
-    final sidebar = File(
-      'lib/src/search/search_sidebar.dart',
-    ).readAsStringSync();
-    final session = File(
-      'lib/src/search/search_session.dart',
-    ).readAsStringSync();
-    final matcher = File(
-      'lib/src/search/workspace_text_search.dart',
-    ).readAsStringSync();
-    expect(workspace, contains('searchSessionProvider'));
-    expect(sidebar, contains('class SearchHeaderField'));
-    expect(sidebar, contains('child: BusyMarkSearchField('));
-    expect(sidebar, isNot(contains('TextField(')));
-    expect(sidebar, isNot(contains('OutlineInputBorder(')));
-    expect(sidebar, contains('onEscape: controller.close'));
-    expect(sidebar, contains('class SearchSidebar'));
-    expect(session, contains('loadWorkspaceTextMatches'));
-    expect(matcher, contains('await loadText(file.absolutePath)'));
-    expect(workspace, isNot(contains('readAsStringSync()')));
-    expect(workspace, contains('_searchNavigationTargetProvider'));
-  });
+      expect(workspace, contains('BusyMarkCommandIds.find'));
+      expect(workspace, contains('if (!searchState.active)'));
+      final sidebar = File(
+        'lib/src/search/search_sidebar.dart',
+      ).readAsStringSync();
+      final session = File(
+        'lib/src/search/search_session.dart',
+      ).readAsStringSync();
+      final matcher = File(
+        'lib/src/search/workspace_text_search.dart',
+      ).readAsStringSync();
+      expect(workspace, contains('searchSessionProvider'));
+      expect(sidebar, contains('class SearchHeaderField'));
+      expect(sidebar, contains('child: BusyMarkSearchField('));
+      expect(sidebar, isNot(contains('TextField(')));
+      expect(sidebar, isNot(contains('OutlineInputBorder(')));
+      expect(sidebar, contains('onEscape: controller.close'));
+      expect(sidebar, contains('class SearchSidebar'));
+      expect(session, contains('loadWorkspaceTextMatches'));
+      expect(matcher, contains('await loadText(file.absolutePath)'));
+      expect(workspace, isNot(contains('readAsStringSync()')));
+      expect(workspace, contains('_searchNavigationTargetProvider'));
+    },
+  );
 
   test('preview links are actionable instead of styled-only text', () {
     final workspace = File(

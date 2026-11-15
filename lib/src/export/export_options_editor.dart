@@ -5,7 +5,6 @@ import '../app/app_settings.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/localization.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../writerside/writerside_model.dart';
 import 'export_options.dart';
 import 'html_export_styles.dart';
@@ -41,10 +40,8 @@ Future<ExportOptionsSelection?> showExportOptions(
   await controller.waitUntilLoaded();
   if (!context.mounted) return null;
   final settings = ref.read(appSettingsControllerProvider);
-  final bar = ref.read(linuxHeaderBarServiceProvider);
   final selection = await showBusyMarkModalEditorDialog<ExportOptionsSelection>(
     context,
-    headerBarService: bar.isAvailable ? bar : null,
     maxWidth: 720,
     builder: (context) => ExportOptionsDialog(
       pdf: settings.pdfExportOptions,

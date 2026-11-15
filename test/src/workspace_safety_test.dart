@@ -1814,8 +1814,22 @@ void main() {
         expect(refreshed, isTrue);
         final before = h.ref.read(workspaceControllerProvider);
         targets.add(before.documentBuffers.last.id);
-        final git = h.ref.read(gitControllerProvider.notifier);
-        git.state = git.state.copyWith(openDiffFilePaths: ['comparison.md']);
+        final review = SharedGitReview(
+          shared.RepositoryId(
+            root: before.workspace!.rootPath,
+            gitDir: '${before.workspace!.rootPath}/.git',
+            commonDir: '${before.workspace!.rootPath}/.git',
+            objectFormat: 'sha1',
+          ),
+          comparison: shared.GitComparison(
+            shared.RepoPath.text('comparison.md'),
+            const shared.ContentVersion.index(),
+            const shared.ContentVersion.working(),
+          ),
+        );
+        h.ref
+            .read(sharedGitReviewProvider.notifier)
+            .open(before.workspace!.id, review);
         history.state = history.state.copyWith(
           selectedRevisionId: 'revision-to-keep',
         );
@@ -1831,9 +1845,13 @@ void main() {
               .map((b) => b.id),
           before.documentBuffers.map((b) => b.id),
         );
-        expect(h.ref.read(gitControllerProvider).openDiffFilePaths, [
-          'comparison.md',
-        ]);
+        expect(
+          h.ref
+              .read(sharedGitReviewProvider)[before.workspace!.id]!
+              .entries
+              .single,
+          same(review),
+        );
         expect(
           h.ref.read(localHistoryControllerProvider).selectedRevisionId,
           'revision-to-keep',
@@ -2129,7 +2147,6 @@ class _IdentityWorkspaceService extends WorkspaceService {
         kind: WorkspaceKind.markdownFolder,
         openedAt: DateTime(2026),
         activeFilePath: firstPath,
-        activeFileSnapshot: _snapshot('# Original A\n'),
         openFilePaths: [firstPath, secondPath],
         files: [_file(firstPath), _file(secondPath)],
         diagnostics: const [],
@@ -2141,7 +2158,6 @@ class _IdentityWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime(2026),
       activeFilePath: path,
-      activeFileSnapshot: _snapshot(documents[path] ?? ''),
       files: [_file(path)],
       diagnostics: const [],
     );

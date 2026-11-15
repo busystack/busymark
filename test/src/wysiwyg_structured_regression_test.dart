@@ -1,3 +1,4 @@
+import '../support/document_history_harness.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/assets/document_media_context.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
@@ -415,11 +416,46 @@ void main() {
               .busyDocument;
           final parent = document.blocks.single;
           var markdown = source;
+          var fixtureHistory0Document = document;
+          final fixtureHistory0 = await DocumentHistoryHarness.create(
+            source: fixtureHistory0Document.source ?? '',
+          );
+          addTearDown(fixtureHistory0.dispose);
           await tester.pumpWidget(
             _app(
               BusyMarkWysiwygEditor(
+                readEditBase: fixtureHistory0.readBase,
+                readSessionState: () =>
+                    fixtureHistory0.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  if (fixtureHistory0.controller.undoActiveBuffer()) {
+                    ((_, value) => markdown = value)(
+                      fixtureHistory0Document.filePath,
+                      fixtureHistory0.buffer.text,
+                    );
+                  }
+                },
+                onRedo: () {
+                  if (fixtureHistory0.controller.redoActiveBuffer()) {
+                    ((_, value) => markdown = value)(
+                      fixtureHistory0Document.filePath,
+                      fixtureHistory0.buffer.text,
+                    );
+                  }
+                },
+                onDocumentChanged: (value) {
+                  fixtureHistory0Document = value;
+                },
+                onSessionChanged: (id, value) {
+                  fixtureHistory0.controller.updateDocumentEditorState(
+                    fixtureHistory0.buffer.id,
+                    fixtureHistory0.buffer.editorState.copyWith(
+                      wysiwygState: value,
+                    ),
+                  );
+                },
                 key: ValueKey('whitespace-$caseIndex-$replacementIndex'),
-                document: document,
+                document: fixtureHistory0Document,
                 initialSessionState: WysiwygEditorSessionState(
                   activeBlockId: parent.id,
                   anchorBlockId: parent.id,
@@ -427,7 +463,13 @@ void main() {
                   extentBlockId: parent.id,
                   extentOffset: parent.plainText.length,
                 ),
-                onSourceChanged: (_, value) => markdown = value,
+                onSourceChanged: (path, text) {
+                  fixtureHistory0.controller.updateActiveWysiwygText(
+                    text,
+                    document: fixtureHistory0Document,
+                  );
+                  ((_, value) => markdown = value)(path, text);
+                },
               ),
             ),
           );
@@ -1485,13 +1527,11 @@ Body.
       text: 'a\n',
     );
     final groups = <String?>[];
-
     await tester.pumpWidget(
       _app(
         BusyMarkWysiwygEditor(
           key: key,
           document: document,
-          useExternalUndoHistory: true,
           undoClock: () => Duration.zero,
           onSourceChanged: (_, _) {},
           onTransactionalSourceChanged: (_, value, group) {
@@ -1512,15 +1552,12 @@ Body.
     await tester.pump();
     await tester.enterText(find.byType(TextField).first, 'abc');
     await tester.pump();
-
     expect(groups, hasLength(2));
     expect(groups.first, isNotNull);
     expect(groups.last, groups.first);
     expect(buffer.editorState.undoState.undo.map((state) => state.text), [
       'a\n',
     ]);
-    final dynamic state = tester.state(find.byType(BusyMarkWysiwygEditor));
-    expect(state.debugUndoSnapshotCount, 0);
   });
 
   testWidgets('undo controllers are disposed when blocks disappear', (
@@ -1676,14 +1713,61 @@ void _hardBreakAnchorRegressions(MarkdownParser parser) {
         BusyDocument live = document;
         var source = original;
         var publications = 0;
+        var fixtureHistory2Document = document;
+        final fixtureHistory2 = await DocumentHistoryHarness.create(
+          source: fixtureHistory2Document.source ?? '',
+        );
+        addTearDown(fixtureHistory2.dispose);
         await tester.pumpWidget(
           _app(
             BusyMarkWysiwygEditor(
-              document: document,
-              onDocumentChanged: (value) => live = value,
-              onSourceChanged: (_, value) {
-                source = value;
-                publications++;
+              readEditBase: fixtureHistory2.readBase,
+              readSessionState: () =>
+                  fixtureHistory2.buffer.editorState.wysiwygState,
+              onUndo: () {
+                if (fixtureHistory2.controller.undoActiveBuffer()) {
+                  ((_, value) {
+                    source = value;
+                    publications++;
+                  })(
+                    fixtureHistory2Document.filePath,
+                    fixtureHistory2.buffer.text,
+                  );
+                }
+              },
+              onRedo: () {
+                if (fixtureHistory2.controller.redoActiveBuffer()) {
+                  ((_, value) {
+                    source = value;
+                    publications++;
+                  })(
+                    fixtureHistory2Document.filePath,
+                    fixtureHistory2.buffer.text,
+                  );
+                }
+              },
+              onSessionChanged: (id, value) {
+                fixtureHistory2.controller.updateDocumentEditorState(
+                  fixtureHistory2.buffer.id,
+                  fixtureHistory2.buffer.editorState.copyWith(
+                    wysiwygState: value,
+                  ),
+                );
+              },
+              document: fixtureHistory2Document,
+              onDocumentChanged: (value) {
+                fixtureHistory2Document = value;
+                ((value) => live = value)(value);
+              },
+              onSourceChanged: (path, text) {
+                fixtureHistory2.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory2Document,
+                );
+                ((_, value) {
+                  source = value;
+                  publications++;
+                })(path, text);
               },
             ),
           ),
@@ -1716,11 +1800,6 @@ void _hardBreakAnchorRegressions(MarkdownParser parser) {
           TextSelection.collapsed(offset: 1 + count),
         );
         expect(
-          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
-              .debugUndoSnapshotCount,
-          1,
-        );
-        expect(
           _anchoredInlineSignatures(
             parser
                 .parse(filePath: 'breaks.md', source: editedSource)
@@ -1735,6 +1814,16 @@ void _hardBreakAnchorRegressions(MarkdownParser parser) {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
         await tester.pumpAndSettle();
         expect(source, original);
+        live = parser
+            .parse(
+              filePath: document.filePath,
+              source: tester
+                  .state<BusyMarkWysiwygEditorState>(
+                    find.byType(BusyMarkWysiwygEditor),
+                  )
+                  .serializedSource,
+            )
+            .busyDocument;
         expect(_anchoredInlineSignatures(live.blocks.single), originalAnchors);
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
@@ -1743,6 +1832,16 @@ void _hardBreakAnchorRegressions(MarkdownParser parser) {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
         await tester.pumpAndSettle();
         expect(source, editedSource);
+        live = parser
+            .parse(
+              filePath: document.filePath,
+              source: tester
+                  .state<BusyMarkWysiwygEditorState>(
+                    find.byType(BusyMarkWysiwygEditor),
+                  )
+                  .serializedSource,
+            )
+            .busyDocument;
         expect(_anchoredInlineSignatures(live.blocks.single), expected);
       });
     }
@@ -1869,13 +1968,54 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
             .parse(filePath: 'heading.md', source: '## About the job\n')
             .busyDocument;
         var publications = 0;
+        var fixtureHistory3Document = document;
+        final fixtureHistory3 = await DocumentHistoryHarness.create(
+          source: fixtureHistory3Document.source ?? '',
+        );
+        addTearDown(fixtureHistory3.dispose);
         await tester.pumpWidget(
           _app(
             DocumentReadOnlyScope(
               readOnly: true,
               child: BusyMarkWysiwygEditor(
-                document: document,
-                onSourceChanged: (_, _) => publications++,
+                readEditBase: fixtureHistory3.readBase,
+                readSessionState: () =>
+                    fixtureHistory3.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  if (fixtureHistory3.controller.undoActiveBuffer()) {
+                    ((_, _) => publications++)(
+                      fixtureHistory3Document.filePath,
+                      fixtureHistory3.buffer.text,
+                    );
+                  }
+                },
+                onRedo: () {
+                  if (fixtureHistory3.controller.redoActiveBuffer()) {
+                    ((_, _) => publications++)(
+                      fixtureHistory3Document.filePath,
+                      fixtureHistory3.buffer.text,
+                    );
+                  }
+                },
+                onDocumentChanged: (value) {
+                  fixtureHistory3Document = value;
+                },
+                onSessionChanged: (id, value) {
+                  fixtureHistory3.controller.updateDocumentEditorState(
+                    fixtureHistory3.buffer.id,
+                    fixtureHistory3.buffer.editorState.copyWith(
+                      wysiwygState: value,
+                    ),
+                  );
+                },
+                document: fixtureHistory3Document,
+                onSourceChanged: (path, text) {
+                  fixtureHistory3.controller.updateActiveWysiwygText(
+                    text,
+                    document: fixtureHistory3Document,
+                  );
+                  ((_, _) => publications++)(path, text);
+                },
               ),
             ),
           ),
@@ -1894,11 +2034,6 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         await tester.tap(button);
         await tester.pumpAndSettle();
         expect(publications, 0);
-        expect(
-          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
-              .debugUndoSnapshotCount,
-          0,
-        );
         expect(field.controller!.text, 'About the job');
       });
     }
@@ -1910,13 +2045,54 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
             .parse(filePath: 'heading.md', source: '## About the job\n')
             .busyDocument;
         var publications = 0;
+        var fixtureHistory4Document = document;
+        final fixtureHistory4 = await DocumentHistoryHarness.create(
+          source: fixtureHistory4Document.source ?? '',
+        );
+        addTearDown(fixtureHistory4.dispose);
         await tester.pumpWidget(
           _app(
             DocumentReadOnlyScope(
               readOnly: true,
               child: BusyMarkWysiwygEditor(
-                document: document,
-                onSourceChanged: (_, _) => publications++,
+                readEditBase: fixtureHistory4.readBase,
+                readSessionState: () =>
+                    fixtureHistory4.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  if (fixtureHistory4.controller.undoActiveBuffer()) {
+                    ((_, _) => publications++)(
+                      fixtureHistory4Document.filePath,
+                      fixtureHistory4.buffer.text,
+                    );
+                  }
+                },
+                onRedo: () {
+                  if (fixtureHistory4.controller.redoActiveBuffer()) {
+                    ((_, _) => publications++)(
+                      fixtureHistory4Document.filePath,
+                      fixtureHistory4.buffer.text,
+                    );
+                  }
+                },
+                onDocumentChanged: (value) {
+                  fixtureHistory4Document = value;
+                },
+                onSessionChanged: (id, value) {
+                  fixtureHistory4.controller.updateDocumentEditorState(
+                    fixtureHistory4.buffer.id,
+                    fixtureHistory4.buffer.editorState.copyWith(
+                      wysiwygState: value,
+                    ),
+                  );
+                },
+                document: fixtureHistory4Document,
+                onSourceChanged: (path, text) {
+                  fixtureHistory4.controller.updateActiveWysiwygText(
+                    text,
+                    document: fixtureHistory4Document,
+                  );
+                  ((_, _) => publications++)(path, text);
+                },
               ),
             ),
           ),
@@ -1931,11 +2107,6 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
         expect(publications, 0);
-        expect(
-          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
-              .debugUndoSnapshotCount,
-          0,
-        );
         expect(field.focusNode!.hasFocus, isTrue);
         expect(
           field.controller!.selection,
@@ -2023,11 +2194,52 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
             )
             .busyDocument;
         var publications = 0;
+        var fixtureHistory5Document = document;
+        final fixtureHistory5 = await DocumentHistoryHarness.create(
+          source: fixtureHistory5Document.source ?? '',
+        );
+        addTearDown(fixtureHistory5.dispose);
         await tester.pumpWidget(
           _app(
             BusyMarkWysiwygEditor(
-              document: document,
-              onSourceChanged: (_, _) => publications++,
+              readEditBase: fixtureHistory5.readBase,
+              readSessionState: () =>
+                  fixtureHistory5.buffer.editorState.wysiwygState,
+              onUndo: () {
+                if (fixtureHistory5.controller.undoActiveBuffer()) {
+                  ((_, _) => publications++)(
+                    fixtureHistory5Document.filePath,
+                    fixtureHistory5.buffer.text,
+                  );
+                }
+              },
+              onRedo: () {
+                if (fixtureHistory5.controller.redoActiveBuffer()) {
+                  ((_, _) => publications++)(
+                    fixtureHistory5Document.filePath,
+                    fixtureHistory5.buffer.text,
+                  );
+                }
+              },
+              onDocumentChanged: (value) {
+                fixtureHistory5Document = value;
+              },
+              onSessionChanged: (id, value) {
+                fixtureHistory5.controller.updateDocumentEditorState(
+                  fixtureHistory5.buffer.id,
+                  fixtureHistory5.buffer.editorState.copyWith(
+                    wysiwygState: value,
+                  ),
+                );
+              },
+              document: fixtureHistory5Document,
+              onSourceChanged: (path, text) {
+                fixtureHistory5.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory5Document,
+                );
+                ((_, _) => publications++)(path, text);
+              },
             ),
           ),
         );
@@ -2054,11 +2266,6 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
           field.controller!.selection,
           const TextSelection(baseOffset: 0, extentOffset: 6),
         );
-        expect(
-          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
-              .debugUndoSnapshotCount,
-          0,
-        );
       },
     );
 
@@ -2076,14 +2283,61 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
           var source = document.source!;
           var publications = 0;
           final key = GlobalKey<BusyMarkWysiwygEditorState>();
+          var fixtureHistory6Document = document;
+          final fixtureHistory6 = await DocumentHistoryHarness.create(
+            source: fixtureHistory6Document.source ?? '',
+          );
+          addTearDown(fixtureHistory6.dispose);
           await tester.pumpWidget(
             _app(
               BusyMarkWysiwygEditor(
+                readEditBase: fixtureHistory6.readBase,
+                readSessionState: () =>
+                    fixtureHistory6.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  if (fixtureHistory6.controller.undoActiveBuffer()) {
+                    ((_, value) {
+                      source = value;
+                      publications++;
+                    })(
+                      fixtureHistory6Document.filePath,
+                      fixtureHistory6.buffer.text,
+                    );
+                  }
+                },
+                onRedo: () {
+                  if (fixtureHistory6.controller.redoActiveBuffer()) {
+                    ((_, value) {
+                      source = value;
+                      publications++;
+                    })(
+                      fixtureHistory6Document.filePath,
+                      fixtureHistory6.buffer.text,
+                    );
+                  }
+                },
+                onDocumentChanged: (value) {
+                  fixtureHistory6Document = value;
+                },
+                onSessionChanged: (id, value) {
+                  fixtureHistory6.controller.updateDocumentEditorState(
+                    fixtureHistory6.buffer.id,
+                    fixtureHistory6.buffer.editorState.copyWith(
+                      wysiwygState: value,
+                    ),
+                  );
+                },
                 key: key,
-                document: document,
-                onSourceChanged: (_, value) {
-                  source = value;
-                  publications++;
+                document: fixtureHistory6Document,
+                onSourceChanged: (path, text) {
+                  fixtureHistory6.controller.updateActiveWysiwygText(
+                    text,
+                    document: fixtureHistory6Document,
+                  );
+                  ((_, value) {
+                    source = value;
+                    publications++;
+                  })(path, text);
                 },
               ),
             ),
@@ -2111,7 +2365,8 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
           expect(field.controller!.text, 'Parent');
           final before = source;
           final count = publications;
-          final undoCount = key.currentState!.debugUndoSnapshotCount;
+          final undoCount =
+              fixtureHistory6.buffer.editorState.undoState.undo.length;
           field.controller!.selection = input
               ? const TextSelection(baseOffset: 0, extentOffset: 6)
               : const TextSelection.collapsed(offset: 0);
@@ -2129,7 +2384,10 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
           await tester.pumpAndSettle();
           expect(source, before);
           expect(publications, count);
-          expect(key.currentState!.debugUndoSnapshotCount, undoCount);
+          expect(
+            fixtureHistory6.buffer.editorState.undoState.undo.length,
+            undoCount,
+          );
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
           await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
@@ -2206,12 +2464,53 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
       ).singleWhere((b) => b.plainText == 'Parent');
       BusyDocument? live;
       var publications = 0;
+      var fixtureHistory7Document = document;
+      final fixtureHistory7 = await DocumentHistoryHarness.create(
+        source: fixtureHistory7Document.source ?? '',
+      );
+      addTearDown(fixtureHistory7.dispose);
       await tester.pumpWidget(
         _app(
           BusyMarkWysiwygEditor(
-            document: document,
-            onDocumentChanged: (value) => live = value,
-            onSourceChanged: (_, _) => publications++,
+            readEditBase: fixtureHistory7.readBase,
+            readSessionState: () =>
+                fixtureHistory7.buffer.editorState.wysiwygState,
+            onUndo: () {
+              if (fixtureHistory7.controller.undoActiveBuffer()) {
+                ((_, _) => publications++)(
+                  fixtureHistory7Document.filePath,
+                  fixtureHistory7.buffer.text,
+                );
+              }
+            },
+            onRedo: () {
+              if (fixtureHistory7.controller.redoActiveBuffer()) {
+                ((_, _) => publications++)(
+                  fixtureHistory7Document.filePath,
+                  fixtureHistory7.buffer.text,
+                );
+              }
+            },
+            onSessionChanged: (id, value) {
+              fixtureHistory7.controller.updateDocumentEditorState(
+                fixtureHistory7.buffer.id,
+                fixtureHistory7.buffer.editorState.copyWith(
+                  wysiwygState: value,
+                ),
+              );
+            },
+            document: fixtureHistory7Document,
+            onDocumentChanged: (value) {
+              fixtureHistory7Document = value;
+              ((value) => live = value)(value);
+            },
+            onSourceChanged: (path, text) {
+              fixtureHistory7.controller.updateActiveWysiwygText(
+                text,
+                document: fixtureHistory7Document,
+              );
+              ((_, _) => publications++)(path, text);
+            },
           ),
         ),
       );
@@ -2225,9 +2524,6 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         extentOffset: 6,
       );
       await tester.pump();
-      final beforeUndo =
-          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
-              .debugUndoSnapshotCount;
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
       expect(publications, 0);
@@ -2236,11 +2532,6 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
       expect(
         field.controller!.selection,
         const TextSelection(baseOffset: 0, extentOffset: 6),
-      );
-      expect(
-        (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
-            .debugUndoSnapshotCount,
-        beforeUndo,
       );
       // A later edit publishes the model too: do not mask a staged deletion.
       tester.testTextInput.updateEditingValue(
@@ -2722,14 +3013,61 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         var publications = 0;
         var source = document.source!;
         BusyDocument? live;
+        var fixtureHistory8Document = document;
+        final fixtureHistory8 = await DocumentHistoryHarness.create(
+          source: fixtureHistory8Document.source ?? '',
+        );
+        addTearDown(fixtureHistory8.dispose);
         await tester.pumpWidget(
           _app(
             BusyMarkWysiwygEditor(
-              document: document,
-              onDocumentChanged: (value) => live = value,
-              onSourceChanged: (_, value) {
-                source = value;
-                publications++;
+              readEditBase: fixtureHistory8.readBase,
+              readSessionState: () =>
+                  fixtureHistory8.buffer.editorState.wysiwygState,
+              onUndo: () {
+                if (fixtureHistory8.controller.undoActiveBuffer()) {
+                  ((_, value) {
+                    source = value;
+                    publications++;
+                  })(
+                    fixtureHistory8Document.filePath,
+                    fixtureHistory8.buffer.text,
+                  );
+                }
+              },
+              onRedo: () {
+                if (fixtureHistory8.controller.redoActiveBuffer()) {
+                  ((_, value) {
+                    source = value;
+                    publications++;
+                  })(
+                    fixtureHistory8Document.filePath,
+                    fixtureHistory8.buffer.text,
+                  );
+                }
+              },
+              onSessionChanged: (id, value) {
+                fixtureHistory8.controller.updateDocumentEditorState(
+                  fixtureHistory8.buffer.id,
+                  fixtureHistory8.buffer.editorState.copyWith(
+                    wysiwygState: value,
+                  ),
+                );
+              },
+              document: fixtureHistory8Document,
+              onDocumentChanged: (value) {
+                fixtureHistory8Document = value;
+                ((value) => live = value)(value);
+              },
+              onSourceChanged: (path, text) {
+                fixtureHistory8.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory8Document,
+                );
+                ((_, value) {
+                  source = value;
+                  publications++;
+                })(path, text);
               },
             ),
           ),
@@ -2766,6 +3104,16 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
         await tester.pumpAndSettle();
         expect(source, '## About the job\n');
+        live = parser
+            .parse(
+              filePath: document.filePath,
+              source: tester
+                  .state<BusyMarkWysiwygEditorState>(
+                    find.byType(BusyMarkWysiwygEditor),
+                  )
+                  .serializedSource,
+            )
+            .busyDocument;
         expect(live!.blocks, hasLength(1));
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
@@ -2773,6 +3121,16 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
         await tester.pumpAndSettle();
+        live = parser
+            .parse(
+              filePath: document.filePath,
+              source: tester
+                  .state<BusyMarkWysiwygEditorState>(
+                    find.byType(BusyMarkWysiwygEditor),
+                  )
+                  .serializedSource,
+            )
+            .busyDocument;
         expect(live!.blocks.map((b) => b.kind), [
           BusyBlockKind.paragraph,
           BusyBlockKind.heading,

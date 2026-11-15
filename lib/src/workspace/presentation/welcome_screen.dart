@@ -28,7 +28,6 @@ import '../../core/debug_log.dart';
 import '../../core/path_utils.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/gtk_header_icon_service.dart';
-import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_message.dart';
@@ -63,7 +62,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       }
     });
     final settings = ref.watch(appSettingsControllerProvider);
-    final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
     final search = ref.watch(searchSessionProvider);
     final sidebarVisible = settings.sidebarVisible || search.active;
@@ -90,11 +88,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         }
       });
     }
-    ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((event) {
-        _handleHeaderBarAction(context, event.action);
-      });
-    });
     final startupPath = ref.watch(startupPathProvider);
     final startupNavigation = ref.read(startupNavigationGuardProvider);
     if (startupNavigation.claimStartupPath(startupPath)) {
@@ -258,126 +251,70 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       ),
     );
 
-    final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
-        .copyWith(
-          title: context.l10n.appTitle,
-          viewMode: AppViewMode.editor,
-          searchQuery: search.query,
-          canRefresh: false,
-          documentControlsVisible: false,
-          searchActive: search.active,
-          searchVisible: true,
-          sidebarVisible: sidebarVisible,
-          sidebarToggleVisible: true,
-          backVisible: false,
-        );
-
-    return HeaderBarConfigurationPublisher(
-      synchronizer: headerBar.configurationSynchronizer,
-      configuration: headerConfiguration,
-      enabled: headerBar.isAvailable,
-      child: Scaffold(
-        backgroundColor: welcomeMainColor,
-        body: LayoutBuilder(
-          builder: (context, constraints) => LinuxPageFrame(
-            sidebarHeader: const BusyMarkLinuxBrandHeader(),
-            sidebarBody: welcomeSidebar,
-            sidebarAvailable:
-                search.active ||
-                constraints.maxWidth >=
-                    BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
-            sidebarOverlay:
-                search.active &&
-                constraints.maxWidth <
-                    BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
-            sidebarExpanded: sidebarVisible,
-            sidebarTransitionGeneration: ref.watch(
-              sidebarTransitionGenerationProvider,
-            ),
-            header: BusyMarkLinuxHeaderLayout(
-              leading: BusyMarkLinuxHeaderControlGroup(
-                children: [
-                  BusyMarkLinuxHeaderIconButton(
-                    tooltip: sidebarVisible
-                        ? context.l10n.hideSidebar
-                        : context.l10n.showSidebar,
-                    icon: BusyMarkGlyphs.sidebar,
-                    nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
-                    selected: sidebarVisible,
-                    shortcut:
-                        (BusyMarkCommandRegistryScope.maybeOf(context) ??
-                                BusyMarkCommandCatalog
-                                    .metadata)[BusyMarkCommandIds.toggleSidebar]
-                            ?.shortcut
-                            ?.label,
-                    onPressed: _toggleSidebar,
-                  ),
-                ],
-              ),
-              centerAllocation: search.active
-                  ? BusyMarkLinuxHeaderCenterAllocation.fillBetweenControls
-                  : BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls,
-              title: search.active
-                  ? const SearchHeaderField()
-                  : BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
-              trailing: BusyMarkLinuxHeaderControlGroup(
-                children: [
-                  BusyMarkHeaderIconButton(
-                    tooltip: context.l10n.search,
-                    icon: BusyMarkGlyphs.search,
-                    selected: search.active,
-                    onPressed: () =>
-                        ref.read(searchSessionProvider.notifier).toggle(),
-                  ),
-                  BusyMarkMainMenuButton(
-                    onSelected: (action) =>
-                        _handleMainMenuAction(context, headerBar, action),
-                  ),
-                ],
-              ),
-            ),
-            body: welcomeContent,
+    return Scaffold(
+      backgroundColor: welcomeMainColor,
+      body: LayoutBuilder(
+        builder: (context, constraints) => LinuxPageFrame(
+          sidebarHeader: const BusyMarkLinuxBrandHeader(),
+          sidebarBody: welcomeSidebar,
+          sidebarAvailable:
+              search.active ||
+              constraints.maxWidth >=
+                  BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
+          sidebarOverlay:
+              search.active &&
+              constraints.maxWidth <
+                  BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
+          sidebarExpanded: sidebarVisible,
+          sidebarTransitionGeneration: ref.watch(
+            sidebarTransitionGenerationProvider,
           ),
+          header: BusyMarkLinuxHeaderLayout(
+            leading: BusyMarkLinuxHeaderControlGroup(
+              children: [
+                BusyMarkLinuxHeaderIconButton(
+                  tooltip: sidebarVisible
+                      ? context.l10n.hideSidebar
+                      : context.l10n.showSidebar,
+                  icon: BusyMarkGlyphs.sidebar,
+                  nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
+                  selected: sidebarVisible,
+                  shortcut:
+                      (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                              BusyMarkCommandCatalog
+                                  .metadata)[BusyMarkCommandIds.toggleSidebar]
+                          ?.shortcut
+                          ?.label,
+                  onPressed: _toggleSidebar,
+                ),
+              ],
+            ),
+            centerAllocation: search.active
+                ? BusyMarkLinuxHeaderCenterAllocation.fillBetweenControls
+                : BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls,
+            title: search.active
+                ? const SearchHeaderField()
+                : BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
+            trailing: BusyMarkLinuxHeaderControlGroup(
+              children: [
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.search,
+                  icon: BusyMarkGlyphs.search,
+                  selected: search.active,
+                  onPressed: () =>
+                      ref.read(searchSessionProvider.notifier).toggle(),
+                ),
+                BusyMarkMainMenuButton(
+                  onSelected: (action) =>
+                      _handleMainMenuAction(context, action),
+                ),
+              ],
+            ),
+          ),
+          body: welcomeContent,
         ),
       ),
     );
-  }
-
-  void _handleHeaderBarAction(BuildContext context, HeaderBarAction action) {
-    switch (action) {
-      case HeaderBarAction.settings:
-        context.go(settingsLocation(SettingsReturnTarget.welcome));
-      case HeaderBarAction.aboutBusyMark:
-        showBusyMarkAboutDialog(context);
-      case HeaderBarAction.syntaxReference:
-        showBusyMarkSyntaxReferenceDialog(context);
-      case HeaderBarAction.reportIssue:
-        showBusyMarkFeedbackDialog(
-          context,
-          headerBarService: ref.read(linuxHeaderBarServiceProvider),
-        );
-      case HeaderBarAction.sidebarToggle:
-        _toggleSidebar();
-      case HeaderBarAction.search:
-        ref.read(searchSessionProvider.notifier).toggle();
-      case HeaderBarAction.back:
-      case HeaderBarAction.refresh:
-      case HeaderBarAction.save:
-      case HeaderBarAction.export:
-      case HeaderBarAction.fullScreen:
-      case HeaderBarAction.menu:
-      case HeaderBarAction.viewModeEditor:
-      case HeaderBarAction.viewModeSource:
-      case HeaderBarAction.viewModePreview:
-      case HeaderBarAction.viewModeSplit:
-      case HeaderBarAction.sidebarFiles:
-      case HeaderBarAction.sidebarToc:
-      case HeaderBarAction.sidebarOutline:
-      case HeaderBarAction.sidebarGit:
-      case HeaderBarAction.sidebarLocalHistory:
-      case HeaderBarAction.sidebarClipboardHistory:
-        break;
-    }
   }
 
   void _toggleSidebar() {
@@ -391,7 +328,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   void _handleMainMenuAction(
     BuildContext context,
-    LinuxHeaderBarService headerBar,
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
@@ -404,10 +340,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
-        showBusyMarkFeedbackDialog(
-          context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
-        );
+        showBusyMarkFeedbackDialog(context);
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }
@@ -507,10 +440,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
     _logSelectedPickerPath(parentPath);
 
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final created = await showBusyMarkModalEditorDialog<bool>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       maxWidth: BusyMarkSizes.dialogWide,
       builder: (context) => BusyMarkCreateWritersideProjectDialog(
         parentDirectoryPath: parentPath,

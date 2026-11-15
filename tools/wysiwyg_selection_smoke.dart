@@ -1,5 +1,7 @@
 // Native Linux selection acceptance probe. Reads a disposable document copy,
 // drives production key/pointer handlers, and uses the real Linux clipboard.
+import '../test/support/document_history_harness.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -53,7 +55,11 @@ Future<void> main(List<String> arguments) async {
     MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: _Probe(document: document, output: output),
+      home: _Probe(
+        document: document,
+        output: output,
+        history: await DocumentHistoryHarness.create(path: copy.path),
+      ),
     ),
   );
 }
@@ -112,7 +118,12 @@ class _ProbeMessenger extends BinaryMessenger {
 }
 
 class _Probe extends StatefulWidget {
-  const _Probe({required this.document, required this.output});
+  const _Probe({
+    required this.document,
+    required this.output,
+    required this.history,
+  });
+  final DocumentHistoryHarness history;
   final BusyDocument document;
   final Directory output;
   @override
@@ -141,6 +152,26 @@ class _ProbeState extends State<_Probe> {
   }
 
   @override
+  void dispose() {
+    widget.history.dispose();
+    super.dispose();
+  }
+
+  void _traverseHistory(bool redo) {
+    final changed = redo
+        ? widget.history.controller.redoActiveBuffer()
+        : widget.history.controller.undoActiveBuffer();
+    if (!changed) return;
+    setState(() {
+      _liveSource = widget.history.buffer.text;
+      _initialSession = widget.history.buffer.editorState.wysiwygState;
+      _liveDocument = const MarkdownParser()
+          .parse(filePath: _liveDocument.filePath, source: _liveSource)
+          .busyDocument;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) => Scaffold(
     body: RepaintBoundary(
       key: _boundary,
@@ -149,15 +180,30 @@ class _ProbeState extends State<_Probe> {
         document: _liveDocument,
         clipboardService: _clipboard,
         initialSessionState: _initialSession,
-        onSessionChanged: (_, session) => _session = session,
+        readEditBase: widget.history.readBase,
+        readSessionState: () => widget.history.buffer.editorState.wysiwygState,
+        onUndo: () => _traverseHistory(false),
+        onRedo: () => _traverseHistory(true),
+        onSessionChanged: (_, session) {
+          _session = session;
+          widget.history.controller.updateDocumentEditorState(
+            widget.history.buffer.id,
+            widget.history.buffer.editorState.copyWith(wysiwygState: session),
+          );
+        },
+        onDocumentChanged: (document) => _liveDocument = document,
         onSourceChanged: (_, value) {
           if (!_editableMode) {
             _edits++;
             return;
           }
           _acceptedEdits++;
+          widget.history.controller.updateActiveWysiwygText(
+            value,
+            document: _liveDocument,
+          );
           setState(() {
-            _liveSource = value;
+            _liveSource = widget.history.buffer.text;
             _syntheticParses++;
             _liveDocument = const MarkdownParser()
                 .parse(filePath: _liveDocument.filePath, source: value)
@@ -681,6 +727,14 @@ class _ProbeState extends State<_Probe> {
     String source, {
     WysiwygEditorSessionState session = const WysiwygEditorSessionState(),
   }) async {
+    widget.history.controller.updateActiveText(source);
+    widget.history.controller.updateDocumentEditorState(
+      widget.history.buffer.id,
+      widget.history.buffer.editorState.copyWith(
+        undoState: const DocumentUndoState(),
+        wysiwygState: session,
+      ),
+    );
     setState(() {
       _editableMode = true;
       _liveSource = source;
@@ -773,7 +827,7 @@ class _ProbeState extends State<_Probe> {
   }
 
   Future<void> _undoSynthetic(String label, String source) async {
-    final expectedEdits = _acceptedEdits + 1;
+    final expectedEdits = _acceptedEdits;
     await _key(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
     await _recordEdit('$label-undo', source, expectedEdits);
   }
@@ -836,7 +890,7 @@ class _ProbeState extends State<_Probe> {
     ]) {
       await _selectSyntheticTable();
       final edits = _acceptedEdits + 1;
-      var expectedSource = '';
+      var expectedSource = '\n';
       var caret = '';
       switch (action) {
         case 'cut':
@@ -1078,13 +1132,13 @@ class _ProbeState extends State<_Probe> {
           LogicalKeyboardKey.keyZ,
           shift: true,
         );
-        await _recordEdit('$label-commit-redo', '$replaced\n', edits + 5);
+        await _recordEdit('$label-commit-redo', '$replaced\n', edits + 2);
         await _key(
           PhysicalKeyboardKey.keyZ,
           LogicalKeyboardKey.keyZ,
           shift: true,
         );
-        await _recordEdit('$label-continued-redo', '$continued\n', edits + 6);
+        await _recordEdit('$label-continued-redo', '$continued\n', edits + 2);
       }
     }
   }

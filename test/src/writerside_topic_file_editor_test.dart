@@ -1817,53 +1817,6 @@ Following-line destination: [Guide][next].
     },
   );
 
-  test(
-    'delete reloads newly configured instances before start-page checks',
-    () async {
-      final fixture = await _fixture(
-        trees: {
-          'guide.tree': '''
-<instance-profile id="guide" name="Guide" start-page="other.md">
-  <toc-element topic="guide.md"/>
-  <toc-element topic="other.md"/>
-</instance-profile>
-''',
-        },
-        topics: {'guide.md': '# Guide\n', 'other.md': '# Other\n'},
-      );
-      final staleTopic = _topic(fixture.module, 'guide.md');
-      File(p.join(fixture.root.path, 'admin.tree')).writeAsStringSync('''
-<instance-profile id="admin" name="Admin" start-page="guide.md">
-  <toc-element topic="guide.md"/>
-</instance-profile>
-''');
-      File(p.join(fixture.root.path, 'writerside.cfg')).writeAsStringSync('''
-<ihp version="2.0">
-  <topics dir="topics"/>
-  <instance src="guide.tree"/>
-  <instance src="admin.tree"/>
-</ihp>
-''');
-
-      await expectLater(
-        editor.delete(module: fixture.module, topic: staleTopic),
-        throwsA(
-          isA<BusyMarkException>().having(
-            (error) => error.code,
-            'code',
-            'writerside.topic-file.is-start-page',
-          ),
-        ),
-      );
-
-      expect(File(staleTopic.filePath).existsSync(), isTrue);
-      expect(
-        File(p.join(fixture.root.path, 'admin.tree')).readAsStringSync(),
-        contains('topic="guide.md"'),
-      );
-    },
-  );
-
   test('rename does not claim a new same-basename nested reference', () async {
     final fixture = await _fixture(
       trees: {
@@ -1957,56 +1910,6 @@ Following-line destination: [Guide][next].
       expect(File(topic.filePath).readAsStringSync(), '# Nested guide\n');
       expect(concurrentTopic.readAsStringSync(), '# Concurrent guide\n');
       expect(target.readAsStringSync(), '# Nested guide\n');
-    },
-  );
-
-  test(
-    'delete aborts when a concurrent topic changes basename resolution',
-    () async {
-      final fixture = await _fixture(
-        trees: {
-          'guide.tree': '''
-<instance-profile id="guide" name="Guide" start-page="other.md">
-  <toc-element topic="guide.md"/>
-  <toc-element topic="other.md"/>
-</instance-profile>
-''',
-        },
-        topics: {
-          'nested/guide.md': '# Nested guide\n',
-          'other.md': '# Other\n',
-        },
-      );
-      final topic = _topic(fixture.module, 'nested/guide.md');
-      final tree = File(p.join(fixture.root.path, 'guide.tree'));
-      final originalTree = tree.readAsStringSync();
-      final concurrentTopic = File(
-        p.join(fixture.root.path, 'topics', 'guide.md'),
-      );
-      var inserted = false;
-      final racingEditor = WritersideTopicFileEditor(
-        beforeTreePublish: (_) async {
-          if (!inserted) {
-            inserted = true;
-            await concurrentTopic.writeAsString('# Concurrent guide\n');
-          }
-        },
-      );
-
-      await expectLater(
-        racingEditor.delete(module: fixture.module, topic: topic),
-        throwsA(
-          isA<BusyMarkException>().having(
-            (error) => error.code,
-            'code',
-            'writerside.topic-file.topic-inventory-changed',
-          ),
-        ),
-      );
-
-      expect(tree.readAsStringSync(), originalTree);
-      expect(File(topic.filePath).readAsStringSync(), '# Nested guide\n');
-      expect(concurrentTopic.readAsStringSync(), '# Concurrent guide\n');
     },
   );
 
@@ -2221,109 +2124,6 @@ Following-line destination: [Guide][next].
     expect((await renamed.stat()).mode & 0xfff, 0x180);
   }, skip: Platform.isWindows ? 'POSIX file modes only.' : false);
 
-  test(
-    'delete removes every TOC entry and promotes children in place',
-    () async {
-      final fixture = await _fixture(
-        trees: {
-          'guide.tree': '''
-<instance-profile id="guide" name="Guide" start-page="parent.md">
-  <toc-element topic="parent.md">
-    <toc-element topic="doomed.md">
-      <toc-element topic="child-a.md"/>
-      <toc-element topic="child-b.md"/>
-    </toc-element>
-    <toc-element topic="after.md"/>
-  </toc-element>
-</instance-profile>
-''',
-          'admin.tree': '''
-<instance-profile id="admin" name="Admin" start-page="other.md">
-  <toc-element topic="doomed.md">
-    <toc-element topic="child-b.md"/>
-  </toc-element>
-  <toc-element topic="other.md"/>
-</instance-profile>
-''',
-        },
-        topics: {
-          'parent.md': '# Parent\n',
-          'doomed.md': '# Doomed\n',
-          'child-a.md': '# Child A\n',
-          'child-b.md': '# Child B\n',
-          'after.md': '# After\n',
-          'other.md': '# Other\n',
-        },
-      );
-      final topic = _topic(fixture.module, 'doomed.md');
-
-      final result = await editor.delete(module: fixture.module, topic: topic);
-
-      expect(File(topic.filePath).existsSync(), isFalse);
-      expect(result.removedTocEntries, 2);
-      expect(result.updatedTreePaths, hasLength(2));
-      final guideTree = _tree(fixture.root, 'guide.tree');
-      final parent = guideTree
-          .findAllElements('toc-element')
-          .singleWhere(
-            (element) => element.getAttribute('topic') == 'parent.md',
-          );
-      expect(_directTopicReferences(parent), [
-        'child-a.md',
-        'child-b.md',
-        'after.md',
-      ]);
-      expect(
-        _directTopicReferences(_tree(fixture.root, 'admin.tree').rootElement),
-        ['child-b.md', 'other.md'],
-      );
-      expect(_allTopicReferences(guideTree), isNot(contains('doomed.md')));
-    },
-  );
-
-  test('delete rejects a topic used as any instance start page', () async {
-    final fixture = await _fixture(
-      trees: {
-        'guide.tree': '''
-<instance-profile id="guide" name="Guide" start-page="other.md">
-  <toc-element topic="doomed.md"/>
-  <toc-element topic="other.md"/>
-</instance-profile>
-''',
-        'admin.tree': '''
-<instance-profile id="admin" name="Admin" start-page="doomed.md">
-  <toc-element topic="doomed.md"/>
-</instance-profile>
-''',
-      },
-      topics: {'doomed.md': '# Doomed\n', 'other.md': '# Other\n'},
-    );
-    final topic = _topic(fixture.module, 'doomed.md');
-    final originalTrees = {
-      for (final name in ['guide.tree', 'admin.tree'])
-        name: File(p.join(fixture.root.path, name)).readAsStringSync(),
-    };
-
-    await expectLater(
-      editor.delete(module: fixture.module, topic: topic),
-      throwsA(
-        isA<BusyMarkException>().having(
-          (error) => error.code,
-          'code',
-          'writerside.topic-file.is-start-page',
-        ),
-      ),
-    );
-
-    expect(File(topic.filePath).existsSync(), isTrue);
-    for (final entry in originalTrees.entries) {
-      expect(
-        File(p.join(fixture.root.path, entry.key)).readAsStringSync(),
-        entry.value,
-      );
-    }
-  });
-
   test('rename rejects unsafe path components before writing', () async {
     final fixture = await _fixture(
       trees: {
@@ -2358,54 +2158,6 @@ Following-line destination: [Guide][next].
       isFalse,
     );
   });
-
-  test(
-    'delete rejects a topic replaced by a symlink without touching its target',
-    () async {
-      final fixture = await _fixture(
-        trees: {
-          'guide.tree': '''
-<instance-profile id="guide" name="Guide" start-page="other.md">
-  <toc-element topic="guide.md"/>
-  <toc-element topic="other.md"/>
-</instance-profile>
-''',
-        },
-        topics: {'guide.md': '# Guide\n', 'other.md': '# Other\n'},
-      );
-      final topic = _topic(fixture.module, 'guide.md');
-      final outside = await Directory.systemTemp.createTemp(
-        'busymark-topic-file-editor-outside-',
-      );
-      addTearDown(() async {
-        if (await outside.exists()) {
-          await outside.delete(recursive: true);
-        }
-      });
-      final target = File(p.join(outside.path, 'keep.md'))
-        ..writeAsStringSync('# Keep\n');
-      await File(topic.filePath).delete();
-      await Link(topic.filePath).create(target.path);
-
-      await expectLater(
-        editor.delete(module: fixture.module, topic: topic),
-        throwsA(
-          isA<BusyMarkException>().having(
-            (error) => error.code,
-            'code',
-            'writerside.topic-file.path-unsafe',
-          ),
-        ),
-      );
-
-      expect(target.readAsStringSync(), '# Keep\n');
-      expect(
-        FileSystemEntity.typeSync(topic.filePath, followLinks: false),
-        FileSystemEntityType.link,
-      );
-    },
-    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
-  );
 }
 
 Future<({Directory root, WritersideModule module})> _fixture({
@@ -2503,13 +2255,6 @@ List<String> _allTopicReferences(XmlDocument document) {
   return [
     for (final element in document.findAllElements('toc-element'))
       if (element.getAttribute('topic') case final topic?) topic,
-  ];
-}
-
-List<String> _directTopicReferences(XmlElement element) {
-  return [
-    for (final child in element.childElements)
-      if (child.name.local == 'toc-element') child.getAttribute('topic')!,
   ];
 }
 

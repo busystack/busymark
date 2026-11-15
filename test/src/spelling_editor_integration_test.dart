@@ -1,3 +1,4 @@
+import '../support/document_history_harness.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
@@ -185,7 +186,6 @@ void main() {
             document: document,
             documentId: 'formatted-buffer',
             contentRevision: 3,
-            useExternalUndoHistory: true,
             spellingAnnotations: [_annotation(occurrence)],
             onDocumentChanged: (value) => updatedDocument = value,
             onSourceChanged: (_, _) {},
@@ -248,17 +248,64 @@ void main() {
     );
     final key = GlobalKey<BusyMarkWysiwygEditorState>();
     final sources = <String>[];
+    var fixtureHistory0Document = document;
+    final fixtureHistory0 = await DocumentHistoryHarness.create(
+      source: fixtureHistory0Document.source ?? '',
+    );
+    addTearDown(fixtureHistory0.dispose);
     await tester.pumpWidget(
       _testApp(
         BusyMarkWysiwygEditor(
+          readEditBase: fixtureHistory0.readBase,
+          readSessionState: () =>
+              fixtureHistory0.buffer.editorState.wysiwygState,
+          onUndo: () {
+            if (fixtureHistory0.controller.undoActiveBuffer()) {
+              ((_, text) => sources.add(text))(
+                fixtureHistory0Document.filePath,
+                fixtureHistory0.buffer.text,
+              );
+            }
+          },
+          onRedo: () {
+            if (fixtureHistory0.controller.redoActiveBuffer()) {
+              ((_, text) => sources.add(text))(
+                fixtureHistory0Document.filePath,
+                fixtureHistory0.buffer.text,
+              );
+            }
+          },
+          onSessionChanged: (id, value) {
+            fixtureHistory0.controller.updateDocumentEditorState(
+              fixtureHistory0.buffer.id,
+              fixtureHistory0.buffer.editorState.copyWith(wysiwygState: value),
+            );
+          },
           key: key,
-          document: document,
+          document: fixtureHistory0Document,
           documentId: snapshot.bufferId,
           contentRevision: snapshot.contentRevision,
           spellingAnnotations: [_annotation(occurrence)],
-          onDocumentChanged: (_) {},
-          onSourceChanged: (_, text) => sources.add(text),
-          onSpellingSourceChanged: (_, text, _, _) => sources.add(text),
+          onDocumentChanged: (value) {
+            fixtureHistory0Document = value;
+            ((_) {})(value);
+          },
+          onSourceChanged: (path, text) {
+            fixtureHistory0.controller.updateActiveWysiwygText(
+              text,
+              document: fixtureHistory0Document,
+            );
+            ((_, text) => sources.add(text))(path, text);
+          },
+          onSpellingSourceChanged: (path, text, before, after) {
+            fixtureHistory0.controller.updateActiveWysiwygText(
+              text,
+              document: fixtureHistory0Document,
+              previousWysiwygState: before,
+              wysiwygState: after,
+            );
+            ((_, text, _, _) => sources.add(text))(path, text, before, after);
+          },
         ),
       ),
     );
@@ -288,7 +335,7 @@ void main() {
     );
     await tester.pump();
     expect(sources, ['Before ![hello `world`](image.png) after\n']);
-    expect(editor.debugUndoSnapshotCount, 1);
+    expect(fixtureHistory0.buffer.editorState.undoState.undo.length, 1);
 
     final editable = find.byType(EditableText).first;
     await tester.tap(editable);
@@ -356,18 +403,68 @@ void main() {
       expect(occurrence.sourceStart, source.indexOf('wrld'));
       final key = GlobalKey<BusyMarkWysiwygEditorState>();
       final sources = <String>[];
+      var fixtureHistory1Document = document;
+      final fixtureHistory1 = await DocumentHistoryHarness.create(
+        source: fixtureHistory1Document.source ?? '',
+      );
+      addTearDown(fixtureHistory1.dispose);
       await tester.pumpWidget(
         ProviderScope(
           child: _testApp(
             BusyMarkWysiwygEditor(
+              readEditBase: fixtureHistory1.readBase,
+              readSessionState: () =>
+                  fixtureHistory1.buffer.editorState.wysiwygState,
+              onUndo: () {
+                if (fixtureHistory1.controller.undoActiveBuffer()) {
+                  ((_, text) => sources.add(text))(
+                    fixtureHistory1Document.filePath,
+                    fixtureHistory1.buffer.text,
+                  );
+                }
+              },
+              onRedo: () {
+                if (fixtureHistory1.controller.redoActiveBuffer()) {
+                  ((_, text) => sources.add(text))(
+                    fixtureHistory1Document.filePath,
+                    fixtureHistory1.buffer.text,
+                  );
+                }
+              },
+              onSessionChanged: (id, value) {
+                fixtureHistory1.controller.updateDocumentEditorState(
+                  fixtureHistory1.buffer.id,
+                  fixtureHistory1.buffer.editorState.copyWith(
+                    wysiwygState: value,
+                  ),
+                );
+              },
               key: key,
-              document: document,
+              document: fixtureHistory1Document,
               documentId: snapshot.bufferId,
               contentRevision: snapshot.contentRevision,
               spellingAnnotations: [_annotation(occurrence)],
-              onDocumentChanged: (_) {},
-              onSourceChanged: (_, text) => sources.add(text),
-              onSpellingSourceChanged: (_, text, _, _) => sources.add(text),
+              onDocumentChanged: (value) {
+                fixtureHistory1Document = value;
+                ((_) {})(value);
+              },
+              onSourceChanged: (path, text) {
+                fixtureHistory1.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory1Document,
+                );
+                ((_, text) => sources.add(text))(path, text);
+              },
+              onSpellingSourceChanged: (path, text, before, after) {
+                fixtureHistory1.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory1Document,
+                  previousWysiwygState: before,
+                  wysiwygState: after,
+                );
+                ((_, text, _, _) =>
+                    sources.add(text))(path, text, before, after);
+              },
             ),
           ),
         ),
@@ -398,7 +495,7 @@ void main() {
       );
       await tester.pump();
       expect(sources, [expected]);
-      expect(editor.debugUndoSnapshotCount, 1);
+      expect(fixtureHistory1.buffer.editorState.undoState.undo.length, 1);
       final target = occurrence.run.target as SpellingRichBlockTarget;
       await tester.tap(
         find.byKey(ValueKey('wysiwyg-rendered-math-${target.blockId}')),
@@ -576,7 +673,6 @@ void main() {
       isFalse,
     );
     expect(changes, isEmpty);
-    expect(key.currentState!.debugUndoSnapshotCount, 0);
   });
 
   testWidgets('delayed math image preparation refuses a newer revision', (
@@ -657,7 +753,6 @@ void main() {
       isFalse,
     );
     expect(changes, isEmpty);
-    expect(key.currentState!.debugUndoSnapshotCount, 0);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 11));
   });
@@ -704,7 +799,6 @@ void main() {
             document: document,
             documentId: snapshot.bufferId,
             contentRevision: snapshot.contentRevision,
-            useExternalUndoHistory: true,
             spellingAnnotations: [_annotation(occurrence)],
             onDocumentChanged: (_) {},
             onSourceChanged: (_, _) {},
@@ -772,7 +866,6 @@ void main() {
           document: document,
           documentId: snapshot.bufferId,
           contentRevision: snapshot.contentRevision,
-          useExternalUndoHistory: true,
           spellingAnnotations: [_annotation(occurrence)],
           onDocumentChanged: (_) {},
           onSourceChanged: (_, _) {},
@@ -843,7 +936,6 @@ void main() {
           document: document,
           documentId: snapshot.bufferId,
           contentRevision: snapshot.contentRevision,
-          useExternalUndoHistory: true,
           spellingAnnotations: [_annotation(occurrence)],
           onDocumentChanged: (_) {},
           onSourceChanged: (_, _) {},
@@ -929,7 +1021,6 @@ void main() {
             document: document,
             documentId: 'rich-buffer',
             contentRevision: 11,
-            useExternalUndoHistory: true,
             spellingAnnotations: [_annotation(occurrence)],
             onDocumentChanged: (_) => publicationOrder.add('document'),
             onSourceChanged: (_, _) => genericSourceChanges++,

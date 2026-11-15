@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
 
 import 'package:path/path.dart' as p;
@@ -306,17 +307,7 @@ class WritersidePdfExportService {
       token.throwIfCancelled();
       final selection = selected[index];
       final topic = selection.topic;
-      String source;
-      try {
-        source =
-            topic.markdown?.source ?? await File(topic.filePath).readAsString();
-      } on FileSystemException catch (error) {
-        throw WritersidePdfExportException(
-          WritersidePdfFailureCode.fileSystem,
-          detail: error.message,
-          cause: error,
-        );
-      }
+      final source = topic.document.source;
       combinedSourceBytes += source.length;
       if (combinedSourceBytes > maximumCombinedSourceBytes) {
         throw const WritersidePdfExportException(
@@ -324,22 +315,11 @@ class WritersidePdfExportService {
           detail: 'The selected instance is too large to export safely.',
         );
       }
-      final parsedTopic = topic.format == WritersideTopicFormat.xml
-          ? moduleService.topicParser.parseXml(
-              filePath: topic.filePath,
-              source: source,
-              topicsRoot: topic.topicRoot,
-            )
-          : moduleService.topicParser.parseMarkdown(
-              filePath: topic.filePath,
-              source: source,
-              topicsRoot: topic.topicRoot,
-            );
       final resolved = documentResolver.resolve(
-        parsedTopic.document,
+        topic.document,
         WritersideResolveContext(
           module: selection.module,
-          topic: parsedTopic,
+          topic: topic,
           instance: instance,
           modulesByOrigin: modulesByOrigin,
         ),
@@ -356,7 +336,7 @@ class WritersidePdfExportService {
       }
       var rendered = documentRenderer.toBusyDocument(
         resolved.document,
-        title: resolved.title ?? _topicTitle(parsedTopic, instance.id),
+        title: resolved.title ?? _topicTitle(topic, instance.id),
         includeTitleHeading: true,
       );
       if (selection.hidden) {
@@ -366,7 +346,7 @@ class WritersidePdfExportService {
       }
       final assets = await _resolveBusyAssets(
         selection.module,
-        parsedTopic,
+        topic,
         preparePdfFootnotes(rendered),
         modulesByOrigin,
       );

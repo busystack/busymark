@@ -15,6 +15,8 @@ class DocumentHistoryHarness {
 
   static Future<DocumentHistoryHarness> create({
     DocumentViewModePreference mode = DocumentViewModePreference.editor,
+    String? source,
+    String? path,
   }) async {
     final container = ProviderContainer(
       overrides: [
@@ -33,9 +35,22 @@ class DocumentHistoryHarness {
     await settings.setAutoSave(false);
     await settings.setValidateOnEdit(false);
     final controller = container.read(workspaceControllerProvider.notifier);
-    await controller.createMarkdownFile();
+    if (path == null) {
+      await controller.createMarkdownFile();
+    } else {
+      await controller.openPath(path);
+    }
     controller.updateActiveEditorMode(mode);
-    controller.updateActiveText('abc');
+    if (path == null || source != null) {
+      controller.updateActiveText(source ?? 'abc');
+    }
+    if (source != null) {
+      final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+      controller.updateDocumentEditorState(
+        buffer.id,
+        buffer.editorState.copyWith(undoState: const DocumentUndoState()),
+      );
+    }
     return DocumentHistoryHarness._(container, controller);
   }
 

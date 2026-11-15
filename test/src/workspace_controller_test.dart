@@ -1500,7 +1500,7 @@ code
       expect(await controller.discardActiveChanges(), isTrue);
       expect(controller.state.activeText, savedText);
       expect(controller.state.isDirty, isFalse);
-      expect(controller.state.workspace?.activeFileSnapshot, isNotNull);
+      expect(controller.state.activeBuffer?.diskSnapshot, isNotNull);
 
       controller.dispose();
       settingsController.dispose();
@@ -2190,13 +2190,13 @@ CommonMark paragraph.
       await service.validationStarted.future;
 
       expect(await controller.saveActive(), isTrue);
-      final savedSnapshot = controller.state.workspace!.activeFileSnapshot!;
+      final savedSnapshot = controller.state.activeBuffer!.diskSnapshot!;
       expect(savedSnapshot.contentHash, '# Dirty A\n');
 
       service.finishValidation();
       await validation;
 
-      final finalSnapshot = controller.state.workspace!.activeFileSnapshot!;
+      final finalSnapshot = controller.state.activeBuffer!.diskSnapshot!;
       expect(finalSnapshot.contentHash, savedSnapshot.contentHash);
       expect(finalSnapshot.modifiedAt, savedSnapshot.modifiedAt);
 
@@ -2489,7 +2489,7 @@ CommonMark paragraph.
     await controller.closeOpenFileTab(initialPath);
 
     expect(controller.state.workspace?.activeFilePath, isNull);
-    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.activeBuffer?.diskSnapshot, isNull);
     expect(controller.state.workspace?.openFilePaths, isEmpty);
     expect(controller.state.activeText, isEmpty);
     expect(controller.state.preview, isNull);
@@ -2553,8 +2553,8 @@ CommonMark paragraph.
     await controller.closeAllOpenFileTabs();
 
     expect(controller.state.workspace?.activeFilePath, isNull);
-    expect(controller.state.workspace?.activeFileModifiedAt, isNull);
-    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.activeBuffer?.diskSnapshot?.modifiedAt, isNull);
+    expect(controller.state.activeBuffer?.diskSnapshot, isNull);
     expect(controller.state.workspace?.openFilePaths, isEmpty);
     expect(controller.state.workspace?.markdown, isNull);
     expect(controller.state.workspace?.diagnostics, isEmpty);
@@ -3426,7 +3426,7 @@ CommonMark paragraph.
     final controller = harness.controller;
 
     await controller.openPath(file.path);
-    final loadedSnapshot = controller.state.workspace!.activeFileSnapshot!;
+    final loadedSnapshot = controller.state.activeBuffer!.diskSnapshot!;
     await file.writeAsString('# External rewrite\n');
     await file.setLastModified(loadedSnapshot.modifiedAt);
     controller.updateActiveText('# BusyMark\n');
@@ -5145,11 +5145,6 @@ class _AutosaveWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime(2026),
       activeFilePath: path,
-      activeFileSnapshot: WorkspaceFileSnapshot(
-        modifiedAt: _autosaveInitialModifiedAt,
-        size: 11,
-        contentHash: 'initial',
-      ),
       files: [
         DocumentFile(
           absolutePath: path,
@@ -5327,7 +5322,6 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime(2026),
       activeFilePath: aPath,
-      activeFileSnapshot: _snapshots[aPath],
       openFilePaths: [aPath],
       files: [
         DocumentFile(

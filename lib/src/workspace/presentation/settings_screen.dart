@@ -32,7 +32,6 @@ import '../../app/window_control_service.dart';
 import '../../core/atomic_file_writer.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/gtk_header_icon_service.dart';
-import '../../platform/linux_header_bar_service.dart';
 import '../../spellcheck/spelling_catalog.dart';
 import '../../spellcheck/spelling_session_controller.dart';
 import '../../spellcheck/spelling_word_store.dart';
@@ -98,13 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const <SpellingDictionaryResource>[];
     _prepareSpellingSettings(spelling, workspace?.id);
     final colors = BusyMarkSurfaceColors.of(context);
-    final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final title = _settingsPageLabel(context, _page);
-    ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((event) {
-        _handleHeaderBarAction(context, headerBar, event.action);
-      });
-    });
     final pageBody = switch (_page) {
       SettingsPage.keyboardShortcuts => const KeyboardShortcutsSettings(),
       SettingsPage.appearance => BusyMarkGroupedList(
@@ -459,19 +452,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context, constraints) {
         final showSidebar =
             constraints.maxWidth >= BusyMarkSizes.settingsSidebarBreakpoint;
-        final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
-            .copyWith(
-              title: title,
-              viewMode: AppViewMode.editor,
-              searchQuery: '',
-              canRefresh: false,
-              documentControlsVisible: false,
-              searchActive: false,
-              searchVisible: false,
-              sidebarVisible: showSidebar,
-              sidebarToggleVisible: false,
-              backVisible: true,
-            );
         final content = ColoredBox(
           key: const ValueKey('settings-content-surface'),
           color: colors.view,
@@ -510,8 +490,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           header: _SettingsFallbackHeader(
             title: title,
             onBack: _goBack,
-            onMenuSelected: (action) =>
-                _handleMainMenuAction(context, headerBar, action),
+            onMenuSelected: (action) => _handleMainMenuAction(context, action),
           ),
           sidebarHeader: const BusyMarkLinuxBrandHeader(),
           sidebarBody: _SettingsSidebar(
@@ -528,13 +507,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onPopInvokedWithResult: (didPop, result) {
             if (!didPop) _goBack();
           },
-          child: HeaderBarConfigurationPublisher(
-            synchronizer: headerBar.configurationSynchronizer,
-            configuration: headerConfiguration,
-            enabled: headerBar.isAvailable,
-            child: BusyMarkLocalTextEditingShortcuts(
-              child: Scaffold(backgroundColor: colors.view, body: body),
-            ),
+          child: BusyMarkLocalTextEditingShortcuts(
+            child: Scaffold(backgroundColor: colors.view, body: body),
           ),
         );
       },
@@ -645,49 +619,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  void _handleHeaderBarAction(
-    BuildContext context,
-    LinuxHeaderBarService headerBar,
-    HeaderBarAction action,
-  ) {
-    switch (action) {
-      case HeaderBarAction.back:
-        _goBack();
-      case HeaderBarAction.aboutBusyMark:
-        showBusyMarkAboutDialog(context);
-      case HeaderBarAction.syntaxReference:
-        showBusyMarkSyntaxReferenceDialog(context);
-      case HeaderBarAction.reportIssue:
-        showBusyMarkFeedbackDialog(
-          context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
-        );
-      case HeaderBarAction.settings:
-        _selectPage(SettingsPage.appearance);
-      case HeaderBarAction.sidebarToggle:
-      case HeaderBarAction.search:
-      case HeaderBarAction.refresh:
-      case HeaderBarAction.save:
-      case HeaderBarAction.export:
-      case HeaderBarAction.fullScreen:
-      case HeaderBarAction.menu:
-      case HeaderBarAction.viewModeEditor:
-      case HeaderBarAction.viewModeSource:
-      case HeaderBarAction.viewModePreview:
-      case HeaderBarAction.viewModeSplit:
-      case HeaderBarAction.sidebarFiles:
-      case HeaderBarAction.sidebarToc:
-      case HeaderBarAction.sidebarOutline:
-      case HeaderBarAction.sidebarGit:
-      case HeaderBarAction.sidebarLocalHistory:
-      case HeaderBarAction.sidebarClipboardHistory:
-        break;
-    }
-  }
-
   void _handleMainMenuAction(
     BuildContext context,
-    LinuxHeaderBarService headerBar,
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
@@ -700,10 +633,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
-        showBusyMarkFeedbackDialog(
-          context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
-        );
+        showBusyMarkFeedbackDialog(context);
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }

@@ -1,3 +1,4 @@
+import '../support/document_history_harness.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -190,18 +191,47 @@ void _expectBoundaryReplacement(
   required String leading,
   required String trailing,
 }) {
+  if (caret == null) {
+    // Buffer history replays authored source through the production parser.
+    // Paragraph boundary whitespace remains in the source, not its inline tree.
+    expect(markdown, '$leading**hello world**$trailing\n');
+    _expectSavedSemantics(
+      markdown,
+      MarkdownMode.writersideMarkdown,
+      '${leading}hello world$trailing',
+      [
+        BusyInlineStyleRange(
+          start: leading.length,
+          end: leading.length + 11,
+          kind: BusyInlineKind.strong,
+        ),
+      ],
+    );
+    expect(
+      _inlineTree(block.inlines),
+      _inlineTree(
+        _parser
+            .parse(filePath: '/replayed.md', source: markdown)
+            .busyDocument
+            .blocks
+            .single
+            .inlines,
+      ),
+    );
+    return;
+  }
   expect(
     {
       'text': block.plainText,
       'strong': _strongRanges(block),
       'markdown': markdown,
-      if (caret != null) 'caret': caret,
+      'caret': caret,
     },
     {
       'text': '${leading}hello world$trailing',
       'strong': [(leading.length, leading.length + 11)],
       'markdown': '$leading**hello world**$trailing\n',
-      if (caret != null) 'caret': leading.length + 11 + trailing.length,
+      'caret': leading.length + 11 + trailing.length,
     },
     reason: 'Live inline tree: ${_inlineTree(block.inlines)}',
   );
@@ -1057,7 +1087,6 @@ void main() {
       AssetIngestionService assetIngestionService =
           const AssetIngestionService(),
       BusyMarkWysiwygTransactionalSourceChanged? onTransactionalSourceChanged,
-      bool useExternalUndoHistory = false,
       bool hostToasts = false,
       bool providerScope = false,
       bool focusFirstField = true,
@@ -1068,6 +1097,33 @@ void main() {
       final document = _parser
           .parse(filePath: filePath ?? '/$id.md', source: source, mode: mode)
           .busyDocument;
+      final history = await DocumentHistoryHarness.create(source: source);
+      addTearDown(history.dispose);
+      final initialSession =
+          initialSessionFor?.call(document) ??
+          const WysiwygEditorSessionState();
+      history.controller.updateDocumentEditorState(
+        history.buffer.id,
+        history.buffer.editorState.copyWith(wysiwygState: initialSession),
+      );
+      void traverse(bool redo) {
+        final changedHistory = redo
+            ? history.controller.redoActiveBuffer()
+            : history.controller.undoActiveBuffer();
+        if (changedHistory) {
+          changed(history.buffer.text);
+          onDocumentChanged?.call(
+            _parser
+                .parse(
+                  filePath: document.filePath,
+                  source: history.buffer.text,
+                  mode: mode,
+                )
+                .busyDocument,
+          );
+        }
+      }
+
       final app = MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -1085,13 +1141,23 @@ void main() {
             assetInputService: assetInputService,
             assetIngestionService: assetIngestionService,
             onTransactionalSourceChanged: onTransactionalSourceChanged,
-            useExternalUndoHistory: useExternalUndoHistory,
-            initialSessionState:
-                initialSessionFor?.call(document) ??
-                const WysiwygEditorSessionState(),
+            readEditBase: history.readBase,
+            readSessionState: () => history.buffer.editorState.wysiwygState,
+            onUndo: () => traverse(false),
+            onRedo: () => traverse(true),
+            onSessionChanged: (_, value) {
+              history.controller.updateDocumentEditorState(
+                history.buffer.id,
+                history.buffer.editorState.copyWith(wysiwygState: value),
+              );
+            },
+            initialSessionState: initialSession,
             document: document,
             onDocumentChanged: onDocumentChanged,
-            onSourceChanged: (_, value) => changed(value),
+            onSourceChanged: (_, value) {
+              history.controller.updateActiveText(value);
+              changed(value);
+            },
           ),
         ),
       );
@@ -1221,15 +1287,20 @@ void main() {
                 isEmpty,
               );
             }
+            final edited = source;
             await key(tester, LogicalKeyboardKey.keyZ);
             await tester.pumpAndSettle();
             expect(source, original);
             await key(tester, LogicalKeyboardKey.keyZ, shift: true);
             await tester.pumpAndSettle();
-            expect(live!.blocks.first.kind, BusyBlockKind.paragraph);
+            expect(source, edited);
             expect(
-              live!.blocks.last.kind,
-              end < 13 ? BusyBlockKind.heading : BusyBlockKind.paragraph,
+              live!.blocks.map((b) => b.kind),
+              _parser
+                  .parse(filePath: '/heading.md', source: edited)
+                  .busyDocument
+                  .blocks
+                  .map((b) => b.kind),
             );
           },
         );
@@ -1360,7 +1431,14 @@ void main() {
           await tester.pumpAndSettle();
           await key(tester, LogicalKeyboardKey.keyZ);
           await key(tester, LogicalKeyboardKey.keyZ);
-          expect(live!.blocks.single.plainText, '');
+          expect(source, '');
+          expect(
+            tester
+                .widget<TextField>(find.byType(TextField).first)
+                .controller!
+                .text,
+            '',
+          );
         },
       );
     }
@@ -2479,11 +2557,11 @@ void main() {
               final delimiter = kind == BusyInlineKind.strong ? '**' : '*';
               final expected =
                   '${delimiter}hello [world](guide.md "Guide")$delimiter \n';
-              void check() {
+              void check({bool replay = false}) {
                 expect(saved, expected);
                 _expectInlineSemantics(
                   live!.blocks.single,
-                  'hello world ',
+                  replay ? 'hello world' : 'hello world ',
                   ranges,
                 );
                 _expectSavedSemantics(saved, mode, 'hello world ', ranges);
@@ -2503,7 +2581,7 @@ void main() {
               _expectInlineSemantics(live!.blocks.single, 'Target', []);
               await key(tester, LogicalKeyboardKey.keyZ, shift: true);
               await tester.pumpAndSettle();
-              check();
+              check(replay: true);
               await mount(tester, 'linked-reopened', saved, (_) {}, mode: mode);
               expect(
                 tester
@@ -2590,7 +2668,12 @@ void main() {
             final current = tester
                 .widget<TextField>(find.byType(TextField).first)
                 .controller!;
-            expect(current.text, fragment.blocks.single.text);
+            expect(
+              current.text,
+              checkCaret
+                  ? fragment.blocks.single.text
+                  : fragment.blocks.single.text.trimRight(),
+            );
             expect(current.selection.isCollapsed, isTrue);
             _expectBoundaryReplacement(
               live!.blocks.single,
@@ -2721,11 +2804,16 @@ void main() {
                 saved,
                 value.expected,
                 reason:
-                    'Live inline tree: ${_inlineTree(live!.blocks.single.inlines)}',
+                    'Live inline tree: ${live!.blocks.map((b) => _inlineTree(b.inlines)).toList()}',
               );
               final field = tester
                   .widget<TextField>(find.byType(TextField).first)
                   .controller!;
+              if (!checkCaret && value.text == '  ') {
+                expect(live!.blocks, isEmpty);
+                expect(field.text, '');
+                return;
+              }
               expect(field.text, live!.blocks.single.plainText);
               if (checkCaret) {
                 expect(
@@ -2748,7 +2836,8 @@ void main() {
                     .single;
                 expect(_inlineTree(live!.blocks.single.inlines), [
                   ..._inlineTree(reparsed.inlines),
-                  if (value.expected.endsWith(' \n')) ['text', ' ', <Object>[]],
+                  if (checkCaret && value.expected.endsWith(' \n'))
+                    ['text', ' ', <Object>[]],
                 ]);
               }
             }
@@ -4401,7 +4490,6 @@ void main() {
           assetIngestionService: ingestion,
           onTransactionalSourceChanged: (_, source, _) =>
               transactions.add(source),
-          useExternalUndoHistory: true,
           hostToasts: true,
         );
 
@@ -4434,7 +4522,6 @@ void main() {
           assetIngestionService: ingestion,
           onTransactionalSourceChanged: (_, source, _) =>
               transactions.add(source),
-          useExternalUndoHistory: true,
           hostToasts: true,
         );
         final pasteResult = await registry.paste(

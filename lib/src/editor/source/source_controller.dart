@@ -10,7 +10,6 @@ class BusyMarkSourceController extends BusyMarkSourceEditingController {
     super.onFullTextChanged,
   }) {
     renderText = false;
-    visualMarkdown = false;
   }
 
   void replaceFullTextAndLanguage({
@@ -20,6 +19,5 @@ class BusyMarkSourceController extends BusyMarkSourceEditingController {
     this.language = language;
     setFullText(text);
     renderText = false;
-    visualMarkdown = false;
   }
 }

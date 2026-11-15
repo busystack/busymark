@@ -13,7 +13,6 @@ import 'package:busymark/src/export/workspace_export_ui.dart';
 import 'package:busymark/src/export/writerside_pdf_export_service.dart';
 import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
 import 'package:busymark/src/export/writerside_pdf_models.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:flutter/material.dart';
@@ -359,11 +358,6 @@ Widget _harness(
 }) => ProviderScope(
   overrides: [
     localSettingsStoreProvider.overrideWithValue(settings),
-    linuxHeaderBarServiceProvider.overrideWithValue(
-      LinuxHeaderBarService(
-        channel: const MethodChannel('pdf-title-test-header'),
-      ),
-    ),
     if (markdown != null)
       markdownPdfExportServiceProvider.overrideWithValue(markdown),
     if (writerside != null)

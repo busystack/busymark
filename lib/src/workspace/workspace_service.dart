@@ -896,62 +896,6 @@ class WorkspaceService {
     );
   }
 
-  Future<List<String>> writersideTopicRenameAffectedPaths(
-    Workspace workspace, {
-    required String topicPath,
-    required String topicModuleRoot,
-  }) async {
-    final project = await _writersideProjectService.load(
-      workspace.rootPath,
-      preferredModuleRoot: topicModuleRoot,
-    );
-    final module = project.modules
-        .where((candidate) => p.equals(candidate.rootPath, topicModuleRoot))
-        .singleOrNull;
-    if (module == null) {
-      throw const BusyMarkException('writerside.topic.module-not-open');
-    }
-    final topic = _writersideTopicForPath(module, topicPath);
-    final paths = <String>{topic.filePath};
-    for (final usage in project.index.references) {
-      final topicPart = usage.value.split('#').first;
-      if (topicPart.isNotEmpty &&
-          project.index
-              .definitions(
-                topicPart,
-                moduleId: usage.moduleId,
-                origin: usage.origin,
-                kind: WritersideSymbolKind.topic,
-                filePath: usage.filePath,
-                referenceOffset: usage.span.startOffset,
-              )
-              .any((symbol) => p.equals(symbol.filePath, topic.filePath))) {
-        paths.add(usage.filePath);
-      }
-    }
-    for (final candidate in project.modules) {
-      final moduleId = project.index.modulesById.entries
-          .where((entry) => p.equals(entry.value.rootPath, candidate.rootPath))
-          .map((entry) => entry.key)
-          .single;
-      for (final instance in candidate.instances) {
-        final startPage = instance.startPage;
-        if (startPage != null &&
-            project.index
-                .definitions(
-                  startPage,
-                  moduleId: moduleId,
-                  kind: WritersideSymbolKind.topic,
-                  filePath: instance.sourceTreePath,
-                )
-                .any((symbol) => p.equals(symbol.filePath, topic.filePath))) {
-          paths.add(instance.sourceTreePath);
-        }
-      }
-    }
-    return paths.toList()..sort();
-  }
-
   Future<void> deleteWritersideTopicFile(
     Workspace workspace,
     String topicPath,
@@ -1064,9 +1008,6 @@ class WorkspaceService {
         (module.topics.isEmpty ? null : module.topics.first.filePath);
     return workspace.copyWith(
       activeFilePath: activeFile,
-      activeFileSnapshot: activeFile == null
-          ? null
-          : await fileSnapshot(activeFile),
       openFilePaths: activeFile == null
           ? workspace.openFilePaths
           : [...workspace.openFilePaths, activeFile],
@@ -1207,10 +1148,6 @@ class WorkspaceService {
       snapshot: snapshot,
       format: decoded.format,
     );
-  }
-
-  Future<DateTime> fileModifiedAt(String path) async {
-    return (await File(path).stat()).modified;
   }
 
   Future<WorkspaceFileSnapshot> fileSnapshot(String path) async {
@@ -2539,7 +2476,6 @@ class WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime.now(),
       activeFilePath: filePath,
-      activeFileSnapshot: load.snapshot,
       openFilePaths: [filePath],
       files: [await _documentFile(filePath, rootPath)],
       diagnostics: markdown.diagnostics,
@@ -2589,9 +2525,6 @@ class WorkspaceService {
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime.now(),
       activeFilePath: firstMarkdown?.filePath,
-      activeFileSnapshot: firstMarkdown == null
-          ? null
-          : await fileSnapshot(firstMarkdown.filePath),
       openFilePaths: firstMarkdown == null
           ? const []
           : [firstMarkdown.filePath],
@@ -2640,9 +2573,6 @@ class WorkspaceService {
       kind: WorkspaceKind.writersideModule,
       openedAt: DateTime.now(),
       activeFilePath: firstTopic,
-      activeFileSnapshot: firstTopic == null
-          ? null
-          : await fileSnapshot(firstTopic),
       openFilePaths: firstTopic == null ? const [] : [firstTopic],
       files: files,
       directories: directories,

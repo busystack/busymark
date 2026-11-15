@@ -42,66 +42,13 @@ enum GitDiffFileStatus {
 enum GitFailureCode {
   unavailable,
   unsupportedVersion,
-  notRepository,
   invalidPath,
-  invalidBranchName,
-  invalidCommitMessage,
-  noStagedFiles,
-  noRemote,
-  noUpstream,
-  multipleRemotes,
   dirtyWorkspace,
-  stagedChanges,
-  detachedHead,
-  diverged,
   authorIdentity,
   authentication,
   network,
   conflict,
   commandFailed,
-}
-
-enum GitResetMode { soft, mixed, hard, keep }
-
-enum GitView { changes, fileHistory, projectHistory }
-
-enum GitComparisonType {
-  staged,
-  unstaged,
-  untracked,
-  commitChange,
-  commitVersusCurrent,
-}
-
-class GitChangeSelection {
-  const GitChangeSelection({
-    required this.path,
-    required this.comparison,
-    this.originalRepoRelativePath,
-  });
-
-  final String path;
-  final GitComparisonType comparison;
-  final String? originalRepoRelativePath;
-
-  List<String> get repoRelativePaths {
-    final originalPath = originalRepoRelativePath;
-    return [
-      if (originalPath != null && originalPath != path) originalPath,
-      path,
-    ];
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is GitChangeSelection &&
-        other.path == path &&
-        other.comparison == comparison &&
-        other.originalRepoRelativePath == originalRepoRelativePath;
-  }
-
-  @override
-  int get hashCode => Object.hash(path, comparison, originalRepoRelativePath);
 }
 
 class GitAvailability {
@@ -129,75 +76,11 @@ class GitRepositoryInfo {
     required this.rootPath,
     required this.gitDirPath,
     this.identityKey,
-    this.currentBranch,
-    this.detachedHeadCommit,
-    this.upstreamBranch,
-    this.aheadCount = 0,
-    this.behindCount = 0,
-    this.hasRemote = false,
-    this.isBare = false,
-    this.isRebasing = false,
-    this.isMerging = false,
-    this.isCherryPicking = false,
-    this.hasConflicts = false,
   });
 
   final String rootPath;
   final String gitDirPath;
   final String? identityKey;
-  final String? currentBranch;
-  final String? detachedHeadCommit;
-  final String? upstreamBranch;
-  final int aheadCount;
-  final int behindCount;
-  final bool hasRemote;
-  final bool isBare;
-  final bool isRebasing;
-  final bool isMerging;
-  final bool isCherryPicking;
-  final bool hasConflicts;
-
-  GitRepositoryInfo copyWith({
-    String? rootPath,
-    String? gitDirPath,
-    Object? identityKey = _unset,
-    Object? currentBranch = _unset,
-    Object? detachedHeadCommit = _unset,
-    Object? upstreamBranch = _unset,
-    int? aheadCount,
-    int? behindCount,
-    bool? hasRemote,
-    bool? isBare,
-    bool? isRebasing,
-    bool? isMerging,
-    bool? isCherryPicking,
-    bool? hasConflicts,
-  }) {
-    return GitRepositoryInfo(
-      rootPath: rootPath ?? this.rootPath,
-      gitDirPath: gitDirPath ?? this.gitDirPath,
-      identityKey: identical(identityKey, _unset)
-          ? (rootPath == null && gitDirPath == null ? this.identityKey : null)
-          : identityKey as String?,
-      currentBranch: identical(currentBranch, _unset)
-          ? this.currentBranch
-          : currentBranch as String?,
-      detachedHeadCommit: identical(detachedHeadCommit, _unset)
-          ? this.detachedHeadCommit
-          : detachedHeadCommit as String?,
-      upstreamBranch: identical(upstreamBranch, _unset)
-          ? this.upstreamBranch
-          : upstreamBranch as String?,
-      aheadCount: aheadCount ?? this.aheadCount,
-      behindCount: behindCount ?? this.behindCount,
-      hasRemote: hasRemote ?? this.hasRemote,
-      isBare: isBare ?? this.isBare,
-      isRebasing: isRebasing ?? this.isRebasing,
-      isMerging: isMerging ?? this.isMerging,
-      isCherryPicking: isCherryPicking ?? this.isCherryPicking,
-      hasConflicts: hasConflicts ?? this.hasConflicts,
-    );
-  }
 }
 
 class GitFileStatus {
@@ -283,62 +166,6 @@ class GitStatusSnapshot {
   bool get clean => files.isEmpty && unrepresentedPathCount == 0;
 }
 
-class GitCommitSummary {
-  const GitCommitSummary({
-    required this.fullHash,
-    required this.shortHash,
-    required this.authorName,
-    required this.authorEmail,
-    required this.authorDate,
-    required this.subject,
-    required this.parentHashes,
-  });
-
-  final String fullHash;
-  final String shortHash;
-  final String authorName;
-  final String authorEmail;
-  final DateTime authorDate;
-  final String subject;
-  final List<String> parentHashes;
-}
-
-class GitFileHistoryEntry {
-  const GitFileHistoryEntry({
-    required this.commit,
-    required this.pathAtCommit,
-    this.pathInParent,
-    required this.status,
-  });
-
-  final GitCommitSummary commit;
-  final String pathAtCommit;
-  final String? pathInParent;
-  final GitDiffFileStatus status;
-
-  String? get oldPath =>
-      status == GitDiffFileStatus.added ? null : (pathInParent ?? pathAtCommit);
-
-  String? get newPath =>
-      status == GitDiffFileStatus.deleted ? null : pathAtCommit;
-}
-
-class GitCommitDetails {
-  const GitCommitDetails({
-    required this.summary,
-    this.body,
-    required this.changedFiles,
-    required this.patch,
-    this.fileSnapshots = const {},
-  });
-
-  final GitCommitSummary summary;
-  final String? body;
-  final List<GitDiffFile> changedFiles;
-  final String patch;
-  final Map<String, String> fileSnapshots;
-}
-
 class GitDiff {
   const GitDiff({
     required this.title,
@@ -353,24 +180,6 @@ class GitDiff {
   final String rawPatch;
   final bool hasBinaryFiles;
   final Map<String, String> fileSnapshots;
-}
-
-class GitHistoricalFileComparison {
-  const GitHistoricalFileComparison({
-    required this.oldPath,
-    required this.newPath,
-    required this.oldContent,
-    required this.newContent,
-    required this.diff,
-  });
-
-  final String? oldPath;
-  final String? newPath;
-  final String? oldContent;
-  final String? newContent;
-  final GitDiff diff;
-
-  bool get binary => oldContent == null || newContent == null;
 }
 
 class GitDiffFile {
@@ -456,22 +265,6 @@ class GitDiffLine {
   final int? newLineNumber;
 }
 
-class GitOperationResult {
-  const GitOperationResult({
-    required this.success,
-    required this.message,
-    required this.stdout,
-    required this.stderr,
-    this.updatedStatus,
-  });
-
-  final bool success;
-  final String message;
-  final String stdout;
-  final String stderr;
-  final GitStatusSnapshot? updatedStatus;
-}
-
 class GitFailure {
   const GitFailure({
     required this.code,
@@ -486,22 +279,6 @@ class GitFailure {
   final String rawMessage;
   final String commandName;
   final int? exitCode;
-}
-
-class GitBranch {
-  const GitBranch({
-    required this.name,
-    required this.current,
-    this.upstream,
-    this.objectName,
-    this.subject,
-  });
-
-  final String name;
-  final bool current;
-  final String? upstream;
-  final String? objectName;
-  final String? subject;
 }
 
 const Object _unset = Object();

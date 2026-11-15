@@ -69,7 +69,6 @@ class LocalHistoryState {
     this.selectedDocumentId,
     this.selectedRevisionId,
     this.selectedRevision,
-    this.browsingDocuments = false,
     this.inspectingRetainedDocument = false,
     this.warning,
   });
@@ -81,7 +80,7 @@ class LocalHistoryState {
   final String? selectedDocumentId;
   final String? selectedRevisionId;
   final LocalHistoryRevision? selectedRevision;
-  final bool browsingDocuments;
+
   final bool inspectingRetainedDocument;
   final LocalHistoryWarning? warning;
 
@@ -102,7 +101,6 @@ class LocalHistoryState {
     Object? selectedDocumentId = _unset,
     Object? selectedRevisionId = _unset,
     Object? selectedRevision = _unset,
-    bool? browsingDocuments,
     bool? inspectingRetainedDocument,
     Object? warning = _unset,
   }) => LocalHistoryState(
@@ -119,7 +117,6 @@ class LocalHistoryState {
     selectedRevision: identical(selectedRevision, _unset)
         ? this.selectedRevision
         : selectedRevision as LocalHistoryRevision?,
-    browsingDocuments: browsingDocuments ?? this.browsingDocuments,
     inspectingRetainedDocument:
         inspectingRetainedDocument ?? this.inspectingRetainedDocument,
     warning: identical(warning, _unset)
@@ -3975,7 +3972,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       selectedDocumentId: null,
       selectedRevisionId: null,
       selectedRevision: null,
-      browsingDocuments: false,
       inspectingRetainedDocument: false,
     );
     _showCaptureFailure();
@@ -3999,7 +3995,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       } else {
         state = state.copyWith(
           loading: false,
-          browsingDocuments: false,
           inspectingRetainedDocument: false,
         );
       }
@@ -4027,7 +4022,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       selectedDocumentId: null,
       selectedRevisionId: null,
       selectedRevision: null,
-      browsingDocuments: false,
       inspectingRetainedDocument: false,
     );
     _showCaptureFailure();
@@ -4053,51 +4047,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       selectedDocumentId: documentId,
       selectedRevisionId: null,
       selectedRevision: null,
-      browsingDocuments: false,
       inspectingRetainedDocument: inspectingRetainedDocument,
     );
     _showCaptureFailure();
-  }
-
-  /// Browses retained documents without filtering the revision timeline.
-  /// No current editor is implied: closed, renamed, untitled, and deleted
-  /// documents remain first-class results.
-  void browseDocuments() {
-    _scopeGeneration++;
-    _loadGeneration++;
-    state = state.copyWith(
-      loading: false,
-      selectedDocumentId: null,
-      selectedRevisionId: null,
-      selectedRevision: null,
-      browsingDocuments: true,
-      inspectingRetainedDocument: false,
-    );
-    _showCaptureFailure();
-  }
-
-  Future<void> selectDocumentForPath(String path) async {
-    await refresh();
-    if (!ref.mounted) return;
-    final normalized = p.normalize(path);
-    final activeDocument = state.snapshot.documents
-        .where(
-          (candidate) =>
-              !candidate.deleted &&
-              candidate.currentPath != null &&
-              p.equals(candidate.currentPath!, normalized),
-        )
-        .firstOrNull;
-    final document =
-        activeDocument ??
-        state.snapshot.documents.where((candidate) {
-          final current = candidate.currentPath;
-          return (current != null && p.equals(current, normalized)) ||
-              candidate.historicalPaths.any(
-                (historical) => p.equals(historical, normalized),
-              );
-        }).firstOrNull;
-    if (document != null) selectDocument(document.id);
   }
 
   Future<LocalHistorySnapshot> readRecoveryHistory() => _store.load();
@@ -6141,7 +6093,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
 
     var selectedDocumentId = state.selectedDocumentId;
-    if (!state.browsingDocuments && !state.inspectingRetainedDocument) {
+    if (!state.inspectingRetainedDocument) {
       final scope = _normalBrowsingScope;
       if (scope != null) {
         selectedDocumentId = _documentIdsByBuffer[scope.bufferId];

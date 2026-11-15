@@ -9,7 +9,6 @@ import 'package:uuid/uuid.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/localization.dart';
-import '../../platform/linux_header_bar_service.dart';
 import '../feedback_metadata.dart';
 import '../feedback_service.dart';
 import '../feedback_submission.dart';
@@ -33,14 +32,10 @@ abstract final class BusyMarkFeedbackKeys {
   static const status = ValueKey<String>('feedback.status');
 }
 
-void showBusyMarkFeedbackDialog(
-  BuildContext context, {
-  LinuxHeaderBarService? headerBarService,
-}) {
+void showBusyMarkFeedbackDialog(BuildContext context) {
   unawaited(
     showBusyMarkModalEditorDialog<void>(
       context,
-      headerBarService: headerBarService,
       maxWidth: 680,
       maxHeight: 760,
       builder: (dialogContext) => BusyMarkFeedbackDialog(

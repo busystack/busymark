@@ -4,7 +4,6 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/system_accent.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -268,9 +267,6 @@ void main() {
       await tester.pump();
       expect(ready, isTrue);
       await initialized;
-      final header = LinuxHeaderBarService(
-        channel: const MethodChannel('test.busymark/headerbar'),
-      );
       final router = GoRouter(
         routes: [
           GoRoute(
@@ -289,7 +285,6 @@ void main() {
           }),
           initialSystemAccentColorProvider.overrideWithValue(coordinator.color),
           localSettingsStoreProvider.overrideWithValue(_MemorySettings()),
-          linuxHeaderBarServiceProvider.overrideWithValue(header),
           appRouterProvider.overrideWithValue(router),
         ],
       );
@@ -349,7 +344,6 @@ void main() {
       expect(gtk.cancels, 1);
       expect(io.closes, 1);
       router.dispose();
-      header.dispose();
       await gtk.events.close();
       await io.signals.close();
     });

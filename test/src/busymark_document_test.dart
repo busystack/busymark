@@ -30,7 +30,6 @@ import 'package:busymark/src/markdown/document_outline.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -4125,8 +4124,6 @@ void main() {}
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, null);
     });
-    final headerBarService = LinuxHeaderBarService(channel: channel);
-    await headerBarService.initialize();
     final l10n = AppLocalizationsEn();
     final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
 
@@ -4141,7 +4138,6 @@ void main() {}
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
               toolbarPlacement: EditorToolbarPlacement.bottomLeft,
-              headerBarService: headerBarService,
               onSourceChanged: (_, _) {},
             ),
           ),

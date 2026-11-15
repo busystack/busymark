@@ -10,7 +10,6 @@ import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
-import '../platform/linux_header_bar_service.dart';
 import 'workspace_controller.dart';
 import 'workspace_message.dart';
 import 'workspace_model.dart';
@@ -152,10 +151,8 @@ Future<bool> _confirmUnsavedChanges(
   final initialRevisions = {
     for (final buffer in dirtyBuffers) buffer.id: buffer.revision,
   };
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final action = await showBusyMarkModalDialog<_UnsavedChangesAction>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.unsavedChanges,
       maxWidth: BusyMarkSizes.dialog,
@@ -470,10 +467,8 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   if (!context.mounted) {
     return false;
   }
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final action = await showBusyMarkModalDialog<_OverwriteAction>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.fileChangedOnDisk,
       maxWidth: BusyMarkSizes.dialog,
@@ -586,10 +581,8 @@ Future<LineEndingNormalization?> _chooseMixedLineEndingNormalizationForFormat(
   if (!format.hasMixedLineEndings) {
     return null;
   }
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   return showBusyMarkModalDialog<LineEndingNormalization>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.normalizeLineEndings,
       maxWidth: BusyMarkSizes.dialog,
@@ -618,10 +611,8 @@ Future<_OverwriteAction?> _confirmSaveAsOverwrite(
   WidgetRef ref,
   String savePath,
 ) {
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   return showBusyMarkModalDialog<_OverwriteAction>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkNativeDialogShell(
       title: context.l10n.warning,
       maxWidth: BusyMarkSizes.dialog,

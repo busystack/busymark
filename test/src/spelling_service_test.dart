@@ -9,7 +9,6 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
-import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -3275,8 +3274,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              _spellingSettingsHeaderDefaults(context, child!),
+          builder: (context, child) => (child!),
           home: const SettingsScreen(
             returnTarget: SettingsReturnTarget.welcome,
             initialPage: SettingsPage.editor,
@@ -3354,8 +3352,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              _spellingSettingsHeaderDefaults(context, child!),
+          builder: (context, child) => (child!),
           home: const SettingsScreen(
             returnTarget: SettingsReturnTarget.welcome,
             initialPage: SettingsPage.editor,
@@ -3479,8 +3476,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              _spellingSettingsHeaderDefaults(context, child!),
+          builder: (context, child) => (child!),
           home: const SettingsScreen(
             returnTarget: SettingsReturnTarget.welcome,
             initialPage: SettingsPage.spellingDictionaries,
@@ -3539,8 +3535,7 @@ void main() {
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            builder: (context, child) =>
-                _spellingSettingsHeaderDefaults(context, child!),
+            builder: (context, child) => (child!),
             home: const SettingsScreen(
               returnTarget: SettingsReturnTarget.welcome,
               initialPage: SettingsPage.editor,
@@ -5922,68 +5917,6 @@ final class _SpellingMemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {}
 }
-
-Widget _spellingSettingsHeaderDefaults(BuildContext context, Widget child) =>
-    HeaderBarConfigurationDefaults(
-      configuration: HeaderBarConfiguration(
-        title: 'Settings',
-        viewMode: AppViewMode.editor,
-        searchQuery: '',
-        textDirection: TextDirection.ltr,
-        canRefresh: false,
-        documentControlsVisible: false,
-        searchActive: false,
-        searchVisible: false,
-        sidebarVisible: false,
-        sidebarToggleVisible: false,
-        backVisible: true,
-        fullScreen: false,
-        modalBarrierDepth: 0,
-        sidebarWidth: 200,
-        labels: _spellingSettingsHeaderLabels,
-        theme: HeaderBarTheme.fromContext(context),
-      ),
-      child: child,
-    );
-
-const _spellingSettingsHeaderLabels = HeaderBarLabels(
-  editor: 'Editor',
-  source: 'Source',
-  preview: 'Preview',
-  split: 'Dual',
-  viewMode: 'View mode',
-  editorShortcut: '',
-  editorGtkAccelerator: '',
-  sourceShortcut: '',
-  sourceGtkAccelerator: '',
-  previewShortcut: '',
-  previewGtkAccelerator: '',
-  splitShortcut: '',
-  splitGtkAccelerator: '',
-  search: 'Search',
-  searchShortcut: '',
-  refresh: 'Refresh',
-  menu: 'Menu',
-  sidebar: 'Sidebar',
-  sidebarShortcut: '',
-  back: 'Back',
-  backShortcut: '',
-  save: 'Save',
-  export: 'Export',
-  exportShortcut: '',
-  exportGtkAccelerator: '',
-  fullScreen: 'Full screen',
-  fullScreenShortcut: '',
-  fullScreenGtkAccelerator: '',
-  settings: 'Settings',
-  settingsShortcut: '',
-  settingsGtkAccelerator: '',
-  syntaxReference: 'Syntax reference',
-  syntaxReferenceShortcut: '',
-  syntaxReferenceGtkAccelerator: '',
-  reportIssue: 'Report issue',
-  aboutBusyMark: 'About',
-);
 
 final class _DelayedAtomicFileWriter extends AtomicFileWriter {
   _DelayedAtomicFileWriter();

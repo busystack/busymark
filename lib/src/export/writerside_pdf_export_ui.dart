@@ -13,7 +13,6 @@ import '../app/busymark_dialogs.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../math/math_providers.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../visualization/visualization_providers.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
@@ -73,7 +72,6 @@ Future<void> exportWritersideModuleToPdf(
   final instances = module.instances
       .where((instance) => !instance.isLibrary)
       .toList(growable: false);
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final selected =
       configuredSelection ??
       await showExportOptions(
@@ -108,8 +106,7 @@ Future<void> exportWritersideModuleToPdf(
   var overwrite = false;
   if (await FileSystemEntity.type(destination, followLinks: false) !=
       FileSystemEntityType.notFound) {
-    if (!context.mounted ||
-        !await _confirmOverwrite(context, headerBar, destination)) {
+    if (!context.mounted || !await _confirmOverwrite(context, destination)) {
       return;
     }
     overwrite = true;
@@ -129,7 +126,6 @@ Future<void> exportWritersideModuleToPdf(
   );
   final outcome = await showBusyMarkModalDialog<_WritersidePdfOutcome>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     barrierDismissible: false,
     builder: (context) => _WritersidePdfProgressDialog(
       cancellationToken: token,
@@ -143,7 +139,7 @@ Future<void> exportWritersideModuleToPdf(
   }
   if (outcome.failure case final failure?) {
     if (failure.code != WritersidePdfFailureCode.cancelled) {
-      await _showWritersidePdfError(context, headerBar, failure);
+      await _showWritersidePdfError(context, failure);
     }
     return;
   }
@@ -256,14 +252,9 @@ class _WritersidePdfOutcome {
   final WritersidePdfExportException? failure;
 }
 
-Future<bool> _confirmOverwrite(
-  BuildContext context,
-  LinuxHeaderBarService headerBar,
-  String path,
-) async {
+Future<bool> _confirmOverwrite(BuildContext context, String path) async {
   return await showBusyMarkModalDialog<bool>(
         context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
         builder: (context) => BusyMarkDialogShell(
           title: context.l10n.warning,
           actions: [
@@ -285,7 +276,6 @@ Future<bool> _confirmOverwrite(
 
 Future<void> _showWritersidePdfError(
   BuildContext context,
-  LinuxHeaderBarService headerBar,
   WritersidePdfExportException failure,
 ) {
   final message = switch (failure.code) {
@@ -302,7 +292,6 @@ Future<void> _showWritersidePdfError(
   };
   return showBusyMarkModalDialog<void>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: context.l10n.exportWritersideAsPdf,
       maxWidth: BusyMarkSizes.dialog,

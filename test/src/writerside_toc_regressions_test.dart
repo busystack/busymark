@@ -9,7 +9,6 @@ import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -65,7 +64,6 @@ void main() {
 ''');
     container = ProviderContainer(
       overrides: [
-        linuxHeaderBarServiceProvider.overrideWithValue(_FallbackHeader()),
         systemAccentColorProvider.overrideWith(
           (ref) => Stream.value(busyMarkDefaultAccentColor),
         ),
@@ -837,15 +835,4 @@ class _Settings implements LocalSettingsStore {
   Future<void> save(Map<String, Object?> json) async {
     value = json;
   }
-}
-
-class _FallbackHeader extends LinuxHeaderBarService {
-  _FallbackHeader()
-    : super(channel: const MethodChannel('test.busymark/toc-header'));
-  @override
-  bool get isAvailable => false;
-  @override
-  bool get usesNativeHeaderBar => false;
-  @override
-  Stream<HeaderBarAction> get actions => const Stream.empty();
 }

@@ -185,15 +185,6 @@ class SaveAllResult {
 
 enum _BufferWriteResult { saved, failed, conflict }
 
-class WorkspaceSearchRequestController extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void request() {
-    state++;
-  }
-}
-
 enum ValidationStatus { published, stale, failed, busy, unavailable }
 
 class ValidationOutcome {
@@ -1726,7 +1717,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         ];
         final nextWorkspace = workspace.copyWith(
           activeFilePath: active.filePath,
-          activeFileSnapshot: active.diskSnapshot,
           openFilePaths: openPaths,
         );
         final reparsed = await _reparseWithDocumentBuffers(
@@ -3150,9 +3140,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspaceGeneration: workspaceGeneration,
       );
       if (state.activeBufferId == reloaded.id && state.workspace != null) {
-        final workspace = state.workspace!.copyWith(
-          activeFileSnapshot: disk.snapshot,
-        );
+        final workspace = state.workspace!;
         final reparsed = await _reparseWithDocumentBuffers(workspace, reloaded);
         if (_fileMonitorOperationIsCurrent(workspaceGeneration) &&
             state.activeBufferId == reloaded.id &&
@@ -3600,9 +3588,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: _replaceBuffer(state.documentBuffers, remapped),
         workspace: workspace?.copyWith(
           activeFilePath: active ? destinationPath : workspace.activeFilePath,
-          activeFileSnapshot: active
-              ? remapped.diskSnapshot
-              : workspace.activeFileSnapshot,
           openFilePaths: remappedTabs,
         ),
       );
@@ -3649,7 +3634,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             )) {
           state = state.copyWith(
             workspace: reparsed.copyWith(
-              activeFileSnapshot: remapped.diskSnapshot,
               openFilePaths: state.workspace!.openFilePaths,
             ),
             preview: _safePreview(reparsed, remapped),
@@ -3731,7 +3715,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       documentBuffers: _replaceBuffer(state.documentBuffers, remapped),
       workspace: workspace?.copyWith(
         activeFilePath: active ? destinationPath : workspace.activeFilePath,
-        activeFileSnapshot: active ? null : workspace.activeFileSnapshot,
         openFilePaths: [
           for (final path in workspace.openFilePaths)
             p.equals(path, oldPath) ? destinationPath : path,
@@ -3780,9 +3763,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, buffer),
-      workspace: state.activeBufferId == buffer.id
-          ? state.workspace?.copyWith(activeFileSnapshot: buffer.diskSnapshot)
-          : state.workspace,
     );
     _schedulePersistence();
   }
@@ -3840,7 +3820,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           source: reloaded.text,
         )) {
       final workspace = await _reparseWithDocumentBuffers(
-        derivedWorkspace.copyWith(activeFileSnapshot: disk.snapshot),
+        derivedWorkspace,
         reloaded,
       );
       if (_preparedInputsCurrent(workspace, state.documentBuffers) &&
@@ -3994,11 +3974,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final buffers = [...state.documentBuffers, buffer];
     final workspace = currentWorkspace == null
         ? untitledWorkspace.copyWith(markdown: null)
-        : currentWorkspace.copyWith(
-            activeFilePath: null,
-            activeFileSnapshot: null,
-            markdown: null,
-          );
+        : currentWorkspace.copyWith(activeFilePath: null, markdown: null);
     state = WorkspaceState(
       workspace: workspace,
       preview: _safePreview(workspace, buffer),
@@ -4071,10 +4047,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final load = active == null
           ? null
           : await _service.loadTextWithSnapshot(active);
-      final text = load?.text ?? '';
-      var loadedWorkspace = load == null
-          ? workspace
-          : workspace.copyWith(activeFileSnapshot: load.snapshot);
+      var loadedWorkspace = workspace;
       final buffer = load == null || active == null
           ? null
           : _fileBuffer(
@@ -4113,7 +4086,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = WorkspaceState(
         isLoading: true,
         workspace: loadedWorkspace,
-        activeText: text,
         preview: preview,
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
@@ -4207,10 +4179,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final load = active == null
           ? null
           : await _service.loadTextWithSnapshot(active);
-      final text = load?.text ?? '';
-      final loadedWorkspace = load == null
-          ? workspace
-          : workspace.copyWith(activeFileSnapshot: load.snapshot);
+      final loadedWorkspace = workspace;
       final buffer = load == null || active == null
           ? null
           : _fileBuffer(
@@ -4226,7 +4195,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       state = WorkspaceState(
         workspace: loadedWorkspace,
-        activeText: text,
         preview: preview,
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
@@ -5639,14 +5607,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       workspace: workspace.copyWith(
         activeFilePath: null,
-        activeFileModifiedAt: null,
-        activeFileSnapshot: null,
         openFilePaths: const [],
         sourceOverrides: const {},
         diagnostics: diagnostics,
         markdown: null,
       ),
-      activeText: '',
       preview: null,
       documentBuffers: const [],
       activeBufferId: null,
@@ -5726,7 +5691,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final load = await _service.loadTextWithSnapshot(path);
       final nextWorkspace = workspace.copyWith(
         activeFilePath: path,
-        activeFileSnapshot: load.snapshot,
         openFilePaths: requestedOpenFilePaths,
       );
       if (acceptNavigation?.call() == false ||
@@ -5785,7 +5749,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
                   : (state.workspace ?? nextWorkspace).copyWith(markdown: null))
               .copyWith(
                 activeFilePath: path,
-                activeFileSnapshot: load.snapshot,
                 openFilePaths: reconciledOpenPaths,
               );
       if (sourcesCurrent) {
@@ -5793,7 +5756,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       state = state.copyWith(
         workspace: publishedWorkspace,
-        activeText: load.text,
         preview: sourcesCurrent
             ? _safePreview(publishedWorkspace, buffer)
             : null,
@@ -5876,7 +5838,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     ];
     final nextWorkspace = workspace.copyWith(
       activeFilePath: buffer.filePath,
-      activeFileSnapshot: buffer.diskSnapshot,
       openFilePaths: openFilePaths,
       markdown: null,
     );
@@ -6001,7 +5962,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
                 : (state.workspace ?? nextWorkspace).copyWith(markdown: null))
             .copyWith(
               activeFilePath: liveBuffer.filePath,
-              activeFileSnapshot: liveBuffer.diskSnapshot,
               openFilePaths: reconciledOpenPaths,
             );
     if (sourceStayedCurrent) {
@@ -6455,7 +6415,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       final nextWorkspace = selected.copyWith(
-        activeFileSnapshot: load.snapshot,
         openFilePaths: _openFileTabPaths(selected, path),
       );
       final buffer = _fileBuffer(
@@ -6888,11 +6847,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         recovered: false,
       );
       final remainsActive = state.activeBufferId == target.bufferId;
-      final nextWorkspace = remainsActive
-          ? currentWorkspace.copyWith(activeFileSnapshot: snapshot)
-          : currentWorkspace;
       state = state.copyWith(
-        workspace: nextWorkspace,
         documentBuffers: _replaceBuffer(state.documentBuffers, savedBuffer),
         clearMessage: true,
       );
@@ -6975,7 +6930,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return;
       }
       final nextWorkspace = reparsed.copyWith(
-        activeFileSnapshot: snapshot,
         openFilePaths: currentWorkspace.openFilePaths,
         files: currentWorkspace.files,
       );
@@ -7117,9 +7071,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       state = state.copyWith(
         documentBuffers: _replaceBuffer(state.documentBuffers, next),
-        workspace: state.activeBufferId == target.id
-            ? state.workspace?.copyWith(activeFileSnapshot: snapshot)
-            : state.workspace,
       );
       await _localHistory.captureSaved(
         LocalHistoryBufferSnapshot(
@@ -7443,7 +7394,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final workspaceBase = openedWorkspace ?? currentWorkspace;
       final savedWorkspace = workspaceBase.copyWith(
         activeFilePath: activeBuffer?.filePath,
-        activeFileSnapshot: activeBuffer?.diskSnapshot,
         openFilePaths: tabPaths,
         markdown: activeBuffer?.filePath == null
             ? currentWorkspace.markdown
@@ -8366,9 +8316,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       state = state.copyWith(
-        workspace: remainsActive
-            ? currentWorkspace.copyWith(activeFileSnapshot: load.snapshot)
-            : currentWorkspace,
+        workspace: currentWorkspace,
         documentBuffers: _replaceBuffer(state.documentBuffers, discardedBuffer),
         clearMessage: true,
       );
@@ -8594,7 +8542,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         _acceptedRefreshRevision = refreshRevision;
         final publishedWorkspace = reparsed.copyWith(
           activeFilePath: activeBuffer?.filePath,
-          activeFileSnapshot: activeBuffer?.diskSnapshot,
           openFilePaths: tabPaths,
         );
         _preparedInputs[publishedWorkspace] = _preparedInputs[reparsed];
@@ -8729,7 +8676,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final nextWorkspace = refreshedWorkspace.copyWith(
       activeFilePath: activeBuffer?.filePath,
-      activeFileSnapshot: activeBuffer?.diskSnapshot,
       openFilePaths: _refreshTabPaths(buffers),
     );
     if (activeBuffer != null) {
@@ -9101,9 +9047,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           !_preparedInputsCurrent(reparsed, state.documentBuffers)) {
         return outcome(ValidationStatus.stale);
       }
-      final currentSnapshot = currentWorkspace.activeFileSnapshot;
       final validatedWorkspace = reparsed.copyWith(
-        activeFileSnapshot: currentSnapshot,
         openFilePaths: currentWorkspace.openFilePaths,
         files: currentWorkspace.files,
         runtimeDiagnostics: currentWorkspace.runtimeDiagnostics,
@@ -9292,9 +9236,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       state = state.copyWith(
         documentBuffers: _replaceBuffer(state.documentBuffers, next),
-        workspace: state.activeBufferId == bufferId
-            ? state.workspace?.copyWith(activeFileSnapshot: snapshot)
-            : state.workspace,
         clearMessage: true,
       );
       _schedulePersistence();

@@ -7,7 +7,6 @@ import 'package:busymark/src/git/application/git_gateway.dart';
 import 'package:busymark/src/git/application/git_workspace_eligibility.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
-import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -17,6 +16,59 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:busystack_git/busystack_git.dart' as shared;
 
 void main() {
+  test(
+    'attachment ignores editor publications; Files-only disk changes refresh status',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-git-files-watch-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final root = await directory.resolveSymbolicLinks();
+      await Directory('$root/.git').create();
+      final index = await File('$root/.git/index').writeAsString('initial');
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'fixture',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: root, rootPath: root);
+      controller.attachWorkspace(workspace);
+      await controller.refresh();
+      final scans = gateway.statusCalls;
+      for (var i = 0; i < 10; i++) {
+        controller.attachWorkspace(
+          workspace.copyWith(activeFilePath: '$root/doc$i.md'),
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      expect(gateway.statusCalls, scans);
+      final monitor = container.read(workspaceFileMonitorProvider);
+      await monitor.start(rootPath: root, openFilePaths: const []);
+      await index.writeAsString('external index change');
+      final timeout = DateTime.now().add(const Duration(seconds: 5));
+      while (gateway.statusCalls == scans && DateTime.now().isBefore(timeout)) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      expect(gateway.statusCalls, greaterThan(scans));
+      expect(
+        container.read(gitControllerProvider).repositoryInfo!.rootPath,
+        root,
+      );
+      await monitor.stop();
+    },
+  );
+
   test(
     'shared status serves authoring refresh without another repository scan',
     () async {
@@ -38,17 +90,15 @@ void main() {
       final workspace = _workspace(id: root, rootPath: root);
       controller.attachWorkspace(workspace);
       await controller.associateSharedRepository(workspace, repository);
-      GitStatusSnapshot snapshot(String branch) => GitStatusSnapshot(
+      GitStatusSnapshot snapshot() => GitStatusSnapshot(
         repositoryInfo: GitRepositoryInfo(
           rootPath: root,
           gitDirPath: '$root/.git',
           identityKey: repository.key,
-          currentBranch: branch,
-          hasRemote: true,
         ),
         files: const [],
       );
-      var latest = snapshot('main'), refreshes = 0, projections = 0;
+      var latest = snapshot(), refreshes = 0, projections = 0;
       expect(
         controller.bindSharedStatusSource(
           workspace,
@@ -70,16 +120,12 @@ void main() {
       expect(gateway.detectCalls, 0);
       expect(gateway.statusCalls, 0);
       expect(
-        container.read(gitControllerProvider).repositoryInfo!.hasRemote,
-        isTrue,
-      );
-      expect(
         container.read(gitControllerProvider).requiresWorkspaceTrust,
         isTrue,
         reason:
             'Sharing passive data does not grant executable repository trust.',
       );
-      latest = snapshot('topic');
+      latest = snapshot();
       await controller.refreshFromSharedSnapshot();
       expect(projections, 1);
       expect(
@@ -88,8 +134,8 @@ void main() {
         reason: 'A reconciled operation already has its snapshot.',
       );
       expect(
-        container.read(gitControllerProvider).repositoryInfo!.currentBranch,
-        'topic',
+        container.read(gitControllerProvider).statusSnapshot,
+        same(latest),
       );
       expect(gateway.detectCalls, 0);
       expect(gateway.statusCalls, 0);
@@ -261,53 +307,6 @@ void main() {
       );
     },
   );
-  test('diff open target follows the current working-tree context', () {
-    const repository = GitRepositoryInfo(
-      rootPath: '/repo',
-      gitDirPath: '/repo/.git',
-    );
-    const addedThenDeleted = GitFileStatus(
-      repoRelativePath: 'draft.md',
-      absolutePath: '/repo/draft.md',
-      indexStatus: GitFileChangeStatus.added,
-      workTreeStatus: GitFileChangeStatus.deleted,
-      category: GitFileStatusCategory.deleted,
-      staged: true,
-      unstaged: true,
-      untracked: false,
-      deleted: true,
-      renamed: false,
-      copied: false,
-      conflicted: false,
-      ignored: false,
-    );
-    const changesState = GitState(
-      repositoryInfo: repository,
-      statusSnapshot: GitStatusSnapshot(
-        repositoryInfo: repository,
-        files: [addedThenDeleted],
-      ),
-      selectedChange: GitChangeSelection(
-        path: 'draft.md',
-        comparison: GitComparisonType.staged,
-      ),
-    );
-
-    expect(changesState.selectedDiffOpenFilePath, isNull);
-    expect(
-      const GitState(
-        selectedView: GitView.fileHistory,
-        fileHistory: GitFileHistoryState(currentPath: 'current.md'),
-      ).selectedDiffOpenFilePath,
-      'current.md',
-    );
-    expect(
-      const GitState(
-        selectedView: GitView.projectHistory,
-      ).selectedDiffOpenFilePath,
-      isNull,
-    );
-  });
 
   test('refreshes after workspace attach', () async {
     final gateway = _FakeGitGateway();
@@ -481,8 +480,6 @@ void main() {
     await controller.refresh();
 
     expect(gateway.lastDetectedWorkspacePath, trusted.path);
-    await controller.initializeRepository();
-    expect(gateway.lastInitializeRootPath, trusted.path);
     final trustedDetectCalls = gateway.detectCalls;
     await workspaceLink.delete();
     await workspaceLink.create(replacement.path);
@@ -541,7 +538,6 @@ void main() {
           rootPath: root,
           gitDirPath: repository.gitDir,
           identityKey: repository.key,
-          currentBranch: 'main',
         ),
         files: [gateway._file(staged: staged, unstaged: !staged)],
       );
@@ -557,12 +553,6 @@ void main() {
         },
       );
       await controller.refreshFromSharedSnapshot();
-      await controller.selectChange(
-        const GitChangeSelection(
-          path: 'README.md',
-          comparison: GitComparisonType.unstaged,
-        ),
-      );
       final scansBeforeStaging = gateway.statusCalls;
       await controller.stageFiles(['README.md']);
       expect(
@@ -573,13 +563,6 @@ void main() {
             .single
             .repoRelativePath,
         'README.md',
-      );
-      expect(
-        container.read(gitControllerProvider).selectedChange,
-        const GitChangeSelection(
-          path: 'README.md',
-          comparison: GitComparisonType.staged,
-        ),
       );
       await controller.unstageFiles(['README.md']);
       expect(
@@ -596,133 +579,6 @@ void main() {
       expect(gateway.statusCalls, scansBeforeStaging);
     },
   );
-
-  test('routes untracked selections to the untracked comparison', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.selectChange(
-      const GitChangeSelection(
-        path: 'draft.md',
-        comparison: GitComparisonType.untracked,
-      ),
-    );
-
-    expect(gateway.untrackedDiffRequests, ['draft.md']);
-    expect(gateway.diffRequests, isEmpty);
-  });
-
-  test('staged rename comparison preserves the original path', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.selectChange(
-      const GitChangeSelection(
-        path: 'new.md',
-        comparison: GitComparisonType.staged,
-        originalRepoRelativePath: 'old.md',
-      ),
-    );
-
-    expect(gateway.diffRequests, [('new.md', true)]);
-    expect(gateway.diffOriginalPaths, ['old.md']);
-  });
-
-  test('rollback forwards every validated rename path', () async {
-    final gateway = _FakeGitGateway(staged: true);
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.rollbackFiles(['old.md', 'new.md']);
-
-    expect(gateway.rollbackPathSets, const [
-      ['old.md', 'new.md'],
-    ]);
-  });
-
-  test('reactivates an open change comparison tab', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-    await controller.selectChange(
-      const GitChangeSelection(
-        path: 'README.md',
-        comparison: GitComparisonType.unstaged,
-      ),
-    );
-    controller.deactivateDiffFile();
-
-    expect(
-      container.read(gitControllerProvider).selectedDiffForDisplay,
-      isNull,
-    );
-    await controller.activateDiffFile('README.md');
-
-    final state = container.read(gitControllerProvider);
-    expect(state.selectedCommitFilePath, 'README.md');
-    expect(state.selectedDiffForDisplay, isNotNull);
-  });
-
-  test('commit blocks empty message', () async {
-    final gateway = _FakeGitGateway(staged: true);
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.commit('   ');
-
-    expect(
-      container.read(gitControllerProvider).lastError?.code,
-      GitFailureCode.invalidCommitMessage,
-    );
-    expect(gateway.commitCalls, 0);
-  });
-
-  test('commit blocks when no files are staged', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.commit('Docs');
-
-    expect(
-      container.read(gitControllerProvider).lastError?.code,
-      GitFailureCode.noStagedFiles,
-    );
-    expect(gateway.commitCalls, 0);
-  });
-
-  test('configures author identity through the active repository', () async {
-    final gateway = _FakeGitGateway(staged: true);
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    final configured = await controller.configureAuthorIdentity(
-      name: 'Example Author',
-      email: 'author@example.com',
-      globally: true,
-    );
-
-    expect(configured, isTrue);
-    expect(gateway.authorName, 'Example Author');
-    expect(gateway.authorEmail, 'author@example.com');
-    expect(gateway.authorIdentityGlobal, isTrue);
-  });
 
   test('AI staged-diff fingerprint rejects obsolete commit context', () async {
     final gateway = _FakeGitGateway(staged: true)
@@ -743,191 +599,6 @@ void main() {
     expect(await controller.stagedDiffMatches(snapshot.fingerprint), isFalse);
   });
 
-  test('branch switch requires clean BusyMark editor state', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    await container
-        .read(workspaceControllerProvider.notifier)
-        .createMarkdownFile();
-    container
-        .read(workspaceControllerProvider.notifier)
-        .updateActiveText('# Dirty\n');
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.switchBranch('feature');
-
-    expect(
-      container.read(gitControllerProvider).lastError?.code,
-      GitFailureCode.dirtyWorkspace,
-    );
-    expect(gateway.switchCalls, 0);
-  });
-
-  test(
-    'restore is blocked while the active editor has unsaved content',
-    () async {
-      final gateway = _FakeGitGateway();
-      final container = _container(gateway);
-      await container
-          .read(workspaceControllerProvider.notifier)
-          .createMarkdownFile();
-      container
-          .read(workspaceControllerProvider.notifier)
-          .updateActiveText('# Unsaved\n');
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-      await controller.refresh();
-      await controller.loadFileHistory('/repo/README.md');
-      await controller.selectFileHistoryCommit('1234567890abcdef');
-
-      final restored = await controller.restoreSelectedFileVersion();
-
-      expect(restored, isFalse);
-      expect(gateway.restoreCalls, 0);
-      expect(
-        container.read(gitControllerProvider).lastError?.code,
-        GitFailureCode.dirtyWorkspace,
-      );
-    },
-  );
-
-  test('restore is blocked while the current file is staged', () async {
-    final gateway = _FakeGitGateway(staged: true);
-    final originalIndex = gateway.indexContent;
-    final originalWorkingTree = gateway.workingTreeContent;
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-    await controller.refresh();
-    await controller.loadFileHistory('/repo/README.md');
-    await controller.selectFileHistoryCommit('1234567890abcdef');
-
-    final restored = await controller.restoreSelectedFileVersion();
-
-    expect(restored, isFalse);
-    expect(gateway.restoreCalls, 0);
-    expect(gateway.staged, isTrue);
-    expect(gateway.indexContent, originalIndex);
-    expect(gateway.workingTreeContent, originalWorkingTree);
-    expect(
-      container.read(gitControllerProvider).lastError?.code,
-      GitFailureCode.stagedChanges,
-    );
-  });
-
-  test(
-    'restore protects a repository-relative file against the repository root',
-    () async {
-      final repository = await Directory.systemTemp.createTemp(
-        'busymark-git-restore-root-',
-      );
-      addTearDown(() async {
-        if (await repository.exists()) await repository.delete(recursive: true);
-      });
-      final path = '${repository.path}/README.md';
-      await File(path).writeAsString('# Working tree before restore\n');
-      final store = MemoryLocalHistoryStore();
-      final gateway = _RootedGitGateway(repository.path);
-      final container = _container(gateway, historyStore: store);
-      final workspaceController = container.read(
-        workspaceControllerProvider.notifier,
-      );
-      await workspaceController.openPath(repository.path);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(
-        container.read(workspaceControllerProvider).workspace!,
-      );
-      await controller.refresh();
-      await controller.loadFileHistory(path);
-      await controller.selectFileHistoryCommit('1234567890abcdef');
-
-      expect(await controller.restoreSelectedFileVersion(), isTrue);
-      expect(gateway.restoreCalls, 1);
-      final snapshot = await store.load();
-      final protected = <LocalHistoryRevision>[];
-      for (final summary in snapshot.revisions.where(
-        (revision) =>
-            revision.reason == LocalHistoryCaptureReason.beforeDiscard,
-      )) {
-        protected.add((await store.readRevision(summary.id))!);
-      }
-      expect(protected.map((revision) => revision.source), [
-        '# Working tree before restore\n',
-      ]);
-      expect(
-        snapshot.documents.singleWhere(
-          (document) => document.currentPath == path,
-        ),
-        isNotNull,
-      );
-    },
-  );
-
-  test('project history reset uses the selected commit and mode', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-    await controller.loadProjectHistory();
-    await controller.selectProjectCommit('1234567890abcdef');
-
-    final reset = await controller.resetCurrentBranchToSelectedCommit(
-      GitResetMode.mixed,
-    );
-
-    expect(reset, isTrue);
-    expect(gateway.resetCalls, 1);
-    expect(gateway.resetHash, '1234567890abcdef');
-    expect(gateway.resetMode, GitResetMode.mixed);
-    expect(
-      container.read(gitControllerProvider).selectedView,
-      GitView.projectHistory,
-    );
-  });
-
-  test('project history reset is blocked by unsaved editor content', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    await container
-        .read(workspaceControllerProvider.notifier)
-        .createMarkdownFile();
-    container
-        .read(workspaceControllerProvider.notifier)
-        .updateActiveText('# Unsaved\n');
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-    await controller.loadProjectHistory();
-    await controller.selectProjectCommit('1234567890abcdef');
-
-    final reset = await controller.resetCurrentBranchToSelectedCommit(
-      GitResetMode.hard,
-    );
-
-    expect(reset, isFalse);
-    expect(gateway.resetCalls, 0);
-    final failure = container.read(gitControllerProvider).lastError;
-    expect(failure?.code, GitFailureCode.dirtyWorkspace);
-    expect(failure?.commandName, 'reset');
-  });
-
-  test('fetch refreshes repository status', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-    final statusCallsBefore = gateway.statusCalls;
-
-    await controller.fetch();
-
-    expect(gateway.fetchCalls, 1);
-    expect(gateway.statusCalls, greaterThan(statusCallsBefore));
-  });
-
   test('reports Git unavailable state', () async {
     final container = _container(const UnavailableGitRepositoryGateway());
     final controller = container.read(gitControllerProvider.notifier);
@@ -942,8 +613,8 @@ void main() {
     expect(container.read(gitControllerProvider).repositoryInfo, isNull);
   });
 
-  test('stores operation failure state', () async {
-    final gateway = _FakeGitGateway(failStage: true);
+  test('reports disconnected Files staging', () async {
+    final gateway = _FakeGitGateway();
     final container = _container(gateway);
     final controller = container.read(gitControllerProvider.notifier);
     controller.attachWorkspace(_workspace());
@@ -969,10 +640,6 @@ void main() {
       container.read(gitControllerProvider).statusSnapshot?.conflictedFiles,
       isNotEmpty,
     );
-    expect(
-      container.read(gitControllerProvider).repositoryInfo?.hasConflicts,
-      isTrue,
-    );
   });
 
   test('clears previous workspace Git state immediately on attach', () async {
@@ -981,8 +648,6 @@ void main() {
     final controller = container.read(gitControllerProvider.notifier);
     controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
     await controller.refresh();
-    await controller.loadProjectHistory();
-    await controller.loadCommitDetails('1234567890abcdef');
     await controller.stageFiles(['../outside.md']);
 
     controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
@@ -991,17 +656,7 @@ void main() {
     expect(state.attachedWorkspace?.id, '/other');
     expect(state.repositoryInfo, isNull);
     expect(state.statusSnapshot, isNull);
-    expect(state.selectedFilePath, isNull);
-    expect(state.selectedCommitHash, isNull);
-    expect(state.selectedCommitFilePath, isNull);
-    expect(state.openDiffFilePaths, isEmpty);
-    expect(state.selectedDiff, isNull);
-    expect(state.history, isEmpty);
-    expect(state.historyFilePath, isNull);
-    expect(state.branches, isEmpty);
     expect(state.lastError, isNull);
-    expect(state.lastOperationMessage, isNull);
-    expect(state.scopedFilePath, isNull);
   });
 
   test('ignores stale refresh results after workspace switch', () async {
@@ -1029,354 +684,6 @@ void main() {
     expect(state.repositoryInfo?.rootPath, '/other');
     expect(state.statusSnapshot?.repositoryInfo.rootPath, '/other');
   });
-
-  test(
-    'cancels set-upstream push when the workspace changes during remote lookup',
-    () async {
-      final gateway = _DeferredSetUpstreamPushGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-
-      controller.attachWorkspace(_workspace());
-      await controller.refresh();
-      expect(
-        container.read(gitControllerProvider).repositoryInfo?.rootPath,
-        '/repo',
-      );
-
-      final push = controller.push(allowSetUpstream: true);
-      await gateway.remotesStarted.future;
-      expect(gateway.remotesRepository?.rootPath, '/repo');
-
-      controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
-      await controller.refresh();
-      expect(
-        container.read(gitControllerProvider).repositoryInfo?.rootPath,
-        '/other',
-      );
-
-      gateway.remotesResult.complete(const ['origin']);
-      await push;
-
-      expect(gateway.setUpstreamPushes, isEmpty);
-      expect(
-        container.read(gitControllerProvider).repositoryInfo?.rootPath,
-        '/other',
-      );
-    },
-  );
-
-  test('ignores stale history after a workspace switch', () async {
-    final gateway = _DeferredHistoryGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-    final history = controller.loadProjectHistory();
-    await gateway.historyStarted.future;
-
-    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
-    await controller.refresh();
-    gateway.historyResult.complete([
-      _commitSummary('aaaaaaaaaaaaaaaa', 'History from the old repository'),
-    ]);
-    await history;
-
-    final state = container.read(gitControllerProvider);
-    expect(state.repositoryInfo?.rootPath, '/other');
-    expect(state.history, isEmpty);
-    expect(state.selectedView, GitView.changes);
-  });
-
-  test('history tab reloads project history after workspace switch', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-    await controller.selectView(GitView.projectHistory);
-    expect(container.read(gitControllerProvider).history, isNotEmpty);
-
-    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
-    await controller.refresh();
-    expect(container.read(gitControllerProvider).selectedView, GitView.changes);
-    expect(container.read(gitControllerProvider).history, isEmpty);
-
-    await controller.selectView(GitView.projectHistory);
-
-    final state = container.read(gitControllerProvider);
-    expect(state.selectedView, GitView.projectHistory);
-    expect(state.history, isNotEmpty);
-    expect(gateway.lastHistoryPath, isNull);
-  });
-
-  test(
-    'current file history scopes selected commit details to the file',
-    () async {
-      final gateway = _FakeGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-      await controller.refresh();
-
-      await controller.loadFileHistory('/repo/README.md');
-      await controller.loadCommitDetails('1234567890abcdef');
-
-      expect(gateway.lastHistoryPath, 'README.md');
-      expect(gateway.lastCommitDetailsPath, isNull);
-      expect(
-        container.read(gitControllerProvider).selectedView,
-        GitView.fileHistory,
-      );
-      expect(
-        container.read(gitControllerProvider).selectedCommitHash,
-        isNotNull,
-      );
-    },
-  );
-
-  test(
-    'file history switches between commit and working-tree comparisons',
-    () async {
-      final gateway = _FakeGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-      await controller.refresh();
-      await controller.loadFileHistory('/repo/README.md');
-
-      await controller.selectFileHistoryCommit('1234567890abcdef');
-
-      var history = container.read(gitControllerProvider).fileHistory;
-      expect(history.comparisonType, GitComparisonType.commitChange);
-      expect(history.comparison?.oldContent, '# Before\n');
-      expect(history.comparison?.newContent, '# Full revision text\n');
-
-      await controller.compareFileHistoryWithCurrent();
-
-      history = container.read(gitControllerProvider).fileHistory;
-      expect(history.comparisonType, GitComparisonType.commitVersusCurrent);
-      expect(history.comparison?.oldContent, '# Full revision text\n');
-      expect(history.comparison?.newContent, '# Working tree\n');
-
-      await controller.selectFileHistoryCommit('1234567890abcdef');
-
-      history = container.read(gitControllerProvider).fileHistory;
-      expect(history.comparisonType, GitComparisonType.commitChange);
-      expect(history.comparison?.newContent, '# Full revision text\n');
-    },
-  );
-
-  test(
-    'project history loads selected commit details without a file scope',
-    () async {
-      final gateway = _FakeGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-      await controller.refresh();
-
-      await controller.loadFileHistory('/repo/README.md');
-      await controller.loadProjectHistory();
-      await controller.loadCommitDetails('1234567890abcdef');
-
-      expect(gateway.lastHistoryPath, isNull);
-      expect(gateway.lastCommitDetailsPath, isNull);
-    },
-  );
-
-  test(
-    'project commit details display the first changed file by default',
-    () async {
-      final gateway = _FakeGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-      await controller.refresh();
-
-      await controller.loadProjectHistory();
-      await controller.loadCommitDetails('1234567890abcdef');
-
-      final state = container.read(gitControllerProvider);
-      expect(
-        state.projectHistory.details?.changedFiles.map(
-          (file) => file.displayPath,
-        ),
-        ['README.md', 'guide.md'],
-      );
-      expect(state.selectedDiff?.files.single.displayPath, 'README.md');
-      expect(state.selectedCommitFilePath, 'README.md');
-      expect(state.openDiffFilePaths, ['README.md']);
-      expect(
-        state.selectedDiffForDisplay?.files.single.displayPath,
-        'README.md',
-      );
-    },
-  );
-
-  test('selected commit file opens a project commit diff tab', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.loadProjectHistory();
-    await controller.loadCommitDetails('1234567890abcdef');
-    await controller.selectCommitFile('guide.md');
-
-    final state = container.read(gitControllerProvider);
-    expect(state.selectedCommitFilePath, 'guide.md');
-    expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
-    expect(state.projectHistory.details?.changedFiles, hasLength(2));
-    expect(state.selectedDiff?.files, hasLength(1));
-    expect(state.selectedDiffForDisplay?.files.single.displayPath, 'guide.md');
-    expect(
-      state.selectedDiffForDisplay?.fileSnapshots['guide.md'],
-      contains('Full revision text'),
-    );
-  });
-
-  test(
-    'closing a commit diff file tab activates the neighboring tab',
-    () async {
-      final gateway = _FakeGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace());
-      await controller.refresh();
-
-      await controller.loadProjectHistory();
-      await controller.loadCommitDetails('1234567890abcdef');
-      await controller.selectCommitFile('guide.md');
-      controller.closeDiffFile('guide.md');
-      await Future<void>.delayed(Duration.zero);
-
-      final state = container.read(gitControllerProvider);
-      expect(state.selectedCommitFilePath, 'README.md');
-      expect(state.openDiffFilePaths, ['README.md']);
-      expect(
-        state.selectedDiffForDisplay?.files.single.displayPath,
-        'README.md',
-      );
-    },
-  );
-
-  test('deactivating a diff file keeps open diff tabs', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.loadProjectHistory();
-    await controller.loadCommitDetails('1234567890abcdef');
-    await controller.selectCommitFile('guide.md');
-    controller.deactivateDiffFile();
-
-    final state = container.read(gitControllerProvider);
-    expect(state.selectedCommitFilePath, isNull);
-    expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
-    expect(state.selectedDiffForDisplay, isNull);
-  });
-
-  test(
-    'file and project history paginate and retain separate selections',
-    () async {
-      final gateway = _PagedHistoryGitGateway();
-      final container = _container(gateway);
-      final controller = container.read(gitControllerProvider.notifier);
-      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
-      await controller.refresh();
-
-      await controller.loadFileHistory('/repo/README.md');
-      expect(
-        container.read(gitControllerProvider).fileHistory.entries,
-        hasLength(50),
-      );
-      expect(container.read(gitControllerProvider).fileHistory.hasMore, isTrue);
-      await controller.loadMoreFileHistory();
-      expect(
-        container.read(gitControllerProvider).fileHistory.entries,
-        hasLength(55),
-      );
-      expect(
-        container.read(gitControllerProvider).fileHistory.hasMore,
-        isFalse,
-      );
-      final fileHash = container
-          .read(gitControllerProvider)
-          .fileHistory
-          .entries
-          .first
-          .commit
-          .fullHash;
-      await controller.selectFileHistoryCommit(fileHash);
-
-      await controller.loadProjectHistory();
-      expect(
-        container.read(gitControllerProvider).projectHistory.commits,
-        hasLength(50),
-      );
-      await controller.loadMoreProjectHistory();
-      expect(
-        container.read(gitControllerProvider).projectHistory.commits,
-        hasLength(60),
-      );
-      final projectHash = container
-          .read(gitControllerProvider)
-          .projectHistory
-          .commits
-          .first
-          .fullHash;
-      await controller.selectProjectCommit(projectHash);
-      await controller.selectView(GitView.fileHistory);
-
-      final state = container.read(gitControllerProvider);
-      expect(state.fileHistory.selectedCommitHash, fileHash);
-      expect(state.projectHistory.selectedCommitHash, projectHash);
-      expect(state.selectedCommitHash, fileHash);
-    },
-  );
-}
-
-class _PagedHistoryGitGateway extends _FakeGitGateway {
-  final _projectCommits = List.generate(
-    60,
-    (index) => _commitSummary(
-      index.toRadixString(16).padLeft(16, '0'),
-      'Project commit $index',
-    ),
-  );
-  late final List<GitFileHistoryEntry> _fileEntries = [
-    for (var index = 0; index < 55; index++)
-      GitFileHistoryEntry(
-        commit: _commitSummary(
-          (index + 1000).toRadixString(16).padLeft(16, '0'),
-          'File commit $index',
-        ),
-        pathAtCommit: 'README.md',
-        pathInParent: 'README.md',
-        status: GitDiffFileStatus.modified,
-      ),
-  ];
-
-  @override
-  Future<List<GitCommitSummary>> history(
-    GitRepositoryInfo repository, {
-    String? repoRelativePath,
-    int limit = 200,
-    int skip = 0,
-  }) async => _projectCommits.skip(skip).take(limit).toList();
-
-  @override
-  Future<List<GitFileHistoryEntry>> fileHistory(
-    GitRepositoryInfo repository,
-    String repoRelativePath, {
-    int limit = 200,
-    int skip = 0,
-  }) async => _fileEntries.skip(skip).take(limit).toList();
 }
 
 ProviderContainer _container(
@@ -1418,44 +725,25 @@ class _FakeGitGateway implements GitRepositoryGateway {
   _FakeGitGateway({
     bool staged = false,
     this.conflicted = false,
-    this.failStage = false,
     this.failStatus = false,
   }) : _staged = staged;
 
   final bool conflicted;
-  final bool failStage;
   final bool failStatus;
-  var _staged = false;
+  final bool _staged;
   var detectCalls = 0;
   var statusCalls = 0;
-  var commitCalls = 0;
-  String? authorName;
-  String? authorEmail;
-  bool? authorIdentityGlobal;
-  var switchCalls = 0;
-  var fetchCalls = 0;
-  var restoreCalls = 0;
-  var resetCalls = 0;
-  String? resetHash;
-  GitResetMode? resetMode;
-  final diffRequests = <(String, bool)>[];
-  final diffOriginalPaths = <String?>[];
-  final untrackedDiffRequests = <String>[];
-  final rollbackPathSets = <List<String>>[];
-  var indexContent = '# Indexed\n';
-  var workingTreeContent = '# Working tree\n';
   var stagedRawPatch = 'diff --git a/README.md b/README.md\n+staged\n';
   String? lastDetectedWorkspacePath;
-  String? lastInitializeRootPath;
-  String? lastHistoryPath;
-  String? lastCommitDetailsPath;
 
   bool get staged => _staged;
+  @override
+  Future<String> stagedPatch(GitRepositoryInfo repository) async =>
+      stagedRawPatch;
 
   static const repo = GitRepositoryInfo(
     rootPath: '/repo',
     gitDirPath: '/repo/.git',
-    currentBranch: 'main',
   );
 
   @override
@@ -1498,345 +786,7 @@ class _FakeGitGateway implements GitRepositoryGateway {
             ),
           ]
         : [_file(staged: _staged, unstaged: !_staged)];
-    return GitStatusSnapshot(
-      repositoryInfo: repo.copyWith(hasConflicts: conflicted),
-      files: files,
-    );
-  }
-
-  @override
-  Future<GitOperationResult> stage(
-    GitRepositoryInfo repository,
-    List<String> repoRelativePaths,
-  ) async {
-    if (failStage) {
-      throw const GitFailure(
-        code: GitFailureCode.commandFailed,
-        userMessageKey: 'gitErrorCommandFailed',
-        rawMessage: 'failed',
-        commandName: 'add',
-      );
-    }
-    _staged = true;
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> unstage(
-    GitRepositoryInfo repository,
-    List<String> repoRelativePaths,
-  ) async {
-    _staged = false;
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> commit(
-    GitRepositoryInfo repository,
-    String message,
-  ) async {
-    commitCalls++;
-    _staged = false;
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> configureAuthorIdentity(
-    GitRepositoryInfo repository, {
-    required String name,
-    required String email,
-    required bool globally,
-  }) async {
-    authorName = name;
-    authorEmail = email;
-    authorIdentityGlobal = globally;
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> switchBranch(
-    GitRepositoryInfo repository,
-    String branchName,
-  ) async {
-    switchCalls++;
-    return _result();
-  }
-
-  @override
-  Future<List<GitCommitSummary>> history(
-    GitRepositoryInfo repository, {
-    String? repoRelativePath,
-    int limit = 200,
-    int skip = 0,
-  }) async {
-    lastHistoryPath = repoRelativePath;
-    return [
-      GitCommitSummary(
-        fullHash: '1234567890abcdef',
-        shortHash: '1234567',
-        authorName: 'BusyMark Test',
-        authorEmail: 'busymark@example.com',
-        authorDate: DateTime(2026),
-        subject: 'Update docs',
-        parentHashes: [],
-      ),
-    ];
-  }
-
-  @override
-  Future<List<GitFileHistoryEntry>> fileHistory(
-    GitRepositoryInfo repository,
-    String repoRelativePath, {
-    int limit = 200,
-    int skip = 0,
-  }) async {
-    lastHistoryPath = repoRelativePath;
-    if (skip > 0) {
-      return const [];
-    }
-    return [
-      GitFileHistoryEntry(
-        commit: _commitSummary('1234567890abcdef', 'Update docs'),
-        pathAtCommit: repoRelativePath,
-        pathInParent: repoRelativePath,
-        status: GitDiffFileStatus.modified,
-      ),
-    ];
-  }
-
-  @override
-  Future<GitDiff> diffFile(
-    GitRepositoryInfo repository,
-    String repoRelativePath, {
-    required bool staged,
-    String? originalRepoRelativePath,
-  }) async {
-    diffRequests.add((repoRelativePath, staged));
-    diffOriginalPaths.add(originalRepoRelativePath);
-    return const GitDiff(
-      title: 'README.md',
-      files: [],
-      rawPatch: '',
-      hasBinaryFiles: false,
-    );
-  }
-
-  @override
-  Future<GitDiff> diffUntrackedFile(
-    GitRepositoryInfo repository,
-    String repoRelativePath,
-  ) async {
-    untrackedDiffRequests.add(repoRelativePath);
-    return GitDiff(
-      title: repoRelativePath,
-      files: [_diffFile(repoRelativePath)],
-      rawPatch: '',
-      hasBinaryFiles: false,
-      fileSnapshots: {repoRelativePath: '# Untracked\n'},
-    );
-  }
-
-  @override
-  Future<GitDiff> diffAll(
-    GitRepositoryInfo repository, {
-    required bool staged,
-  }) async {
-    return GitDiff(
-      title: 'All',
-      files: const [],
-      rawPatch: staged ? stagedRawPatch : '',
-      hasBinaryFiles: false,
-    );
-  }
-
-  @override
-  Future<GitCommitDetails> commitDetails(
-    GitRepositoryInfo repository,
-    String hash, {
-    String? repoRelativePath,
-  }) async {
-    lastCommitDetailsPath = repoRelativePath;
-    final changedFiles = repoRelativePath == null
-        ? [_diffFile('README.md'), _diffFile('guide.md')]
-        : [_diffFile(repoRelativePath)];
-    return GitCommitDetails(
-      summary: GitCommitSummary(
-        fullHash: hash,
-        shortHash: hash.substring(0, 7),
-        authorName: 'BusyMark Test',
-        authorEmail: 'busymark@example.com',
-        authorDate: DateTime(2026),
-        subject: 'Update docs',
-        parentHashes: const [],
-      ),
-      changedFiles: changedFiles,
-      patch: '',
-      fileSnapshots: {
-        for (final file in changedFiles)
-          file.displayPath: '# ${file.displayPath}\n\nFull revision text.\n',
-      },
-    );
-  }
-
-  @override
-  Future<String?> readFileAtCommit(
-    GitRepositoryInfo repository,
-    String hash,
-    String repoRelativePath,
-  ) async => '# $repoRelativePath\n';
-
-  @override
-  Future<GitHistoricalFileComparison> compareFileWithParent(
-    GitRepositoryInfo repository,
-    String hash, {
-    String? oldPath,
-    String? newPath,
-  }) async {
-    final path = newPath ?? oldPath!;
-    final file = GitDiffFile(
-      oldPath: oldPath,
-      newPath: newPath,
-      status: newPath == null
-          ? GitDiffFileStatus.deleted
-          : oldPath == null
-          ? GitDiffFileStatus.added
-          : oldPath != newPath
-          ? GitDiffFileStatus.renamed
-          : GitDiffFileStatus.modified,
-      hunks: const [],
-      binary: false,
-      additions: 1,
-      deletions: 1,
-    );
-    final diff = GitDiff(
-      title: path,
-      files: [file],
-      rawPatch: '',
-      hasBinaryFiles: false,
-      fileSnapshots: {path: '# Full revision text\n'},
-    );
-    return GitHistoricalFileComparison(
-      oldPath: oldPath,
-      newPath: newPath,
-      oldContent: oldPath == null ? '' : '# Before\n',
-      newContent: newPath == null ? '' : '# Full revision text\n',
-      diff: diff,
-    );
-  }
-
-  @override
-  Future<GitHistoricalFileComparison> compareFileWithWorkingTree(
-    GitRepositoryInfo repository,
-    String hash, {
-    required String historicalPath,
-    required String currentPath,
-  }) async {
-    final file = _diffFile(currentPath);
-    final diff = GitDiff(
-      title: currentPath,
-      files: [file],
-      rawPatch: 'working-tree comparison',
-      hasBinaryFiles: false,
-      fileSnapshots: {currentPath: workingTreeContent},
-    );
-    return GitHistoricalFileComparison(
-      oldPath: historicalPath,
-      newPath: currentPath,
-      oldContent: '# Full revision text\n',
-      newContent: workingTreeContent,
-      diff: diff,
-    );
-  }
-
-  @override
-  Future<GitOperationResult> restoreFileFromCommit(
-    GitRepositoryInfo repository,
-    String hash, {
-    required String historicalPath,
-    required String currentPath,
-  }) async {
-    restoreCalls += 1;
-    workingTreeContent = '# Restored\n';
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> resetCurrentBranch(
-    GitRepositoryInfo repository,
-    String hash,
-    GitResetMode mode,
-  ) async {
-    resetCalls += 1;
-    resetHash = hash;
-    resetMode = mode;
-    return _result();
-  }
-
-  @override
-  Future<List<GitBranch>> branches(GitRepositoryInfo repository) async {
-    return const [GitBranch(name: 'main', current: true)];
-  }
-
-  @override
-  Future<List<String>> remotes(GitRepositoryInfo repository) async => const [];
-
-  @override
-  Future<GitOperationResult> rollbackTracked(
-    GitRepositoryInfo repository,
-    List<String> repoRelativePaths,
-  ) async {
-    rollbackPathSets.add(List.unmodifiable(repoRelativePaths));
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> discardUntracked(
-    GitRepositoryInfo repository,
-    List<String> repoRelativePaths,
-    GitStatusSnapshot snapshot,
-  ) async => _result();
-
-  @override
-  Future<GitOperationResult> pullFastForwardOnly(
-    GitRepositoryInfo repository,
-  ) async => _result();
-
-  @override
-  Future<GitOperationResult> fetch(GitRepositoryInfo repository) async {
-    fetchCalls += 1;
-    return _result();
-  }
-
-  @override
-  Future<GitOperationResult> push(GitRepositoryInfo repository) async =>
-      _result();
-
-  @override
-  Future<GitOperationResult> pushSetUpstream(
-    GitRepositoryInfo repository,
-    String remote,
-    String branch,
-  ) async => _result();
-
-  @override
-  Future<GitOperationResult> createBranch(
-    GitRepositoryInfo repository,
-    String branchName,
-  ) async => _result();
-
-  @override
-  Future<GitOperationResult> initializeRepository(String rootPath) async {
-    lastInitializeRootPath = rootPath;
-    return _result();
-  }
-
-  GitOperationResult _result() {
-    return const GitOperationResult(
-      success: true,
-      message: 'ok',
-      stdout: '',
-      stderr: '',
-    );
+    return GitStatusSnapshot(repositoryInfo: repo, files: files);
   }
 
   GitFileStatus _file({
@@ -1885,7 +835,6 @@ class _AssociatedGitGateway extends _TrustRequiredFakeGitGateway {
       rootPath: repository.root,
       gitDirPath: repository.gitDir,
       identityKey: repository.key,
-      currentBranch: 'main',
     );
   }
 
@@ -1894,56 +843,6 @@ class _AssociatedGitGateway extends _TrustRequiredFakeGitGateway {
     final value = await super.status(repository);
     return GitStatusSnapshot(repositoryInfo: repository, files: value.files);
   }
-
-  @override
-  Future<GitOperationResult> stage(
-    GitRepositoryInfo repository,
-    List<String> paths,
-  ) async {
-    stageCalls++;
-    return super.stage(repository, paths);
-  }
-}
-
-class _RootedGitGateway extends _FakeGitGateway {
-  _RootedGitGateway(this.rootPath);
-
-  final String rootPath;
-
-  GitRepositoryInfo get repository => GitRepositoryInfo(
-    rootPath: rootPath,
-    gitDirPath: '$rootPath/.git',
-    currentBranch: 'main',
-  );
-
-  @override
-  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
-    detectCalls++;
-    return repository;
-  }
-
-  @override
-  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async =>
-      GitStatusSnapshot(
-        repositoryInfo: repository,
-        files: [
-          GitFileStatus(
-            repoRelativePath: 'README.md',
-            absolutePath: '$rootPath/README.md',
-            indexStatus: GitFileChangeStatus.unmodified,
-            workTreeStatus: GitFileChangeStatus.modified,
-            category: GitFileStatusCategory.modified,
-            staged: false,
-            unstaged: true,
-            untracked: false,
-            deleted: false,
-            renamed: false,
-            copied: false,
-            conflicted: false,
-            ignored: false,
-          ),
-        ],
-      );
 }
 
 class _DeferredDetectGitGateway extends _FakeGitGateway {
@@ -1994,107 +893,6 @@ class _DeferredDetectGitGateway extends _FakeGitGateway {
       ],
     );
   }
-}
-
-class _DeferredHistoryGitGateway extends _FakeGitGateway {
-  final historyStarted = Completer<void>();
-  final historyResult = Completer<List<GitCommitSummary>>();
-
-  @override
-  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
-    return GitRepositoryInfo(
-      rootPath: workspacePath,
-      gitDirPath: '$workspacePath/.git',
-    );
-  }
-
-  @override
-  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
-    return GitStatusSnapshot(repositoryInfo: repository, files: const []);
-  }
-
-  @override
-  Future<List<GitCommitSummary>> history(
-    GitRepositoryInfo repository, {
-    String? repoRelativePath,
-    int limit = 200,
-    int skip = 0,
-  }) {
-    if (!historyStarted.isCompleted) {
-      historyStarted.complete();
-    }
-    return historyResult.future;
-  }
-}
-
-class _DeferredSetUpstreamPushGitGateway extends _FakeGitGateway {
-  final remotesStarted = Completer<void>();
-  final remotesResult = Completer<List<String>>();
-  final setUpstreamPushes =
-      <({String rootPath, String remote, String branch})>[];
-  GitRepositoryInfo? remotesRepository;
-
-  @override
-  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
-    return GitRepositoryInfo(
-      rootPath: workspacePath,
-      gitDirPath: '$workspacePath/.git',
-      currentBranch: workspacePath == '/repo' ? 'branch-a' : 'branch-b',
-      hasRemote: true,
-    );
-  }
-
-  @override
-  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
-    return GitStatusSnapshot(repositoryInfo: repository, files: const []);
-  }
-
-  @override
-  Future<List<String>> remotes(GitRepositoryInfo repository) {
-    remotesRepository = repository;
-    if (!remotesStarted.isCompleted) {
-      remotesStarted.complete();
-    }
-    return remotesResult.future;
-  }
-
-  @override
-  Future<GitOperationResult> pushSetUpstream(
-    GitRepositoryInfo repository,
-    String remote,
-    String branch,
-  ) async {
-    setUpstreamPushes.add((
-      rootPath: repository.rootPath,
-      remote: remote,
-      branch: branch,
-    ));
-    return _result();
-  }
-}
-
-GitCommitSummary _commitSummary(String hash, String subject) {
-  return GitCommitSummary(
-    fullHash: hash,
-    shortHash: hash.substring(0, 7),
-    authorName: 'BusyMark Test',
-    authorEmail: 'busymark@example.com',
-    authorDate: DateTime(2026),
-    subject: subject,
-    parentHashes: const [],
-  );
-}
-
-GitDiffFile _diffFile(String path) {
-  return GitDiffFile(
-    oldPath: path,
-    newPath: path,
-    status: GitDiffFileStatus.modified,
-    hunks: const [],
-    binary: false,
-    additions: 1,
-    deletions: 0,
-  );
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {
