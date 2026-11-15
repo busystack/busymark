@@ -3099,6 +3099,8 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
           const TextSelection.collapsed(offset: 0),
         );
         expect(source, contains('## About the job'));
+        expect(source, startsWith('\n'));
+        final splitSource = source;
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -3121,6 +3123,8 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
         await tester.pumpAndSettle();
+        expect(source, splitSource);
+        expect(fixtureHistory8.buffer.text, splitSource);
         live = parser
             .parse(
               filePath: document.filePath,
@@ -3131,10 +3135,10 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
                   .serializedSource,
             )
             .busyDocument;
-        expect(live!.blocks.map((b) => b.kind), [
-          BusyBlockKind.paragraph,
-          BusyBlockKind.heading,
-        ]);
+        // Buffer history reparses the exact source; leading blank lines do not
+        // create a semantic paragraph in the retained production parser.
+        expect(live!.blocks.single.kind, BusyBlockKind.heading);
+        expect(live!.blocks.single.plainText, 'About the job');
       },
     );
   });

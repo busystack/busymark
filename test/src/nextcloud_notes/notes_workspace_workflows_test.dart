@@ -24,6 +24,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 
 import 'notes_api_test.dart' show testAccount, serverNote;
+import '../../support/widget_async.dart';
 
 class _Fixture {
   bool closed = false;
@@ -223,94 +224,128 @@ void main() {
         });
         final note = f.repository.notes.single;
         final offline = NotesOfflineController(f.repository, testAccount().id);
-        await tester.runAsync(() async {
-          await offline.initialize();
-          if (mode == 'retry') {
-            f.failMedia = true;
-            await offline.setRequirement('note', note.localId);
-            f.failMedia = false;
-          } else if (mode == 'resume') {
-            await offline.setRequirement('note', note.localId, paused: true);
-          }
-        });
-        offline.failures['another-note:held-failure'] =
-            'Retain this separate failure';
-        final before = f.downloads;
-        f.mediaGate = Completer<void>();
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              notesOfflineProvider(
-                testAccount().id,
-              ).overrideWith((ref) async => offline),
-            ],
-            child: MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(body: NotesOfflineDialog(note: note)),
-            ),
-          ),
-        );
-        Future<void> settle() async {
-          for (var i = 0; i < 20; i++) {
-            await tester.runAsync(
-              () => Future<void>.delayed(const Duration(milliseconds: 10)),
-            );
-            await tester.pump(const Duration(milliseconds: 30));
-          }
-        }
-
-        await settle();
-        if (mode == 'keep') {
-          await tester.tap(find.byType(BusyMarkSwitchRow));
-        } else {
-          await tester.tap(
-            find.widgetWithText(
-              BusyMarkDialogButton,
-              mode == 'retry' ? 'Retry' : 'Resume Downloads',
+        try {
+          await tester.runAsync(() async {
+            await offline.initialize();
+            if (mode == 'retry') {
+              f.failMedia = true;
+              await offline.setRequirement('note', note.localId);
+              f.failMedia = false;
+            } else if (mode == 'resume') {
+              await offline.setRequirement('note', note.localId, paused: true);
+            }
+          });
+          offline.failures['another-note:held-failure'] =
+              'Retain this separate failure';
+          final before = f.downloads;
+          f.mediaGate = Completer<void>();
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                notesOfflineProvider(
+                  testAccount().id,
+                ).overrideWith((ref) async => offline),
+              ],
+              child: MaterialApp(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: Scaffold(body: NotesOfflineDialog(note: note)),
+              ),
             ),
           );
+          await pumpUntil(tester, () {
+            if (!tester
+                .widget<BusyMarkSwitchRow>(find.byType(BusyMarkSwitchRow))
+                .enabled) {
+              return false;
+            }
+            if (mode == 'keep') return true;
+            final action = find.widgetWithText(
+              BusyMarkDialogButton,
+              mode == 'retry' ? 'Retry' : 'Resume Downloads',
+            );
+            return action.evaluate().isNotEmpty &&
+                tester.widget<BusyMarkDialogButton>(action).onPressed != null;
+          }, operation: 'offline dialog ready');
+          if (mode == 'keep') {
+            await tester.tap(find.byType(BusyMarkSwitchRow));
+          } else {
+            await tester.tap(
+              find.widgetWithText(
+                BusyMarkDialogButton,
+                mode == 'retry' ? 'Retry' : 'Resume Downloads',
+              ),
+            );
+          }
+          await pumpUntil(
+            tester,
+            () =>
+                f.downloads == before + 1 &&
+                find
+                    .widgetWithText(BusyMarkDialogButton, 'Pause Downloads')
+                    .evaluate()
+                    .isNotEmpty,
+            operation: 'held offline download starts',
+          );
+          expect(f.downloads, before + 1);
+          expect(f.mediaGate!.isCompleted, isFalse);
+          final pause = find.widgetWithText(
+            BusyMarkDialogButton,
+            'Pause Downloads',
+          );
+          expect(
+            tester.widget<BusyMarkDialogButton>(pause).onPressed,
+            isNotNull,
+          );
+          await tester.tap(pause);
+          await pumpUntil(
+            tester,
+            () => find.text('Downloads paused').evaluate().isNotEmpty,
+            operation: 'offline pause is published',
+          );
+          expect(
+            (await tester.runAsync(() => offline.inspect(note)))!.paused,
+            isTrue,
+          );
+          expect(find.text('Downloads paused'), findsOneWidget);
+          expect(f.mediaGate!.isCompleted, isFalse);
+          expect(f.downloads, before + 1);
+          expect(
+            offline.failures['another-note:held-failure'],
+            'Retain this separate failure',
+          );
+          final available = await tester.runAsync(
+            () => f.repository.attachmentAvailability(note.localId),
+          );
+          expect(available!.available, contains('.attachments.1/cached.png'));
+          f.mediaGate!.complete();
+          var reconciled = false;
+          unawaited(offline.reconcile().then((_) => reconciled = true));
+          await pumpUntil(
+            tester,
+            () => reconciled,
+            operation: 'paused reconciliation drains',
+          );
+          expect(f.downloads, before + 1);
+        } finally {
+          if (f.mediaGate?.isCompleted == false) f.mediaGate!.complete();
+          await tester.pumpWidget(const SizedBox.shrink());
+          var offlineClosed = false;
+          unawaited(offline.dispose().then((_) => offlineClosed = true));
+          await pumpUntil(
+            tester,
+            () => offlineClosed,
+            operation: 'offline controller closes',
+          );
+          expect(offlineClosed, isTrue);
+          unawaited(f.repository.dispose().then((_) => f.closed = true));
+          await pumpUntil(
+            tester,
+            () => f.closed,
+            operation: 'offline repository closes',
+          );
+          expect(f.closed, isTrue);
         }
-        await settle();
-        expect(f.downloads, before + 1);
-        expect(f.mediaGate!.isCompleted, isFalse);
-        final pause = find.widgetWithText(
-          BusyMarkDialogButton,
-          'Pause Downloads',
-        );
-        expect(tester.widget<BusyMarkDialogButton>(pause).onPressed, isNotNull);
-        await tester.tap(pause);
-        await settle();
-        expect(
-          (await tester.runAsync(() => offline.inspect(note)))!.paused,
-          isTrue,
-        );
-        expect(find.text('Downloads paused'), findsOneWidget);
-        expect(f.mediaGate!.isCompleted, isFalse);
-        expect(f.downloads, before + 1);
-        expect(
-          offline.failures['another-note:held-failure'],
-          'Retain this separate failure',
-        );
-        final available = await tester.runAsync(
-          () => f.repository.attachmentAvailability(note.localId),
-        );
-        expect(available!.available, contains('.attachments.1/cached.png'));
-        f.mediaGate!.complete();
-        await settle();
-        expect(f.downloads, before + 1);
-        await tester.pumpWidget(const SizedBox.shrink());
-        var offlineClosed = false;
-        unawaited(offline.dispose().then((_) => offlineClosed = true));
-        for (var i = 0; i < 100 && !offlineClosed; i++) {
-          await settle();
-        }
-        expect(offlineClosed, isTrue);
-        unawaited(f.repository.dispose().then((_) => f.closed = true));
-        for (var i = 0; i < 100 && !f.closed; i++) {
-          await settle();
-        }
-        expect(f.closed, isTrue);
       },
     );
   }

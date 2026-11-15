@@ -489,7 +489,7 @@ void main() {
         'lib/src/workspace/presentation/workspace_screen.dart',
       ).readAsStringSync();
 
-      expect(workspace, contains('BusyMarkCommandIds.find'));
+      expect(workspace, contains('const SearchHeaderField()'));
       expect(workspace, contains('if (!searchState.active)'));
       final sidebar = File(
         'lib/src/search/search_sidebar.dart',
@@ -501,6 +501,11 @@ void main() {
         'lib/src/search/workspace_text_search.dart',
       ).readAsStringSync();
       expect(workspace, contains('searchSessionProvider'));
+      expect(
+        session,
+        contains('BusyMarkCommandIds.search: SearchCategory.file'),
+      );
+      expect(sidebar, contains('searchCommandForCategory('));
       expect(sidebar, contains('class SearchHeaderField'));
       expect(sidebar, contains('child: BusyMarkSearchField('));
       expect(sidebar, isNot(contains('TextField(')));
@@ -1526,7 +1531,7 @@ void main() {
     ).readAsStringSync();
     final stagingAdapter = gitController.substring(
       gitController.indexOf('Future<void> stageFiles('),
-      gitController.indexOf('Future<void> rollbackFiles('),
+      gitController.indexOf('Future<GitStagedDiffSnapshot?> stagedDiffForAi('),
     );
     expect(
       stagingAdapter,
