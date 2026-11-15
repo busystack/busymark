@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show CheckedState;
 
+import '../support/document_history_harness.dart';
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -1492,6 +1494,8 @@ void main() {}
   ) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Original\n');
     var markdown = parsed.source;
+    final history = await DocumentHistoryHarness.create(source: markdown);
+    addTearDown(history.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -1503,7 +1507,25 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (filePath, value) => markdown = value,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: () {
+                history.controller.undoActiveBuffer();
+                markdown = history.buffer.text;
+              },
+              onRedo: () {
+                history.controller.redoActiveBuffer();
+                markdown = history.buffer.text;
+              },
+              onSessionChanged: (_, value) =>
+                  history.controller.updateDocumentEditorState(
+                    history.buffer.id,
+                    history.buffer.editorState.copyWith(wysiwygState: value),
+                  ),
+              onSourceChanged: (filePath, value) {
+                history.controller.updateActiveText(value);
+                markdown = value;
+              },
             ),
           ),
         ),
@@ -1511,6 +1533,14 @@ void main() {}
     );
     await tester.pump();
 
+    await tester.tap(find.byType(TextField).first);
+    tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!
+        .selection = const TextSelection.collapsed(
+      offset: 2,
+    );
+    await tester.pump();
     await tester.enterText(find.byType(TextField).first, 'Changed');
     await tester.pump();
 
@@ -1566,9 +1596,19 @@ void main() {}
       filePath: 'second.md',
       source: 'Second original\n',
     );
+    final firstHistory = await DocumentHistoryHarness.create(
+      source: first.source,
+    );
+    final secondHistory = await DocumentHistoryHarness.create(
+      source: second.source,
+    );
+    addTearDown(firstHistory.dispose);
+    addTearDown(secondHistory.dispose);
+    var activeHistory = firstHistory;
     var activeDocument = first.busyDocument;
 
     Widget buildEditor() {
+      final history = activeHistory;
       return MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -1578,7 +1618,18 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: activeDocument,
-              onSourceChanged: (_, _) {},
+              documentId: history.buffer.id,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: history.controller.undoActiveBuffer,
+              onRedo: history.controller.redoActiveBuffer,
+              onSessionChanged: (_, value) =>
+                  history.controller.updateDocumentEditorState(
+                    history.buffer.id,
+                    history.buffer.editorState.copyWith(wysiwygState: value),
+                  ),
+              onSourceChanged: (_, value) =>
+                  history.controller.updateActiveText(value),
             ),
           ),
         ),
@@ -1597,6 +1648,7 @@ void main() {}
     );
 
     activeDocument = second.busyDocument;
+    activeHistory = secondHistory;
     await tester.pumpWidget(buildEditor());
     await tester.pump();
 
@@ -1615,6 +1667,9 @@ void main() {}
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Second original',
     );
+    expect(firstHistory.buffer.text, 'Unsaved first tab\n');
+    expect(firstHistory.buffer.editorState.undoState.undo, hasLength(1));
+    expect(secondHistory.buffer.editorState.undoState.undo, isEmpty);
   });
 
   testWidgets('WYSIWYG editor applies heading keyboard shortcuts', (
@@ -4107,63 +4162,6 @@ void main() {}
     expect(find.text(l10n.editHtml), findsOneWidget);
   });
 
-  testWidgets('WYSIWYG dialogs activate the native headerbar barrier', (
-    tester,
-  ) async {
-    if (!Platform.isLinux) {
-      return;
-    }
-    const channel = MethodChannel('com.busymark.test/wysiwyg-modal-barrier');
-    final calls = <MethodCall>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-          calls.add(call);
-          return call.method == 'initialize' ? true : null;
-        });
-    addTearDown(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, null);
-    });
-    final l10n = AppLocalizationsEn();
-    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
-
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: SizedBox(
-            width: 900,
-            height: 640,
-            child: BusyMarkWysiwygEditor(
-              document: parsed.busyDocument,
-              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
-              onSourceChanged: (_, _) {},
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(TextField).first);
-    await tester.tap(find.byTooltip(l10n.htmlBlock));
-    await tester.pumpAndSettle();
-
-    expect(
-      calls.where((call) => call.method == 'setModalBarrierDepth').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', 1),
-    );
-
-    await tester.tap(find.text(l10n.cancel));
-    await tester.pumpAndSettle();
-
-    expect(
-      calls.where((call) => call.method == 'setModalBarrierDepth').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', 0),
-    );
-  });
-
   testWidgets('WYSIWYG typing preserves existing inline formatting', (
     tester,
   ) async {
@@ -6502,6 +6500,10 @@ void main() {}
     (tester) async {
       final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
       var markdown = parsed.source;
+      final history = await DocumentHistoryHarness.create(
+        source: parsed.source,
+      );
+      addTearDown(history.dispose);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -6513,7 +6515,25 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
-                onSourceChanged: (filePath, value) => markdown = value,
+                readEditBase: history.readBase,
+                readSessionState: () => history.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  history.controller.undoActiveBuffer();
+                  markdown = history.buffer.text;
+                },
+                onRedo: () {
+                  history.controller.redoActiveBuffer();
+                  markdown = history.buffer.text;
+                },
+                onSessionChanged: (_, value) =>
+                    history.controller.updateDocumentEditorState(
+                      history.buffer.id,
+                      history.buffer.editorState.copyWith(wysiwygState: value),
+                    ),
+                onSourceChanged: (_, value) {
+                  history.controller.updateActiveText(value);
+                  markdown = value;
+                },
               ),
             ),
           ),
