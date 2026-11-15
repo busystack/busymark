@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -6,6 +7,7 @@ import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/application/git_gateway.dart';
 import 'package:busymark/src/git/application/git_workspace_eligibility.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
+import 'package:busymark/src/git/data/git_shared_gateway.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -14,60 +16,73 @@ import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:busystack_git/busystack_git.dart' as shared;
+import '../../../../busystack_git/test/support/repository_fixture.dart';
 
 void main() {
-  test(
-    'attachment ignores editor publications; Files-only disk changes refresh status',
-    () async {
-      final directory = await Directory.systemTemp.createTemp(
-        'busymark-git-files-watch-',
-      );
-      addTearDown(() => directory.delete(recursive: true));
-      final root = await directory.resolveSymbolicLinks();
-      await Directory('$root/.git').create();
-      final index = await File('$root/.git/index').writeAsString('initial');
-      final repository = shared.RepositoryId(
-        root: root,
-        gitDir: '$root/.git',
-        commonDir: '$root/.git',
-        objectFormat: 'sha1',
-        filesystemToken: 'fixture',
-      );
-      final gateway = _AssociatedGitGateway(repository);
-      final container = _container(gateway);
-      await container
-          .read(appSettingsControllerProvider.notifier)
-          .waitUntilLoaded();
-      await container
-          .read(appSettingsControllerProvider.notifier)
-          .trustGitWorkspace(root);
-      final controller = container.read(gitControllerProvider.notifier);
-      final workspace = _workspace(id: root, rootPath: root);
-      controller.attachWorkspace(workspace);
-      await controller.refresh();
-      final scans = gateway.statusCalls;
-      for (var i = 0; i < 10; i++) {
-        controller.attachWorkspace(
-          workspace.copyWith(activeFilePath: '$root/doc$i.md'),
+  for (final linked in [false, true]) {
+    test(
+      'Files-only status watches external staging without editor scans, linked=$linked',
+      () async {
+        final fixture = await RepositoryFixture.create();
+        addTearDown(fixture.close);
+        await fixture.commit('a.md', utf8.encode('initial\n'), 'initial');
+        var root = fixture.root.path;
+        if (linked) {
+          root = '${fixture.directory.path}/linked';
+          await fixture.git(['worktree', 'add', '-b', 'linked', root]);
+        }
+        final gateway = _CountingSharedGitGateway(fixture.engine);
+        await File('$root/a.md').writeAsString('external change\n');
+        final container = _container(gateway);
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .waitUntilLoaded();
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(root);
+        final controller = container.read(gitControllerProvider.notifier);
+        final workspace = _workspace(id: root, rootPath: root);
+        controller.attachWorkspace(workspace);
+        await controller.refresh();
+        // Allow the existing asynchronous shared watcher to install its watches.
+        await Future<void>.delayed(const Duration(seconds: 1));
+        final scans = gateway.statusCalls;
+        for (var i = 0; i < 10; i++) {
+          controller.attachWorkspace(
+            workspace.copyWith(activeFilePath: '$root/doc$i.md'),
+          );
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        expect(gateway.statusCalls, scans);
+        await fixture.git(['add', '--', 'a.md'], cwd: root);
+        final timeout = DateTime.now().add(const Duration(seconds: 10));
+        while (container
+                .read(gitControllerProvider)
+                .statusSnapshot!
+                .stagedFiles
+                .isEmpty &&
+            DateTime.now().isBefore(timeout)) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+        expect(gateway.statusCalls, greaterThan(scans));
+        expect(
+          container.read(gitControllerProvider).repositoryInfo!.rootPath,
+          root,
         );
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-      expect(gateway.statusCalls, scans);
-      final monitor = container.read(workspaceFileMonitorProvider);
-      await monitor.start(rootPath: root, openFilePaths: const []);
-      await index.writeAsString('external index change');
-      final timeout = DateTime.now().add(const Duration(seconds: 5));
-      while (gateway.statusCalls == scans && DateTime.now().isBefore(timeout)) {
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-      }
-      expect(gateway.statusCalls, greaterThan(scans));
-      expect(
-        container.read(gitControllerProvider).repositoryInfo!.rootPath,
-        root,
-      );
-      await monitor.stop();
-    },
-  );
+        expect(
+          container.read(gitControllerProvider).statusSnapshot!.stagedFiles,
+          hasLength(1),
+        );
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .revokeGitWorkspaceTrust(root);
+        final afterRevocation = gateway.statusCalls;
+        await fixture.git(['reset', '--', 'a.md'], cwd: root);
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+        expect(gateway.statusCalls, afterRevocation);
+      },
+    );
+  }
 
   test(
     'shared status serves authoring refresh without another repository scan',
@@ -721,6 +736,17 @@ Workspace _workspace({
   );
 }
 
+class _CountingSharedGitGateway extends GitCliGateway {
+  _CountingSharedGitGateway(shared.GitEngine engine) : super(engine: engine);
+  var statusCalls = 0;
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) {
+    statusCalls++;
+    return super.status(repository);
+  }
+}
+
 class _FakeGitGateway implements GitRepositoryGateway {
   _FakeGitGateway({
     bool staged = false,
@@ -737,6 +763,8 @@ class _FakeGitGateway implements GitRepositoryGateway {
   String? lastDetectedWorkspacePath;
 
   bool get staged => _staged;
+  @override
+  Stream<void> watch(GitRepositoryInfo repository) => const Stream.empty();
   @override
   Future<String> stagedPatch(GitRepositoryInfo repository) async =>
       stagedRawPatch;

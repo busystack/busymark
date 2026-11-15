@@ -16,5 +16,6 @@ abstract class GitRepositoryGateway {
   bool get requiresWorkspaceTrust;
 
   Future<GitStatusSnapshot> status(GitRepositoryInfo repository);
+  Stream<void> watch(GitRepositoryInfo repository);
   Future<String> stagedPatch(GitRepositoryInfo repository);
 }

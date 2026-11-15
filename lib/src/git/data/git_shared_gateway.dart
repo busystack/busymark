@@ -85,6 +85,11 @@ class GitCliGateway implements GitRepositoryGateway, GitWorkspaceRootInspector {
         final id = await _repo(repository), state = await core.status(id);
         return projectSharedStatus(state);
       }, 'status');
+  @override
+  Stream<void> watch(GitRepositoryInfo repository) async* {
+    yield* core.watch(await _repo(repository));
+  }
+
   static GitRepositoryInfo _info(shared.RepositoryId id) => GitRepositoryInfo(
     rootPath: id.root,
     gitDirPath: id.gitDir,

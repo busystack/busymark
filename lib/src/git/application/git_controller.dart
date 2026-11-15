@@ -85,6 +85,7 @@ class GitController extends Notifier<GitState> {
   late GitRepositoryGateway _gateway;
   final _validation = const GitValidation();
   Timer? _debounce;
+  StreamSubscription<void>? _repositoryWatch;
   var _refreshEpoch = 0;
   var _workspaceEpoch = 0;
   var _attachmentEpoch = 0;
@@ -123,6 +124,7 @@ class GitController extends Notifier<GitState> {
     }
     _refreshEpoch++;
     _debounce?.cancel();
+    _stopRepositoryWatch();
     _sharedStatusSource = (
       workspaceId: workspace.id,
       repository: repository,
@@ -272,6 +274,7 @@ class GitController extends Notifier<GitState> {
     final files = ref.read(workspaceFileMonitorProvider).events.listen((event) {
       final root = state.attachedWorkspace?.filesystemRootPath;
       if (_sharedStatusSource == null &&
+          _repositoryWatch == null &&
           root != null &&
           (p.equals(root, event.path) || p.isWithin(root, event.path))) {
         _scheduleRefresh();
@@ -279,6 +282,7 @@ class GitController extends Notifier<GitState> {
     });
     ref.onDispose(() {
       _debounce?.cancel();
+      _stopRepositoryWatch();
       unawaited(files.cancel());
     });
     return const GitState();
@@ -290,12 +294,11 @@ class GitController extends Notifier<GitState> {
         state.attachedWorkspace?.rootPath != workspace.rootPath ||
         state.attachedWorkspace?.kind != workspace.kind;
     if (!changedOwner) return;
-    if (changedOwner) {
-      _attachmentEpoch++;
-      _workspaceEpoch++;
-      _sharedAssociation = null;
-      _sharedStatusSource = null;
-    }
+    _stopRepositoryWatch();
+    _attachmentEpoch++;
+    _workspaceEpoch++;
+    _sharedAssociation = null;
+    _sharedStatusSource = null;
     if (workspace.isRemote) {
       _debounce?.cancel();
       state = const GitState();
@@ -318,11 +321,9 @@ class GitController extends Notifier<GitState> {
       state = const GitState();
       return;
     }
-    if (changedOwner) {
-      _debounce?.cancel();
-      state = _workspaceResetState(workspace);
-      _scheduleRefresh(immediate: true);
-    }
+    _debounce?.cancel();
+    state = _workspaceResetState(workspace);
+    _scheduleRefresh(immediate: true);
   }
 
   Future<void> refresh() async {
@@ -352,6 +353,7 @@ class GitController extends Notifier<GitState> {
     }
     state = state.copyWith(availability: availability);
     if (!availability.available) {
+      _stopRepositoryWatch();
       state = state.copyWith(
         isRefreshing: false,
         requiresWorkspaceTrust: false,
@@ -387,6 +389,7 @@ class GitController extends Notifier<GitState> {
         return;
       }
       if (repository == null) {
+        _stopRepositoryWatch();
         state = state.copyWith(
           isRefreshing: false,
           requiresWorkspaceTrust: false,
@@ -411,17 +414,42 @@ class GitController extends Notifier<GitState> {
         _setWorkspaceTrustRequiredState();
         return;
       }
+      final previous = state.repositoryInfo;
+      if (previous?.identityKey != repository.identityKey ||
+          previous?.rootPath != repository.rootPath ||
+          previous?.gitDirPath != repository.gitDirPath) {
+        _stopRepositoryWatch();
+      }
       state = state.copyWith(repositoryInfo: repository);
       final status = await _gateway.status(repository);
       if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
       }
       _applyStatus(status, workspace);
+      // The shared watcher covers linked-worktree metadata outside the opened
+      // directory too. The session takes ownership when a Git view opens.
+      _repositoryWatch ??= _gateway
+          .watch(repository)
+          .listen(
+            (_) {
+              if (_isCurrentWorkspace(workspaceId) &&
+                  _sharedStatusSource == null) {
+                _scheduleRefresh();
+              }
+            },
+            onError: (Object error) {
+              if (_isCurrentWorkspace(workspaceId) &&
+                  _sharedStatusSource == null) {
+                _setFailure(error, commandName: 'watch');
+              }
+            },
+          );
     } on Object catch (error) {
       if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
       }
       if (error is GitWorkspaceRootRequired) {
+        _stopRepositoryWatch();
         _sharedAssociation = null;
         _sharedStatusSource = null;
         state = _workspaceResetState(workspace);
@@ -559,6 +587,7 @@ class GitController extends Notifier<GitState> {
 
   void _setWorkspaceTrustRequiredState() {
     _debounce?.cancel();
+    _stopRepositoryWatch();
     _workspaceEpoch++;
     state = state.copyWith(
       isRefreshing: false,
@@ -567,6 +596,12 @@ class GitController extends Notifier<GitState> {
       statusSnapshot: null,
       lastError: null,
     );
+  }
+
+  void _stopRepositoryWatch() {
+    final watch = _repositoryWatch;
+    _repositoryWatch = null;
+    if (watch != null) unawaited(watch.cancel());
   }
 
   void _setFailure(Object error, {required String commandName}) {
@@ -716,9 +751,12 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
       _unavailable();
 
   @override
+  Stream<void> watch(GitRepositoryInfo repository) => _unavailable();
+
+  @override
   Future<String> stagedPatch(GitRepositoryInfo repository) => _unavailable();
 
-  Future<T> _unavailable<T>() {
+  Never _unavailable() {
     throw const GitFailure(
       code: GitFailureCode.unavailable,
       userMessageKey: 'gitErrorUnavailable',
