@@ -181,15 +181,15 @@ final _searchNavigationTargetProvider =
     >(_SearchNavigationTargetController.new);
 // Only Commit grows the existing sidebar allocation for its full native labels.
 final _sidebarAllocationProvider =
-    NotifierProvider<_SidebarAllocation, (String, DateTime, _SidebarTab)?>(
+    NotifierProvider<_SidebarAllocation, (String, _SidebarTab)?>(
       _SidebarAllocation.new,
     );
 
-class _SidebarAllocation extends Notifier<(String, DateTime, _SidebarTab)?> {
+class _SidebarAllocation extends Notifier<(String, _SidebarTab)?> {
   @override
-  (String, DateTime, _SidebarTab)? build() => null;
+  (String, _SidebarTab)? build() => null;
   void select(Workspace workspace, _SidebarTab tab) =>
-      state = (workspace.id, workspace.openedAt, tab);
+      state = (workspace.id, tab);
 }
 
 final _sidebarShortcutRequestProvider =
@@ -582,12 +582,11 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     final gitVisible =
         request == _SidebarTab.git ||
         request == _SidebarTab.gitLog ||
-        allocation == (workspace.id, workspace.openedAt, _SidebarTab.git) ||
-        allocation == (workspace.id, workspace.openedAt, _SidebarTab.gitLog);
+        allocation == (workspace.id, _SidebarTab.git) ||
+        allocation == (workspace.id, _SidebarTab.gitLog);
     final referencesVisible =
         request == _SidebarTab.references ||
-        allocation ==
-            (workspace.id, workspace.openedAt, _SidebarTab.references);
+        allocation == (workspace.id, _SidebarTab.references);
     final sidebarWidth = gitVisible && !searchState.active
         ? busyMarkGitSidebarMinimumWidth(context)
         : referencesVisible && !searchState.active
@@ -1294,6 +1293,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     _tab = _initialSidebarTabIndex(widget.workspace);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        final tabs = _sidebarTabsFor(widget.workspace.kind);
+        ref
+            .read(_sidebarAllocationProvider.notifier)
+            .select(
+              widget.workspace,
+              tabs[_tab.clamp(0, tabs.length - 1).toInt()],
+            );
         ref.read(_sidebarShortcutRequestProvider.notifier).clear();
       }
     });

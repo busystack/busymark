@@ -10844,6 +10844,104 @@ code
     );
   }
 
+  testWidgets('remounted sidebar allocates the displayed view at scaled text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1500, 1100);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_mount_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            localeTag: 'ja',
+            autoSave: false,
+            validateOnEdit: false,
+            trustedGitWorkspacePaths: [temp.path],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(settings),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(_gitSidebarShortcutState(temp.path)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    Future<void> mount(String key) => tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: BusyMarkApp(key: ValueKey(key)),
+      ),
+    );
+    await mount('initial');
+    await pumpUntil(
+      tester,
+      () =>
+          !container.read(workspaceControllerProvider).isLoading &&
+          container.read(workspaceControllerProvider).activeBuffer != null,
+      operation: 'open sidebar allocation fixture',
+    );
+    await tester.pumpAndSettle();
+    await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
+    await pumpUntil(
+      tester,
+      () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+      operation: 'open shared Commit',
+    );
+    await tester.pumpAndSettle();
+    final frame = find.byKey(const ValueKey('workspace-page-frame'));
+    expect(
+      tester.widget<LinuxPageFrame>(frame).sidebarWidth,
+      greaterThan(BusyMarkSizes.sidebarWidth),
+    );
+    final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    service.openedAt = DateTime(2026, 2);
+    expect(
+      await tester.runAsync(
+        container
+            .read(workspaceControllerProvider.notifier)
+            .refreshWorkspaceFromDiskPreservingOpenTabs,
+      ),
+      isTrue,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      container.read(workspaceControllerProvider).workspace!.openedAt,
+      service.openedAt,
+    );
+    expect(find.byType(shared.GitCommitView), findsOneWidget);
+    expect(
+      tester.widget<LinuxPageFrame>(frame).sidebarWidth,
+      busyMarkGitSidebarMinimumWidth(tester.element(frame)),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await mount('remounted');
+    await tester.pumpAndSettle();
+    expect(find.text('Intro.md'), findsWidgets);
+    expect(find.byType(shared.GitCommitView), findsNothing);
+    expect(
+      tester.widget<LinuxPageFrame>(frame).sidebarWidth,
+      BusyMarkSizes.sidebarWidth,
+    );
+    final current = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(current.id, buffer.id);
+    expect(current.text, buffer.text);
+  });
+
   testWidgets('sidebar view commands select workspace sidebar tabs', (
     tester,
   ) async {
@@ -22450,6 +22548,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
   final WorkspaceKind kind;
   final String rootPath;
   final List<String> paths;
+  DateTime openedAt = DateTime(2026);
   final _sources = <String, String>{};
   String? savedPath;
   String? savedText;
@@ -22471,7 +22570,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
       id: rootPath,
       rootPath: rootPath,
       kind: kind,
-      openedAt: DateTime(2026),
+      openedAt: openedAt,
       activeFilePath: paths.first,
       openFilePaths: [paths.first],
       files: files,
