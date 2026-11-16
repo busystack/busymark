@@ -44,8 +44,18 @@ void main() {
         final workspace = _workspace(id: root, rootPath: root);
         controller.attachWorkspace(workspace);
         await controller.refresh();
-        // Allow the existing asynchronous shared watcher to install its watches.
-        await Future<void>.delayed(const Duration(seconds: 1));
+        // Reconcile the status-to-watch installation gap before measuring
+        // editor-only attachments. This event belongs to watcher startup.
+        final readyUntil = DateTime.now().add(const Duration(seconds: 10));
+        while ((gateway.watchEvents == 0 ||
+                gateway.refreshedWatchEvents != gateway.watchEvents ||
+                container.read(gitControllerProvider).isRefreshing) &&
+            DateTime.now().isBefore(readyUntil)) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+        expect(gateway.watchEvents, greaterThan(0));
+        expect(gateway.refreshedWatchEvents, gateway.watchEvents);
+        expect(container.read(gitControllerProvider).isRefreshing, isFalse);
         final scans = gateway.statusCalls;
         for (var i = 0; i < 10; i++) {
           controller.attachWorkspace(
@@ -739,11 +749,23 @@ Workspace _workspace({
 class _CountingSharedGitGateway extends GitCliGateway {
   _CountingSharedGitGateway(shared.GitEngine engine) : super(engine: engine);
   var statusCalls = 0;
+  var watchEvents = 0, refreshedWatchEvents = 0;
 
   @override
-  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) {
+  Stream<void> watch(GitRepositoryInfo repository) async* {
+    await for (final _ in super.watch(repository)) {
+      watchEvents++;
+      yield null;
+    }
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
     statusCalls++;
-    return super.status(repository);
+    final events = watchEvents;
+    final snapshot = await super.status(repository);
+    refreshedWatchEvents = events;
+    return snapshot;
   }
 }
 
