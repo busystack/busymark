@@ -3519,7 +3519,6 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                         await ref
                             .read(workspaceControllerProvider.notifier)
                             .openActiveFile(file.absolutePath);
-                        if (mounted) {}
                       }
                     : null,
                 onMenuRequested: showMenu,
@@ -4918,7 +4917,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
                             await ref
                                 .read(workspaceControllerProvider.notifier)
                                 .openActiveFile(topicPath);
-                            if (mounted) {}
                           }
                         : hasChildren
                         ? () {

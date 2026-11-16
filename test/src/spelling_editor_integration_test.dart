@@ -288,7 +288,6 @@ void main() {
           spellingAnnotations: [_annotation(occurrence)],
           onDocumentChanged: (value) {
             fixtureHistory0Document = value;
-            ((_) {})(value);
           },
           onSourceChanged: (path, text) {
             fixtureHistory0.controller.updateActiveWysiwygText(
@@ -446,7 +445,6 @@ void main() {
               spellingAnnotations: [_annotation(occurrence)],
               onDocumentChanged: (value) {
                 fixtureHistory1Document = value;
-                ((_) {})(value);
               },
               onSourceChanged: (path, text) {
                 fixtureHistory1.controller.updateActiveWysiwygText(

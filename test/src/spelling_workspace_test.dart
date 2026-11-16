@@ -84,7 +84,6 @@ void main() {
       'delayed spelling review return respects newerOwner=$newerOwner',
       (tester) async {
         enableDesktopFocusLifecycle(tester);
-        addTearDown(() {});
         const original = 'helo world\n';
         final harness = await _pumpWorkspace(tester, source: original);
         await _until(

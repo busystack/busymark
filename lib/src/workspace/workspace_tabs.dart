@@ -19,7 +19,7 @@ class WorkspaceTabEntry {
   const WorkspaceTabEntry.file({
     required String path,
     required bool active,
-    String? bufferId,
+    required String bufferId,
     String? untitledName,
     bool dirty = false,
   }) : this._(
@@ -66,7 +66,7 @@ class WorkspaceTabEntry {
   final String? comparisonId, comparisonLabel;
   final SharedGitReview? review;
 
-  String get key => '${kind.name}:${comparisonId ?? bufferId ?? path}';
+  String get key => '${kind.name}:${comparisonId ?? bufferId!}';
 }
 
 List<WorkspaceTabEntry> workspaceTabEntries({
