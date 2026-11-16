@@ -1,6 +1,6 @@
 # Architecture simplification against the v0.7.2 review
 
-The cleanup removes **6,761 production lines (2.99%) and eight source files**.
+The cleanup removes **6,757 production lines (2.99%) and eight source files**.
 It retires alternate native-header, Git, undo and property-panel owners,
 redundant workspace state and unnecessary derived work. All nine numbered
 findings are resolved below; the broader tab-state deletion is bounded and the
@@ -21,7 +21,8 @@ they check restored buffer selections, instrument the existing batch history
 reader, and exercise fixed selector mnemonics independently of direct key
 assignments. Final test-only corrections are committed as `e17a502`; they await
 observable Notes state and check retained search, staging and history behavior.
-Production inputs remain frozen at `5ad719b`.
+That first verification phase used production inputs frozen at `5ad719b`.
+The bounded follow-up below records the later source revisions and new results.
 
 The official Flutter 3.47.5 / Dart 3.13.4 SDK and all dependency locks remain
 unchanged. The shared engine remains pinned to
@@ -114,11 +115,11 @@ excluded from the production reduction. No production files were moved.
 | Scope | Before | After | Net change |
 | --- | ---: | ---: | ---: |
 | Dart files under `lib/src` | 361 | 353 | -8 |
-| Physical production lines under `lib/src` | 226,164 | 219,403 | **-6,761 (2.99%)** |
+| Physical production lines under `lib/src` | 226,164 | 219,407 | **-6,757 (2.99%)** |
 | Git controller | 2,439 | 769 | -1,670 |
 | Shared Git host gateway | 949 | 204 | -745 |
 | Rich editor | 11,291 | 10,824 | -467 |
-| Workspace screen | 16,606 | 16,439 | -167 |
+| Workspace screen | 16,606 | 16,443 | -163 |
 
 The eight deleted files comprise the six unconditional files in the review, the
 368-line diff parser unlocked by the AI change and the two-line gateway export.
@@ -157,179 +158,195 @@ repository or trust changes/disposal, and hands ownership to the existing shared
 session when bound. This is necessary invalidation, not a second watcher
 implementation or a new coordination framework.
 
-The remaining 16,439-line workspace screen and 9,726-line workspace controller
+The remaining 16,443-line workspace screen and 9,726-line workspace controller
 still concentrate real product responsibilities. Their size is documented,
 not presented as solved by deleting unrelated behavior or adding abstractions.
 
-## Verification record
+## Verification and acceptance
 
-Evidence lives in `build/architecture-review/` in this checkout. Logs from failed
-or incomplete attempts are retained; later passes do not relabel them.
+**BusyMark is not release-qualified.** The architectural deletion and bounded
+follow-up are implemented, but native shutdown, two native read-only selection
+checks, full focus transitions and installed-application acceptance remain open.
+Baseline reproduction and passing unrelated tests do not waive those gates or
+prove that the cleanup has no effect on them.
 
-The unchanged baseline analyzer passed. Its first complete test invocation
-reported **5,732 passed, 68 skipped and 37 failed**. Thirty-five failures lacked
-the required native Git process supervisor; the remaining two were save/reopen
-timeouts under load. Both save cases passed on unchanged code in an isolated
-repeat after prerequisites were supplied. This baseline is not described as
-green.
+The official Flutter 3.47.5 / Dart 3.13.4 SDK is unchanged at
+`6a19cca56475dbfba1478ee68d7bd0c2ef891da1`. The mapped release engine SHA-256 is
+`d57449a5c2ee39e77b9e3488f0703b165c67e0b3c554089f388db96484ae62f1`.
+All dependency manifests/locks and both exact shared pins/archives are unchanged
+from the original reviewed commit. No third-party or shared source was patched.
+The raw records below are relative to `build/architecture-review/`.
 
-Official Typst/D2 artifacts, all supported spelling dictionaries, the native Git
-supervisor and an owned Xvfb were prepared with the existing tooling. The complete
-retained corpus runs without name filters; the six deleted entry files cover
-only the deleted implementations listed above. Native/test resource failures
-were investigated separately from product regressions.
+### Baseline established before changes
 
-The first deletion group passed 328 focused cases (six resource-dependent PDF
-cases were skipped before Typst was prepared). The reference/input regression
-group passed 26 cases. The candidate retained Git suite passed 298 cases; the
-additional real AI patch/identity test group passed three cases. The applied
-source analyzer is clean. Final complete-corpus and native results follow;
-their recorded failures do not qualify release acceptance.
+The original clean tree's analyzer passed. Its first complete Flutter run had
+**5,732 passed, 68 skipped and 37 failed** (`baseline-tests.log`). Thirty-five
+failures lacked the native Git supervisor. Two save/reopen timeouts passed on
+unchanged code in isolation after prerequisites were supplied. This baseline is
+not green. The original release also failed **27 of 100 natural-close runs with
+SIGSEGV** (`close-baseline-release/summary.json`). All 444 tracked production/lock
+inputs matched the reviewed original commit (`baseline-native-integrity.json`).
 
-### Final verification
+Official bundled Typst/D2, fonts, spelling dictionaries, the native Git
+supervisor and owned Xvfb/private desktops were prepared with existing tooling.
+Incomplete, failed and superseded attempts are retained with their original
+logs. The previous report's final source had **5,706 passed, 0 skipped, 1 failed**
+across all 243 entry files (`full-corpus-isolated/receipt.json`): Chromium exceeded
+its unchanged five-second retirement deadline in the CRLF CSS case. The complete
+unchanged HTML-options file subsequently passed all 16 cases on both original
+and changed production. That isolated comparison never qualified the failed
+full run. Its packaging helper correctly refused it.
 
-| Check | Result and evidence |
+### Bounded follow-up changes
+
+`15ac993` requires the file-tab buffer ID and deletes the path-only identity
+fallback. The kind prefix and separate comparison/history IDs remain. It also
+deletes both empty `if (mounted)` blocks, the empty spelling teardown and both
+no-op spelling callback invocations. No replacement callback or compatibility
+mechanism was added. All **92 affected safety/spelling cases passed before and
+after** (`followup-20261115/remnants-{baseline-ready,after}.log`). The first
+mistaken invocation naming a nonexistent test file is retained separately.
+
+`665b105` fixes a verified native host allocation defect. The sidebar preserves
+its selected view by workspace ID, while its parent allocation also required
+`openedAt`. A same-root refresh changed that timestamp without remounting the
+sidebar. The live snapshot showed Git requiring **396 pixels inside a 300-pixel
+slot**, with the branch action at x=312 outside the slot. Resizing did not help;
+reselecting Commit did (`followup-20261115/layout-state-control/`). Allocation
+now uses the sidebar's existing `(workspace ID, view)` identity; initial view
+publication also clears stale allocation after a real remount. Document,
+repository and asynchronous lifetime timestamps/guards remain unchanged. This
+adds six net production lines and no new owner or framework.
+
+The real application regression covers Japanese 1.5x text, same-root refresh,
+full unmount/remount and unchanged buffer identity/source. It fails with the
+old allocation and passes with the correction (`sidebar-lifetime-{before,green}.log`).
+All **299 application smoke cases pass**. Earlier invalid fixture attempts and
+the inadequate initial native candidate remain recorded, without qualification.
+
+`6cd76cb` corrects the Files-only watcher's test readiness. The pinned shared
+`repository_watch.dart` deliberately invalidates after installing its watches
+to close the initial status/watch gap. Under load this legitimate refresh landed
+inside the fixture's measurement after a fixed one-second sleep (one status
+call became two). The existing counting gateway now observes initial watch
+invalidation and its completed status read before measuring editor attachments.
+The strict zero-extra-scans assertion for ten repeated attachments, ordinary and
+linked-worktree staging checks, trust-revocation assertion and staging deadline
+remain. All **21 cases pass** in both an isolated diagnostic and the actual file;
+analysis is clean. The first ignored diagnostic's void-event compilation error
+is retained separately. No production Git or shared watcher code changed.
+
+### Current source and verification results
+
+The shipping source is production SHA-256
+`793dcf728362205bece6bc7dee445dca9c968fa59c0fb9b68d44b0a708b63a56`, with AOT SHA-256
+`cd1a1caf26f04c6089ab4b09320b3b1188517c2745bb40a1309f9fb073a52aa1`.
+The producer receipt was captured before building at `15ac993` with the explicit
+two-file changes later committed as `665b105`; those bytes match that committed
+source. The subsequent fixture-only commit changes no production input.
+The preserved 1,473-payload shipping bundle is
+`followup-20261115/final-sidebar-release/bundle/`; all native matrix receipts
+bind to it and the official mapped engine. Probe bundles separately identify
+and hash their diagnostic entrypoints; they are not shipping executables.
+
+| Verification | Result and raw evidence |
 | --- | --- |
-| Complete host Flutter corpus | All 243 entry files exercised exactly once: **5,706 passed, 0 skipped, 1 failed**. The failure is the unchanged Chromium retirement deadline in the CRLF CSS case. Full record: `full-corpus-isolated/receipt.json`. This is a complete failed run, not a qualified pass. |
-| Full-corpus artifact qualification | The existing packaging helper refuses this receipt with `Full test corpus has not passed`: `final-corpus-qualification.log`. No exception or waiver was added. |
-| Evidence integrity | All 243 entry hashes, imported host inputs, exact shared archives, 20 raw-log hashes, 95 line-inventory rows and both copies of the sealed 1,473-payload release bundle verified: `final-evidence-integrity.json`. This verifies the recorded failed execution, not acceptance. |
-| Official analyzer | Clean after the last test-only corrections: `final-frozen-analyze-ready.log`. |
-| Dart formatter | All 665 tracked Dart files, zero changes: `final-maintained-format.log`. Generated verification copies/build artifacts are excluded from this maintained-source check. |
-| Final fixture corrections | All 114 Notes/account/source-audit cases passed: `final-fixture-verification-ready.log`. All 302 structured editor cases passed: `final-structured-fixture.log`. |
-| Shared engine complete suite | 142 passed serially: `shared-engine-serial.log`. |
-| Shared UI complete suite | 489 passed serially: `shared-ui-serial.log`. |
-| Native spelling package | 14 passed after resolving its own locked native-asset graph: `spellcheck-native-tests-ready.log`. |
-| Python tools suite | 134 passed with system Python and private native prerequisites: `python-suite-private.log`. |
-| Shared native accessibility | Both CTest cases passed: `git-accessibility-tests.log`. |
-| Native architecture boundary | Resolved final-source audit passed: `final-native-audit.log`. Adversarial ownership/resolution tests passed: `native-audit-adversarial.log`. |
-| Host Git, design and sidebar audits | All three final resolved checks passed: `final-check-resolved.log`, `final-design-resolved.log`, `final-sidebar-resolved.log`. All three corresponding `--self-test` runs passed. |
-| Localization synchronization | Existing host synchronization `--check` passed: `localization-sync-check.log`; full host localization regressions are part of the corpus. |
-| Native GTK/services | Accent, secure credential policy, shortcut metadata, GTK host and libsecret scripts passed in their `test_*.log` files. |
-| Native WebKit/rendering | Production web-render host completed 34 operations: `web-render-native.log`. Complete renderer corpus passed: `visualization-native-ready.log`. |
-| Large native search workflow | Passed with 10,001 cached notes, real GTK shortcuts, history cancellation, keymap reassignment/reset, RTL and 30 open/close cycles: `sidebar-native-final.log`. The measured descriptor count was 31 before and 29 after those cycles; this is a single-run lifetime check, not a before/after architecture benchmark. |
-| Release export/spelling | Both final-source X11 checks passed with exit 0 and `ok: true`: spelling/editor-history transactions and compiled PDF/HTML export. See `final-x11/results.json`. |
-| Wayland | All three final-source checks passed: spelling transactions, full native renderer corpus and compiled PDF/HTML export. See `final-wayland/wayland-results.json` and its spelling/export JSON reports. This does not close the independent SDK multi-engine lifecycle gate. |
-| Final release build | Official unmodified SDK build passed: `final-release-build.log`. The preserved bundle and sealed 1,473-file payload receipt are under `final-release/`. Its mapped release engine matches the official SDK artifact SHA-256 `d57449a5c2ee39e77b9e3488f0703b165c67e0b3c554089f388db96484ae62f1`. |
+| Complete final Flutter corpus | All **243 entry files exactly once**, 22 complete-file batches: **5,706 passed, 0 skipped, 2 failed**. Autosave-after-branch deadline and RTL template-dialog initial settle timeout; `followup-20261115/complete-corpus/receipt.json`. The existing qualifier rejects it with `Full test corpus has not passed`; no waiver. |
+| Official analyzer | Clean after the final fixture change: `followup-20261115/final-fixture-analyze.log`. |
+| Maintained Dart formatting | All 665 tracked Dart files pass; verification copies/build outputs excluded. |
+| Current archive/consumer/resolved audits | Exact shared trees, host consumer, resolved native audit and adversarial tests, all three host/design/sidebar audits and self-tests pass: `followup-20261115/current-audits.json`. |
+| Unchanged shared suites | Engine **142**, shared UI **489**, native spelling **14**, Python **134**, shared native CTest **2** passed in the first verification phase. Their source/pinned inputs remain unchanged; see `shared-engine-serial.log`, `shared-ui-serial.log`, `spellcheck-native-tests-ready.log`, `python-suite-private.log`, `git-accessibility-tests.log`. |
+| Localization/native services | Synchronization check and accent, credential policy, shortcut metadata, GTK host and libsecret scripts passed in the first phase; localization/editor/navigation cases are retained in the final corpus. |
+| Actual shipping X11 presentation | **All 16** theme/locale/scale cases pass, including both Japanese 1.5x failures from the earlier build: `followup-20261115/final-native-matrix.json`. All **236** retained captures inspected in **30** labelled grids with full-resolution Japanese branches, narrow history, RTL and focused-filter checks; original hashes verified in `followup-20261115/final-native-review/`. |
+| Shipping 100-natural-close gate | **Failed:** 76 exit zero, **23 SIGSEGV + 1 abort**; all 100 records/raw logs and zero unresolved descendants: `followup-20261115/final-natural-close/summary.json`. |
+| Final-source native selection | **80/82 pass**. `10-drag-with-scroll`: clipboard; `12-cell-local-drag`: local range/clipboard. All editing/composition/retained-buffer Undo/Redo cases complete. Full fresh report, clipboard evidence and captures: `followup-20261115/final-selection-native/`. |
+| Final-source actual application selection/history | **All 52 checks pass**, with clean ownership: `followup-20261115/final-application-selection-result.json`. Uses the real `application.main`, workspace buffers, tab restoration, Linux clipboard, composition and Undo/Redo; framework-dispatched keys/input, separately from physical pointer and shipping close gates. All 52 captures inspected in seven labelled grids; original hashes verified. |
+| Final-source native focus | Wayland **Alt-Tab all 13 checks pass**, including the owned supervisor without cleanup/survivors: `followup-20261115/final-focus-native/`. X11 readiness fails; full Wayland minimize/restore times out waiting for resumed lifecycle after restore. Both failed gates remain under `followup-20261115/final-focus-x11/` and `followup-20261115/final-focus-full-wayland/`. |
+| Installed BusyMark | Older **0.7.1 Snap revision 31**; changed payload not installed or accepted. Administrator authentication is unavailable. No install, push or publication occurred. |
 
-The final complete-corpus run completed with one failure. Its receipt is
-`full-corpus-isolated/receipt.json`: all 243 discovered entry files are assigned
-exactly once to 20 complete-file batches using the official SDK's
-`flutter test --no-pub --concurrency=2 --reporter=expanded`. Entry files,
-production inputs and raw output logs are bound by SHA-256; the local committed
-test helpers also remain unchanged. No case-name filters were used.
+The first follow-up corpus stopped after 14 passing batches when subsequent
+source changes superseded it. A later frozen run ended with outer exit 143 after
+19 complete batches, one watcher-fixture failure and interrupted batch 20. All
+243 entry hashes matched before applying the fixture correction. Its incomplete
+receipt remains at `followup-20261115/final-corpus/receipt.json`; the termination
+cause was not isolated. The final run uses a new receipt and bounded groups of
+complete files. No interrupted or changed-input output is used to qualify it.
 
-The CRLF custom/built-in CSS case failed during Chromium retirement after its
-five-second deadline. The ownership report records no unresolved child
-processes after cleanup, but the unchanged strict retirement check still fails
-the test (`full-corpus-isolated/09.log`). The test, browser helper, HTML export
-service/styles/models and stylesheet are byte-identical to the original
-reviewed commit. This failed batch is retained and is not replaced by an
-isolated repeat in the complete-corpus receipt.
+The complete final run exposes a three-second autosave-after-history-branch
+deadline failure, followed by a teardown/write race. The entire test file and
+durable history store are byte-identical to the reviewed original; autosave code
+is identical except for removal of the obsolete Workspace snapshot assignment
+(`followup-20261115/autosave-source-comparison.json`). All 444 original baseline
+production/lock inputs were verified again. The complete unchanged file passes
+**178 cases on original and 178 on current production** serially, with the same
+assertions and deadline (`history-autosave-comparison.json`). These repeats support
+a timing concern, not a resolved root cause or proof of non-regression. The failed
+full batch remains failed; no timeout, test or functionality was weakened.
 
-The complete unchanged HTML options file then passed all 16 cases on original
-production and all 16 on final production, sequentially, with the same browser
-ownership and five-second retirement checks. See `html-options-comparison.json`
-and `html-options-{baseline,current}-isolated.log`. These repeats support the
-fixture-timing diagnosis; they do not turn the complete failed corpus into a
-qualified pass or establish a Chromium root cause.
+The second full-run failure is the RTL template-creation dialog's initial
+`pumpAndSettle` timeout. The test, production dialog and catalog service are all
+byte-identical to the reviewed original (`template-dialog-source-comparison.json`).
+The fixture advances real I/O for a fixed interval before settling; the exact
+cause of this timeout remains unisolated. Complete serial original/current file
+comparisons each pass all **14 cases**, with original assertions and timing
+(`template-dialog-comparison.json`). They do not qualify the failed full batch.
 
-The preceding frozen-input attempt stopped after twelve batches with 3,275
-passes, no skips and one 30-second real-store content-search timeout. Cleanup
-then raced the unfinished capture. That case captures 96 durable revisions
-while another complete store file also performs substantial disk work. Its
-test body, capture path and content-search algorithm are unchanged from the
-reviewed source. The original complete controller file passes in isolation
-(130 cases in seven seconds, `history-baseline-isolated.log`). The fresh full
-schedule runs the controller and store files separately, preserving every test,
-the required command, and all existing deadlines; those final files pass all
-130 and 93 cases respectively. The failed incomplete receipt and its logs remain
-under `full-corpus-frozen/`; they do not qualify a pass.
+### What remains unaccepted
 
-Earlier attempts affected by exhausted `/tmp`, a slow secondary-volume temporary
-directory or incomplete compiler/font resources are also preserved as failures
-or incomplete runs. No failed log is rewritten or reused as a passing record.
+The previous shipping build failed 32 natural closes with SIGSEGV and one with
+a mutex abort in 100 runs. The original failed 27; the constructor-cleanup build
+failed 18. The corrected shipping build still fails 24. A separate unchanged
+SDK-template counter also fails one of 100 natural closes on the same official
+engine (`followup-20261115/sdk-counter-natural-close/`). Different observed rates
+do not establish improvement, non-regression, a common cause or an upstream fault.
 
-The failed first corpus attempt stopped during batch 12 after exposing remaining
-editor fixture ownership, a Notes timing failure and an incorrect standalone Typst
-path without the bundled fonts. The editor fixtures were corrected in
-`0137003`; the entire unchanged Notes workflow file passed its repeat (54
-cases); all nine PDF option rendering cases passed using the complete bundle.
-Those earlier logs have not been changed or reused to qualify the final corpus.
+Debugger traces on old and changed shipping builds show native rendering/driver
+teardown while engine workers remain active: LLVM/Mesa cleanup in one capture
+and EGL/NVIDIA loader cleanup in another. No root cause is claimed. Debugger-only
+callback-drain, early-disposal and application-hold experiments failed to prove
+a safe fix and were rejected (`followup-20261115/gdb-*`). No lifecycle workaround,
+forced exit, delay, engine patch or retained closed engine was shipped.
 
-Later complete-file diagnostics exposed two source-audit anchors for deleted
-implementations, a retained-history replay assertion and a pre-existing Notes
-fixture race. The source audit now checks the real search header, command map
-and Files staging boundary. The editor case retains its initial physical Enter,
-publication and focus checks, then verifies exact leading-blank-line source
-through Undo/Redo and the production parser's heading result. It no longer
-expects a transient empty paragraph object from the removed private stack.
+The fresh selection report preserves the two failing assertions. The older
+`selection-comparison.json` references two missing `/tmp` reports; those raw old
+reports are explicitly missing, not reconstructed. The new complete 82-case
+report is included in the handoff. Passing Alt-Tab focus does not qualify X11,
+full minimize/restore, the independent official-SDK Wayland multi-engine gate,
+or installed behavior. A first full-focus setup closed the ownership supervisor's
+required input lease; its cancelled output contains no product assertion.
+All recorded follow-up ownership cleanups leave zero unresolved descendants.
 
-The unchanged original Notes fixture reproduces the Pause failure on the
-original production code (`notes-baseline-pair.log`). Its fixed sleeps did not
-wait for enabled actions or published pause state, and failure cleanup could
-wait for real I/O without advancing Flutter's fake clock. The corrected fixture
-uses the existing bounded `pumpUntil` helper for those observations and drains
-held work in `finally`. All cache, paused-state, download-count, unrelated-failure
-and disposal assertions remain; no production Notes code or test-case timeout
-changed. The corrected complete Notes/account files pass on original production
-(71 cases, `notes-pumped-ready-candidate.log`) and with the final production and
-source audit (114 cases, `final-fixture-verification-ready.log`). An initial
-focused command named a nonexistent account test path; its failed invocation is
-preserved separately as `final-fixture-verification.log`.
+Earlier production native WebKit/renderers, large 10,001-note/30-cycle sidebar
+workflow, X11 and Wayland spelling/editor-history/PDF/HTML exports passed; their
+records remain in `web-render-native.log`, `visualization-native-ready.log`,
+`sidebar-native-final.log`, `final-x11/` and `final-wayland/`. They are historical
+coverage of that earlier source. The earlier compiled dirty-close/video fixture
+still contains readiness failures and a visualization abort; its dependent
+reopen was missing. None substitutes for final complete native acceptance.
 
-The final shipping release failed the existing 100-natural-close gate: 32/100
-runs exited with SIGSEGV and one with a mutex abort
-(`close-final-release/summary.json`). An isolated build of the original reviewed
-commit failed with SIGSEGV in 27/100 runs (`close-baseline-release/summary.json`).
-All 444 tracked baseline production/lock inputs were checked byte for byte
-against the original commit; none differed (`baseline-native-integrity.json`).
-Both builds use the same official engine. The mutex symptom is also documented
-in the earlier [sidebar acceptance record](sidebar-ui-consistency.md). These
-comparisons establish pre-existing native failures, not an isolated root cause
-or proof of an upstream defect. The gate remains open.
+The remaining failures need causal native investigation and actual payload-bound
+installed acceptance. They do not justify restoring deleted implementations or
+adding another architecture. This is a BusyMark-only follow-up; shared pins and
+archives are unchanged, and no other consumer change is required.
 
-The complete final Git matrix exercised all 16 theme/locale/scale combinations:
-14 passed; both Japanese scale-1.5 cases failed to expose the branch-action
-target (`native-final-cases/cases.json`). The unchanged original build reproduces
-that failure (`native-baseline-ja/`). Earlier menu timeout attempts are retained
-under `native-git-final/` and `native-git-final-repeat/`. All 204 retained named
-captures/failing checkpoints from this final matrix were inspected in 22 labelled
-grids, with additional full-resolution checks of narrow filter focus, RTL history, scaled branches and
-the failing Japanese state. Originals and hashes remain intact in
-`native-review/original-images.json`; the inspection record states its limits.
-Existing cramped/clipped scaled sidebar actions remain visible. A partial
-matrix is not presentation or installed-app acceptance.
+### Portable evidence handoff
 
-The compiled close fixture exercised dirty Save/Discard/Cancel, reopening,
-initialization and visualization/video lifetimes. Its first 33 records had three
-video-readiness failures on Xvfb. The installed WebKit's supported software
-renderer made all three video cases pass without changing assertions or
-disabling its sandbox (`close-video-software/`). The complete software-rendered
-repeat produced 32 records with one visualization mutex abort; its dependent
-reopen did not run (`close-live-software-final/`). This remains a failed native
-gate, not a qualified complete pass.
+The separate local artifact is
+`build/architecture-review/busymark-architecture-evidence-20261115.tar.gz`, with
+an adjacent `.sha256` checksum. Include this artifact with a source handoff:
+ordinary source exports omit the ignored `build/` directory. Its internal
+`README.txt` explains path mapping and the historical missing reports.
+`followup-20261115/final-evidence-integrity.json` verifies all 243 entry hashes,
+all 22 raw-log hashes, current production/shared hashes and all 95 original/current
+line rows. That check establishes the integrity of a complete **failed** run.
 
-The compiled selection probe completed 82 cases: 80 passed, while the same two
-read-only drag/clipboard cases fail on the original reviewed build. Every
-editing/history/composition case completes against the retained buffer owner;
-the unchanged failing checks were preserved (`selection-comparison.json`).
-The actual-host editor focus control could not reach readiness on its private
-compositor in either attempt; it yields no passing product assertion. Ownership
-cleanup reported no unresolved descendants. See `focus-native-editor*.log`.
+The separate archive includes raw passed/failed/incomplete logs, receipts,
+original captures and inspection records, full debugger stacks, SDK counter
+control source, exact source patches, toolchain/pin hashes, this report and the
+95-file line inventory. `MANIFEST.json` records original paths, lengths and
+SHA-256 for every included file. Private profiles, caches, downloaded
+prerequisites, SDK/build binaries and source checkout copies are excluded.
 
-Native search initially exposed stale fixture assumptions. Its read counter
-observed only `readRevision`, although both original and current production
-already use `readRevisions`. The existing wrapper now counts those requests and
-still delegates to the real file store. The selector also uses fixed E/S/R/D
-mnemonics independently of direct command shortcuts
-(`workspace_screen.dart`, `_documentViewMnemonic`); the probe now verifies that
-the view remains selectable, its bytes remain unchanged, and direct shortcut
-metadata is unassigned. No production keymap or cancellation behavior changed.
-The complete large-probe result is recorded in `sidebar-native-final.log`.
-
-Installed applications require separate payload-bound acceptance under
-`docs/git-ui-acceptance.md`; a build or screenshot is not a substitute. The
-installed BusyMark Snap is older than these changes. This checkout has no
-BusyFiles consumer/installed application, so final installed acceptance for both
-hosts cannot be established here. Shared pins/archives are unchanged and need
-no consumer refresh. No package was installed, pushed or published.
+Reading the records and verifying their hashes requires no Flutter/Dart SDK.
+Re-executing the checks requires the pinned official toolchain and native
+prerequisites. Hash integrity does not qualify failed or incomplete acceptance.

@@ -35,7 +35,7 @@ production,lib/src/spellcheck/spelling_release_smoke.dart,705,704,-1
 production,lib/src/workspace/document_navigation.dart,17,15,-2
 production,lib/src/workspace/presentation/settings_screen.dart,2478,2408,-70
 production,lib/src/workspace/presentation/welcome_screen.dart,921,852,-69
-production,lib/src/workspace/presentation/workspace_screen.dart,16606,16439,-167
+production,lib/src/workspace/presentation/workspace_screen.dart,16606,16443,-163
 production,lib/src/workspace/presentation/writerside_instance_dialog.dart,655,652,-3
 production,lib/src/workspace/workspace_controller.dart,9785,9726,-59
 production,lib/src/workspace/workspace_model.dart,531,501,-30
@@ -45,11 +45,11 @@ production,lib/src/workspace/workspace_tab_actions.dart,293,289,-4
 production,lib/src/workspace/workspace_tabs.dart,123,111,-12
 production,lib/src/writerside/writerside_topic_file_editor.dart,2752,2538,-214
 test,test/src/app_router_test.dart,269,245,-24
-test,test/src/app_smoke_test.dart,24130,23648,-482
+test,test/src/app_smoke_test.dart,24130,23747,-383
 test,test/src/busymark_dialogs_test.dart,748,482,-266
 test,test/src/busymark_document_test.dart,7889,7905,16
 test,test/src/git/git_cli_gateway_integration_test.dart,1199,187,-1012
-test,test/src/git/git_controller_test.dart,2106,932,-1174
+test,test/src/git/git_controller_test.dart,2106,954,-1152
 test,test/src/git/git_diff_parser_test.dart,165,0,-165
 test,test/src/git/git_log_parser_test.dart,65,0,-65
 test,test/src/git/git_process_runner_test.dart,400,0,-400
@@ -69,9 +69,9 @@ test,test/src/references/reference_controller_test.dart,216,299,83
 test,test/src/source_audit_test.dart,2074,2079,5
 test,test/src/source_highlighter_test.dart,778,686,-92
 test,test/src/source_search_test.dart,265,248,-17
-test,test/src/spelling_editor_integration_test.dart,1170,1261,91
+test,test/src/spelling_editor_integration_test.dart,1170,1259,89
 test,test/src/spelling_service_test.dart,6170,6103,-67
-test,test/src/spelling_workspace_test.dart,2048,2008,-40
+test,test/src/spelling_workspace_test.dart,2048,2007,-41
 test,test/src/validation_problems_ui_test.dart,347,337,-10
 test,test/src/visualization_card_test.dart,526,514,-12
 test,test/src/workspace_controller_test.dart,7411,7405,-6
