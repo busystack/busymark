@@ -1,0 +1,380 @@
+BusyMark architecture audit disposition — audit 2026-11-16, verification 2026-11-17
+
+Input and scope
+---------------
+Read all 14 pages of /home/albert/Downloads/busymark-architecture-audit.pdf.
+SHA-256: 789adc28ccf7a9b51e579783a9e160a36d9064a551a8a533032caca0d5d04121.
+The requested /home/albert/busystack/busymark directory does not exist. Work was
+performed in the supplied checkout, /mnt/Media/busystack/busymark.
+The starting revision was 0623104, rather than the PDF's archived 9f6aa57.
+Each finding was checked against that current production code before correction.
+The official Flutter 3.47.5 / Dart 3.13.4 toolchain and dependency locks are retained.
+No third-party source, SDK, tool implementation, or shared dependency was changed.
+
+Disposition of every numbered finding
+------------------------------------
+A1 — CORRECTED IN SOURCE; final verification recorded below.
+Independent evidence in the starting revision:
+* workspace_service.dart saveFormattedText checked expectedSnapshot and then
+  renamed a temporary file, leaving the final check/publication race.
+* workspace_controller.dart Save All and autosave called unconditional saveText.
+* Writerside _replaceAtomically and HTML publishSite exchanged again on rejected
+  displaced state, followed by ordinary temporary-path cleanup.
+* saveFormattedTextBatch read/stat'ed displaced data before adding to committed.
+Corrections:
+* workspace_service.dart:1387 resolves the normal-save referent and delegates
+  conditional writes to the existing saveFormattedTextReplacingPath publisher.
+  The ordinary unconditional API remains for callers without an expected version.
+* workspace_controller.dart:6803,7036,9222 passes the captured disk snapshot on
+  manual Save, Save All and autosave. Save All classifies publication conflicts
+  as conflicts, not ordinary failures; all three retain the unsaved buffer.
+* workspace_message.dart and workspace_safety.dart retain/show a recovery path,
+  including in the overwrite prompt, instead of translating it away.
+* workspace_service.dart:1524 registers exchange ownership before fallible
+  validation. The existing checked batch rollback handles every later exception.
+* writerside_topic_removal_service.dart:2634 retains displaced state on every
+  post-exchange rejection/read/cleanup failure, without a blind second exchange.
+  Existing rollback-failed reporting includes both paths and triggers rollback
+  of earlier successful domain edits; it does not claim the current file restored.
+  Recovery paths also survive an exception during rollback of an earlier file.
+* html_export_publisher.dart:138 uses the existing retained-stage exception on
+  failed displaced-directory validation; html_export_service.dart already keeps
+  that stage. Publication may have happened; the wording now says so explicitly.
+* Integration review found that workspace_file_monitor.dart recognized only
+  the basename of a save staging directory, not its contents child. The real
+  inotify regression reproduced a leaked .busymark-save-*/contents path; endpoint
+  tests reproduced both erroneous move directions. The existing temporary-path
+  predicate now recognizes save staging ancestors, including batch saves.
+  A controller regression verifies that exchange notifications cannot retarget
+  the authoring buffer. No watcher or file-decoration subsystem was replaced.
+Removed: the normal conditional check-then-rename path, blind Writerside/HTML
+recovery exchanges and unsafe batch cleanup before exchange registration.
+Retained: symlink referent versus Save As entry semantics; BOM/newlines/mode;
+anchored paths; live authorization; manifests; multi-file domain rollback;
+checked conditional Save As/batch rollback; non-Git document recovery comparison.
+Regression evidence: workspace_service_test final-window symlink/format/mode,
+second-writer recovery, injected post-exchange validation errors with and without
+a newer destination; workspace_controller_test manual/all/auto dirty-buffer and
+recovery-path cases; Writerside post-exchange A/B preservation and truthful partial
+failure; HTML service-level retained-stage cleanup test. Existing multi-file,
+permissions, recovery, search replacement and refactoring suites also run.
+The Local History recorder now observes the conditional-save API with its
+expected snapshot; its original source/empty-write assertions remain unchanged.
+
+A2 — CORRECTED IN SOURCE; final verification recorded below.
+Independent evidence: separate application processes used the same SQLite path,
+while repository guards compared process-local caches and store UPSERTs compared
+no persisted input. Startup unconditionally reclassified every syncing note.
+Corrections in nextcloud_notes/data/notes_store.dart:
+* SQLite transaction ownership now includes expected storage generations for
+  account/note/attachment mutations, removal cascades, import and offline state.
+  Generation changes commit atomically with durable rows; failure advances neither
+  durable content nor the owning cache's expectation. Tombstones fence reuse.
+* Observational reads do not silently reauthorize an older repository cache.
+  Even no-op editor saves validate their durable identity before claiming success.
+* Network workflows acquire an account request claim before sending requests.
+  Claims include the cached identities deleted by another process, as well as
+  current rows. Stale caches cannot issue a remote delete before validation.
+* Session identity includes process ID and Linux process start identity, so
+  process ID reuse cannot establish live ownership. Closed sessions release their
+  claims; dead sessions are retired. Startup leaves live requests alone and
+  recovers interrupted syncing state only when no live request owns it.
+* Nested/overlapping request counts live in the SQLite claim transaction; a
+  queued begin cannot lose ownership when an earlier request ends.
+* Store close drains active requests before releasing ownership. HTTP operations
+  never hold a SQLite transaction across a network await.
+* Expected-state capture belongs inside the existing startup transaction and
+  error handler. Invalid generation metadata now rolls back migration and
+  session registration, closes SQLite and reports failure instead of leaving
+  open() waiting for an unreported worker failure. The new regression verifies
+  the unchanged schema/outbox after failure, immediate lock reuse, repair and
+  successful reopen.
+Repository synchronize/settings/reconciliation/conflict-resolution/deletion and
+attachment-deletion routes use that existing store boundary. This is necessary
+ownership state; it replaces neither the repository nor SQLite worker/scheduler.
+Behavioral limit: a competing window receives an explicit conflict, keeps its
+editor text dirty, and does not automatically rebase or retry the rejected write.
+The message directs the user to preserve edits with existing Save As before
+reopening the window to reload its cache. New recovery UI or a competing save
+engine was not introduced. Uncertain process-identity I/O fails closed, rather than declaring a live owner
+dead. Process-start liveness is tested for the supported
+Linux desktop, not asserted for other platforms or mixed old/new binaries.
+Regression evidence: notes_process_ownership_test uses independent repositories
+and actual Dart processes, stale content and same-revision acknowledgment changes,
+live-request startup, killed-owner recovery, deleted identities before network
+I/O, queued request overlap, attachment/removal/transaction fences and close
+during an active request.
+Settings widget fixtures explicitly let real SQLite initialization complete
+before advancing the fake clock to visual quiescence; existing assertions and
+timeout limits remain. The existing Notes suites exercise edits during HTTP acknowledgment, metadata,
+settings, creation evidence, uploads, imports, restart, rollback and recovery.
+
+A3 — CORRECTED.
+Independent evidence: shared_git_integration.dart bound session-capturing
+callbacks but its route disposal never cleared the persistent controller source.
+GitController.releaseSharedStatusSource (git_controller.dart:142) checks exact
+owner identity, clears the source, invalidates pending refreshes and schedules the
+existing fallback. The scope captures release callbacks at bind time and runs
+them before session/client disposal (shared_git_integration.dart:263,278).
+An old release cannot detach a replacement session. The existing lazy session,
+watcher handoff, trust checks and document-tab responsibilities remain.
+Regression: git_controller_test exact-owner release, replacement binding, late
+retired result and real fallback status; existing Files watcher and host tests.
+
+A4 — CORRECTED.
+Independent evidence: AssetIngestionService used openSync/lockSync with a
+blockingExclusive OS lock on the caller's isolate.
+asset_ingestion_service.dart:352 now awaits open/lock/unlock/close inside the
+same local queue and exception-safe ownership boundary. No worker or queue added.
+Regression: an actual Python process holds the production lock while a Dart timer
+must fire before lock release; publication waits, then succeeds, and another
+operation verifies release. Existing adoption/rollback/process tests remain.
+
+A5 — CORRECTED.
+Independent evidence: writersideEditorIndex unconditionally loaded every module
+and called withModule repeatedly, separately from withDocumentSources.
+workspace_controller.dart:6084 now captures the complete buffer map and obtains
+the index from WorkspaceService.withDocumentSources. No state is published by
+this read-only preparation. Removed the separate module-load/withModule loop.
+Retained discovery and disk freshness, removal of closed-buffer overrides,
+inactive dirty dependencies, module/instance selection and stale-result guards.
+Regression: unsaved inactive dependency rename/undo integration additionally
+asserts that preparation leaves workspace state unchanged with validation off;
+existing discovery/overlay/reference/controller tests exercise the reused path.
+No wall-clock performance improvement is claimed.
+
+A6 — CORRECTED.
+Independent evidence: repository-wide production search found outbox writes and
+schema maintenance, but no reader. Pending selection and exact creation evidence
+already came from the authoritative notes records.
+Schema 7 drops outbox inside the migration/recovery transaction and fences older
+clients. Removed mirror creation, writes/deletes, repeated note serialization,
+and six redundant per-note commit payload values. No replacement queue added.
+Actual notes, creation attempts, pending state, attachments and atomicity remain.
+Regression: v2–v6 legacy fixtures retain exact pending JSON/bytes while dropping
+the mirror; malformed recovery rolls back the fence and table drop; v8 is rejected.
+Existing rollback/retry/restart assertions now check authoritative pending state,
+not a write-only mirror. Acceptance criteria were not relaxed.
+
+A7 — CORRECTED.
+Independent evidence: PDF export allocated unique export:block request keys and
+only detached cancellation in finally; the coordinator retained revision entries.
+markdown_visualization_export.dart:87 now cancels every temporary key and clears
+its last successful result in finally, on completion/failure/cancellation.
+The content-addressed render cache and coordinator scheduling remain.
+Regression: mixed successful/failed exports leave no retained successful results
+for temporary keys; cancellation retires all selected keys; existing real Typst
+and visualization tests run with the local pinned binary enabled.
+
+A8 — CORRECTED (optional local optimization implemented).
+Independent evidence: with no hidden ranges, visibleText equals fullText and the
+index consumers query immutable coordinates. Two identical indexes and a second
+changed-range scan were unnecessary.
+source_document.dart:36,62 shares the full index only when current hidden ranges
+are empty. Folded coordinates retain their separate index. Net benefit is the
+removed duplicate allocation/update/scan with a small local branch; no editor
+redesign or speculative performance infrastructure was added.
+Regression: empty/unfolded identity, folded-to-unfolded edits, subsequent edits,
+existing CRLF/randomized mapping, line index, gutter and editor/search suites.
+
+No numbered finding was disproven or intentionally ignored. Source corrections
+are distinct from full installed-application acceptance; see verification below.
+
+Deliberately retained / unnumbered audit observations
+---------------------------------------------------
+The page 9 unopened-reference reread cost remains unchanged: freshness is real,
+but there is no latency measurement or demonstrated equivalent invalidation
+scheme. Adding another indexing service would increase the correctness burden.
+reference_controller.dart:189 still rereads unopened sources before comparing
+the captured document with its cached index input.
+The page 10–13 retention recommendations remain intact: DocumentBuffer authority
+and two editor projections; shared undo and stale-revision guards; bounded
+workspace preparation; undo/recovery/session/local-history distinctions; lossless
+Markdown and authored/resolved Writerside models; operation-specific Writerside
+services; Notes repository/store/scheduler and exact uncertain-request evidence;
+search/reference/FTS/comparison distinctions; file observation; Git host/session/
+engine handoff; spelling projections/coordinator/isolate/native dictionaries;
+diagram/math scheduling and content caches; Dart/native/JS/D2 execution; SVG and
+OpenAPI dependency policies; PDF/HTML pipelines; native integration and pinned
+qualification tools; AI protocol adapters/guarded application; asset provisional
+ownership; clipboard/feedback; commands/routing/settings/localization/design.
+None is replaced, merged, or split merely because of file size or line count.
+Shared Git UI ownership, focus/sidebar contracts, canonical worktree attachment,
+trust/read-only rules and document lifetimes are retained. Shared pins/archives
+are unchanged because no shared implementation was changed; the exact archive
+check is part of verification, rather than inventing a new shared revision.
+
+Verification
+------------
+Evidence directory: build/architecture-audit-20261116/.
+Source correction and regression verification do not constitute completed
+installed-application acceptance. The independent gates below remain explicit.
+
+Source and artifact identity:
+* Final production change: 81afc3e. The previous 631128d build and its native
+  captures are superseded by this integration correction. 365bc2a changes only
+  app test fixture cleanup. BusyMark production hash v2, 434 files:
+  68c30695dbcdb366c2e9762b3a84539eb93d095a3fea4f7a95a4be5be36eb09a.
+* The final official release build passed and sealed all 1,474 bundle payload
+  files in build-recovery-source.json. Only lib/libapp.so differs from the
+  previous bundle; its new SHA-256 is
+  92623c9d3d08208e9a882448c9a39b61f13654f1178eeef57145d72471cd6a02.
+  This whole-payload receipt, not the runner executable hash alone, binds the
+  actual application compiled by the official SDK. Verification against current
+  production source and every sealed payload passed again after native testing.
+* final-source-verification.json records the repeated binding, exact shared pins,
+  archive/tree hashes, unchanged dependency inputs and clean official SDK Git
+  status. Neither shared package changed, so no shared pin refresh was warranted.
+
+Completed checks:
+* Official Flutter analyzer: no issues (analyze-disposal-final.log).
+* Tracked Dart formatting: 667 files, zero changes (format-integration-final.log; final app fixture formatted separately).
+* Shared localization synchronization and exact vendored archive checks pass.
+* Shared engine: 142 tests and supported-runtime check; shared Flutter UI: 489;
+  shared native accessibility: 2; native spelling package: 14. All pass.
+* Resolved native Git presentation audit and adversarial self-tests pass.
+  All three BusyMark source audits (Git scope, general design, sidebar) and
+  their adversarial self-tests pass. No audit or acceptance criteria changed.
+  All eight commands were repeated on the final sources and exit zero
+  (final-audit-results.json and final-audit-*.log).
+* All 134 Python verification-tool tests pass (python-private-final.log).
+* The six production native helper suites pass: GTK accent lookup, accent host
+  lifecycle, shortcut metadata, credential namespace, Notes libsecret and the
+  complete demand-driven WebKit host lifecycle suite (native-driver.log).
+* Official Writerside builder conformance passes all 181 semantic checks in
+  each of ten invocations, including reference/property/default/list variants
+  (writerside-conformance-unsandboxed.log). No builder or fixture was changed.
+* The final affected Notes run passes all 147 cases (notes-overlap-final.log),
+  including real independent processes, crash recovery and queued ownership.
+  After startup integration correction, the entire Notes directory passes all
+  301 tests (notes-startup-final.log).
+* The final controller/watcher/endpoint group passes all 217 cases, including
+  the document-identity regression (save-watcher-controller-final.log). The
+  combined Local History/controller/watcher group passes all 394 cases before
+  that last additional controller assertion case was added.
+* The final fixture integration run passes all 201 cases across Notes settings,
+  Local History workspace and actual PDF options rendering
+  (integration-fixtures-verified.log).
+
+Full BusyMark corpus:
+* Final execution PASSES: full-corpus-disposal/receipt.json records all 244
+  discovered test files, 5,737 passing cases, zero failed and zero skipped.
+  The frozen implementation/test revision is 365bc2a. All 21 invocations use
+  complete test files, --no-pub, --concurrency=2 and --reporter=expanded, without
+  test-name filters. Actual Typst/D2 rendering and native dictionary resources
+  are enabled. Every file occurs exactly once in this final receipt.
+* full-corpus-integrity.json records independent verification of the discovered
+  file set, unchanged test/production inputs, complete commands, all original
+  output hashes and the actual passing counts. Exact shared archive/tree
+  verification also passes; their test fixtures were not modified.
+* Canonical packaging qualification remains BLOCKED: the unmodified
+  tools/verify_flutter_test_corpus.py:37 calls git diff using the literal
+  revision "materialized source archive" inside shared directories with no
+  .git repository. Git exits 129 at that call and the verifier exits 1
+  (corpus-canonical-verifier.log).
+  It does not reach its output checks. The independent integrity checks above
+  are execution evidence, not a waiver or replacement of that packaging gate.
+  No acceptance tool, criteria, assertion or dependency was changed to pass it.
+* An earlier completed run recorded 5,729 passes and one autosave deadline
+  failure. Its unmodified receipt/logs remain in full-corpus-acceptance/. The
+  incomplete full-corpus-confirmation/ run reproduced that timeout in batch 11
+  before the startup/watcher integration corrections. Diagnostic complete-file
+  runs passed, without reproducing it. The exact original interleaving was not
+  captured; a passing repeat alone is not claimed to explain or correct it.
+* Integration review separately demonstrated the watcher staging defect with
+  failing endpoint tests and real inotify events (save-staging-*-red.log), then
+  corrected its source predicate and verified authoring-buffer identity. The
+  final full batch containing the autosave case passes all 381 cases with the
+  original three-second deadline and all original assertions. Failure diagnostics
+  now include settings, buffer path, current/saved text, disk state and error.
+* full-corpus-recovery/ was stopped after five app fixture timer failures and
+  before changing its frozen inputs. Those tests unmounted an
+  UncontrolledProviderScope while its manually owned ProviderContainer remained
+  alive through Flutter's timer invariants. 365bc2a disposes that container on
+  fixture unmount, exercising production timer cancellation. Every original
+  editor/save/reopen and timer assertion remains. All 299 app cases pass in
+  app-fixture-cleanup.log and again in the final complete corpus.
+
+Native final-production bundle verification:
+* All 16 final-production Git cases complete their driver checks: light/dark,
+  en/de/ja/ar, text scale 1.0/1.5 (native-git-postcorpus/). Every receipt records
+  natural application exit, unchanged disposable repository, ready credential
+  service and a mapped engine matching the official SDK. DesktopRun.close in
+  tools/git_native_smoke.py:548 requires each driver to exit zero and checks
+  those fields before the loop can print its final completion message. That
+  message is present after every case. No case was skipped or filtered.
+* The outer run-postcorpus-native.py orchestration session nevertheless reports
+  SIGTERM/143. A clean aggregate exit is NOT claimed. Its exact cause has not
+  been established; the process waited for the corpus before the long matrix.
+  This remains a separately recorded orchestration failure, rather than being
+  rewritten as exit zero. The complete per-case evidence is independently
+  checked against current source/payloads in final-source-verification.json.
+* All 220 named original captures were visually reviewed through 26 contact
+  sheets. All six popups extending beyond the parent window were also reviewed
+  at full display size (two duplicate pairs verified byte-identical). Menus fit
+  the display; no new visible regression was identified. The final
+  native-postcorpus-review/reviewed.json binds every reviewed original by hash.
+* The final plain shipping application close passes: one run, clean durable
+  shutdown, no surviving children, exact official mapped engine
+  (native-close-recovery/summary.json). The --plain harness executes only that
+  case; this does not claim native dirty Save/Discard/Cancel coverage. Document
+  lifetime flows remain covered by the complete 299-case app widget suite.
+* Final compiled X11 spelling/editor/history and visualization/math/PDF/HTML
+  paths pass (x11-recovery/results.json). Final compiled Wayland spelling/editor,
+  visualization/PDF and the complete real renderer corpus pass under an owned
+  Weston display (wayland-recovery/wayland-results.json).
+* The separate complete X11 renderer corpus passes (renderer-x11-qualified.log).
+  Its first launch lacked GTK's Cairo Python bridge; supplying the existing
+  unmodified prerequisite tree through PYTHONPATH fixes that environment failure.
+  The compiled smoke PDF is byte-identical before/after the final Notes/watcher
+  integration changes (SHA-256 e6ed565492758ab3994a3854aa2cab476cde8e01062c437bd2423dc9d4e6086a).
+* Earlier native-git-recovery/ completed one case, then refused startup of the
+  next because its source binding differed momentarily during Flutter work.
+  Current hashes matched again afterward, but the exact transient was not
+  identified. That partial attempt is retained and not accepted. The complete
+  post-corpus case collection ran after the Flutter test processes finished.
+* These rebuilt-bundle checks do not certify installed Snap confinement, offline
+  network-namespace restart, physical printing, or the independent multi-engine
+  Wayland lifecycle gate.
+
+Qualification limitations and remaining failures:
+* Canonical packaging qualification fails at the materialized-archive Git check
+  described above. The native matrix outer wrapper reports SIGTERM/143 despite
+  completed, independently validated case checks. Neither failure is hidden,
+  waived, or converted to a passing command exit.
+* The final complete test execution has no failures. The exact interleaving of
+  the earlier autosave timeouts remains unobserved; the final pass does not
+  retrospectively establish their cause. Failed/interrupted runs are retained.
+* Installed BusyMark still contains an older payload. sudo -n requires a password;
+  administrator authentication was unavailable. BusyFiles checkout and installed
+  application are absent. Corrected installed-payload binding and both-consumer
+  installed-app acceptance are therefore blocked. Older installed binaries and
+  unchanged shared revisions are not accepted as evidence for this correction.
+* The separately documented official Wayland multi-engine lifecycle problem
+  has not been resolved or waived. The missing BusyFiles checkout also prevents
+  executing its maintained standalone upstream probe here. Passing the compiled
+  single-application smoke paths does not close that gate.
+* Relocated HTML verification through both installed browser engines is not
+  available: Selenium is absent. The browsers themselves are present. No package
+  was added, upgraded or patched to obtain a pass. Actual compiled exports and
+  the real PDF-rendering tests remain independent passing evidence.
+* No application was pushed, published, released or installed. All first-party
+  implementation changes are local commits; the final report is committed too.
+
+Local implementation commits:
+ffd3e26 Correct audited publication, Notes ownership, and resource lifetimes
+fd97b85 Fence deleted Notes identities before remote requests
+ce1d245 Preserve recovery evidence through nested rollback and liveness errors
+5fe8432 Keep rollback regression compliant with analyzer style
+631128d Count overlapping Notes requests inside the ownership transaction
+0b30b52 Align integration fixtures with conditional saves and real Notes initialization
+81afc3e Keep Notes startup transactional and conditional save staging private
+365bc2a Dispose owned app test containers before timer invariant checks
+
+Further simplification
+----------------------
+No broader architectural reduction is supported by this audit or these changes.
+The useful deletions are the outbox mirror, duplicate index preparation and
+unfolded duplicate indexes. Other fixes restore ownership and recovery rather
+than reduce line count. Additional simplification needs an equivalent production
+path and demonstrable total benefit, especially around concurrency and recovery.
