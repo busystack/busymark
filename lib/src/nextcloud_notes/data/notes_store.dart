@@ -307,21 +307,21 @@ class NotesStore {
     }
     final finished = Completer<void>();
     _requests.add(finished);
+    _requestDepth[accountId] = (_requestDepth[accountId] ?? 0) + 1;
     try {
       await _call('beginRequest', accountId);
-      _requestDepth[accountId] = (_requestDepth[accountId] ?? 0) + 1;
       try {
         return await action();
       } finally {
-        final depth = _requestDepth[accountId]! - 1;
-        if (depth == 0) {
-          _requestDepth.remove(accountId);
-          await _call('endRequest', accountId);
-        } else {
-          _requestDepth[accountId] = depth;
-        }
+        await _call('endRequest', accountId);
       }
     } finally {
+      final depth = _requestDepth[accountId]! - 1;
+      if (depth == 0) {
+        _requestDepth.remove(accountId);
+      } else {
+        _requestDepth[accountId] = depth;
+      }
       _requests.remove(finished);
       finished.complete();
     }
@@ -382,7 +382,7 @@ class _NotesStoreSession {
       'CREATE TABLE IF NOT EXISTS store_sessions (id TEXT PRIMARY KEY, process INTEGER NOT NULL, start TEXT NOT NULL)',
     );
     db.execute(
-      'CREATE TABLE IF NOT EXISTS request_owners (account_id TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE, session TEXT NOT NULL REFERENCES store_sessions(id) ON DELETE CASCADE)',
+      'CREATE TABLE IF NOT EXISTS request_owners (account_id TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE, session TEXT NOT NULL REFERENCES store_sessions(id) ON DELETE CASCADE, depth INTEGER NOT NULL)',
     );
     _retireDeadSessions(db);
     db.execute('INSERT INTO store_sessions VALUES(?,?,?)', [
@@ -615,12 +615,16 @@ class _NotesStoreSession {
         // Validation uses the same persisted generation as writes.
       } else if (action == 'beginRequest') {
         db.execute(
-          'INSERT INTO request_owners VALUES(?,?) ON CONFLICT(account_id) DO NOTHING',
+          'INSERT INTO request_owners VALUES(?,?,1) ON CONFLICT(account_id) DO UPDATE SET depth=depth+1',
           [argument, id],
         );
       } else if (action == 'endRequest') {
         db.execute(
-          'DELETE FROM request_owners WHERE account_id=? AND session=?',
+          'UPDATE request_owners SET depth=depth-1 WHERE account_id=? AND session=?',
+          [argument, id],
+        );
+        db.execute(
+          'DELETE FROM request_owners WHERE account_id=? AND session=? AND depth=0',
           [argument, id],
         );
       } else {

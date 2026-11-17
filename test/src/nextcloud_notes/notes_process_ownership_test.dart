@@ -123,6 +123,33 @@ void main() {
   );
 
   test(
+    'a queued overlapping request retains ownership after the first request ends',
+    () async {
+      final owner = await NotesStore.open(path: path);
+      final observer = await NotesStore.open(path: path);
+      addTearDown(owner.close);
+      addTearDown(observer.close);
+      final entered = Completer<void>(), release = Completer<void>();
+      late Future<void> overlapping;
+      await owner.withRequestOwnership(testAccount().id, () async {
+        overlapping = owner.withRequestOwnership(testAccount().id, () async {
+          entered.complete();
+          await release.future;
+        });
+        // End while the second begin is queued, before its reply reaches Dart.
+      });
+      await entered.future;
+      await expectLater(
+        observer.withRequestOwnership(testAccount().id, () async {}),
+        conflict,
+      );
+      release.complete();
+      await overlapping;
+      await observer.withRequestOwnership(testAccount().id, () async {});
+    },
+  );
+
+  test(
     'closing a store drains active requests before releasing their claim',
     () async {
       final owner = await NotesStore.open(path: path);
