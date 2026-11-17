@@ -711,6 +711,7 @@ void _worker(List<dynamic> arguments) {
           session._advance(db, ('notes', note.localId));
         }
       }
+      session.capture(db);
       if (version < 7) db.execute('PRAGMA user_version = 7');
       db.execute('COMMIT');
     } catch (_) {
@@ -725,7 +726,6 @@ void _worker(List<dynamic> arguments) {
     ready.send([false, 'Cannot open or migrate the Nextcloud Notes database.']);
     return;
   }
-  session.capture(db);
   final commands = ReceivePort();
   ready.send([true, commands.sendPort]);
   commands.listen((dynamic message) {

@@ -42,6 +42,44 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'conditional save exchange cannot retarget the authoring buffer',
+    () async {
+      final root = await Directory.systemTemp.createTemp('save-monitor-owner-');
+      addTearDown(() => root.delete(recursive: true));
+      final file = await File(
+        p.join(root.path, 'note.md'),
+      ).writeAsString('old');
+      final monitor = _ControlledFileMonitor();
+      final service = WorkspaceService(
+        beforeDisplacedValidation: (target, displaced) async {
+          monitor.emitEvent(
+            classifyWorkspaceFileMonitorEvent(
+              FileSystemMoveEvent(target, false, displaced),
+              openFilePaths: {target},
+              workspaceRoot: true,
+            )!,
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        },
+      );
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller;
+      await controller.openPath(file.path);
+      final id = controller.state.activeBuffer!.id;
+      controller.updateActiveText('saved');
+      expect(await controller.saveActive(), isTrue);
+      expect(controller.state.activeBuffer!.id, id);
+      expect(controller.state.activeBuffer!.filePath, file.path);
+      expect(controller.state.activeBuffer!.isDirty, isFalse);
+      expect(await file.readAsString(), 'saved');
+    },
+  );
+
   for (final route in ['manual', 'all', 'auto']) {
     test(
       '$route save retains editor and both external versions on final publication race',

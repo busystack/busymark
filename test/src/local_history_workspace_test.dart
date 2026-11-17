@@ -923,6 +923,18 @@ void main() {
           await _waitFor(
             () => !h.state.activeBuffer!.isDirty,
             operation: 'autosave after branch',
+            diagnostics: () => jsonEncode({
+              'autoSave': h.container
+                  .read(appSettingsControllerProvider)
+                  .autoSave,
+              'filePath': h.state.activeBuffer?.filePath,
+              'source': h.state.activeBuffer?.text,
+              'saved': h.state.activeBuffer?.lastSavedText,
+              'diskState': h.state.activeBuffer?.diskState.name,
+              'message': h.state.message?.code.name,
+              'error': h.state.message?.error.toString(),
+              'disk': File(path).readAsStringSync(),
+            }),
           );
         }
         expect(await history.flushAll(h.state.documentBuffers), isTrue);
