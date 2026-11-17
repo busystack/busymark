@@ -69,6 +69,48 @@ void main() {
     },
   );
 
+  test(
+    'domain rollback preserves the recovery path from a failed earlier-file rollback',
+    () async {
+      final fixture = await _homeFixture(
+        referrer: '# Referrer\n\n[Old](doomed.md)\n',
+      );
+      final analysis = await analyzeHome(fixture);
+      var before = 0, after = 0;
+      String? retained, destination;
+      final racing = WritersideTopicRemovalService(
+        beforeFileExchange: (_, _) async {
+          if (++before == 2)
+            throw StateError('fail later file before publication');
+        },
+        afterFileExchange: (target, displaced) async {
+          if (++after != 2) return;
+          retained = displaced;
+          destination = target;
+          await File(displaced).writeAsString('rollback A');
+          await File(target).writeAsString('rollback B');
+        },
+      );
+      BusyMarkException? failure;
+      try {
+        await racing.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: analysis.homePageReplacements.first,
+            updateUsagesAutomatically: true,
+          ),
+        );
+        fail('Rollback must report the uncertain publication');
+      } on BusyMarkException catch (error) {
+        failure = error;
+      }
+      expect(failure.code, 'writerside.topic-removal.rollback-failed');
+      expect(failure.args['paths'], contains(retained));
+      expect(await File(retained!).readAsString(), 'rollback A');
+      expect(await File(destination!).readAsString(), 'rollback B');
+    },
+  );
+
   for (final redirect in [false, true]) {
     test(
       'explicit Home Page replacement promotes children (redirect=$redirect)',

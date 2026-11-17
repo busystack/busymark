@@ -949,9 +949,15 @@ class WritersideTopicRemovalService {
             edit.original,
             expected: edit.updated,
           );
-        } on Object {
-          // Never overwrite a file changed by another process during rollback.
-          rollbackFailures.add(edit.path);
+        } on Object catch (rollbackError) {
+          // Preserve recovery locations from a failed rollback exchange too.
+          rollbackFailures.add(
+            rollbackError is BusyMarkException &&
+                    rollbackError.code ==
+                        'writerside.topic-removal.rollback-failed'
+                ? '${rollbackError.args['paths']}'
+                : edit.path,
+          );
         }
       }
       if (rollbackFailures.isNotEmpty) {

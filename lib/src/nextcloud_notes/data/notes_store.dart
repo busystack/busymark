@@ -356,8 +356,13 @@ class _NotesStoreSession {
     try {
       final stat = File('/proc/$process/stat').readAsStringSync();
       return stat.substring(stat.lastIndexOf(')') + 2).split(' ')[19];
-    } on FileSystemException {
-      return null;
+    } on FileSystemException catch (error) {
+      // Access denial or an I/O failure is not evidence that an owner died.
+      // Keep its claim rather than reclassifying a potentially live request.
+      if (error.osError?.errorCode == 2 || error.osError?.errorCode == 3) {
+        return null;
+      }
+      rethrow;
     }
   }
 
@@ -383,7 +388,8 @@ class _NotesStoreSession {
     db.execute('INSERT INTO store_sessions VALUES(?,?,?)', [
       id,
       pid,
-      _processStart(pid) ?? '',
+      _processStart(pid) ??
+          (throw StateError('Cannot establish Notes process identity.')),
     ]);
   }
 
