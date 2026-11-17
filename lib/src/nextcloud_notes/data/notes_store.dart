@@ -350,6 +350,7 @@ class _NotesStoreSession {
   _NotesStoreSession(this.id);
   final String id;
   final _expected = <(String, String), int>{};
+  final _rowAccounts = <(String, String), String>{};
 
   static String? _processStart(int process) {
     try {
@@ -392,6 +393,17 @@ class _NotesStoreSession {
   ).isNotEmpty;
 
   void capture(Database db) {
+    for (final row in db.select('SELECT id,account_id FROM notes')) {
+      _rowAccounts[('notes', row['id'] as String)] =
+          row['account_id'] as String;
+    }
+    for (final row in db.select(
+      'SELECT a.id,n.account_id FROM attachments a JOIN notes n ON n.id=a.note_id',
+    )) {
+      _rowAccounts[('attachments', row['id'] as String)] =
+          row['account_id'] as String;
+    }
+
     for (final row in db.select('SELECT * FROM store_versions')) {
       _expected[(row['kind'] as String, row['id'] as String)] =
           row['generation'] as int;
@@ -434,6 +446,7 @@ class _NotesStoreSession {
     }
     final checked = <(String, String)>{}, changed = <(String, String)>{};
     final accounts = <String>{};
+    final rowAccounts = <(String, String), String>{};
     void account(String value, {bool write = false}) {
       accounts.add(value);
       checked.add(('accounts', value));
@@ -449,7 +462,10 @@ class _NotesStoreSession {
       final owner =
           accountId ??
           (rows.isEmpty ? null : rows.single['account_id'] as String);
-      if (owner != null) account(owner);
+      if (owner != null) {
+        account(owner);
+        rowAccounts[('notes', value)] = owner;
+      }
     }
 
     void attachment(String value, {bool write = false, String? noteId}) {
@@ -460,7 +476,11 @@ class _NotesStoreSession {
       ]);
       final owner =
           noteId ?? (rows.isEmpty ? null : rows.single['note_id'] as String);
-      if (owner != null) note(owner);
+      if (owner != null) {
+        note(owner);
+        final accountId = rowAccounts[('notes', owner)];
+        if (accountId != null) rowAccounts[('attachments', value)] = accountId;
+      }
     }
 
     void noteJson(Map value) => note(
@@ -547,6 +567,13 @@ class _NotesStoreSession {
           changed.add(key);
         case 'beginRequest':
           account(argument as String);
+          // Include cached identities deleted by another process, not just
+          // rows still present. A stale cache must not send a remote DELETE.
+          checked.addAll(
+            _rowAccounts.entries
+                .where((entry) => entry.value == argument)
+                .map((entry) => entry.key),
+          );
           // A stale cache must not send a remote DELETE or request based on
           // another process's superseded note, identity, settings or attachment.
           for (final row in db.select(
@@ -600,6 +627,7 @@ class _NotesStoreSession {
       final versions = {for (final key in changed) key: _generation(db, key)};
       db.execute('COMMIT');
       _expected.addAll(versions);
+      _rowAccounts.addAll(rowAccounts);
       return result;
     } catch (_) {
       db.execute('ROLLBACK');

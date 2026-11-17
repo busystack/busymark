@@ -64,6 +64,18 @@ void main() {
   );
 
   test(
+    'deleted cached identities block remote requests before any network operation',
+    () async {
+      final r = await repository();
+      final external = await NotesStore.open(path: path);
+      addTearDown(external.close);
+      await external.commit(removeNotes: [r.notes.single.localId]);
+      await expectLater(r.delete(r.notes.single.localId), conflict);
+      expect(await external.notes(), isEmpty);
+    },
+  );
+
+  test(
     'independent processes reject stale edits and acknowledgments without revision changes',
     () async {
       final a = await _Peer.open(path), b = await _Peer.open(path);
