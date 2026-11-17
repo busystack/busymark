@@ -80,8 +80,9 @@ void main() {
       String? retained, destination;
       final racing = WritersideTopicRemovalService(
         beforeFileExchange: (_, _) async {
-          if (++before == 2)
+          if (++before == 2) {
             throw StateError('fail later file before publication');
+          }
         },
         afterFileExchange: (target, displaced) async {
           if (++after != 2) return;
