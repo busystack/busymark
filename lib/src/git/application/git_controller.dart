@@ -99,6 +99,7 @@ class GitController extends Notifier<GitState> {
   _sharedAssociation;
 
   ({
+    Object owner,
     String workspaceId,
     shared.RepositoryId repository,
     String workspacePath,
@@ -113,6 +114,7 @@ class GitController extends Notifier<GitState> {
   bool bindSharedStatusSource(
     Workspace workspace,
     shared.RepositoryId repository, {
+    Object? owner,
     required Future<GitStatusSnapshot> Function() refresh,
     required Future<GitStatusSnapshot?> Function() current,
     required Future<void> Function(List<String>, bool) stage,
@@ -126,6 +128,7 @@ class GitController extends Notifier<GitState> {
     _debounce?.cancel();
     _stopRepositoryWatch();
     _sharedStatusSource = (
+      owner: owner ?? refresh,
       workspaceId: workspace.id,
       repository: repository,
       workspacePath: workspace.rootPath,
@@ -134,6 +137,13 @@ class GitController extends Notifier<GitState> {
       stage: stage,
     );
     return true;
+  }
+
+  void releaseSharedStatusSource(Object owner) {
+    if (!ref.mounted || !identical(_sharedStatusSource?.owner, owner)) return;
+    _sharedStatusSource = null;
+    _refreshEpoch++;
+    _scheduleRefresh(immediate: true);
   }
 
   Future<void> refreshFromSharedSnapshot({bool refresh = false}) async {

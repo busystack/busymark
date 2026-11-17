@@ -9,7 +9,15 @@ import 'html_export_models.dart';
 const htmlExportManifest = '.busymark-html-export.json';
 
 class HtmlExportPublisher {
-  const HtmlExportPublisher({this.fileWriter = const AtomicFileWriter()});
+  const HtmlExportPublisher({
+    this.fileWriter = const AtomicFileWriter(),
+    this.beforeSiteExchange,
+    this.afterSiteExchange,
+  });
+  final Future<void> Function(String destination, String stage)?
+  beforeSiteExchange;
+  final Future<void> Function(String destination, String stage)?
+  afterSiteExchange;
   final AtomicFileWriter fileWriter;
 
   Future<Directory> staging(String destination) async {
@@ -109,6 +117,7 @@ class HtmlExportPublisher {
         'Atomic directory replacement is unavailable on this system. Choose a new destination.',
       );
     }
+    await beforeSiteExchange?.call(destination, stage.path);
     final error = api.exchange(stage.path, destination);
     if (error != null) {
       throw HtmlExportException(
@@ -117,17 +126,16 @@ class HtmlExportPublisher {
     }
     // Verify the exchanged directory too, protecting a concurrently changed target.
     try {
+      await afterSiteExchange?.call(destination, stage.path);
       if (await _verifyOwned(stage, 'site') != identity) {
         throw const HtmlExportException(
           'The destination changed during export.',
         );
       }
     } on Object {
-      final rollback = api.exchange(stage.path, destination);
-      if (rollback != null) {
-        throw HtmlExportRecoveryException(stage.path);
-      }
-      rethrow;
+      // The destination may have changed again during verification. A second
+      // exchange could move that newer work into recursive stage cleanup.
+      throw HtmlExportRecoveryException(stage.path);
     }
   }
 
@@ -245,10 +253,10 @@ class HtmlExportPublisher {
   }
 }
 
-/// Cleanup must retain the displaced directory if even rollback is unavailable.
+/// Displaced output must survive cleanup when publication is uncertain.
 class HtmlExportRecoveryException extends HtmlExportException {
   HtmlExportRecoveryException(String stagePath)
     : super(
-        'Directory replacement could not be rolled back. The previous output is retained at $stagePath.',
+        'The destination may contain published or newer output. The displaced output is retained at $stagePath; review both locations before recovery.',
       );
 }

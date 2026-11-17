@@ -349,15 +349,15 @@ class AssetIngestionService {
         final metadata = Directory(p.join(key, _transactionDirectoryName));
         await metadata.create(recursive: true);
         final lockFile = File(p.join(metadata.path, _directoryLockFileName));
-        final operatingSystemLock = lockFile.openSync(mode: FileMode.append);
+        final operatingSystemLock = await lockFile.open(mode: FileMode.append);
         try {
-          operatingSystemLock.lockSync(FileLock.blockingExclusive);
+          await operatingSystemLock.lock(FileLock.blockingExclusive);
           return await operation();
         } finally {
           try {
-            operatingSystemLock.unlockSync();
+            await operatingSystemLock.unlock();
           } finally {
-            operatingSystemLock.closeSync();
+            await operatingSystemLock.close();
           }
         }
       },

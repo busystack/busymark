@@ -122,12 +122,16 @@ class WorkspaceService {
     this.writersideDocumentRenderer = const WritersideDocumentRenderer(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
+    this.beforeDisplacedValidation,
     Future<void> Function(String targetPath, int committedCount)?
     afterBatchFileCommit,
   }) : writersideService = writersideService ?? const WritersideModuleService(),
        _useWorkspaceScanOptionsForWriterside = writersideService == null,
        _beforeNewFilePublish = beforeNewFilePublish,
        _afterBatchFileCommit = afterBatchFileCommit;
+
+  final Future<void> Function(String targetPath, String displacedPath)?
+  beforeDisplacedValidation;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
@@ -1286,8 +1290,11 @@ class WorkspaceService {
             OSError('atomic exchange failed', exchangeError),
           );
         }
+        // Retain displaced state even if an injected or real validation fails.
+        preserveStagedFile = true;
         if (!await _displacedEntryMatchesExpected(
           staged.file.path,
+          targetPath: target.path,
           expectedType: targetType,
           expectedLinkTarget: expectedLinkTarget,
           expectedLinkResolvedPath: expectedLinkResolvedPath,
@@ -1306,6 +1313,7 @@ class WorkspaceService {
       } else {
         await staged.file.rename(target.path);
       }
+      preserveStagedFile = false;
       await onPublished?.call();
       return _snapshotFromBytes(await target.stat(), bytes);
     } finally {
@@ -1315,12 +1323,14 @@ class WorkspaceService {
 
   Future<bool> _displacedEntryMatchesExpected(
     String path, {
+    required String targetPath,
     required FileSystemEntityType expectedType,
     required String? expectedLinkTarget,
     required String? expectedLinkResolvedPath,
     required WorkspaceFileSnapshot expectedSnapshot,
   }) async {
     try {
+      await beforeDisplacedValidation?.call(targetPath, path);
       final displacedType = await FileSystemEntity.type(
         path,
         followLinks: false,
@@ -1382,6 +1392,15 @@ class WorkspaceService {
     WorkspaceFileSnapshot? expectedSnapshot,
   }) async {
     final savePath = await _saveTargetPath(path);
+    if (expectedSnapshot != null) {
+      return saveFormattedTextReplacingPath(
+        savePath,
+        text,
+        format: format,
+        mixedNormalization: mixedNormalization,
+        expectedSnapshot: expectedSnapshot,
+      );
+    }
     final target = File(savePath);
     final existingStat = await target.stat();
     final bytes = _encodeDocumentText(
@@ -1500,23 +1519,21 @@ class WorkspaceService {
             OSError('atomic exchange failed', error),
           );
         }
+        // The temporary path owns displaced user data as soon as exchange
+        // succeeds, including when the following read or stat fails.
+        committed.add(write);
+        await beforeDisplacedValidation?.call(
+          write.target.path,
+          write.stagedFile.path,
+        );
         final displacedBytes = await write.stagedFile.readAsBytes();
         final displacedSnapshot = _snapshotFromBytes(
           await write.stagedFile.stat(),
           displacedBytes,
         );
         if (displacedSnapshot.differsFrom(write.expectedSnapshot)) {
-          final conflict = await _rollbackBatchWrite(write);
-          if (conflict != null) {
-            preservedArtifacts.add(conflict.preservedPath);
-            throw WorkspaceBatchPartialApplicationConflict(
-              files: [conflict],
-              cause: WorkspaceBatchWriteConflict(write.requestPath),
-            );
-          }
           throw WorkspaceBatchWriteConflict(write.requestPath);
         }
-        committed.add(write);
         await _afterBatchFileCommit?.call(write.target.path, committed.length);
         validateBeforeCommit?.call();
       }

@@ -6082,23 +6082,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   /// Rebuilds identities from the current editor buffers before navigation or
   /// refactoring; an inactive, unsaved dependency is still authoritative.
   Future<WritersideProjectIndex?> writersideEditorIndex() async {
-    var project = state.workspace?.writersideProject;
-    if (project == null) return null;
-    final buffers = state.documentBuffers;
-    for (final module in project.modules.toList()) {
-      final loaded = await _service.writersideService.load(
-        module.rootPath,
-        sourceOverrides: {
-          ...module.sourceOverrides,
-          for (final buffer in buffers)
-            if (buffer.filePath != null &&
-                p.isWithin(module.rootPath, buffer.filePath!))
-              buffer.filePath!: buffer.text,
-        },
-      );
-      project = project!.withModule(loaded);
-    }
-    return project!.index;
+    final workspace = state.workspace;
+    if (workspace?.writersideProject == null) return null;
+    final prepared = await _service.withDocumentSources(workspace!, {
+      for (final buffer in state.documentBuffers)
+        if (buffer.filePath != null) buffer.filePath!: buffer.text,
+    });
+    return prepared.writersideProject?.index;
   }
 
   /// Stages a rename in normal undoable document buffers. All source ranges
@@ -6880,8 +6870,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           _workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
         state = state.copyWith(
           message: error is AtomicFileChangedException
-              ? const WorkspaceMessage(
+              ? WorkspaceMessage(
                   WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+                  error: error,
                 )
               : WorkspaceMessage(WorkspaceMessageCode.saveFailed, error: error),
         );
@@ -7037,16 +7028,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return _BufferWriteResult.conflict;
     }
     final path = target.filePath!;
-    if (await _service.fileChangedSince(path, current.diskSnapshot)) {
+    if (current.diskSnapshot == null ||
+        await _service.fileChangedSince(path, current.diskSnapshot)) {
       return _BufferWriteResult.conflict;
     }
     try {
-      final snapshot = await _service.saveText(
+      final snapshot = await _service.saveTextIfUnchanged(
         path,
         target.format.formattedText(
           target.text,
           mixedNormalization: normalization,
         ),
+        expectedSnapshot: current.diskSnapshot!,
       );
       final latest = state.documentBuffers
           .where((buffer) => buffer.id == target.id)
@@ -7083,6 +7076,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         ),
       );
       return _BufferWriteResult.saved;
+    } on AtomicFileChangedException catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(
+          message: WorkspaceMessage(
+            WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+            error: error,
+          ),
+        );
+      }
+      return _BufferWriteResult.conflict;
     } on Object {
       return _BufferWriteResult.failed;
     }
@@ -9204,7 +9207,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     if (target.isRemote) return _saveRemoteBufferSnapshot(target);
     final path = target.filePath!;
-    if (await _service.fileChangedSince(path, target.diskSnapshot)) {
+    if (target.diskSnapshot == null ||
+        await _service.fileChangedSince(path, target.diskSnapshot)) {
       return false;
     }
     final beforeWrite = state.documentBuffers
@@ -9215,9 +9219,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     try {
-      final snapshot = await _service.saveText(
+      final snapshot = await _service.saveTextIfUnchanged(
         path,
         target.format.formattedText(target.text),
+        expectedSnapshot: target.diskSnapshot!,
       );
       final current = state.documentBuffers
           .where((buffer) => buffer.id == bufferId)

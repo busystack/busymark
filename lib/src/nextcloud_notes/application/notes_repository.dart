@@ -797,114 +797,116 @@ class NotesRepository {
     NotesSettings original,
     Map<String, String> patch,
   ) async {
-    if (patch.isEmpty) return original;
-    _assertMutableAccount(id);
-    _settingsTransitions.add(id);
-    final generation = accountGeneration(id);
-    try {
-      await _syncs[id];
-      final fresh = await getSettings(id);
-      for (final field in patch.keys) {
-        if (fresh.toJson()[field] != original.toJson()[field] &&
-            fresh.toJson()[field] != patch[field]) {
-          throw const NotesSettingsConflict(
-            NotesSettingsConflictReason.stale,
-            'Server settings changed while this form was open. Reload and review them.',
-          );
-        }
-      }
-      final pathChange =
-          patch.containsKey('notesPath') &&
-          patch['notesPath'] != fresh.notesPath;
-      final suffixChange =
-          patch.containsKey('fileSuffix') &&
-          patch['fileSuffix'] != fresh.fileSuffix;
-      final attempt = NotesSettingsAttempt(
-        id: _uuid.v4(),
-        original: fresh,
-        patch: patch,
-      );
-      await _mutate(() async {
-        if (!_currentAccount(id, generation)) {
-          throw const NotesException(
-            NotesFailureCode.missing,
-            'The account was removed.',
-            scope: NotesRequestScope.account,
-          );
-        }
-        final attachments = await store.attachments();
-        if ((pathChange || suffixChange) &&
-            (hasSettingsBlockers(id) ||
-                attachments.any(
-                  (a) =>
-                      _notes[a.noteId]?.accountId == id &&
-                      !{'cached', 'uploaded', 'deleted'}.contains(a.state),
-                ))) {
-          throw NotesSettingsConflict(
-            hasSettingsBlockers(id)
-                ? NotesSettingsConflictReason.pendingNotes
-                : NotesSettingsConflictReason.pendingAttachments,
-            'Synchronize or resolve pending notes, conflicts and attachment operations before changing the server collection.',
-          );
-        }
-        final current = _accounts[id]!.copyWith(settingsAttempt: attempt);
-        await store.saveAccount(current);
-        _accounts[id] = current;
-      });
-      NotesSettings result;
+    return store.withRequestOwnership(id, () async {
+      if (patch.isEmpty) return original;
+      _assertMutableAccount(id);
+      _settingsTransitions.add(id);
+      final generation = accountGeneration(id);
       try {
-        result = await (await _clientForAccount(
-          _accounts[id]!,
-        )).updateSettings(patch);
-      } on NotesException catch (error) {
-        await _rememberThrottle(id, error);
-        if (!error.possiblyExecuted) {
-          await _finishSettings(
-            id,
-            generation,
-            attempt,
-            fresh,
-            resetCheckpoint: false,
-          );
-          rethrow;
+        await _syncs[id];
+        final fresh = await getSettings(id);
+        for (final field in patch.keys) {
+          if (fresh.toJson()[field] != original.toJson()[field] &&
+              fresh.toJson()[field] != patch[field]) {
+            throw const NotesSettingsConflict(
+              NotesSettingsConflictReason.stale,
+              'Server settings changed while this form was open. Reload and review them.',
+            );
+          }
         }
-        // A lost response may follow normalization/partial execution. Read first;
-        // if that read fails, the durable attempt fences writes across restart.
-        result = await getSettings(id);
-        if (patch.keys.every(
-          (key) => result.toJson()[key] == fresh.toJson()[key],
-        )) {
-          await _finishSettings(
-            id,
-            generation,
-            attempt,
-            result,
-            resetCheckpoint:
-                result.notesPath != fresh.notesPath ||
-                result.fileSuffix != fresh.fileSuffix,
-          );
-          throw const NotesException(
-            NotesFailureCode.rejected,
-            'The settings response was lost and the server still reports the previous values. Review them before saving again.',
-            scope: NotesRequestScope.settings,
-          );
+        final pathChange =
+            patch.containsKey('notesPath') &&
+            patch['notesPath'] != fresh.notesPath;
+        final suffixChange =
+            patch.containsKey('fileSuffix') &&
+            patch['fileSuffix'] != fresh.fileSuffix;
+        final attempt = NotesSettingsAttempt(
+          id: _uuid.v4(),
+          original: fresh,
+          patch: patch,
+        );
+        await _mutate(() async {
+          if (!_currentAccount(id, generation)) {
+            throw const NotesException(
+              NotesFailureCode.missing,
+              'The account was removed.',
+              scope: NotesRequestScope.account,
+            );
+          }
+          final attachments = await store.attachments();
+          if ((pathChange || suffixChange) &&
+              (hasSettingsBlockers(id) ||
+                  attachments.any(
+                    (a) =>
+                        _notes[a.noteId]?.accountId == id &&
+                        !{'cached', 'uploaded', 'deleted'}.contains(a.state),
+                  ))) {
+            throw NotesSettingsConflict(
+              hasSettingsBlockers(id)
+                  ? NotesSettingsConflictReason.pendingNotes
+                  : NotesSettingsConflictReason.pendingAttachments,
+              'Synchronize or resolve pending notes, conflicts and attachment operations before changing the server collection.',
+            );
+          }
+          final current = _accounts[id]!.copyWith(settingsAttempt: attempt);
+          await store.saveAccount(current);
+          _accounts[id] = current;
+        });
+        NotesSettings result;
+        try {
+          result = await (await _clientForAccount(
+            _accounts[id]!,
+          )).updateSettings(patch);
+        } on NotesException catch (error) {
+          await _rememberThrottle(id, error);
+          if (!error.possiblyExecuted) {
+            await _finishSettings(
+              id,
+              generation,
+              attempt,
+              fresh,
+              resetCheckpoint: false,
+            );
+            rethrow;
+          }
+          // A lost response may follow normalization/partial execution. Read first;
+          // if that read fails, the durable attempt fences writes across restart.
+          result = await getSettings(id);
+          if (patch.keys.every(
+            (key) => result.toJson()[key] == fresh.toJson()[key],
+          )) {
+            await _finishSettings(
+              id,
+              generation,
+              attempt,
+              result,
+              resetCheckpoint:
+                  result.notesPath != fresh.notesPath ||
+                  result.fileSuffix != fresh.fileSuffix,
+            );
+            throw const NotesException(
+              NotesFailureCode.rejected,
+              'The settings response was lost and the server still reports the previous values. Review them before saving again.',
+              scope: NotesRequestScope.settings,
+            );
+          }
         }
+        await _finishSettings(
+          id,
+          generation,
+          attempt,
+          result,
+          resetCheckpoint:
+              pathChange ||
+              suffixChange ||
+              result.notesPath != fresh.notesPath ||
+              result.fileSuffix != fresh.fileSuffix,
+        );
+        return result;
+      } finally {
+        _settingsTransitions.remove(id);
       }
-      await _finishSettings(
-        id,
-        generation,
-        attempt,
-        result,
-        resetCheckpoint:
-            pathChange ||
-            suffixChange ||
-            result.notesPath != fresh.notesPath ||
-            result.fileSuffix != fresh.fileSuffix,
-      );
-      return result;
-    } finally {
-      _settingsTransitions.remove(id);
-    }
+    });
   }
 
   Future<void> _finishSettings(
@@ -963,19 +965,21 @@ class NotesRepository {
         _accounts[id] = updated;
       });
   Future<NotesSettings> reconcileSettings(String id) async {
-    final attempt = _accounts[id]?.settingsAttempt;
-    final generation = accountGeneration(id);
-    final result = await getSettings(id);
-    if (attempt != null) {
-      await _finishSettings(
-        id,
-        generation,
-        attempt,
-        result,
-        resetCheckpoint: true,
-      );
-    }
-    return result;
+    return store.withRequestOwnership(id, () async {
+      final attempt = _accounts[id]?.settingsAttempt;
+      final generation = accountGeneration(id);
+      final result = await getSettings(id);
+      if (attempt != null) {
+        await _finishSettings(
+          id,
+          generation,
+          attempt,
+          result,
+          resetCheckpoint: true,
+        );
+      }
+      return result;
+    });
   }
 
   void setDisplayedMediaNotes(Iterable<String> ids) {
@@ -1224,6 +1228,7 @@ class NotesRepository {
     bool? favorite,
   }) => _mutate(() async {
     var current = _require(localId);
+    await store.validateNote(localId);
     _assertMutableAccount(current.accountId);
     final digest = sha256.convert(utf8.encode(content)).toString();
     if (editorRevision != null &&
@@ -1326,11 +1331,18 @@ class NotesRepository {
     if (_disposed || _removing.contains(accountId)) return Future.value();
     final existing = _syncs[accountId];
     if (existing != null) return existing;
-    final future = _synchronize(
-      accountId,
-      allowWrites: allowWrites,
-      refreshCapabilities: refreshCapabilities,
-      onlyFreshWrites: onlyFreshWrites,
+    final future = initialize().then(
+      (_) => !_accounts.containsKey(accountId)
+          ? Future<void>.value()
+          : store.withRequestOwnership(
+              accountId,
+              () => _synchronize(
+                accountId,
+                allowWrites: allowWrites,
+                refreshCapabilities: refreshCapabilities,
+                onlyFreshWrites: onlyFreshWrites,
+              ),
+            ),
     );
     _syncs[accountId] = future;
     _notify();
@@ -2451,158 +2463,160 @@ class NotesRepository {
     NotesCreationReview? creationReview,
     NoteState? reviewedRemote,
   }) async {
-    final original = _require(localId);
-    if (expectedRevision != null && original.revision != expectedRevision) {
-      throw const NotesException(
-        NotesFailureCode.conflict,
-        'New local edits appeared. Review the conflict again.',
-      );
-    }
-    if (resolution == NoteConflictResolution.saveAsNew) {
-      if (!_creationResolutions.add(localId)) {
+    return store.withRequestOwnership(_require(localId).accountId, () async {
+      final original = _require(localId);
+      if (expectedRevision != null && original.revision != expectedRevision) {
         throw const NotesException(
           NotesFailureCode.conflict,
-          'A creation decision is already in progress.',
+          'New local edits appeared. Review the conflict again.',
         );
       }
-      try {
-        await recoverAsNew(
-          localId,
-          creationDecision:
-              original.serverId == null &&
-              original.syncState == NoteSyncState.creationUncertain,
-        );
-      } finally {
-        _creationResolutions.remove(localId);
-      }
-      return;
-    }
-    if (resolution == NoteConflictResolution.useServerNote) {
-      if (creationReview == null ||
-          creationCandidateServerId != creationReview.candidate.id) {
-        throw const NotesException(
-          NotesFailureCode.conflict,
-          'Select and review a server note before confirming adoption.',
-        );
-      }
-      await _resolveCreation(original, creationReview);
-      return;
-    }
-    if (original.metadataConflict != null) {
-      await _resolveMetadataConflict(
-        original,
-        resolution,
-        mergedContent: mergedContent,
-        metadataChoices: metadataChoices,
-      );
-      return;
-    }
-    if (original.serverId == null) {
-      throw const NotesException(
-        NotesFailureCode.conflict,
-        'An uncertain creation needs explicit server-note confirmation or a separate note.',
-      );
-    }
-    final client = await _clientForAccount(_accounts[original.accountId]!);
-    late NoteState fresh;
-    try {
-      fresh = await client.get(original.serverId!);
-    } on NotesException catch (error) {
-      if (error.code == NotesFailureCode.missing &&
-          original.syncState == NoteSyncState.deletedRemotely &&
-          resolution == NoteConflictResolution.takeRemote) {
-        await _setDeleted(localId, expectedRevision: original.revision);
+      if (resolution == NoteConflictResolution.saveAsNew) {
+        if (!_creationResolutions.add(localId)) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'A creation decision is already in progress.',
+          );
+        }
+        try {
+          await recoverAsNew(
+            localId,
+            creationDecision:
+                original.serverId == null &&
+                original.syncState == NoteSyncState.creationUncertain,
+          );
+        } finally {
+          _creationResolutions.remove(localId);
+        }
         return;
       }
-      rethrow;
-    }
-    if (fresh.error) {
-      throw const NotesException(
-        NotesFailureCode.forbidden,
-        'The server note is unavailable.',
-      );
-    }
-    await _mutate(() async {
-      final current = _require(localId);
-      if (current.revision != original.revision) {
+      if (resolution == NoteConflictResolution.useServerNote) {
+        if (creationReview == null ||
+            creationCandidateServerId != creationReview.candidate.id) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'Select and review a server note before confirming adoption.',
+          );
+        }
+        await _resolveCreation(original, creationReview);
+        return;
+      }
+      if (original.metadataConflict != null) {
+        await _resolveMetadataConflict(
+          original,
+          resolution,
+          mergedContent: mergedContent,
+          metadataChoices: metadataChoices,
+        );
+        return;
+      }
+      if (original.serverId == null) {
         throw const NotesException(
           NotesFailureCode.conflict,
-          'New local edits appeared while resolving this note. Review them before applying the resolution.',
+          'An uncertain creation needs explicit server-note confirmation or a separate note.',
         );
       }
-      final reviewed = reviewedRemote ?? original.remote;
-      if (reviewed != null &&
-          jsonEncode(fresh.toJson()) != jsonEncode(reviewed.toJson())) {
-        final changedAgain = current.copyWith(
-          remote: fresh,
-          readonly: fresh.readonly,
-          syncState: NoteSyncState.conflict,
-          errorMessage:
-              'The server note changed again. Review its current state before resolving the conflict.',
-        );
-        await store.saveNote(changedAgain);
-        _notes[localId] = changedAgain;
-        _notify();
-        throw NotesConflictReviewChanged(fresh);
+      final client = await _clientForAccount(_accounts[original.accountId]!);
+      late NoteState fresh;
+      try {
+        fresh = await client.get(original.serverId!);
+      } on NotesException catch (error) {
+        if (error.code == NotesFailureCode.missing &&
+            original.syncState == NoteSyncState.deletedRemotely &&
+            resolution == NoteConflictResolution.takeRemote) {
+          await _setDeleted(localId, expectedRevision: original.revision);
+          return;
+        }
+        rethrow;
       }
-      final merge = NotesConflictMerge(current, fresh);
-      final merging = resolution == NoteConflictResolution.merge;
-      final resolved = resolution == NoteConflictResolution.takeRemote
-          ? _fromRemote(
-              localId,
-              current.accountId,
-              fresh,
-              revision: current.revision + 1,
-              previous: current,
-            ).copyWith(
-              editorRevision: current.revision + 1,
-              editorContentDigest: sha256
-                  .convert(utf8.encode(fresh.content))
-                  .toString(),
-            )
-          : current.copyWith(
-              content: merging
-                  ? mergedContent ?? merge.content.resolve()
-                  : current.content,
-              title: merging
-                  ? merge.title.resolve(
-                      metadataChoices[NotesMergeAttribute.title],
-                    )
-                  : current.title,
-              category: merging
-                  ? merge.category.resolve(
-                      metadataChoices[NotesMergeAttribute.category],
-                    )
-                  : current.category,
-              favorite: merging
-                  ? merge.favorite.resolve(
-                      metadataChoices[NotesMergeAttribute.favorite],
-                    )
-                  : current.favorite,
-              etag: fresh.etag,
-              base: fresh,
-              remote: null,
-              readonly: fresh.readonly,
-              error: false,
-              revision: current.revision + 1,
-              localActivityMicros: clock().microsecondsSinceEpoch,
-              failureCode: null,
-              failureScope: null,
-              retryCount: 0,
-              syncState: NoteSyncState.pending,
-              errorMessage: null,
-            );
-      if (fresh.readonly &&
-          resolution != NoteConflictResolution.takeRemote &&
-          _readonlyBlocks(resolved, fresh)) {
+      if (fresh.error) {
         throw const NotesException(
           NotesFailureCode.forbidden,
-          'The server note is read-only. Only its favorite can be changed; recover protected local changes as a new note.',
+          'The server note is unavailable.',
         );
       }
-      await store.saveNote(resolved);
-      _notes[localId] = resolved;
-      _notify();
+      await _mutate(() async {
+        final current = _require(localId);
+        if (current.revision != original.revision) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'New local edits appeared while resolving this note. Review them before applying the resolution.',
+          );
+        }
+        final reviewed = reviewedRemote ?? original.remote;
+        if (reviewed != null &&
+            jsonEncode(fresh.toJson()) != jsonEncode(reviewed.toJson())) {
+          final changedAgain = current.copyWith(
+            remote: fresh,
+            readonly: fresh.readonly,
+            syncState: NoteSyncState.conflict,
+            errorMessage:
+                'The server note changed again. Review its current state before resolving the conflict.',
+          );
+          await store.saveNote(changedAgain);
+          _notes[localId] = changedAgain;
+          _notify();
+          throw NotesConflictReviewChanged(fresh);
+        }
+        final merge = NotesConflictMerge(current, fresh);
+        final merging = resolution == NoteConflictResolution.merge;
+        final resolved = resolution == NoteConflictResolution.takeRemote
+            ? _fromRemote(
+                localId,
+                current.accountId,
+                fresh,
+                revision: current.revision + 1,
+                previous: current,
+              ).copyWith(
+                editorRevision: current.revision + 1,
+                editorContentDigest: sha256
+                    .convert(utf8.encode(fresh.content))
+                    .toString(),
+              )
+            : current.copyWith(
+                content: merging
+                    ? mergedContent ?? merge.content.resolve()
+                    : current.content,
+                title: merging
+                    ? merge.title.resolve(
+                        metadataChoices[NotesMergeAttribute.title],
+                      )
+                    : current.title,
+                category: merging
+                    ? merge.category.resolve(
+                        metadataChoices[NotesMergeAttribute.category],
+                      )
+                    : current.category,
+                favorite: merging
+                    ? merge.favorite.resolve(
+                        metadataChoices[NotesMergeAttribute.favorite],
+                      )
+                    : current.favorite,
+                etag: fresh.etag,
+                base: fresh,
+                remote: null,
+                readonly: fresh.readonly,
+                error: false,
+                revision: current.revision + 1,
+                localActivityMicros: clock().microsecondsSinceEpoch,
+                failureCode: null,
+                failureScope: null,
+                retryCount: 0,
+                syncState: NoteSyncState.pending,
+                errorMessage: null,
+              );
+        if (fresh.readonly &&
+            resolution != NoteConflictResolution.takeRemote &&
+            _readonlyBlocks(resolved, fresh)) {
+          throw const NotesException(
+            NotesFailureCode.forbidden,
+            'The server note is read-only. Only its favorite can be changed; recover protected local changes as a new note.',
+          );
+        }
+        await store.saveNote(resolved);
+        _notes[localId] = resolved;
+        _notify();
+      });
     });
   }
 
@@ -2860,38 +2874,40 @@ class NotesRepository {
 
   /// Online refresh plus explicit action only. The API has no atomic conditional DELETE.
   Future<void> delete(String localId) async {
-    final original = _require(localId);
-    if (original.serverId == null) {
-      if (original.syncState == NoteSyncState.creationUncertain ||
-          original.syncState == NoteSyncState.syncing) {
-        throw const NotesException(
+    return store.withRequestOwnership(_require(localId).accountId, () async {
+      final original = _require(localId);
+      if (original.serverId == null) {
+        if (original.syncState == NoteSyncState.creationUncertain ||
+            original.syncState == NoteSyncState.syncing) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'Resolve the uncertain creation before deleting this note.',
+          );
+        }
+        await _setDeleted(localId, expectedRevision: original.revision);
+        return;
+      }
+      final running = _syncs[original.accountId];
+      if (running != null) await running;
+      final client = await _clientForAccount(_accounts[original.accountId]!);
+      final current = _require(localId);
+      final fresh = await client.get(current.serverId!);
+      if (fresh.etag != current.etag) {
+        await _setState(
+          localId,
+          NoteSyncState.conflict,
+          'The note changed on Nextcloud. Review the fresh version before deleting.',
+          remote: fresh,
+        );
+        throw NotesException(
           NotesFailureCode.conflict,
-          'Resolve the uncertain creation before deleting this note.',
+          'The note changed on Nextcloud; deletion was cancelled.',
+          remote: fresh,
         );
       }
-      await _setDeleted(localId, expectedRevision: original.revision);
-      return;
-    }
-    final running = _syncs[original.accountId];
-    if (running != null) await running;
-    final client = await _clientForAccount(_accounts[original.accountId]!);
-    final current = _require(localId);
-    final fresh = await client.get(current.serverId!);
-    if (fresh.etag != current.etag) {
-      await _setState(
-        localId,
-        NoteSyncState.conflict,
-        'The note changed on Nextcloud. Review the fresh version before deleting.',
-        remote: fresh,
-      );
-      throw NotesException(
-        NotesFailureCode.conflict,
-        'The note changed on Nextcloud; deletion was cancelled.',
-        remote: fresh,
-      );
-    }
-    await client.delete(current.serverId!);
-    await _setDeleted(localId, expectedRevision: current.revision);
+      await client.delete(current.serverId!);
+      await _setDeleted(localId, expectedRevision: current.revision);
+    });
   }
 
   Future<void> _setDeleted(
@@ -3353,69 +3369,71 @@ class NotesRepository {
     String reference, {
     bool retainForHistory = false,
   }) async {
-    final note = _require(localId);
-    if (note.readonly || note.error) {
-      throw const NotesException(
-        NotesFailureCode.forbidden,
-        'This Nextcloud note is read-only.',
-      );
-    }
-    final items = await store.attachments(localId);
-    final matching = items
-        .where(
-          (a) =>
-              a.reference == reference ||
-              (canonicalAttachmentReference(reference) != null &&
-                  a.remotePath == canonicalAttachmentReference(reference)),
-        )
-        .toList();
-    if (matching.isEmpty) return;
-    final attachment = matching.first;
-    if (attachment.state == 'uploading' || attachment.state == 'uncertain') {
-      throw const NotesException(
-        NotesFailureCode.conflict,
-        'Resolve the uncertain attachment upload before deleting.',
-      );
-    }
-    if (attachment.remotePath != null) {
-      if (!(_accounts[note.accountId]?.supportsAttachmentDeletion ?? false)) {
+    return store.withRequestOwnership(_require(localId).accountId, () async {
+      final note = _require(localId);
+      if (note.readonly || note.error) {
         throw const NotesException(
-          NotesFailureCode.unsupported,
-          'Remote attachment cleanup is unavailable: it requires a verified Notes version of 6.1.0 or newer. Notes and attachment upload/download remain available.',
+          NotesFailureCode.forbidden,
+          'This Nextcloud note is read-only.',
         );
       }
-      if (note.serverId == null) return;
+      final items = await store.attachments(localId);
+      final matching = items
+          .where(
+            (a) =>
+                a.reference == reference ||
+                (canonicalAttachmentReference(reference) != null &&
+                    a.remotePath == canonicalAttachmentReference(reference)),
+          )
+          .toList();
+      if (matching.isEmpty) return;
+      final attachment = matching.first;
+      if (attachment.state == 'uploading' || attachment.state == 'uncertain') {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'Resolve the uncertain attachment upload before deleting.',
+        );
+      }
+      if (attachment.remotePath != null) {
+        if (!(_accounts[note.accountId]?.supportsAttachmentDeletion ?? false)) {
+          throw const NotesException(
+            NotesFailureCode.unsupported,
+            'Remote attachment cleanup is unavailable: it requires a verified Notes version of 6.1.0 or newer. Notes and attachment upload/download remain available.',
+          );
+        }
+        if (note.serverId == null) return;
+        await _mutate(() async {
+          final current = _require(localId);
+          final pending = current.copyWith(
+            revision: current.revision + 1,
+            syncState: NoteSyncState.pending,
+          );
+          await store.updateAttachment(
+            NotesAttachment(
+              id: attachment.id,
+              noteId: localId,
+              filename: attachment.filename,
+              reference: attachment.reference,
+              remotePath: attachment.remotePath,
+              state: 'deletePending',
+            ),
+            note: pending,
+          );
+          _notes[localId] = pending;
+          _notify();
+        });
+        await synchronize(note.accountId);
+        return;
+      }
       await _mutate(() async {
-        final current = _require(localId);
-        final pending = current.copyWith(
-          revision: current.revision + 1,
-          syncState: NoteSyncState.pending,
-        );
-        await store.updateAttachment(
-          NotesAttachment(
-            id: attachment.id,
-            noteId: localId,
-            filename: attachment.filename,
-            reference: attachment.reference,
-            remotePath: attachment.remotePath,
-            state: 'deletePending',
-          ),
-          note: pending,
-        );
-        _notes[localId] = pending;
+        if (retainForHistory) {
+          await _retainDeletedAttachment(attachment);
+        } else {
+          await store.removeAttachment(attachment.id);
+          await _invalidateAttachmentMedia(attachment);
+        }
         _notify();
       });
-      await synchronize(note.accountId);
-      return;
-    }
-    await _mutate(() async {
-      if (retainForHistory) {
-        await _retainDeletedAttachment(attachment);
-      } else {
-        await store.removeAttachment(attachment.id);
-        await _invalidateAttachmentMedia(attachment);
-      }
-      _notify();
     });
   }
 

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_service.dart';
+import 'package:busymark/src/export/html_export_publisher.dart';
 import 'package:busymark/src/export/html_export_assets.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -435,6 +436,51 @@ css: https://evil.invalid/style.css
     expect(await File(p.join(destination, 'mine.txt')).readAsString(), 'keep');
     expect(await File(result.entryPointPath).readAsString(), index);
   });
+
+  test(
+    'site validation failure preserves displaced and newer directories through service cleanup',
+    () async {
+      final source = p.absolute('test/fixtures/writerside/conformance_project');
+      final destination = p.join(root.path, 'site');
+      await service.exportWriterside(
+        projectRoot: source,
+        moduleRoot: source,
+        instanceId: 'conformance',
+        destinationPath: destination,
+      );
+      String? displaced;
+      final racing = HtmlExportService(
+        stylesheetLoader: () => File('assets/export/html.css').readAsString(),
+        publisher: HtmlExportPublisher(
+          beforeSiteExchange: (target, _) async {
+            await File(p.join(target, 'external-A.txt')).writeAsString('A');
+          },
+          afterSiteExchange: (target, stage) async {
+            displaced = stage;
+            await File(p.join(target, 'external-B.txt')).writeAsString('B');
+          },
+        ),
+      );
+      await expectLater(
+        racing.exportWriterside(
+          projectRoot: source,
+          moduleRoot: source,
+          instanceId: 'conformance',
+          destinationPath: destination,
+          overwrite: true,
+        ),
+        throwsA(isA<HtmlExportRecoveryException>()),
+      );
+      expect(
+        await File(p.join(destination, 'external-B.txt')).readAsString(),
+        'B',
+      );
+      expect(
+        await File(p.join(displaced!, 'external-A.txt')).readAsString(),
+        'A',
+      );
+    },
+  );
 
   test('official conformance fixture exports as individual pages', () async {
     final source = p.absolute('test/fixtures/writerside/conformance_project');

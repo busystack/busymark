@@ -996,7 +996,6 @@ void main() {
         for (final table in [
           'accounts',
           'notes',
-          'outbox',
           'attachments',
           'import_items',
           'offline_requirements',
@@ -1021,7 +1020,7 @@ void main() {
         6,
       ]);
       db = sqlite3.open(f.repository.store.path);
-      expect(db.select('PRAGMA user_version').single.values.single, 6);
+      expect(db.select('PRAGMA user_version').single.values.single, 7);
       for (final entry in before.entries) {
         expect(
           db

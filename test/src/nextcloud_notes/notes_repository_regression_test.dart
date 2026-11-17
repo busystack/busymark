@@ -902,9 +902,9 @@ void main() {
     },
   );
 
-  for (final schema in [2, 3, 4, 5]) {
+  for (final schema in [2, 3, 4, 5, 6]) {
     test(
-      'v$schema migration retains exact outbox and bytes; failed recovery rolls back fence; v7 rejected',
+      'v$schema migration retains exact pending notes and bytes, drops mirror transactionally; v8 rejected',
       () async {
         final r = await open(MockClient((_) async => http.Response('[]', 200)));
         final draft = await r.create(testAccount().id, content: 'retained');
@@ -926,7 +926,11 @@ void main() {
           db.execute('DROP TABLE IF EXISTS $table');
         }
         db.execute('PRAGMA user_version=$schema');
-        final outbox = db.select('SELECT data FROM outbox').single['data'];
+        db.execute(
+          'CREATE TABLE outbox (note_id TEXT PRIMARY KEY, data TEXT NOT NULL)',
+        );
+        final pending = db.select('SELECT data FROM notes').single['data'];
+        db.execute('INSERT INTO outbox VALUES(?,?)', [draft.localId, pending]);
         db.close();
         final migrated = await open(
           MockClient((_) async => http.Response('[]', 200)),
@@ -938,8 +942,16 @@ void main() {
         expect(await migrated.store.attachmentBytes(attachment.id), [1, 2]);
         await restart(migrated);
         db = sqlite3.open('${directory.path}/notes.sqlite3');
-        expect(db.select('PRAGMA user_version').single.values.single, 6);
-        expect(db.select('SELECT data FROM outbox').single['data'], outbox);
+        expect(db.select('PRAGMA user_version').single.values.single, 7);
+        expect(
+          db.select("SELECT name FROM sqlite_master WHERE name='outbox'"),
+          isEmpty,
+        );
+        expect(db.select('SELECT data FROM notes').single['data'], pending);
+        db.execute(
+          'CREATE TABLE outbox (note_id TEXT PRIMARY KEY, data TEXT NOT NULL)',
+        );
+        db.execute('INSERT INTO outbox VALUES(?,?)', [draft.localId, pending]);
         db.execute('DROP TRIGGER IF EXISTS notes_search_delete');
         for (final table in [
           'note_search',
@@ -965,7 +977,8 @@ void main() {
           ),
           isEmpty,
         );
-        db.execute('PRAGMA user_version=7');
+        expect(db.select('SELECT data FROM outbox').single['data'], pending);
+        db.execute('PRAGMA user_version=8');
         db.close();
         await expectLater(
           NotesStore.open(path: '${directory.path}/notes.sqlite3'),

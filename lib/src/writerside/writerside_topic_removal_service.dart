@@ -293,7 +293,14 @@ class WritersideTopicRemovalService {
     this.moduleService = const WritersideModuleService(),
     this.projectService,
     this.treeDirectoryLister,
+    this.beforeFileExchange,
+    this.afterFileExchange,
   });
+
+  final Future<void> Function(String targetPath, String displacedPath)?
+  beforeFileExchange;
+  final Future<void> Function(String targetPath, String displacedPath)?
+  afterFileExchange;
 
   final WritersideModuleService moduleService;
   final WritersideProjectService? projectService;
@@ -2561,6 +2568,7 @@ class WritersideTopicRemovalService {
     }
     final stat = await File(path).stat();
     File? temporary;
+    var preserveTemporary = false;
     try {
       for (var attempt = 0; attempt < 100; attempt += 1) {
         final candidate = File(
@@ -2606,6 +2614,7 @@ class WritersideTopicRemovalService {
       validateBeforeCommit?.call();
       final atomicApi = LinuxAtomicFileApi.instance;
       if (atomicApi.isAvailable) {
+        await beforeFileExchange?.call(checked.path, temporary.path);
         final exchangeError = atomicApi.exchange(temporary.path, checked.path);
         if (exchangeError != null) {
           throw FileSystemException(
@@ -2614,42 +2623,31 @@ class WritersideTopicRemovalService {
             path,
           );
         }
-        final replacedType = await FileSystemEntity.type(
-          temporary.path,
-          followLinks: false,
-        );
-        final replacedStat = replacedType == FileSystemEntityType.file
-            ? await temporary.stat()
-            : null;
-        final replacedMatches =
-            replacedType == FileSystemEntityType.file &&
-            replacedStat != null &&
-            (replacedStat.mode & 0xfff) == (stat.mode & 0xfff) &&
-            await temporary.readAsString() == expected;
-        if (!replacedMatches) {
-          final restoreError = atomicApi.exchange(temporary.path, checked.path);
-          if (restoreError != null) {
-            throw BusyMarkException(
-              'writerside.topic-removal.rollback-failed',
-              args: {'paths': '${temporary.path}, ${checked.path}'},
-            );
-          }
-          throw BusyMarkException(
-            'writerside.topic-file.tree-changed',
-            args: {'path': path},
-          );
-        }
+        // From this point the temporary path contains displaced user data.
+        // Retain it on every validation/cleanup failure; never exchange blindly
+        // over a destination another writer may already have replaced again.
+        preserveTemporary = true;
         try {
-          await temporary.delete();
-        } on Object catch (error, stackTrace) {
-          final restoreError = atomicApi.exchange(temporary.path, checked.path);
-          if (restoreError != null) {
-            throw BusyMarkException(
-              'writerside.topic-removal.rollback-failed',
-              args: {'paths': '${temporary.path}, ${checked.path}'},
-            );
+          await afterFileExchange?.call(checked.path, temporary.path);
+          final replacedType = await FileSystemEntity.type(
+            temporary.path,
+            followLinks: false,
+          );
+          final replacedStat = replacedType == FileSystemEntityType.file
+              ? await temporary.stat()
+              : null;
+          if (replacedType != FileSystemEntityType.file ||
+              replacedStat == null ||
+              (replacedStat.mode & 0xfff) != (stat.mode & 0xfff) ||
+              await temporary.readAsString() != expected) {
+            throw StateError('Displaced source changed');
           }
-          Error.throwWithStackTrace(error, stackTrace);
+          await temporary.delete();
+        } on Object {
+          throw BusyMarkException(
+            'writerside.topic-removal.rollback-failed',
+            args: {'paths': '${temporary.path}, ${checked.path}'},
+          );
         }
         temporary = null;
         return;
@@ -2657,7 +2655,7 @@ class WritersideTopicRemovalService {
       await temporary.rename(checked.path);
       temporary = null;
     } finally {
-      if (temporary != null && await temporary.exists()) {
+      if (!preserveTemporary && temporary != null && await temporary.exists()) {
         await temporary.delete();
       }
     }

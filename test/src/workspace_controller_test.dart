@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -41,6 +42,51 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final route in ['manual', 'all', 'auto']) {
+    test(
+      '$route save retains editor and both external versions on final publication race',
+      () async {
+        final root = await Directory.systemTemp.createTemp(
+          'controller-save-race-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final file = File(p.join(root.path, 'note.md'))..writeAsStringSync('E');
+        String? recovery;
+        final service = WorkspaceService(
+          beforeNewFilePublish: (target) async {
+            await File(target).writeAsString('A');
+          },
+          beforeDisplacedValidation: (target, displaced) async {
+            recovery = displaced;
+            await File(target).writeAsString('B');
+          },
+        );
+        final harness = await _createControllerHarness(service: service);
+        await harness.settingsController.setAutoSave(route == 'auto');
+        final controller = harness.controller;
+        await controller.openPath(file.path);
+        controller.updateActiveText('S');
+        if (route == 'manual') {
+          expect(await controller.saveActive(), isFalse);
+        } else if (route == 'all') {
+          final result = await controller.saveAll();
+          expect(result.conflictBufferIds, [controller.state.activeBuffer!.id]);
+          expect(result.failedBufferIds, isEmpty);
+        } else {
+          expect(await controller.autoSaveActiveIfNeeded(), isFalse);
+        }
+        expect(await file.readAsString(), 'B');
+        expect(await File(recovery!).readAsString(), 'A');
+        expect(controller.state.activeBuffer!.text, 'S');
+        expect(controller.state.activeBuffer!.isDirty, isTrue);
+        final error =
+            controller.state.message!.error as AtomicFileChangedException;
+        expect(error.recoveryPath, recovery);
+        await harness.settingsController.setAutoSave(false);
+      },
+    );
+  }
+
   for (final operation in ['open', 'Save As']) {
     test('Recent failure preserves successful $operation', () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -1113,7 +1159,14 @@ void main() {
         sourceFilePath: bPath,
       );
       await controller.openActiveFile(aPath);
+      await harness.settingsController.setValidateOnEdit(false);
+      final beforePreparation = controller.state;
       final index = (await controller.writersideEditorIndex())!;
+      expect(
+        controller.state,
+        same(beforePreparation),
+        reason: 'Reference preparation must not publish validation state',
+      );
       final symbol = index
           .definitions('a.topic#anchor', moduleId: 'docs')
           .single;

@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
-  for (final schema in [3, 7]) {
+  for (final schema in [3, 8]) {
     test('failed v$schema open releases SQLite before reporting failure', () async {
       final directory = await Directory.systemTemp.createTemp(
         'notes-failed-open-',

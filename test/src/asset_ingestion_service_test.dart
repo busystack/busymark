@@ -12,6 +12,75 @@ void main() {
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
   );
 
+  test(
+    'cross-process lock contention leaves the Dart event loop responsive',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'asset-lock-contention-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final document = File(p.join(root.path, 'note.md'))
+        ..writeAsStringSync('');
+      final lock = File(
+        p.join(
+          root.path,
+          'images',
+          '.busymark-asset-transactions',
+          'directory.lock',
+        ),
+      );
+      await lock.parent.create(recursive: true);
+      final holder = await Process.start('python3', [
+        '-c',
+        'import fcntl,sys,time\nf=open(sys.argv[1],"a")\nfcntl.lockf(f,fcntl.LOCK_EX)\nprint("locked",flush=True)\ntime.sleep(1.5)',
+        lock.path,
+      ]);
+      addTearDown(() => holder.kill());
+      expect(
+        await holder.stdout
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .first,
+        'locked',
+      );
+      final clock = Stopwatch()..start();
+      final publication = const AssetIngestionService().ingestBytes(
+        bytes: png,
+        suggestedFileName: 'image.png',
+        request: AssetIngestionRequest(
+          documentFilePath: document.path,
+          workspaceKind: AssetWorkspaceKind.standalone,
+        ),
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(
+        clock.elapsedMilliseconds,
+        lessThan(1000),
+        reason: 'Lock waiting must not block the event loop',
+      );
+      expect(
+        File(p.join(root.path, 'images', 'image.png')).existsSync(),
+        isFalse,
+      );
+      expect(await holder.exitCode, 0);
+      final asset = await publication;
+      await const AssetIngestionService().commit(asset);
+      expect(await File(asset.absolutePath).readAsBytes(), png);
+      // A second operation proves that the lock descriptor was released.
+      final reused = await const AssetIngestionService().ingestBytes(
+        bytes: png,
+        suggestedFileName: 'image.png',
+        request: AssetIngestionRequest(
+          documentFilePath: document.path,
+          workspaceKind: AssetWorkspaceKind.standalone,
+        ),
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+      expect(reused.reusedExisting, isTrue);
+    },
+  );
+
   test('ingests workspace images with safe names and portable paths', () async {
     final workspace = await Directory.systemTemp.createTemp('busymark-assets-');
     addTearDown(() => workspace.delete(recursive: true));

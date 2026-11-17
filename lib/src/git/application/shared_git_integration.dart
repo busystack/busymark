@@ -232,6 +232,7 @@ class _BusyMarkGitWorkspaceScopeState
     if (!controller.bindSharedStatusSource(
       workspace,
       repository,
+      owner: session,
       current: current,
       stage: (paths, unstage) async {
         if (!mounted || generation != _generation || session.isDisposed) return;
@@ -259,6 +260,7 @@ class _BusyMarkGitWorkspaceScopeState
     )) {
       return;
     }
+    _statusReleases.add(() => controller.releaseSharedStatusSource(session));
     shared.GitSnapshot? observed;
     void changed() {
       if (!mounted || generation != _generation) return;
@@ -273,6 +275,8 @@ class _BusyMarkGitWorkspaceScopeState
     session.addListener(changed);
   }
 
+  final _statusReleases = <void Function()>[];
+
   void _releaseAttachments() {
     _generation++;
     _discoveryCancellation.cancel();
@@ -280,6 +284,10 @@ class _BusyMarkGitWorkspaceScopeState
       entry.key.removeListener(entry.value);
     }
     _statusListeners.clear();
+    for (final release in _statusReleases) {
+      release();
+    }
+    _statusReleases.clear();
     for (final session in _owned) {
       session.dispose();
     }

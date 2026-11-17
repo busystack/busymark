@@ -24,6 +24,51 @@ void main() {
     selectedNodePath: const [0],
   );
 
+  test(
+    'post-exchange rejection retains A and newer B and reports partial publication',
+    () async {
+      final fixture = await _homeFixture();
+      final analysis = await analyzeHome(fixture);
+      final tree = File(p.join(fixture.root.path, 'guide.tree'));
+      await Process.run('chmod', ['640', tree.path]);
+      String? displaced;
+      final racing = WritersideTopicRemovalService(
+        beforeFileExchange: (target, _) async {
+          await File(target).writeAsString('A');
+        },
+        afterFileExchange: (target, temporary) async {
+          displaced = temporary;
+          expect((await File(target).stat()).mode & 0x1ff, 0x1a0);
+          await File(target).writeAsString('B');
+        },
+      );
+      await expectLater(
+        racing.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: analysis.homePageReplacements.first,
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>()
+              .having(
+                (e) => e.code,
+                'truthful partial result',
+                'writerside.topic-removal.rollback-failed',
+              )
+              .having(
+                (e) => e.args['paths'],
+                'recovery path',
+                contains('busymark-safe-delete-'),
+              ),
+        ),
+      );
+      expect(await tree.readAsString(), 'B');
+      expect(await File(displaced!).readAsString(), 'A');
+      expect(File(analysis.topicPath).existsSync(), isTrue);
+    },
+  );
+
   for (final redirect in [false, true]) {
     test(
       'explicit Home Page replacement promotes children (redirect=$redirect)',

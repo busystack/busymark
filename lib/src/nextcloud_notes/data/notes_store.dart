@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../assets/asset_limits.dart';
 import '../domain/notes_models.dart';
@@ -20,7 +21,14 @@ class NotesStore {
       if (result[1] == true) {
         pending?.complete(result[2]);
       } else {
-        pending?.completeError(StateError(result[2] as String));
+        pending?.completeError(
+          result[3] == true
+              ? const NotesException(
+                  NotesFailureCode.conflict,
+                  'Another BusyMark window changed this Notes state or owns a request. Your editor changes are retained. Use Save As to preserve them before reopening this window.',
+                )
+              : StateError(result[2] as String),
+        );
       }
     });
   }
@@ -94,9 +102,11 @@ class NotesStore {
   Future<void> saveAccount(NextcloudAccount account) =>
       commit(accounts: [account]);
 
+  Future<void> validateNote(String id) => _call('validateNote', id);
+
   Future<void> saveNote(NextcloudNote note) => commit(notes: [note]);
 
-  /// Content, exact revision, reference state, outbox and checkpoint commit together.
+  /// Content, exact revision, reference state and checkpoint commit together.
   Future<void> commit({
     List<NextcloudAccount> accounts = const [],
     List<NextcloudNote> notes = const [],
@@ -104,19 +114,7 @@ class NotesStore {
   }) async {
     await _call('commit', {
       'accounts': accounts.map((a) => [a.id, jsonEncode(a.toJson())]).toList(),
-      'notes': notes
-          .map(
-            (n) => [
-              n.localId,
-              n.accountId,
-              n.serverId,
-              n.encode(),
-              n.hasPendingChanges,
-              n.revision,
-              n.serverId == null ? 'create' : 'update',
-            ],
-          )
-          .toList(),
+      'notes': notes.map((n) => n.encode()).toList(),
       'removeNotes': removeNotes,
     });
   }
@@ -295,15 +293,318 @@ class NotesStore {
   Future<String?> importedNote(String accountId, String sourceKey) async =>
       await _call('importedNote', [accountId, sourceKey]) as String?;
 
+  final _requestDepth = <String, int>{};
+  final _requests = <Completer<void>>{};
+
+  /// SQLite owns the claim; the network operation never holds a DB transaction.
+  /// Nested operations in this repository share the claim, foreign stores cannot.
+  Future<T> withRequestOwnership<T>(
+    String accountId,
+    Future<T> Function() action,
+  ) async {
+    if (_closing != null && !_requestDepth.containsKey(accountId)) {
+      throw StateError('The Notes store is closing.');
+    }
+    final finished = Completer<void>();
+    _requests.add(finished);
+    try {
+      await _call('beginRequest', accountId);
+      _requestDepth[accountId] = (_requestDepth[accountId] ?? 0) + 1;
+      try {
+        return await action();
+      } finally {
+        final depth = _requestDepth[accountId]! - 1;
+        if (depth == 0) {
+          _requestDepth.remove(accountId);
+          await _call('endRequest', accountId);
+        } else {
+          _requestDepth[accountId] = depth;
+        }
+      }
+    } finally {
+      _requests.remove(finished);
+      finished.complete();
+    }
+  }
+
   Future<void> close() => _closing ??= _close();
 
   Future<void> _close() async {
     if (_closed) return;
+    while (_requests.isNotEmpty) {
+      await Future.wait(_requests.map((request) => request.future));
+    }
     await _call('close');
     _closed = true;
     await _subscription.cancel();
     _replies.close();
     _isolate.kill(priority: Isolate.immediate);
+  }
+}
+
+class _NotesStoreConflict implements Exception {}
+
+/// Expected storage generations belong to this repository's cache, not to the
+/// last read from SQLite. Reads for search/media must not authorize stale edits.
+class _NotesStoreSession {
+  _NotesStoreSession(this.id);
+  final String id;
+  final _expected = <(String, String), int>{};
+
+  static String? _processStart(int process) {
+    try {
+      final stat = File('/proc/$process/stat').readAsStringSync();
+      return stat.substring(stat.lastIndexOf(')') + 2).split(' ')[19];
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  void _retireDeadSessions(Database db) {
+    for (final row in db.select('SELECT * FROM store_sessions')) {
+      if (_processStart(row['process'] as int) != row['start']) {
+        db.execute('DELETE FROM store_sessions WHERE id=?', [row['id']]);
+      }
+    }
+  }
+
+  void open(Database db) {
+    db.execute(
+      'CREATE TABLE IF NOT EXISTS store_versions (kind TEXT NOT NULL, id TEXT NOT NULL, generation INTEGER NOT NULL, PRIMARY KEY(kind,id))',
+    );
+    db.execute(
+      'CREATE TABLE IF NOT EXISTS store_sessions (id TEXT PRIMARY KEY, process INTEGER NOT NULL, start TEXT NOT NULL)',
+    );
+    db.execute(
+      'CREATE TABLE IF NOT EXISTS request_owners (account_id TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE, session TEXT NOT NULL REFERENCES store_sessions(id) ON DELETE CASCADE)',
+    );
+    _retireDeadSessions(db);
+    db.execute('INSERT INTO store_sessions VALUES(?,?,?)', [
+      id,
+      pid,
+      _processStart(pid) ?? '',
+    ]);
+  }
+
+  bool requestIsLive(Database db, String account) => db.select(
+    'SELECT 1 FROM request_owners WHERE account_id=?',
+    [account],
+  ).isNotEmpty;
+
+  void capture(Database db) {
+    for (final row in db.select('SELECT * FROM store_versions')) {
+      _expected[(row['kind'] as String, row['id'] as String)] =
+          row['generation'] as int;
+    }
+  }
+
+  int _generation(Database db, (String, String) key) {
+    final rows = db.select(
+      'SELECT generation FROM store_versions WHERE kind=? AND id=?',
+      [key.$1, key.$2],
+    );
+    return rows.isEmpty ? 0 : rows.single['generation'] as int;
+  }
+
+  void _advance(Database db, (String, String) key) => db.execute(
+    'INSERT INTO store_versions VALUES(?,?,1) ON CONFLICT(kind,id) DO UPDATE SET generation=generation+1',
+    [key.$1, key.$2],
+  );
+
+  Object? execute(Database db, String action, dynamic argument) {
+    if (action == 'close') {
+      db.execute('DELETE FROM store_sessions WHERE id=?', [id]);
+      db.close();
+      return null;
+    }
+    if (const {
+      'accounts',
+      'notes',
+      'attachments',
+      'attachmentSize',
+      'attachmentBytes',
+      'writeAttachmentFile',
+      'searchChunk',
+      'offlineRequirements',
+      'importOperations',
+      'importOperation',
+      'importedNote',
+    }.contains(action)) {
+      return _execute(db, action, argument);
+    }
+    final checked = <(String, String)>{}, changed = <(String, String)>{};
+    final accounts = <String>{};
+    void account(String value, {bool write = false}) {
+      accounts.add(value);
+      checked.add(('accounts', value));
+      if (write) changed.add(('accounts', value));
+    }
+
+    void note(String value, {bool write = false, String? accountId}) {
+      checked.add(('notes', value));
+      if (write) changed.add(('notes', value));
+      final rows = db.select('SELECT account_id FROM notes WHERE id=?', [
+        value,
+      ]);
+      final owner =
+          accountId ??
+          (rows.isEmpty ? null : rows.single['account_id'] as String);
+      if (owner != null) account(owner);
+    }
+
+    void attachment(String value, {bool write = false, String? noteId}) {
+      checked.add(('attachments', value));
+      if (write) changed.add(('attachments', value));
+      final rows = db.select('SELECT note_id FROM attachments WHERE id=?', [
+        value,
+      ]);
+      final owner =
+          noteId ?? (rows.isEmpty ? null : rows.single['note_id'] as String);
+      if (owner != null) note(owner);
+    }
+
+    void noteJson(Map value) => note(
+      value['localId'] as String,
+      write: true,
+      accountId: value['accountId'] as String,
+    );
+    db.execute('BEGIN IMMEDIATE');
+    try {
+      _retireDeadSessions(db);
+      switch (action) {
+        case 'validateNote':
+          note(argument as String);
+        case 'commit':
+          final data = argument as Map;
+          for (final a in data['accounts'] as List) {
+            account(a[0] as String, write: true);
+          }
+          for (final n in data['notes'] as List) {
+            noteJson(jsonDecode(n as String) as Map);
+          }
+          for (final n in data['removeNotes'] as List) {
+            note(n as String, write: true);
+            for (final row in db.select(
+              'SELECT id FROM attachments WHERE note_id=?',
+              [n],
+            )) {
+              attachment(row['id'] as String, write: true);
+            }
+          }
+        case 'removeAccount':
+          account(argument as String, write: true);
+          for (final row in db.select(
+            'SELECT id FROM notes WHERE account_id=?',
+            [argument],
+          )) {
+            final noteId = row['id'] as String;
+            note(noteId, write: true);
+            for (final a in db.select(
+              'SELECT id FROM attachments WHERE note_id=?',
+              [noteId],
+            )) {
+              attachment(a['id'] as String, write: true);
+            }
+          }
+        case 'createWithAttachments':
+          final a = argument as List;
+          noteJson(a[0] as Map);
+          for (final n in a[2] as List) {
+            noteJson(n as Map);
+          }
+          for (final value in a[1] as List) {
+            attachment(
+              value[0] as String,
+              write: true,
+              noteId: value[1] as String,
+            );
+          }
+        case 'saveAttachment' || 'saveAttachmentFile':
+          final a = argument as List;
+          attachment(a[0] as String, write: true, noteId: a[1] as String);
+        case 'stageAttachments':
+          for (final a in argument as List) {
+            attachment(a[0] as String, write: true, noteId: a[1] as String);
+          }
+        case 'updateAttachment':
+          final a = argument as List;
+          attachment(a[0] as String, write: true);
+          if (a[2] != null) noteJson(a[2] as Map);
+        case 'removeAttachment':
+          attachment(argument as String, write: true);
+        case 'setOfflineRequirement' ||
+            'beginImportOperation' ||
+            'completeImportOperation':
+          final a = argument as List;
+          account(a[0] as String);
+          final key = (
+            action == 'setOfflineRequirement' ? 'offline' : 'import',
+            jsonEncode(
+              a.take(action == 'setOfflineRequirement' ? 3 : 2).toList(),
+            ),
+          );
+          checked.add(key);
+          changed.add(key);
+        case 'beginRequest':
+          account(argument as String);
+          // A stale cache must not send a remote DELETE or request based on
+          // another process's superseded note, identity, settings or attachment.
+          for (final row in db.select(
+            'SELECT id FROM notes WHERE account_id=?',
+            [argument],
+          )) {
+            final noteId = row['id'] as String;
+            note(noteId);
+            for (final a in db.select(
+              'SELECT id FROM attachments WHERE note_id=?',
+              [noteId],
+            )) {
+              attachment(a['id'] as String);
+            }
+          }
+      }
+      for (final key in checked) {
+        if (_generation(db, key) != (_expected[key] ?? 0)) {
+          throw _NotesStoreConflict();
+        }
+      }
+      for (final value in accounts) {
+        final owners = db.select(
+          'SELECT session FROM request_owners WHERE account_id=?',
+          [value],
+        );
+        if (owners.isNotEmpty && owners.single['session'] != id) {
+          throw _NotesStoreConflict();
+        }
+      }
+      Object? result;
+      if (action == 'validateNote') {
+        // Validation uses the same persisted generation as writes.
+      } else if (action == 'beginRequest') {
+        db.execute(
+          'INSERT INTO request_owners VALUES(?,?) ON CONFLICT(account_id) DO NOTHING',
+          [argument, id],
+        );
+      } else if (action == 'endRequest') {
+        db.execute(
+          'DELETE FROM request_owners WHERE account_id=? AND session=?',
+          [argument, id],
+        );
+      } else {
+        result = _execute(db, action, argument);
+      }
+      for (final key in changed) {
+        _advance(db, key);
+      }
+      // Capture before COMMIT, publish the cache baseline only after COMMIT.
+      final versions = {for (final key in changed) key: _generation(db, key)};
+      db.execute('COMMIT');
+      _expected.addAll(versions);
+      return result;
+    } catch (_) {
+      db.execute('ROLLBACK');
+      rethrow;
+    }
   }
 }
 
@@ -313,6 +614,7 @@ void _worker(List<dynamic> arguments) {
   final replies = arguments[2] as SendPort;
   Database? openedDatabase;
   late final Database db;
+  final session = _NotesStoreSession(const Uuid().v4());
   try {
     db = sqlite3.open(path);
     openedDatabase = db;
@@ -321,36 +623,26 @@ void _worker(List<dynamic> arguments) {
       throw StateError('Cannot protect the Nextcloud Notes database.');
     }
     db.execute('PRAGMA foreign_keys = ON');
+    db.execute('PRAGMA busy_timeout = 5000');
     db.execute('PRAGMA journal_mode = WAL');
     db.execute('PRAGMA synchronous = FULL');
-    db.execute('PRAGMA busy_timeout = 5000');
+    db.execute('BEGIN IMMEDIATE');
     final version = db.select('PRAGMA user_version').first.values.first as int;
-    if (version > 6) {
+    if (version > 7) {
       throw StateError(
         'The Notes database was created by a newer BusyMark version.',
       );
     }
     if (version == 0) {
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        db.execute(
-          'CREATE TABLE accounts (id TEXT PRIMARY KEY, data TEXT NOT NULL)',
-        );
-        db.execute(
-          'CREATE TABLE notes (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, server_id INTEGER, data TEXT NOT NULL, UNIQUE(account_id, server_id))',
-        );
-        db.execute(
-          'CREATE TABLE outbox (note_id TEXT PRIMARY KEY REFERENCES notes(id) ON DELETE CASCADE, revision INTEGER NOT NULL, operation TEXT NOT NULL, data TEXT NOT NULL)',
-        );
-        db.execute(
-          'CREATE TABLE attachments (id TEXT PRIMARY KEY, note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE, data TEXT NOT NULL, bytes BLOB NOT NULL)',
-        );
-        db.execute('PRAGMA user_version = 1');
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
-      }
+      db.execute(
+        'CREATE TABLE accounts (id TEXT PRIMARY KEY, data TEXT NOT NULL)',
+      );
+      db.execute(
+        'CREATE TABLE notes (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, server_id INTEGER, data TEXT NOT NULL, UNIQUE(account_id, server_id))',
+      );
+      db.execute(
+        'CREATE TABLE attachments (id TEXT PRIMARY KEY, note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE, data TEXT NOT NULL, bytes BLOB NOT NULL)',
+      );
     }
     // v2 stores durable creation attempts in the existing versioned note JSON.
     // Older uncertain operations have no attempt and remain explicitly unresolved.
@@ -360,14 +652,16 @@ void _worker(List<dynamic> arguments) {
     // Advance only inside the recovery transaction; malformed rows roll back.
 
     // A request interrupted by a crash has an uncertain creation/upload outcome.
-    db.execute('BEGIN IMMEDIATE');
     try {
       _createWorkspaceSchema(db);
+      session.open(db);
+      db.execute('DROP TABLE IF EXISTS outbox');
       for (final row in db.select('SELECT data FROM notes')) {
         final note = NextcloudNote.fromJson(
           jsonDecode(row['data'] as String) as Map<String, dynamic>,
         );
-        if (note.syncState == NoteSyncState.syncing) {
+        if (note.syncState == NoteSyncState.syncing &&
+            !session.requestIsLive(db, note.accountId)) {
           _writeNote(
             db,
             note.copyWith(
@@ -376,9 +670,10 @@ void _worker(List<dynamic> arguments) {
                   : NoteSyncState.pending,
             ),
           );
+          session._advance(db, ('notes', note.localId));
         }
       }
-      if (version < 6) db.execute('PRAGMA user_version = 6');
+      if (version < 7) db.execute('PRAGMA user_version = 7');
       db.execute('COMMIT');
     } catch (_) {
       db.execute('ROLLBACK');
@@ -392,20 +687,22 @@ void _worker(List<dynamic> arguments) {
     ready.send([false, 'Cannot open or migrate the Nextcloud Notes database.']);
     return;
   }
+  session.capture(db);
   final commands = ReceivePort();
   ready.send([true, commands.sendPort]);
   commands.listen((dynamic message) {
     final request = message as List<dynamic>;
     try {
-      final result = _execute(db, request[1] as String, request[2]);
+      final result = session.execute(db, request[1] as String, request[2]);
       replies.send([request[0], true, result]);
       if (request[1] == 'close') commands.close();
-    } catch (_) {
+    } catch (error) {
       // Never include note contents, SQL parameters or credentials in errors/logs.
       replies.send([
         request[0],
         false,
         'The durable Nextcloud Notes transaction failed.',
+        error is _NotesStoreConflict,
       ]);
     }
   });
@@ -417,19 +714,6 @@ void _writeNote(Database db, NextcloudNote note) {
     [note.localId, note.accountId, note.serverId, note.encode()],
   );
   _indexNote(db, note);
-  if (note.hasPendingChanges) {
-    db.execute(
-      'INSERT INTO outbox(note_id,revision,operation,data) VALUES(?,?,?,?) ON CONFLICT(note_id) DO UPDATE SET revision=excluded.revision,operation=excluded.operation,data=excluded.data',
-      [
-        note.localId,
-        note.revision,
-        note.serverId == null ? 'create' : 'update',
-        note.encode(),
-      ],
-    );
-  } else {
-    db.execute('DELETE FROM outbox WHERE note_id=?', [note.localId]);
-  }
 }
 
 Object? _execute(Database db, String action, dynamic argument) {
@@ -438,32 +722,18 @@ Object? _execute(Database db, String action, dynamic argument) {
       final rows = db.select(
         "SELECT n.data FROM notes n LEFT JOIN note_search_map s ON s.id=n.id WHERE s.id IS NULL OR s.revision!=json_extract(n.data,'\$.revision') LIMIT 32",
       );
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        for (final row in rows) {
-          _indexNote(
-            db,
-            NextcloudNote.fromJson(
-              jsonDecode(row['data'] as String) as Map<String, dynamic>,
-            ),
-          );
-        }
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
+      for (final row in rows) {
+        _indexNote(
+          db,
+          NextcloudNote.fromJson(
+            jsonDecode(row['data'] as String) as Map<String, dynamic>,
+          ),
+        );
       }
       return rows.length;
     case 'rebuildIndex':
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        db.execute('DELETE FROM note_search');
-        db.execute('DELETE FROM note_search_map');
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
-      }
+      db.execute('DELETE FROM note_search');
+      db.execute('DELETE FROM note_search_map');
       return null;
     case 'searchChunk':
       final a = argument as Map;
@@ -577,25 +847,18 @@ Object? _execute(Database db, String action, dynamic argument) {
       return rows.isEmpty ? null : Map<String, Object?>.from(rows.single);
     case 'completeImportOperation':
       final a = argument as List;
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        for (final key in a[2] as List) {
-          if (db.select(
-            'SELECT note_id FROM import_items WHERE account_id=? AND source_key=?',
-            [a[0], key],
-          ).isEmpty) {
-            throw StateError('An import item is not durable.');
-          }
+      for (final key in a[2] as List) {
+        if (db.select(
+          'SELECT note_id FROM import_items WHERE account_id=? AND source_key=?',
+          [a[0], key],
+        ).isEmpty) {
+          throw StateError('An import item is not durable.');
         }
-        db.execute(
-          "UPDATE import_operations SET state='completed' WHERE account_id=? AND id=?",
-          [a[0], a[1]],
-        );
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
       }
+      db.execute(
+        "UPDATE import_operations SET state='completed' WHERE account_id=? AND id=?",
+        [a[0], a[1]],
+      );
       return null;
     case 'offlineRequirements':
       return db
@@ -638,29 +901,22 @@ Object? _execute(Database db, String action, dynamic argument) {
           .toList();
     case 'commit':
       final data = argument as Map;
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        for (final id in data['removeNotes'] as List) {
-          db.execute('DELETE FROM notes WHERE id=?', [id]);
-        }
-        for (final a in data['accounts'] as List) {
-          db.execute(
-            'INSERT INTO accounts(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
-            a as List<Object?>,
-          );
-        }
-        for (final n in data['notes'] as List) {
-          _writeNote(
-            db,
-            NextcloudNote.fromJson(
-              jsonDecode(n[3] as String) as Map<String, dynamic>,
-            ),
-          );
-        }
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
+      for (final id in data['removeNotes'] as List) {
+        db.execute('DELETE FROM notes WHERE id=?', [id]);
+      }
+      for (final a in data['accounts'] as List) {
+        db.execute(
+          'INSERT INTO accounts(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
+          a as List<Object?>,
+        );
+      }
+      for (final n in data['notes'] as List) {
+        _writeNote(
+          db,
+          NextcloudNote.fromJson(
+            jsonDecode(n as String) as Map<String, dynamic>,
+          ),
+        );
       }
       return null;
     case 'removeAccount':
@@ -707,37 +963,30 @@ Object? _execute(Database db, String action, dynamic argument) {
       return null;
     case 'createWithAttachments':
       final a = argument as List;
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        for (final note in a[2] as List) {
-          _writeNote(
-            db,
-            NextcloudNote.fromJson(Map<String, dynamic>.from(note as Map)),
-          );
-        }
+      for (final note in a[2] as List) {
         _writeNote(
           db,
-          NextcloudNote.fromJson(Map<String, dynamic>.from(a[0] as Map)),
+          NextcloudNote.fromJson(Map<String, dynamic>.from(note as Map)),
         );
-        for (final attachment in a[1] as List) {
-          db.execute(
-            'INSERT INTO attachments(id,note_id,data,bytes) VALUES(?,?,?,?)',
-            (attachment as List).cast<Object?>(),
-          );
-        }
-        if (a.length > 3 && a[3] != null) {
-          final note = NextcloudNote.fromJson(
-            Map<String, dynamic>.from(a[0] as Map),
-          );
-          db.execute(
-            'INSERT INTO import_items(account_id,source_key,note_id) VALUES(?,?,?)',
-            [note.accountId, a[3], note.localId],
-          );
-        }
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
+      }
+      _writeNote(
+        db,
+        NextcloudNote.fromJson(Map<String, dynamic>.from(a[0] as Map)),
+      );
+      for (final attachment in a[1] as List) {
+        db.execute(
+          'INSERT INTO attachments(id,note_id,data,bytes) VALUES(?,?,?,?)',
+          (attachment as List).cast<Object?>(),
+        );
+      }
+      if (a.length > 3 && a[3] != null) {
+        final note = NextcloudNote.fromJson(
+          Map<String, dynamic>.from(a[0] as Map),
+        );
+        db.execute(
+          'INSERT INTO import_items(account_id,source_key,note_id) VALUES(?,?,?)',
+          [note.accountId, a[3], note.localId],
+        );
       }
       return null;
     case 'attachments':
@@ -750,18 +999,11 @@ Object? _execute(Database db, String action, dynamic argument) {
           .map((r) => r['data'])
           .toList();
     case 'stageAttachments':
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        for (final attachment in argument as List) {
-          db.execute(
-            'INSERT INTO attachments(id,note_id,data,bytes) VALUES(?,?,?,?)',
-            (attachment as List).cast<Object?>(),
-          );
-        }
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
+      for (final attachment in argument as List) {
+        db.execute(
+          'INSERT INTO attachments(id,note_id,data,bytes) VALUES(?,?,?,?)',
+          (attachment as List).cast<Object?>(),
+        );
       }
       return null;
     case 'attachmentSize':
@@ -777,26 +1019,18 @@ Object? _execute(Database db, String action, dynamic argument) {
       return rows.isEmpty ? null : rows.first['bytes'];
     case 'updateAttachment':
       final a = argument as List;
-      db.execute('BEGIN IMMEDIATE');
-      try {
-        db.execute('UPDATE attachments SET data=? WHERE id=?', [a[1], a[0]]);
-        if (a[2] != null) {
-          _writeNote(
-            db,
-            NextcloudNote.fromJson(Map<String, dynamic>.from(a[2] as Map)),
-          );
-        }
-        db.execute('COMMIT');
-      } catch (_) {
-        db.execute('ROLLBACK');
-        rethrow;
+      db.execute('UPDATE attachments SET data=? WHERE id=?', [a[1], a[0]]);
+      if (a[2] != null) {
+        _writeNote(
+          db,
+          NextcloudNote.fromJson(Map<String, dynamic>.from(a[2] as Map)),
+        );
       }
       return null;
     case 'removeAttachment':
       db.execute('DELETE FROM attachments WHERE id=?', [argument]);
       return null;
     case 'close':
-      db.close();
       return null;
     default:
       throw StateError('Unknown Notes storage operation.');

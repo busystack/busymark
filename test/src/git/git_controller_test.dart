@@ -193,6 +193,81 @@ void main() {
   );
 
   test(
+    'releasing the exact session resumes Files refresh and invalidates retired callbacks',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'git-status-release-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final root = await directory.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'shared',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: root, rootPath: root);
+      controller.attachWorkspace(workspace);
+      await controller.associateSharedRepository(workspace, repository);
+      final old = Object(), current = Object();
+      final pending = Completer<GitStatusSnapshot>();
+      final status = GitStatusSnapshot(
+        repositoryInfo: GitRepositoryInfo(
+          rootPath: root,
+          gitDirPath: '$root/.git',
+          identityKey: repository.key,
+        ),
+        files: const [],
+      );
+      controller.bindSharedStatusSource(
+        workspace,
+        repository,
+        owner: old,
+        refresh: () => pending.future,
+        current: () async => status,
+        stage: (_, _) async {},
+      );
+      final retiredRefresh = controller.refresh();
+      var refreshes = 0;
+      controller.bindSharedStatusSource(
+        workspace,
+        repository,
+        owner: current,
+        refresh: () async {
+          refreshes++;
+          return status;
+        },
+        current: () async => status,
+        stage: (_, _) async {},
+      );
+      controller.releaseSharedStatusSource(old);
+      await controller.refresh();
+      expect(refreshes, 1);
+      controller.releaseSharedStatusSource(current);
+      await controller.refresh();
+      expect(gateway.statusCalls, greaterThan(0));
+      final fallback = container.read(gitControllerProvider).statusSnapshot;
+      pending.complete(status);
+      await retiredRefresh;
+      expect(
+        container.read(gitControllerProvider).statusSnapshot,
+        same(fallback),
+      );
+      expect(refreshes, 1);
+    },
+  );
+
+  test(
     'late shared status cannot target a different authoring workspace',
     () async {
       final directory = await Directory.systemTemp.createTemp(

@@ -1,4 +1,5 @@
 import '../app/busymark_native_controls.dart';
+import '../core/atomic_file_writer.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -483,7 +484,12 @@ Future<bool> saveActiveWithOverwriteConfirmation(
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
         ),
       ],
-      children: [Text(context.l10n.fileChangedOnDiskMessage)],
+      children: [
+        Text(context.l10n.fileChangedOnDiskMessage),
+        if (state.message?.error case final AtomicFileChangedException error
+            when error.recoveryPath != null)
+          Text(error.toString()),
+      ],
     ),
   );
   if (action != _OverwriteAction.overwrite) {

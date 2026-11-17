@@ -86,6 +86,10 @@ class MarkdownVisualizationExportRenderer {
       ]);
     } finally {
       cancellationToken.detach();
+      for (final key in keys) {
+        coordinator.cancel(key);
+        coordinator.clearLastSuccessful(key);
+      }
     }
     cancellationToken.throwIfCancelled();
 
