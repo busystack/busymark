@@ -827,6 +827,7 @@ void main() {
         );
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
+        container.dispose();
         await tester.pump(const Duration(seconds: 1));
       },
     );
@@ -1843,6 +1844,8 @@ void main() {
         BusyBlockKind.heading,
       );
       await tester.pumpWidget(const SizedBox.shrink());
+      container.dispose();
+      await tester.pump();
     },
   );
 
@@ -2035,6 +2038,8 @@ void main() {
           expected,
         );
         await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+        await tester.pump();
       },
     );
   }
