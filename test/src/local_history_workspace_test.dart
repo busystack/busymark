@@ -8492,6 +8492,20 @@ class _RecordingRestoreWorkspaceService extends WorkspaceService {
   }
 
   @override
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) async {
+    writes.add(text);
+    return super.saveTextIfUnchanged(
+      path,
+      text,
+      expectedSnapshot: expectedSnapshot,
+    );
+  }
+
+  @override
   Future<WorkspaceFileSnapshot> saveNewFormattedText(
     String path,
     String text, {
