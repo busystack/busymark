@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'app_metadata.dart';
 import 'busymark_dialog_identity.dart';
+import 'busymark_deferred_editor_focus.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
@@ -283,6 +284,7 @@ class _ModalFocusRestoration with WidgetsBindingObserver {
     initialBarrierColor: barrierColor ?? busyMarkModalBarrierColor(context),
     barrierDismissible: barrierDismissible,
   );
+  BusyMarkDeferredEditorFocus.modalOpened();
   return (result: navigator.push<T>(route), route: route);
 }
 

@@ -1,10 +1,10 @@
+import '../core/atomic_file_writer.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:file_selector/file_selector.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -565,36 +565,43 @@ class _BusyMarkVisualizationCardState
   ) async {
     final svg = result is SvgVisualizationResult;
     final extension = svg ? 'svg' : 'png';
-    final location = await getSaveLocation(
-      suggestedName:
-          '${widget.descriptor.kind.canonicalFence}-diagram.$extension',
-      initialDirectory: widget.documentPath.isEmpty
-          ? null
-          : p.dirname(widget.documentPath),
-      acceptedTypeGroups: [
-        XTypeGroup(
-          label: '${svg ? 'SVG' : 'PNG'} ${context.l10n.image}',
-          extensions: [extension],
-          mimeTypes: [svg ? 'image/svg+xml' : 'image/png'],
-        ),
-      ],
-      confirmButtonText: context.l10n.save,
-    );
-    if (location == null) {
-      return;
-    }
-    final path = p.extension(location.path).toLowerCase() == '.$extension'
-        ? location.path
-        : '${location.path}.$extension';
-    final bytes = svg
-        ? utf8.encode(result.svg)
-        : (result as RasterVisualizationResult).pngBytes;
-    await File(path).writeAsBytes(bytes, flush: true);
-    if (mounted) {
-      BusyMarkToastOverlay.show(
-        this.context,
-        message: this.context.l10n.visualizationSaved(p.basename(path)),
+    try {
+      final destination = await pickSaveDestination(
+        context,
+        suggestedName:
+            '${widget.descriptor.kind.canonicalFence}-diagram.$extension',
+        initialDirectory: widget.documentPath.isEmpty
+            ? null
+            : p.dirname(widget.documentPath),
+        actionLabel: context.l10n.save,
+        suffix: '.$extension',
       );
+      if (destination == null || !mounted) return;
+      final bytes = svg
+          ? utf8.encode(result.svg)
+          : (result as RasterVisualizationResult).pngBytes;
+      await const AtomicFileWriter().writeBytes(
+        destination.path,
+        bytes,
+        overwrite: destination.replacesExisting,
+        authorization: destination,
+      );
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          this.context,
+          message: this.context.l10n.visualizationSaved(
+            p.basename(destination.path),
+          ),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          this.context,
+          message: error.toString(),
+          priority: BusyMarkToastPriority.high,
+        );
+      }
     }
   }
 

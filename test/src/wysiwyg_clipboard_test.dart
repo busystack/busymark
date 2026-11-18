@@ -516,16 +516,17 @@ void main() {
       BusyBlockKind.heading,
       BusyBlockKind.paragraph,
       BusyBlockKind.paragraph,
-      BusyBlockKind.unorderedListItem,
+      BusyBlockKind.writersideRawXml,
       BusyBlockKind.table,
     ]);
-    expect(blocks.take(4).map((block) => block.plainText), [
+    expect(blocks.take(3).map((block) => block.plainText), [
       'Heading',
       'First',
       'Second',
-      'Parent',
     ]);
-    expect(blocks[3].children.single.plainText, 'Child');
+    final parent = blocks[3].children.single;
+    expect(parent.plainText, 'Parent');
+    expect(parent.children.single.children.single.plainText, 'Child');
     expect(
       blocks.last.children
           .expand((row) => row.children)

@@ -1,8 +1,8 @@
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:file_selector/file_selector.dart';
+import '../core/save_destination.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -80,62 +80,27 @@ Future<void> exportWorkspaceToHtml(
       : path.isEmpty
       ? context.l10n.untitledMarkdownFileName
       : p.basename(path);
-  final location = await getSaveLocation(
+  final service = ref.read(htmlExportServiceProvider);
+  String? siteOwnership;
+  final authorization = await pickSaveDestination(
+    context,
     suggestedName: site
         ? '${instance!.id}-html'
         : '${p.basenameWithoutExtension(name)}.html',
-    initialDirectory: (workspace.filesystemRootPath ?? '').isEmpty
-        ? null
-        : (workspace.filesystemRootPath ?? ''),
-    acceptedTypeGroups: site
-        ? const []
-        : [
-            XTypeGroup(
-              label: context.l10n.fileTypeHtml,
-              extensions: const ['html'],
-              mimeTypes: const ['text/html'],
-            ),
-          ],
-    confirmButtonText: context.l10n.export,
+    initialDirectory: workspace.filesystemRootPath,
+    actionLabel: context.l10n.export,
+    suffix: site ? null : '.html',
+    kind: site ? SaveDestinationKind.directory : SaveDestinationKind.file,
+    replacementDetails: site ? context.l10n.htmlOwnedDirectoryOnly : null,
+    validateReplacement: site
+        ? (path) async {
+            siteOwnership = await service.publisher.siteOwnership(path);
+          }
+        : null,
   );
-  if (location == null || !context.mounted) return;
-  final destination =
-      !site && p.extension(location.path).toLowerCase() != '.html'
-      ? '${location.path}.html'
-      : location.path;
-  var overwrite = false;
-  if (await FileSystemEntity.type(destination, followLinks: false) !=
-      FileSystemEntityType.notFound) {
-    if (!context.mounted) return;
-    overwrite =
-        await showBusyMarkModalDialog<bool>(
-          context,
-          builder: (context) => BusyMarkDialogShell(
-            title: context.l10n.warning,
-            actions: [
-              BusyMarkDialogButton(
-                label: context.l10n.cancel,
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              BusyMarkDialogButton(
-                label: context.l10n.overwrite,
-                destructive: true,
-                onPressed: () => Navigator.pop(context, true),
-              ),
-            ],
-            children: [
-              Text(context.l10n.errorPathAlreadyExists(destination)),
-              if (site) Text(context.l10n.htmlOwnedDirectoryOnly),
-            ],
-          ),
-        ) ??
-        false;
-    if (!overwrite || !context.mounted) return;
-  }
-  if (!context.mounted) return;
-  // Capture text and service before starting the modal operation. Subsequent
-  // workspace notifications cannot replace these inputs.
-  final service = ref.read(htmlExportServiceProvider);
+  if (authorization == null || !context.mounted) return;
+  final destination = authorization.path;
+  final overwrite = authorization.replacesExisting;
   final request = MarkdownHtmlExportRequest(
     source: snapshot.activeText,
     media: media,
@@ -143,6 +108,7 @@ Future<void> exportWorkspaceToHtml(
     workspaceRoot: (workspace.filesystemRootPath ?? ''),
     destinationPath: destination,
     overwrite: overwrite,
+    authorization: authorization,
     options: options,
     mode: workspace.markdown?.mode ?? MarkdownMode.commonMark,
   );
@@ -160,6 +126,8 @@ Future<void> exportWorkspaceToHtml(
               instanceId: selected!.id,
               destinationPath: destination,
               overwrite: overwrite,
+              authorization: authorization,
+              expectedSiteOwnership: siteOwnership,
               options: options,
               cancellationToken: token,
               onProgress: progress,

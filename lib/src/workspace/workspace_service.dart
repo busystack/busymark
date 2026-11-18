@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
 import '../core/atomic_file_writer.dart';
+import '../core/save_destination.dart';
 import '../core/busymark_exception.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
@@ -1201,6 +1202,8 @@ class WorkspaceService {
     String text, {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
     Future<void> Function()? onPublished,
   }) async {
     final bytes = _encodeDocumentText(
@@ -1212,6 +1215,11 @@ class WorkspaceService {
     try {
       final stat = await staged.file.stat();
       await _beforeNewFilePublish?.call(path);
+      if (stillCurrent?.call() == false ||
+          authorization?.replacesExisting == true) {
+        throw AtomicFileChangedException(path);
+      }
+      authorization?.requireCurrent(path);
       await _publishNewFileWithoutReplace(staged.file, path);
       await onPublished?.call();
       return _snapshotFromBytes(stat, bytes);
@@ -1249,6 +1257,8 @@ class WorkspaceService {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
     WorkspaceFileSnapshot? expectedSnapshot,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
     Future<void> Function()? onPublished,
   }) async {
     final bytes = _encodeDocumentText(
@@ -1256,6 +1266,10 @@ class WorkspaceService {
       format: format,
       mixedNormalization: mixedNormalization,
     );
+    if (authorization != null &&
+        (!authorization.replacesExisting || expectedSnapshot == null)) {
+      throw ArgumentError('A replacement requires an approved existing entry');
+    }
     final staged = await _stageNewSave(path, bytes);
     var preserveStagedFile = false;
     try {
@@ -1272,6 +1286,8 @@ class WorkspaceService {
       await _validateExpectedSnapshot(path, expectedSnapshot);
       final target = File(p.absolute(path));
       await _beforeNewFilePublish?.call(path);
+      if (stillCurrent?.call() == false) throw AtomicFileChangedException(path);
+      authorization?.requireCurrent(path);
       if (expectedSnapshot != null) {
         final atomicApi = LinuxAtomicFileApi.instance;
         if (!Platform.isLinux || !atomicApi.isAvailable) {
@@ -1292,14 +1308,15 @@ class WorkspaceService {
         }
         // Retain displaced state even if an injected or real validation fails.
         preserveStagedFile = true;
-        if (!await _displacedEntryMatchesExpected(
-          staged.file.path,
-          targetPath: target.path,
-          expectedType: targetType,
-          expectedLinkTarget: expectedLinkTarget,
-          expectedLinkResolvedPath: expectedLinkResolvedPath,
-          expectedSnapshot: expectedSnapshot,
-        )) {
+        if (authorization?.acceptsDisplaced(staged.file.path) == false ||
+            !await _displacedEntryMatchesExpected(
+              staged.file.path,
+              targetPath: target.path,
+              expectedType: targetType,
+              expectedLinkTarget: expectedLinkTarget,
+              expectedLinkResolvedPath: expectedLinkResolvedPath,
+              expectedSnapshot: expectedSnapshot,
+            )) {
           preserveStagedFile = !await _rollbackConditionalReplacement(
             staged: staged.file,
             target: target,

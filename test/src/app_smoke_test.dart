@@ -1,3 +1,5 @@
+import 'package:busymark/src/app/busymark_native_controls.dart';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
 import 'package:busymark/src/references/reference_controller.dart';
@@ -5547,7 +5549,12 @@ void main() {
         ..._smokeAccentOverrides,
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
-            ..value = AppSettings.defaults().copyWith(autoSave: false).toJson(),
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  documentViewMode: DocumentViewModePreference.source,
+                )
+                .toJson(),
         ),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(
@@ -5604,8 +5611,26 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final source = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(EditableText),
+    );
+    final field = tester.widget<EditableText>(source);
+    expect(field.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      field.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText('Typed into new tab');
+    await tester.pump();
+
     expect(find.text(l10n.unsavedChanges), findsNothing);
     expect(service.untitledCount, 1);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      'Typed into new tab',
+    );
     expect(
       container.read(workspaceControllerProvider).documentBuffers,
       hasLength(2),
@@ -5634,11 +5659,135 @@ void main() {
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
     expect(service.untitledCount, 2);
+    final nextField = tester.widget<EditableText>(source);
+    expect(nextField.focusNode, isNot(same(field.focusNode)));
+    expect(nextField.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      nextField.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText('Second created tab');
+    await tester.pump();
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      'Second created tab',
+    );
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .map((b) => b.text),
+      containsAll(['# Dirty\n', 'Typed into new tab']),
+    );
     expect(
       container.read(workspaceControllerProvider).documentBuffers,
       hasLength(3),
     );
     await tester.pump(const Duration(milliseconds: 800));
+  });
+
+  testWidgets('Files New File opens the Dual Source field ready to type', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('busymark-files-new-');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final existing = File(p.join(folder.path, 'existing.md'))
+      ..writeAsStringSync('# Existing\n');
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  documentViewMode: DocumentViewModePreference.split,
+                )
+                .toJson(),
+        ),
+        startupPathProvider.overrideWithValue(folder.path),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await pumpUntil(
+      tester,
+      () => find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty,
+      operation: 'Open a real Markdown folder',
+    );
+    final menus = NativeMenuProbe(tester);
+    final viewSelector = find.byTooltip(
+      '${l10n.sidebarViewMenu} (Ctrl+Shift+F9)',
+    );
+    await tester.tap(viewSelector);
+    await tester.pumpAndSettle();
+    await menus.activate(l10n.files);
+    await tester.pumpAndSettle();
+    Future<void> openNewFile() async {
+      await tester.tap(
+        find.widgetWithText(BusyMarkSidebarTreeRow, 'existing.md'),
+        buttons: kSecondaryButton,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        menus.matching(l10n.newFile),
+        hasLength(1),
+        reason:
+            'Native menu entries: ${menus.entries.map((entry) => entry['label'])}',
+      );
+      await menus.activate(l10n.newFile);
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.newFile), findsOneWidget);
+    }
+
+    await openNewFile();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(File(p.join(folder.path, 'untitled.md')).existsSync(), isFalse);
+
+    await openNewFile();
+    final dialog = find.byType(BusyMarkModalEditorScaffold);
+    await tester.tap(
+      find.descendant(of: dialog, matching: find.text(l10n.create)),
+    );
+    await pumpUntil(
+      tester,
+      () =>
+          container.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          p.join(folder.path, 'untitled.md'),
+      operation: 'New File opens its new buffer',
+    );
+    await tester.pumpAndSettle();
+    final source = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(source.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      source.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText('Typed into Files-created Source');
+    await tester.pump();
+    final state = container.read(workspaceControllerProvider);
+    expect(state.activeText, 'Typed into Files-created Source');
+    expect(
+      state.activeBuffer!.editorState.mode,
+      DocumentViewModePreference.split,
+    );
+    expect(existing.readAsStringSync(), '# Existing\n');
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
   });
 
   testWidgets('Ctrl+N creates real CommonMark inside a Writerside workspace', (
@@ -21388,10 +21537,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       fileSelectorChannel,
       (call) async {
-        expect(call.method, 'getSavePath');
-        final args = call.arguments as Map<Object?, Object?>;
-        expect(args['suggestedName'], l10n.untitledMarkdownFileName);
-        return saveFile.path;
+        expect(call.method, 'getDirectoryPath');
+        return temp.path;
       },
     );
     addTearDown(() {
@@ -21436,8 +21583,16 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
 
     final sourceField = find.byType(TextField).last;
-    await tester.tap(sourceField);
-    await tester.enterText(sourceField, editedText);
+    final editable = tester.widget<EditableText>(
+      find.descendant(of: sourceField, matching: find.byType(EditableText)),
+    );
+    expect(editable.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      editable.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText(editedText);
     await tester.pump();
 
     expect(container.read(workspaceControllerProvider).activeText, editedText);
@@ -21448,6 +21603,13 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
+    final nameField = find.widgetWithText(
+      BusyMarkNativeTextEntry,
+      l10n.fileName,
+    );
+    await tester.enterText(nameField, 'created');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
     expect(service.saveCount, 1);
     expect(service.savedPath, saveFile.path);
     expect(service.savedText, editedText);
@@ -22442,6 +22604,21 @@ class _StartupWorkspaceService extends WorkspaceService {
     String text, {
     required WorkspaceFileSnapshot expectedSnapshot,
   }) => saveText(path, text);
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
+    Future<void> Function()? onPublished,
+  }) {
+    authorization?.requireCurrent(path);
+    expect(stillCurrent?.call(), isNot(false));
+    return saveNewText(path, text, onPublished: onPublished);
+  }
 
   @override
   Future<WorkspaceFileSnapshot> saveNewText(

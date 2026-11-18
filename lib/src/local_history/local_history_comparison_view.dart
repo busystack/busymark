@@ -1,11 +1,11 @@
+import '../core/save_destination.dart';
 import 'dart:async';
 
-import 'package:file_selector/file_selector.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
-import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
@@ -174,7 +174,7 @@ class _LocalHistoryComparisonViewState
                   document.remoteNote == null &&
                   actionsAreCurrent &&
                   data.missing
-              ? () => _chooseRestoreLocation(document, revision)
+              ? () => _restoreMissing(document, revision)
               : null,
         );
       },
@@ -280,32 +280,6 @@ class _LocalHistoryComparisonViewState
     }
   }
 
-  Future<void> _chooseRestoreLocation(
-    LocalHistoryDocument document,
-    LocalHistoryRevision revision,
-  ) async {
-    final historicalPath =
-        document.currentPath ?? revision.summary.historicalPath;
-    final extension = p.extension(historicalPath ?? '');
-    final location = await getSaveLocation(
-      acceptedTypeGroups: [
-        XTypeGroup(
-          label: context.l10n.source,
-          extensions: extension.isEmpty ? null : [extension.substring(1)],
-          mimeTypes: extension.isEmpty ? const ['text/plain'] : null,
-        ),
-      ],
-      suggestedName: p.basename(historicalPath ?? document.displayName),
-      initialDirectory: historicalPath == null
-          ? null
-          : p.dirname(historicalPath),
-      confirmButtonText: context.l10n.localHistoryRestoreRevision,
-    );
-    if (location != null && mounted) {
-      await _restoreMissing(document, revision, location.path);
-    }
-  }
-
   Future<void> _recoverRemote(
     LocalHistoryDocument document,
     LocalHistoryRevision revision,
@@ -348,43 +322,71 @@ class _LocalHistoryComparisonViewState
 
   Future<void> _restoreMissing(
     LocalHistoryDocument document,
-    LocalHistoryRevision revision,
-    String path,
-  ) => _runRestore(() async {
-    if (!await confirmSafeToContinue(context, ref) || !mounted) return null;
+    LocalHistoryRevision revision, [
+    String? originalDestination,
+  ]) => _runRestore(() async {
     final controller = ref.read(workspaceControllerProvider.notifier);
-    final exists = await controller.localHistoryRestorePathExists(path);
-    if (!mounted) return null;
-    var overwrite = false;
-    if (exists) {
-      overwrite =
-          await showBusyMarkModalDialog<bool>(
-            context,
-            barrierDismissible: false,
-            builder: (dialogContext) => BusyMarkDialogShell(
-              title: dialogContext.l10n.overwrite,
-              actions: [
-                BusyMarkDialogButton(
-                  label: dialogContext.l10n.cancel,
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                ),
-                BusyMarkDialogButton(
-                  label: dialogContext.l10n.overwrite,
-                  destructive: true,
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                ),
-              ],
-              children: [Text(dialogContext.l10n.errorPathAlreadyExists(path))],
-            ),
-          ) ??
-          false;
-      if (!overwrite || !mounted) return null;
+    final selected = ref
+        .read(localHistoryControllerProvider)
+        .selectedRevisionId;
+    bool ownsComparison() =>
+        mounted &&
+        ref.read(localHistoryControllerProvider).selectedRevisionId == selected;
+
+    var path = originalDestination;
+    if (path == null) {
+      final previous = ref.read(workspaceControllerProvider);
+      final previousDocument = controller.captureActiveDocumentSaveTarget();
+      final historicalPath =
+          document.currentPath ?? revision.summary.historicalPath;
+      final extension = p.extension(historicalPath ?? '');
+      path = await chooseSaveDestinationPath(
+        context,
+        suggestedName: p.basename(historicalPath ?? document.displayName),
+        initialDirectory: historicalPath == null
+            ? null
+            : p.dirname(historicalPath),
+        actionLabel: context.l10n.localHistoryRestoreRevision,
+        suffix: extension.isEmpty ? null : extension,
+        suffixOnlyWhenMissing: true,
+        isCurrent: () =>
+            ownsComparison() &&
+            (previousDocument != null
+                ? controller.isActiveDocumentSaveTargetCurrent(previousDocument)
+                : ref.read(workspaceControllerProvider).activeBuffer == null &&
+                      ref.read(workspaceControllerProvider).workspace?.id ==
+                          previous.workspace?.id),
+      );
+      if (path == null || !mounted || !ownsComparison()) return null;
     }
+    if (!await confirmSafeToContinue(context, ref) ||
+        !mounted ||
+        !ownsComparison()) {
+      return null;
+    }
+    final previous = ref.read(workspaceControllerProvider);
+    final previousDocument = controller.captureActiveDocumentSaveTarget();
+    bool isCurrent() =>
+        ownsComparison() &&
+        (previousDocument != null
+            ? controller.isActiveDocumentSaveTargetCurrent(previousDocument)
+            : ref.read(workspaceControllerProvider).activeBuffer == null &&
+                  ref.read(workspaceControllerProvider).workspace?.id ==
+                      previous.workspace?.id);
+
+    final destination = await confirmSaveDestination(
+      context,
+      path,
+      kind: SaveDestinationKind.fileOrSymbolicLink,
+      isCurrent: isCurrent,
+    );
+    if (destination == null || !isCurrent()) return null;
     return controller.restoreMissingLocalHistoryRevision(
       document: document,
       revision: revision,
-      destinationPath: path,
-      overwriteExisting: overwrite,
+      destinationPath: destination.path,
+      overwriteExisting: destination.replacesExisting,
+      authorization: destination,
     );
   });
 }

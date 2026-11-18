@@ -1,5 +1,7 @@
+import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
@@ -15,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/widget_async.dart';
 
 void main() {
   late Directory cacheDirectory;
@@ -142,6 +146,69 @@ void main() {
     expect(find.textContaining('```MerMAID'), findsOneWidget);
   });
 
+  testWidgets(
+    'Save image refuses an unapproved final SVG and publishes a new one',
+    (tester) async {
+      final coordinator = VisualizationCoordinator(
+        renderers: const [_CardRenderer()],
+        cache: _MemoryVisualizationCache(cacheDirectory),
+      );
+      addTearDown(coordinator.dispose);
+      const chooser = MethodChannel('plugins.flutter.io/file_selector');
+      final messenger = tester.binding.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(chooser, (call) async {
+        expect(call.method, 'getDirectoryPath');
+        return cacheDirectory.path;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+      final protected = File('${cacheDirectory.path}/diagram.svg')
+        ..writeAsStringSync('existing SVG');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            visualizationCoordinatorProvider.overrideWithValue(coordinator),
+          ],
+          child: const _App(child: _CardHarness(onDiagnosticSelected: _ignore)),
+        ),
+      );
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+      Future<void> chooseName(String name) async {
+        await tester.tap(find.byTooltip('Save image'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(BusyMarkNativeTextEntry, 'File name'),
+          name,
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+      }
+
+      await chooseName('diagram');
+      expect(find.text('Overwrite'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(protected.readAsStringSync(), 'existing SVG');
+      expect(find.textContaining('Saved diagram.svg'), findsNothing);
+
+      await chooseName('new-diagram');
+      final published = File('${cacheDirectory.path}/new-diagram.svg');
+      await pumpUntil(
+        tester,
+        published.existsSync,
+        operation: 'Publish staged SVG',
+      );
+      expect(published.readAsStringSync(), startsWith('<svg'));
+      expect(protected.readAsStringSync(), 'existing SVG');
+      await pumpUntil(
+        tester,
+        () => find.text('Saved new-diagram.svg').evaluate().isNotEmpty,
+        operation: 'Show successful SVG publication',
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   testWidgets('fits a small Mermaid diagram to the preview width', (
     tester,
   ) async {
@@ -266,6 +333,8 @@ class _MemoryVisualizationCache extends VisualizationCache {
   }
 }
 
+void _ignore(int _) {}
+
 class _App extends StatelessWidget {
   const _App({required this.child});
 
@@ -276,7 +345,9 @@ class _App extends StatelessWidget {
     return MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: SingleChildScrollView(child: child)),
+      home: BusyMarkToastOverlay(
+        child: Scaffold(body: SingleChildScrollView(child: child)),
+      ),
     );
   }
 }

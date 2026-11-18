@@ -3583,7 +3583,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         }
         final created = await ref
             .read(workspaceControllerProvider.notifier)
-            .createWorkspaceFile(directory, fileName);
+            .createWorkspaceFile(directory, fileName, focusSource: true);
         if (created) {
           _expandedPaths.addAll(_directoryAncestorPaths(directory));
         }
@@ -9988,6 +9988,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               ),
                               filePath: activeEditorPath,
                               documentId: activeBuffer?.id,
+                              creationFocus: ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .sourceCreationFocus(activeBuffer?.id),
                               clipboardInsertionRegistry: ref.read(
                                 clipboardInsertionRegistryProvider,
                               ),

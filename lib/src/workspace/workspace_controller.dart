@@ -12,10 +12,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
+import '../app/busymark_deferred_editor_focus.dart';
 import '../comparison/source_comparison.dart';
 import '../core/debug_log.dart';
 import '../core/anchored_path_guard.dart';
 import '../core/atomic_file_writer.dart';
+import '../core/save_destination.dart';
 import '../core/busymark_temporary_path.dart';
 import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
@@ -245,6 +247,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _validationSequence = 0;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
+  ({String bufferId, BusyMarkDeferredEditorFocus request})? _creationFocus;
+
+  BusyMarkDeferredEditorFocus? sourceCreationFocus(String? bufferId) =>
+      _creationFocus?.bufferId == bufferId ? _creationFocus?.request : null;
+
+  void _cancelCreationFocus() {
+    _creationFocus?.request.cancel();
+    _creationFocus = null;
+  }
+
+  void _retainCreationFocus(
+    DocumentBuffer buffer,
+    BusyMarkDeferredEditorFocus? request,
+  ) {
+    if (request == null || !request.isPending) return;
+    final mode = buffer.editorState.mode;
+    if (mode == DocumentViewModePreference.source ||
+        mode == DocumentViewModePreference.split) {
+      _creationFocus = (bufferId: buffer.id, request: request);
+    } else {
+      request.cancel();
+    }
+  }
+
   // Removal follows workspace/request lifetime, not active-tab navigation.
   var _removalOperationRevision = 0;
   var _workspaceRefreshRevision = 0;
@@ -345,6 +371,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     ref.onDispose(() {
       _settingsController.processPendingProperties = null;
       propertyEdits.dispose();
+      _cancelCreationFocus();
       _fileMonitorWorkspaceGeneration++;
       _removalOperationRevision++;
       _cancelPendingDerivedRefresh();
@@ -3914,7 +3941,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   /// Starts a document from Welcome, replacing the previous workspace only
   /// after its buffers have been resolved and their history has been flushed.
-  Future<bool> createMarkdownWorkspace() async {
+  Future<bool> createMarkdownWorkspace({bool focusSource = false}) async {
+    final request = focusSource ? BusyMarkDeferredEditorFocus() : null;
+    try {
+      return await _createMarkdownWorkspace(request);
+    } finally {
+      if (_creationFocus?.request != request) request?.cancel();
+    }
+  }
+
+  Future<bool> _createMarkdownWorkspace(
+    BusyMarkDeferredEditorFocus? request,
+  ) async {
     if (!propertyEdits.flush()) return false;
     final previous = state;
     final previousOperation = _activeDocumentRevision;
@@ -3945,11 +3983,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         historySettled: historySettled,
       );
     }
-    await createMarkdownFile();
+    await _createMarkdownFile(request);
     return true;
   }
 
-  Future<void> createMarkdownFile() async {
+  Future<void> createMarkdownFile({bool focusSource = false}) async {
+    final request = focusSource ? BusyMarkDeferredEditorFocus() : null;
+    try {
+      await _createMarkdownFile(request);
+    } finally {
+      if (_creationFocus?.request != request) request?.cancel();
+    }
+  }
+
+  Future<void> _createMarkdownFile(BusyMarkDeferredEditorFocus? request) async {
     if (!propertyEdits.flush()) return;
     if (state.workspace?.isRemote == true) {
       await createNextcloudNote();
@@ -3975,6 +4022,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final workspace = currentWorkspace == null
         ? untitledWorkspace.copyWith(markdown: null)
         : currentWorkspace.copyWith(activeFilePath: null, markdown: null);
+    _retainCreationFocus(buffer, request);
     state = WorkspaceState(
       workspace: workspace,
       preview: _safePreview(workspace, buffer),
@@ -4486,15 +4534,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> createWorkspaceFile(
     String directoryPath,
-    String fileName,
-  ) async {
-    final created = await _runWorkspaceFileOperation((workspace) async {
-      return _service.createFile(workspace, directoryPath, fileName);
-    });
-    if (created) {
-      await _showEditorForNewFile();
+    String fileName, {
+    bool focusSource = false,
+  }) async {
+    final request = focusSource ? BusyMarkDeferredEditorFocus() : null;
+    try {
+      final created = await _runWorkspaceFileOperation(
+        (workspace) => _service.createFile(workspace, directoryPath, fileName),
+        creationFocus: request,
+      );
+      if (created) await _showEditorForNewFile();
+      return created;
+    } finally {
+      if (_creationFocus?.request != request) request?.cancel();
     }
-    return created;
   }
 
   Future<MarkdownMovePlan?> prepareMarkdownMove(
@@ -5648,6 +5701,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> _openActiveFile(
     String path, {
+    BusyMarkDeferredEditorFocus? creationFocus,
     List<String>? openFilePaths,
     List<DocumentBuffer>? documentBuffers,
     bool Function()? acceptNavigation,
@@ -5754,6 +5808,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (sourcesCurrent) {
         _preparedInputs[publishedWorkspace] = _preparedInputs[reparsed];
       }
+      _retainCreationFocus(buffer, creationFocus);
       state = state.copyWith(
         workspace: publishedWorkspace,
         preview: sourcesCurrent
@@ -6174,6 +6229,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   void updateActiveEditorMode(DocumentViewModePreference mode) {
+    _cancelCreationFocus();
     if (!propertyEdits.flush()) return;
     final buffer = state.activeBuffer;
     if (buffer == null || buffer.editorState.mode == mode) {
@@ -7095,6 +7151,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String path, {
     ActiveDocumentSaveTarget? target,
     bool overwriteExisting = false,
+    SaveDestination? authorization,
     LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     if (target != null && !isActiveDocumentSaveTargetCurrent(target)) {
@@ -7110,13 +7167,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _cancelPendingDerivedRefresh();
     return _enqueueBufferWrite(operationTarget.bufferId, () async {
       final refreshedTarget = _refreshBufferSaveTarget(operationTarget);
-      if (refreshedTarget == null) {
+      if (refreshedTarget == null ||
+          (authorization != null &&
+              !isActiveDocumentSaveTargetCurrent(operationTarget))) {
         return false;
       }
       return _saveActiveAsNow(
         path,
         target: refreshedTarget,
-        overwriteExisting: overwriteExisting,
+        overwriteExisting: authorization?.replacesExisting ?? overwriteExisting,
+        authorization: authorization,
         mixedLineEndingNormalization: mixedLineEndingNormalization,
       );
     });
@@ -7142,10 +7202,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String path, {
     required ActiveDocumentSaveTarget target,
     required bool overwriteExisting,
+    required SaveDestination? authorization,
     required LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     if (target.workspaceKind == WorkspaceKind.nextcloudNotes) {
       try {
+        authorization?.requireCurrent(path);
         final buffer = state.documentBuffers
             .where((buffer) => buffer.id == target.bufferId)
             .firstOrNull;
@@ -7161,6 +7223,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           destinationPath: path,
           media: media.context,
           overwrite: overwriteExisting,
+          authorization: authorization,
+          isCancelled: authorization == null
+              ? null
+              : () => !isActiveDocumentSaveTargetCurrent(target),
         );
         // Save As exports a copy; it never promotes a remote identity to a path.
         return true;
@@ -7198,6 +7264,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? destinationCleanupOperationId;
     WorkspaceFileSnapshot? protectedDestinationSnapshot;
     try {
+      authorization?.requireCurrent(path);
       final destinationExisted =
           overwriteExisting && await _service.pathExists(path);
       if (destinationExisted) {
@@ -7264,43 +7331,54 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       )) {
         return false;
       }
-      if (destinationOwnedByAnotherBuffer()) return false;
+      bool stillCurrent() =>
+          !destinationOwnedByAnotherBuffer() &&
+          (authorization == null || isActiveDocumentSaveTargetCurrent(target));
+      if (!stillCurrent()) return false;
+      authorization?.requireCurrent(path);
+      final text = target.format.formattedText(
+        target.text,
+        mixedNormalization: mixedLineEndingNormalization,
+      );
+      Future<void> onPublished() async {
+        historyPathCommitted = true;
+        historySaveAsStillCurrent =
+            await _commitSavedAsSourceRecoveryAfterPublication(
+              savedAsSourceRecoveryOwner,
+            );
+      }
+
       WorkspaceFileSnapshot? savedSnapshot;
       try {
         if (overwriteExisting) {
-          savedSnapshot = await _service.saveTextReplacingPathIfUnchanged(
-            path,
-            target.format.formattedText(
-              target.text,
-              mixedNormalization: mixedLineEndingNormalization,
-            ),
-            expectedSnapshot: protectedDestinationSnapshot!,
-            onPublished: () async {
-              historyPathCommitted = true;
-              historySaveAsStillCurrent =
-                  await _commitSavedAsSourceRecoveryAfterPublication(
-                    savedAsSourceRecoveryOwner,
-                  );
-            },
-          );
+          savedSnapshot = authorization == null
+              ? await _service.saveTextReplacingPathIfUnchanged(
+                  path,
+                  text,
+                  expectedSnapshot: protectedDestinationSnapshot!,
+                  onPublished: onPublished,
+                )
+              : await _service.saveFormattedTextReplacingPath(
+                  path,
+                  text,
+                  expectedSnapshot: protectedDestinationSnapshot!,
+                  authorization: authorization,
+                  stillCurrent: stillCurrent,
+                  onPublished: onPublished,
+                );
         } else {
           savedSnapshot = await _localHistory.runStagedPathDeletion(
             path: path,
             recursive: false,
-            filesystemOperation: () => _service.saveNewText(
-              path,
-              target.format.formattedText(
-                target.text,
-                mixedNormalization: mixedLineEndingNormalization,
-              ),
-              onPublished: () async {
-                historyPathCommitted = true;
-                historySaveAsStillCurrent =
-                    await _commitSavedAsSourceRecoveryAfterPublication(
-                      savedAsSourceRecoveryOwner,
-                    );
-              },
-            ),
+            filesystemOperation: () => authorization == null
+                ? _service.saveNewText(path, text, onPublished: onPublished)
+                : _service.saveNewFormattedText(
+                    path,
+                    text,
+                    authorization: authorization,
+                    stillCurrent: stillCurrent,
+                    onPublished: onPublished,
+                  ),
             didCommit: (_) => true,
             committedAfterError: () async => historyPathCommitted,
             commitEvidenceOperationId: savedAsSourceRecoveryOwner,
@@ -7857,6 +7935,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required LocalHistoryRevision revision,
     required String destinationPath,
     required bool overwriteExisting,
+    SaveDestination? authorization,
   }) async {
     if (revision.summary.documentId != document.id) return false;
     final path = p.normalize(p.absolute(destinationPath));
@@ -7880,11 +7959,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     WorkspaceFileSnapshot? createdSnapshot;
     void Function()? stopWatchingTarget;
     try {
+      authorization?.requireCurrent(path);
       if (!existed) {
         createdSnapshot = await _service.saveNewFormattedText(
           path,
           '',
           format: revision.format,
+          authorization: authorization,
         );
       }
       var destination = state.bufferForPath(path);
@@ -7917,6 +7998,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       // Keep destination formatting while making the editor's canonical source
       // agree with the bytes that Save will produce under that policy.
+      if (existed) authorization?.requireCurrent(path);
       final restoredText = createdSnapshot != null
           ? revision.source
           : _withFinalNewlinePolicy(
@@ -7968,6 +8050,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
         return false;
       }
+      if (existed) authorization?.requireCurrent(path);
       final current = state.documentBuffers
           .where((buffer) => buffer.id == target.bufferId)
           .firstOrNull!;
@@ -8709,11 +8792,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> _runWorkspaceFileOperation(
     Future<String?> Function(Workspace workspace) operation, {
     bool openForEditing = false,
+    BusyMarkDeferredEditorFocus? creationFocus,
   }) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
     }
+    final initialNavigation = _activeDocumentRevision;
     final before = _incorporatedDiskStates(workspace, state.documentBuffers);
     _reconciledNotifications = null;
     _workspaceFileOperationDepth++;
@@ -8724,13 +8809,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!ref.mounted || state.workspace?.id != workspace.id) {
         return false;
       }
+      if (initialNavigation != _activeDocumentRevision) creationFocus?.cancel();
+      final expectedNavigation = _activeDocumentRevision + 1;
       final refreshed = await refreshWorkspaceFromDiskPreservingOpenTabs();
       if (!refreshed) {
         return false;
       }
       await _acknowledgeHistoryOperationsAfterWorkspaceRefresh();
       if (preferredActivePath != null) {
-        final opened = await _openActiveFile(preferredActivePath);
+        if (expectedNavigation != _activeDocumentRevision) {
+          creationFocus?.cancel();
+        }
+        final opened = await _openActiveFile(
+          preferredActivePath,
+          creationFocus: creationFocus,
+        );
         if (opened &&
             openForEditing &&
             state.activeBuffer?.filePath == preferredActivePath &&
@@ -9264,6 +9357,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   int _invalidateActiveDocumentOperations() {
+    _cancelCreationFocus();
     _activeDocumentRevision++;
     return _activeDocumentRevision;
   }

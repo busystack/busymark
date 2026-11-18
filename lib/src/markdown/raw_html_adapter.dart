@@ -51,7 +51,14 @@ class RawHtmlInlineParseResult {
 }
 
 class RawHtmlAdapter {
-  const RawHtmlAdapter({this.preserveInlineWhitespace = false});
+  const RawHtmlAdapter({
+    this.preserveInlineWhitespace = false,
+    this.importClipboardLists = false,
+  });
+
+  /// Browser lists have explicit DOM owners. Clipboard import can serialize
+  /// their items as a group without inferring ownership in authored Markdown.
+  final bool importClipboardLists;
 
   /// Clipboard selections can explicitly include spaces at inline edges.
   /// Callers enabling this must first remove structural HTML layout whitespace.
@@ -78,7 +85,10 @@ class RawHtmlAdapter {
       return const RawHtmlBlockParseResult(safe: false);
     }
     final blocks = _blocksFromNodes(fragment.nodes, nextId);
-    return RawHtmlBlockParseResult(safe: true, blocks: blocks);
+    return RawHtmlBlockParseResult(
+      safe: true,
+      blocks: importClipboardLists ? _separateClipboardLists(blocks) : blocks,
+    );
   }
 
   List<BusyInline>? parseRawHtmlInlineFragment(String text) {
@@ -419,7 +429,7 @@ class RawHtmlAdapter {
 
     if (_headingLevel(tag) case final level?) {
       final anchorId = attributes['id'] ?? slugForHeading(text);
-      return _applyHtmlDirection([
+      final heading = _applyHtmlDirection([
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.heading,
@@ -432,6 +442,7 @@ class RawHtmlAdapter {
           },
         ),
       ], attributes['dir']);
+      return _preserveClipboardDirection(element, heading, nextId);
     }
 
     final List<BusyBlock> blocks = switch (tag) {
@@ -507,8 +518,42 @@ class RawHtmlAdapter {
               ]
             : const [],
     };
-    return _applyHtmlDirection(blocks, attributes['dir']);
+    return _preserveClipboardDirection(
+      element,
+      _applyHtmlDirection(blocks, attributes['dir']),
+      nextId,
+    );
   }
+
+  List<BusyBlock> _preserveClipboardDirection(
+    html.Element element,
+    List<BusyBlock> blocks,
+    String Function() nextId,
+  ) {
+    if (!importClipboardLists ||
+        blocks.isEmpty ||
+        _normalizedHtmlDirection(element.attributes['dir']) == null ||
+        blocks.singleOrNull?.rawSource != null) {
+      return blocks;
+    }
+    return [_importedHtmlBlock(element, blocks, nextId)];
+  }
+
+  BusyBlock _importedHtmlBlock(
+    html.Element element,
+    List<BusyBlock> blocks,
+    String Function() nextId,
+  ) => BusyBlock(
+    id: nextId(),
+    kind: BusyBlockKind.htmlBlock,
+    rawSource: element.outerHtml,
+    children: blocks,
+    attributes: {
+      'sourceFormat': 'html',
+      'htmlTag': element.localName!,
+      if (element.attributes['dir'] case final direction?) 'dir': direction,
+    },
+  );
 
   List<BusyBlock> _applyHtmlDirection(
     List<BusyBlock> blocks,
@@ -597,19 +642,101 @@ class RawHtmlAdapter {
     final attributes =
         sanitizeHtmlAttributes(element.localName ?? '', element.attributes) ??
         {};
-    final start = int.tryParse(attributes['start'] ?? '') ?? 1;
+    final items = element.children.where((child) => child.localName == 'li');
+    final reversed = attributes.containsKey('reversed');
+    final start =
+        int.tryParse(attributes['start'] ?? '') ??
+        (importClipboardLists && reversed ? items.length : 1);
     var number = start;
+    final blocks = <BusyBlock>[];
+    for (final child in items) {
+      if (importClipboardLists && ordered) {
+        number = int.tryParse(child.attributes['value'] ?? '') ?? number;
+      }
+      blocks.add(
+        _listItemFromElement(
+          child,
+          ordered: ordered,
+          marker: ordered ? '$number.' : '-',
+          nextId: nextId,
+          parentAttributes: attributes,
+        ),
+      );
+      if (ordered) number += importClipboardLists && reversed ? -1 : 1;
+    }
+    if (!importClipboardLists || blocks.isEmpty) return blocks;
+    final loose = items.any(
+      (item) => item.children.any((c) => c.localName == 'p'),
+    );
+    // Alphabetic, reversed, and per-item numbering have no Markdown marker
+    // equivalent. Keep the sanitized list itself as the source in that case.
+    if (attributes.keys.any((name) => name != 'start' && name != 'type') ||
+        (ordered &&
+            (reversed ||
+                (attributes['type'] ?? '1') != '1' ||
+                start < 0 ||
+                start + blocks.length - 1 > 999999999 ||
+                items.any((item) => item.attributes.containsKey('value')))) ||
+        (loose && blocks.length == 1 && blocks.single.children.isEmpty)) {
+      return [_importedHtmlBlock(element, blocks, nextId)];
+    }
+    final last = blocks.length - 1;
     return [
-      for (final child in element.children)
-        if (child.localName?.toLowerCase() == 'li')
-          _listItemFromElement(
-            child,
-            ordered: ordered,
-            marker: ordered ? '${number++}.' : '-',
-            nextId: nextId,
-            parentAttributes: attributes,
-          ),
+      BusyBlock(
+        id: nextId(),
+        kind: BusyBlockKind.writersideRawXml,
+        children: [
+          for (final (index, block) in blocks.indexed)
+            if (loose && index < last)
+              block.copyWith(
+                attributes: {
+                  ...block.attributes,
+                  'busymark-native-trailing-gap': '\n\n',
+                },
+              )
+            else
+              block,
+        ],
+        attributes: {
+          'element': 'list',
+          busyMarkWritersideContainerAttribute: 'true',
+          'busymark-list-form': 'markdown',
+          'busymark-native-list-type': ordered ? 'decimal' : 'bullet',
+          'busymark-native-list-start': '$start',
+        },
+      ),
     ];
+  }
+
+  List<BusyBlock> _separateClipboardLists(List<BusyBlock> blocks) {
+    String? previousMarker;
+    final result = <BusyBlock>[];
+    for (final block in blocks) {
+      var children = _separateClipboardLists(block.children);
+      String? marker;
+      if (block.attributes['busymark-list-form'] == 'markdown') {
+        final ordered =
+            block.attributes['busymark-native-list-type'] == 'decimal';
+        final standard = ordered ? '.' : '-';
+        marker = previousMarker == standard ? (ordered ? ')' : '+') : standard;
+        children = [
+          for (final child in children)
+            child.copyWith(
+              attributes: {
+                ...child.attributes,
+                'marker': ordered
+                    ? '${child.attributes['marker']!.split('.').first}$marker'
+                    : marker,
+                if (!ordered && marker != '-')
+                  'busymark-clipboard-list-marker': marker,
+              },
+            ),
+        ];
+      }
+      result.add(block.copyWith(children: children));
+      previousMarker = marker;
+    }
+    return result;
   }
 
   BusyBlock _listItemFromElement(
@@ -620,6 +747,24 @@ class RawHtmlAdapter {
     Map<String, String> parentAttributes = const {},
   }) {
     final attributes = sanitizeHtmlAttributes('li', element.attributes) ?? {};
+    if (importClipboardLists) {
+      final children = _blocksFromNodes(element.nodes, nextId);
+      final first = children.firstOrNull;
+      final inlines =
+          first?.kind == BusyBlockKind.paragraph &&
+              first!.attributes.keys.every((key) => key == 'htmlTag')
+          ? children.removeAt(0).inlines
+          : const <BusyInline>[];
+      return BusyBlock(
+        id: nextId(),
+        kind: ordered
+            ? BusyBlockKind.orderedListItem
+            : BusyBlockKind.unorderedListItem,
+        inlines: inlines,
+        children: children,
+        attributes: {...attributes, 'ordered': '$ordered', 'marker': marker},
+      );
+    }
     final inlines = <BusyInline>[];
     final nestedBlocks = <BusyBlock>[];
     for (final child in element.nodes) {

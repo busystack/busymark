@@ -27,14 +27,17 @@ final class LinuxFileIdentity {
 
   /// Unsupported identity inspection returns null. Recovery must fail closed
   /// rather than infer identity from a pathname or matching document bytes.
-  static String? read(String path) {
+  static String? read(String path) => version(path)?.identity;
+
+  static LinuxFileVersion? version(String path, {bool followLinks = false}) {
     final statx = _statx;
     if (statx == null) return null;
     final nativePath = path.toNativeUtf8();
     final buffer = calloc<Uint8>(256);
     try {
       // AT_FDCWD, AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS | STATX_BTIME.
-      if (statx(-100, nativePath, 0x100, 0xfff, buffer) != 0) {
+      if (statx(-100, nativePath, followLinks ? 0 : 0x100, 0xfff, buffer) !=
+          0) {
         throw FileSystemException('Cannot inspect filesystem identity', path);
       }
       final data = ByteData.sublistView(buffer.asTypedList(256));
@@ -46,10 +49,28 @@ final class LinuxFileIdentity {
       final birth = mask & 0x800 == 0
           ? ''
           : ':${data.getInt64(0x50, Endian.host)}:${data.getUint32(0x58, Endian.host)}';
-      return '$major:$minor:$inode$birth';
+      (int, int) timestamp(int offset) => (
+        data.getInt64(offset, Endian.host),
+        data.getUint32(offset + 8, Endian.host),
+      );
+      return (
+        identity: '$major:$minor:$inode$birth',
+        mode: data.getUint16(0x1c, Endian.host),
+        size: data.getUint64(0x28, Endian.host),
+        modified: timestamp(0x70),
+        changed: timestamp(0x60),
+      );
     } finally {
       calloc.free(buffer);
       malloc.free(nativePath);
     }
   }
 }
+
+typedef LinuxFileVersion = ({
+  String identity,
+  int mode,
+  int size,
+  (int, int) modified,
+  (int, int) changed,
+});

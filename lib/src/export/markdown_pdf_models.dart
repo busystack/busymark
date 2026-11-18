@@ -1,3 +1,4 @@
+import '../core/save_destination.dart';
 import '../assets/document_media_context.dart';
 import 'package:flutter/foundation.dart';
 
@@ -40,6 +41,7 @@ class MarkdownPdfExportRequest {
     required this.destinationPath,
     required this.options,
     required this.overwrite,
+    this.authorization,
     this.mode = MarkdownMode.commonMark,
     this.document,
     this.titlePage,
@@ -53,6 +55,7 @@ class MarkdownPdfExportRequest {
   final String destinationPath;
   final PdfExportOptions options;
   final bool overwrite;
+  final SaveDestination? authorization;
   final MarkdownMode mode;
 
   /// A pre-parsed semantic document. When present, PDF export consumes this

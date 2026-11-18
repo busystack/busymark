@@ -419,7 +419,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
     final created = await ref
         .read(workspaceControllerProvider.notifier)
-        .createMarkdownWorkspace();
+        .createMarkdownWorkspace(focusSource: true);
     if (created && mounted) {
       context.go('/workspace');
     }

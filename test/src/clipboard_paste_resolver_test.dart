@@ -157,7 +157,7 @@ void main() {
       const expectedKinds = [
         BusyBlockKind.heading,
         BusyBlockKind.paragraph,
-        BusyBlockKind.unorderedListItem,
+        BusyBlockKind.writersideRawXml,
         BusyBlockKind.paragraph,
         BusyBlockKind.table,
         BusyBlockKind.paragraph,

@@ -1,9 +1,8 @@
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
-import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -132,41 +131,14 @@ Future<void> exportActiveMarkdownToPdf(
       : activePath == null || activePath.isEmpty
       ? context.l10n.untitledMarkdownFileName
       : p.basename(activePath);
-  final location = await getSaveLocation(
-    acceptedTypeGroups: [
-      XTypeGroup(
-        label: context.l10n.fileTypePdf,
-        extensions: const ['pdf'],
-        mimeTypes: const ['application/pdf'],
-      ),
-    ],
+  final destination = await pickSaveDestination(
+    context,
     suggestedName: '${p.basenameWithoutExtension(baseName)}.pdf',
     initialDirectory: _initialDirectory(workspace, activePath),
-    confirmButtonText: context.l10n.export,
+    actionLabel: context.l10n.export,
+    suffix: '.pdf',
   );
-  if (location == null || !context.mounted) {
-    return;
-  }
-
-  final destinationPath = _withPdfExtension(location.path);
-  final targetType = await FileSystemEntity.type(
-    destinationPath,
-    followLinks: false,
-  );
-  if (!context.mounted) {
-    return;
-  }
-  var overwrite = false;
-  if (targetType != FileSystemEntityType.notFound) {
-    final confirmed = await _confirmPdfOverwrite(context, destinationPath);
-    if (!confirmed || !context.mounted) {
-      return;
-    }
-    overwrite = true;
-  }
-  if (!context.mounted) {
-    return;
-  }
+  if (destination == null || !context.mounted) return;
 
   final cancellationToken = MarkdownPdfCancellationToken();
   final request = MarkdownPdfExportRequest(
@@ -174,9 +146,10 @@ Future<void> exportActiveMarkdownToPdf(
     media: media,
     filePath: activePath ?? '',
     workspaceRoot: (workspace.filesystemRootPath ?? ''),
-    destinationPath: destinationPath,
+    destinationPath: destination.path,
     options: options,
-    overwrite: overwrite,
+    overwrite: destination.replacesExisting,
+    authorization: destination,
     document: document,
     titlePage: selected.titlePage,
   );
@@ -239,35 +212,6 @@ String? _initialDirectory(Workspace workspace, String? activePath) {
   return (workspace.filesystemRootPath ?? '').isEmpty
       ? null
       : (workspace.filesystemRootPath ?? '');
-}
-
-String _withPdfExtension(String path) {
-  final normalized = p.normalize(path);
-  return p.extension(normalized).toLowerCase() == '.pdf'
-      ? normalized
-      : '$normalized.pdf';
-}
-
-Future<bool> _confirmPdfOverwrite(BuildContext context, String path) async {
-  return await showBusyMarkModalDialog<bool>(
-        context,
-        builder: (context) => BusyMarkDialogShell(
-          title: context.l10n.warning,
-          actions: [
-            BusyMarkDialogButton(
-              label: context.l10n.cancel,
-              onPressed: () => Navigator.pop(context, false),
-            ),
-            BusyMarkDialogButton(
-              label: context.l10n.overwrite,
-              destructive: true,
-              onPressed: () => Navigator.pop(context, true),
-            ),
-          ],
-          children: [Text(context.l10n.errorPathAlreadyExists(path))],
-        ),
-      ) ??
-      false;
 }
 
 @visibleForTesting

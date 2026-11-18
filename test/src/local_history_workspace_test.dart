@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:busymark/src/app/busymark_native_controls.dart';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -21,8 +23,11 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+
+import '../support/widget_async.dart';
 
 void main() {
   late Directory root;
@@ -7476,6 +7481,118 @@ void main() {
     });
   }
 
+  for (final direct in [true, false]) {
+    testWidgets(
+      'missing revision uses final destination consent (direct=$direct)',
+      (tester) async {
+        final original = p.join(root.path, 'original.md');
+        final copy = p.join(root.path, 'copy.md');
+        final anchor = p.join(root.path, 'anchor.md');
+        File(anchor).writeAsStringSync('Unchanged anchor');
+        const channel = MethodChannel('plugins.flutter.io/file_selector');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        var chooserUses = 0;
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          expect(call.method, 'getDirectoryPath');
+          chooserUses++;
+          return root.path;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+        final h = (await tester.runAsync(() async {
+          final store = MemoryLocalHistoryStore();
+          final captured = await _capture(
+            store,
+            original,
+            'Historical revision',
+          );
+          final h = await _harness(
+            store,
+            fileMonitor: _ControlledFileMonitor(),
+            comparisonComputer: (old, current) async =>
+                compareSource(old, current),
+          );
+          await h.controller.openPath(anchor);
+          final history = h.container.read(
+            localHistoryControllerProvider.notifier,
+          );
+          await history.refresh();
+          history.inspectRetainedDocument(captured.document.id);
+          await history.selectRevision(captured.revision!.id);
+          return h;
+        }))!;
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: h.container,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const Scaffold(body: LocalHistoryComparisonView()),
+            ),
+          ),
+        );
+        final app = AppLocalizations.of(
+          tester.element(find.byType(LocalHistoryComparisonView)),
+        );
+        final action = find.text(
+          direct
+              ? app.localHistoryRestoreOriginalLocation
+              : app.localHistoryRestoreNewLocation,
+        );
+        await pumpUntil(
+          tester,
+          () => action.evaluate().isNotEmpty,
+          operation: 'Show restore route',
+        );
+
+        // The destination appeared after the comparison still showed a missing file.
+        final replacement = File(direct ? original : copy)
+          ..writeAsStringSync('Arrived later');
+        Future<void> showConfirmation() async {
+          await tester.tap(action);
+          if (!direct) {
+            final name = find.widgetWithText(
+              BusyMarkNativeTextEntry,
+              app.fileName,
+            );
+            await pumpUntil(
+              tester,
+              () => name.evaluate().isNotEmpty,
+              operation: 'Show restore filename',
+            );
+            await tester.pump(const Duration(milliseconds: 300));
+            await tester.enterText(name, 'copy');
+            await tester.testTextInput.receiveAction(TextInputAction.done);
+          }
+          final overwrite = find.text(app.overwrite);
+          await pumpUntil(
+            tester,
+            () => overwrite.evaluate().isNotEmpty,
+            operation: 'Show one final overwrite confirmation',
+          );
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(overwrite, findsOneWidget);
+        }
+
+        await showConfirmation();
+        await tester.tap(find.text(app.cancel));
+        await tester.pumpAndSettle();
+        expect(replacement.readAsStringSync(), 'Arrived later');
+        expect(h.state.activeText, 'Unchanged anchor');
+        await showConfirmation();
+        await tester.tap(find.text(app.overwrite));
+        await pumpUntil(
+          tester,
+          () => h.state.activeText == 'Historical revision',
+          operation: 'Restore revision into the approved buffer',
+        );
+        expect(h.state.activeBuffer!.filePath, replacement.path);
+        expect(replacement.readAsStringSync(), 'Arrived later');
+        expect(chooserUses, direct ? 0 : 2);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
+
   testWidgets(
     'comparison renders styled intraline spans without framework errors',
     (tester) async {
@@ -8523,6 +8640,8 @@ class _RecordingRestoreWorkspaceService extends WorkspaceService {
     String text, {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
     Future<void> Function()? onPublished,
   }) async {
     writes.add(text);

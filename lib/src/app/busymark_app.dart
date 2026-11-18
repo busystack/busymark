@@ -790,9 +790,11 @@ class BusyMarkApp extends ConsumerWidget {
           if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
             return;
           }
-          if (!await controller.createMarkdownWorkspace()) return;
+          if (!await controller.createMarkdownWorkspace(focusSource: true)) {
+            return;
+          }
         } else {
-          await controller.createMarkdownFile();
+          await controller.createMarkdownFile(focusSource: true);
         }
         if (context.mounted) {
           router.go('/workspace');

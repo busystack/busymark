@@ -1,6 +1,7 @@
+import '../core/save_destination.dart';
 import '../app/busymark_native_controls.dart';
 import '../core/atomic_file_writer.dart';
-import 'package:file_selector/file_selector.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -19,12 +20,6 @@ import 'text_format_metadata.dart';
 enum _UnsavedChangesAction { cancel, discard, save }
 
 enum _OverwriteAction { cancel, overwrite }
-
-XTypeGroup _markdownSaveType(BuildContext context) => XTypeGroup(
-  label: context.l10n.fileTypeMarkdown,
-  extensions: <String>['md', 'markdown'],
-  mimeTypes: <String>['text/markdown', 'text/x-markdown'],
-);
 
 Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
@@ -154,45 +149,22 @@ Future<bool> _confirmUnsavedChanges(
   };
   final action = await showBusyMarkModalDialog<_UnsavedChangesAction>(
     context,
-    builder: (context) => BusyMarkNativeDialogShell(
-      title: context.l10n.unsavedChanges,
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkNativeActionButton(
-          role: BusyMarkNativeActionRole.standard,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(BusyMarkGlyphs.clear, size: BusyMarkSizes.iconSm),
-              const SizedBox(width: BusyMarkSpacing.sm),
-              Text(context.l10n.cancel),
-            ],
-          ),
+    builder: (context) => BusyMarkAlert(
+      heading: context.l10n.unsavedChanges,
+      responses: [
+        BusyMarkAlertResponse(
+          label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.cancel),
         ),
-        BusyMarkNativeActionButton(
-          role: BusyMarkNativeActionRole.destructive,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(BusyMarkGlyphs.delete, size: BusyMarkSizes.iconSm),
-              const SizedBox(width: BusyMarkSpacing.sm),
-              Text(context.l10n.discard),
-            ],
-          ),
+        BusyMarkAlertResponse(
+          label: context.l10n.discard,
+          destructive: true,
           onPressed: () =>
               Navigator.pop(context, _UnsavedChangesAction.discard),
         ),
-        BusyMarkNativeActionButton(
-          role: BusyMarkNativeActionRole.suggested,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(BusyMarkGlyphs.save, size: BusyMarkSizes.iconSm),
-              const SizedBox(width: BusyMarkSpacing.sm),
-              Text(context.l10n.save),
-            ],
-          ),
+        BusyMarkAlertResponse(
+          label: context.l10n.save,
+          suggested: true,
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.save),
         ),
       ],
@@ -470,15 +442,14 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   }
   final action = await showBusyMarkModalDialog<_OverwriteAction>(
     context,
-    builder: (context) => BusyMarkNativeDialogShell(
-      title: context.l10n.fileChangedOnDisk,
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkNativeDialogButton(
+    builder: (context) => BusyMarkAlert(
+      heading: context.l10n.fileChangedOnDisk,
+      responses: [
+        BusyMarkAlertResponse(
           label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
         ),
-        BusyMarkNativeDialogButton(
+        BusyMarkAlertResponse(
           label: context.l10n.overwrite,
           destructive: true,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
@@ -535,40 +506,31 @@ Future<bool> _saveActiveAs(
     return false;
   }
   final activePath = target.path;
-  final location = await getSaveLocation(
-    acceptedTypeGroups: [_markdownSaveType(context)],
+  final destination = await pickSaveDestination(
+    context,
     suggestedName: activePath == null || activePath.isEmpty
         ? context.l10n.untitledMarkdownFileName
         : p.basename(activePath),
     initialDirectory: activePath == null || activePath.isEmpty
         ? null
         : p.dirname(activePath),
-    confirmButtonText: context.l10n.save,
+    actionLabel: context.l10n.save,
+    suffix: '.md',
+    suffixOnlyWhenMissing: true,
+    kind: target.workspaceKind == WorkspaceKind.nextcloudNotes
+        ? SaveDestinationKind.file
+        : SaveDestinationKind.fileOrSymbolicLink,
+    isCurrent: () => controller.isActiveDocumentSaveTargetCurrent(target),
   );
-  if (location == null) {
+  if (destination == null ||
+      !controller.isActiveDocumentSaveTargetCurrent(target)) {
     return false;
-  }
-  final savePath = p.normalize(_withMarkdownExtension(location.path));
-  final exists = await controller.savePathExists(savePath, target: target);
-  if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
-    return false;
-  }
-  var overwriteExisting = false;
-  if (exists) {
-    if (!context.mounted) {
-      return false;
-    }
-    final action = await _confirmSaveAsOverwrite(context, ref, savePath);
-    if (action != _OverwriteAction.overwrite ||
-        !controller.isActiveDocumentSaveTargetCurrent(target)) {
-      return false;
-    }
-    overwriteExisting = true;
   }
   return controller.saveActiveAs(
-    savePath,
+    destination.path,
     target: target,
-    overwriteExisting: overwriteExisting,
+    overwriteExisting: destination.replacesExisting,
+    authorization: destination,
     mixedLineEndingNormalization: normalization,
   );
 }
@@ -610,37 +572,4 @@ Future<LineEndingNormalization?> _chooseMixedLineEndingNormalizationForFormat(
       children: [Text(context.l10n.mixedLineEndingsSavePrompt)],
     ),
   );
-}
-
-Future<_OverwriteAction?> _confirmSaveAsOverwrite(
-  BuildContext context,
-  WidgetRef ref,
-  String savePath,
-) {
-  return showBusyMarkModalDialog<_OverwriteAction>(
-    context,
-    builder: (context) => BusyMarkNativeDialogShell(
-      title: context.l10n.warning,
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkNativeDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
-        ),
-        BusyMarkNativeDialogButton(
-          label: context.l10n.overwrite,
-          destructive: true,
-          onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
-        ),
-      ],
-      children: [Text(context.l10n.errorPathAlreadyExists(savePath))],
-    ),
-  );
-}
-
-String _withMarkdownExtension(String path) {
-  if (p.extension(path).isNotEmpty) {
-    return path;
-  }
-  return '$path.md';
 }

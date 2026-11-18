@@ -1,3 +1,4 @@
+import '../core/save_destination.dart';
 import '../assets/document_media_context.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -93,6 +94,7 @@ class HtmlExportService {
       options: request.options,
       customCss: customCss,
       overwrite: request.overwrite,
+      authorization: request.authorization,
       roots: [
         if (request.filePath.isNotEmpty) p.dirname(request.filePath),
         if (request.workspaceRoot.isNotEmpty) request.workspaceRoot,
@@ -112,6 +114,8 @@ class HtmlExportService {
     required String instanceId,
     required String destinationPath,
     bool overwrite = false,
+    SaveDestination? authorization,
+    String? expectedSiteOwnership,
     HtmlExportOptions options = const HtmlExportOptions(),
     WritersideProject? capturedProject,
     HtmlExportCancellationToken? cancellationToken,
@@ -158,6 +162,8 @@ class HtmlExportService {
       options: options,
       customCss: customCss,
       overwrite: overwrite,
+      authorization: authorization,
+      expectedSiteOwnership: expectedSiteOwnership,
       roots: project.modules.map((m) => m.rootPath).toList(),
       modules: project.modules,
       warnings: warnings,
@@ -173,6 +179,8 @@ class HtmlExportService {
     required HtmlExportOptions options,
     required String customCss,
     required bool overwrite,
+    SaveDestination? authorization,
+    String? expectedSiteOwnership,
     required List<String> roots,
     List<WritersideModule> modules = const [],
     DocumentMediaContext? media,
@@ -292,6 +300,8 @@ class HtmlExportService {
           stage: stage,
           destination: destination,
           overwrite: overwrite,
+          authorization: authorization,
+          expectedOwnership: expectedSiteOwnership,
           token: token,
         );
       } else {
@@ -301,6 +311,7 @@ class HtmlExportService {
           html: outputs.values.single,
           assetsName: assetName,
           overwrite: overwrite,
+          authorization: authorization,
           token: token,
         );
       }

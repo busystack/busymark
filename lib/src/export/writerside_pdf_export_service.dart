@@ -141,6 +141,7 @@ class WritersidePdfExportService {
               ? request.titlePage ?? PdfTitlePageData.forInstance(instance)
               : null,
           overwrite: request.overwrite,
+          authorization: request.authorization,
           mode: MarkdownMode.writersideMarkdown,
           document: document,
         ),

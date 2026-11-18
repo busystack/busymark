@@ -3,6 +3,11 @@ import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:busymark/src/core/save_destination.dart';
+import 'package:busymark/src/workspace/workspace_file_monitor.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
+import 'package:path/path.dart' as p;
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -92,9 +97,6 @@ void main() {
 
       expect(find.text(l10n.unsavedChanges), findsOneWidget);
       expect(find.byType(BusyMarkNativeActionButton), findsNWidgets(3));
-      expect(find.byIcon(BusyMarkGlyphs.clear), findsOneWidget);
-      expect(find.byIcon(BusyMarkGlyphs.delete), findsOneWidget);
-      expect(find.byIcon(BusyMarkGlyphs.save), findsOneWidget);
       await tester.tap(find.text(l10n.cancel));
       await tester.pumpAndSettle();
 
@@ -501,7 +503,7 @@ void main() {
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       fileSelectorChannel,
       (call) async {
-        expect(call.method, 'getSavePath');
+        expect(call.method, 'getDirectoryPath');
         pickerStarted.complete();
         return pickerResult.future;
       },
@@ -557,7 +559,7 @@ void main() {
 
     await controller.openPath(service.secondPath);
     controller.updateActiveText('# Edited active document\n');
-    pickerResult.complete(service.saveAsPath);
+    pickerResult.complete(service.rootPath);
     await tester.pumpAndSettle();
 
     expect(saved, isFalse);
@@ -578,7 +580,7 @@ void main() {
   testWidgets(
     'Save As cancel does not overwrite an existing normalized markdown path',
     (tester) async {
-      final service = _IdentityWorkspaceService();
+      final service = _saveAsFixture();
 
       const fileSelectorChannel = MethodChannel(
         'plugins.flutter.io/file_selector',
@@ -586,8 +588,8 @@ void main() {
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         fileSelectorChannel,
         (call) async {
-          expect(call.method, 'getSavePath');
-          return service.saveAsExtensionlessPath;
+          expect(call.method, 'getDirectoryPath');
+          return service.rootPath;
         },
       );
       addTearDown(() {
@@ -641,9 +643,12 @@ void main() {
       await tester.tap(find.text('Save document'));
       await tester.pumpAndSettle();
 
+      await _submitSaveName(tester, 'notes');
       expect(find.text(l10n.overwrite), findsOneWidget);
       expect(
-        find.text(l10n.errorPathAlreadyExists(service.saveAsNormalizedPath)),
+        find.text(
+          l10n.errorPathAlreadyExists(p.basename(service.saveAsNormalizedPath)),
+        ),
         findsOneWidget,
       );
       await tester.tap(find.text(l10n.cancel));
@@ -665,7 +670,7 @@ void main() {
   testWidgets(
     'Save As overwrites an existing normalized markdown path only after confirmation',
     (tester) async {
-      final service = _IdentityWorkspaceService();
+      final service = _saveAsFixture();
 
       const fileSelectorChannel = MethodChannel(
         'plugins.flutter.io/file_selector',
@@ -673,8 +678,8 @@ void main() {
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         fileSelectorChannel,
         (call) async {
-          expect(call.method, 'getSavePath');
-          return service.saveAsExtensionlessPath;
+          expect(call.method, 'getDirectoryPath');
+          return service.rootPath;
         },
       );
       addTearDown(() {
@@ -728,6 +733,7 @@ void main() {
       await tester.tap(find.text('Save document'));
       await tester.pumpAndSettle();
 
+      await _submitSaveName(tester, 'notes');
       expect(find.text(l10n.overwrite), findsOneWidget);
       expect(
         service.documents[service.saveAsNormalizedPath],
@@ -751,85 +757,88 @@ void main() {
     },
   );
 
-  testWidgets('Save As cancels when the document changes during path lookup', (
-    tester,
-  ) async {
-    final service = _IdentityWorkspaceService()
-      ..pendingPathExistsResult = Completer<bool>();
-    const fileSelectorChannel = MethodChannel(
-      'plugins.flutter.io/file_selector',
-    );
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      fileSelectorChannel,
-      (call) async => service.saveAsExtensionlessPath,
-    );
-    addTearDown(() {
+  testWidgets(
+    'Save As cancels when the document changes while overwrite confirmation is open',
+    (tester) async {
+      final service = _saveAsFixture();
+      const fileSelectorChannel = MethodChannel(
+        'plugins.flutter.io/file_selector',
+      );
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         fileSelectorChannel,
-        null,
+        (call) async => service.rootPath,
       );
-    });
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          fileSelectorChannel,
+          null,
+        );
+      });
 
-    bool? saved;
-    late WidgetRef widgetRef;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-          workspaceServiceProvider.overrideWithValue(service),
-        ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: buildBusyMarkTheme(
-            brightness: Brightness.light,
-            accentColor: Colors.green,
-          ),
-          home: Scaffold(
-            body: Consumer(
-              builder: (context, ref, child) {
-                widgetRef = ref;
-                return TextButton(
-                  onPressed: () async {
-                    saved = await saveActiveWithOverwriteConfirmation(
-                      context,
-                      ref,
-                    );
-                  },
-                  child: const Text('Save document'),
-                );
-              },
+      bool? saved;
+      late WidgetRef widgetRef;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.green,
+            ),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, child) {
+                  widgetRef = ref;
+                  return TextButton(
+                    onPressed: () async {
+                      saved = await saveActiveWithOverwriteConfirmation(
+                        context,
+                        ref,
+                      );
+                    },
+                    child: const Text('Save document'),
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    final controller = widgetRef.read(workspaceControllerProvider.notifier);
-    await controller.createMarkdownFile();
-    controller.updateActiveText('# Untitled draft\n');
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Untitled draft\n');
 
-    await tester.tap(find.text('Save document'));
-    await tester.runAsync(() => service.pathExistsCheckStarted.future);
+      await tester.tap(find.text('Save document'));
+      await tester.pumpAndSettle();
+      await _submitSaveName(tester, 'notes');
+      expect(find.text(l10n.overwrite), findsOneWidget);
 
-    await controller.openPath(service.secondPath);
-    controller.updateActiveText('# Edited active document\n');
-    service.pendingPathExistsResult!.complete(true);
-    await tester.pumpAndSettle();
+      await controller.openPath(service.secondPath);
+      controller.updateActiveText('# Edited active document\n');
+      await tester.tap(find.text(l10n.overwrite));
+      await tester.pumpAndSettle();
 
-    expect(saved, isFalse);
-    expect(find.text(l10n.overwrite), findsNothing);
-    expect(service.pathExistsChecks, [service.saveAsNormalizedPath]);
-    expect(service.saves, isEmpty);
-    expect(
-      service.documents[service.saveAsNormalizedPath],
-      '# Existing notes\n',
-    );
-    final state = widgetRef.read(workspaceControllerProvider);
-    expect(state.workspace?.activeFilePath, service.secondPath);
-    expect(state.activeText, '# Edited active document\n');
-    expect(state.isDirty, isTrue);
-  });
+      expect(saved, isFalse);
+      expect(find.text(l10n.overwrite), findsNothing);
+      expect(service.saves, isEmpty);
+      expect(
+        service.documents[service.saveAsNormalizedPath],
+        '# Existing notes\n',
+      );
+      final state = widgetRef.read(workspaceControllerProvider);
+      expect(state.workspace?.activeFilePath, service.secondPath);
+      expect(state.activeText, '# Edited active document\n');
+      expect(state.isDirty, isTrue);
+    },
+  );
 
   testWidgets('discard confirmation cannot discard a newly active document', (
     tester,
@@ -1462,6 +1471,11 @@ void main() {
                   .toJson(),
           ),
           workspaceServiceProvider.overrideWithValue(service),
+          workspaceFileMonitorProvider.overrideWith((ref) {
+            final monitor = _SaveDialogMonitor();
+            ref.onDispose(() => unawaited(monitor.dispose()));
+            return monitor;
+          }),
           if (createController != null)
             workspaceControllerProvider.overrideWith(createController),
         ],
@@ -1706,13 +1720,15 @@ void main() {
     testWidgets('scoped tab close supports untitled first Save As $saveAs', (
       tester,
     ) async {
-      final service = _IdentityWorkspaceService();
+      final service = saveAs == 'save'
+          ? _saveAsFixture()
+          : _IdentityWorkspaceService();
       const channel = MethodChannel('plugins.flutter.io/file_selector');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
         call,
       ) async {
-        expect(call.method, 'getSavePath');
-        return saveAs == 'save' ? service.saveAsPath : null;
+        expect(call.method, 'getDirectoryPath');
+        return saveAs == 'save' ? service.rootPath : null;
       });
       addTearDown(
         () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -1729,6 +1745,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.save));
       await tester.pumpAndSettle();
+      if (saveAs == 'save') await _submitSaveName(tester, 'saved');
       expect(h.result(), saveAs == 'save');
       final state = h.ref.read(workspaceControllerProvider);
       if (saveAs == 'save') {
@@ -2104,6 +2121,36 @@ class _PendingGitGateway implements GitRepositoryGateway {
       throw StateError('Unexpected metadata request: ${invocation.memberName}');
 }
 
+class _SaveDialogMonitor extends WorkspaceFileMonitor {
+  @override
+  Future<void> start({
+    required String rootPath,
+    required Iterable<String> openFilePaths,
+  }) async {}
+
+  @override
+  void updateOpenFilePaths(Iterable<String> paths) {}
+}
+
+_IdentityWorkspaceService _saveAsFixture() {
+  final folder = Directory.systemTemp.createTempSync('busymark-save-as-test-');
+  addTearDown(() => folder.deleteSync(recursive: true));
+  final service = _IdentityWorkspaceService(rootPath: folder.path);
+  File(
+    service.saveAsNormalizedPath,
+  ).writeAsStringSync(service.documents[service.saveAsNormalizedPath]!);
+  return service;
+}
+
+Future<void> _submitSaveName(WidgetTester tester, String name) async {
+  await tester.enterText(
+    find.widgetWithText(BusyMarkNativeTextEntry, AppLocalizationsEn().fileName),
+    name,
+  );
+  await tester.testTextInput.receiveAction(TextInputAction.done);
+  await tester.pumpAndSettle();
+}
+
 class _IdentityWorkspaceService extends WorkspaceService {
   _IdentityWorkspaceService({this.rootPath = '/virtual/workspace'})
     : firstPath = '$rootPath/a.md',
@@ -2127,14 +2174,11 @@ class _IdentityWorkspaceService extends WorkspaceService {
   final saves = <({String path, String text})>[];
   final fileChangeCheckStarted = Completer<void>();
   final firstSaveStarted = Completer<void>();
-  final pathExistsCheckStarted = Completer<void>();
-  final pathExistsChecks = <String>[];
   var failSave = false;
   var openPathCalls = 0;
   var firstChangedOnDisk = false;
   var pauseFirstSave = false;
   Completer<bool>? pendingFileChangedResult;
-  Completer<bool>? pendingPathExistsResult;
   final _releaseFirstSave = Completer<void>();
 
   @override
@@ -2188,17 +2232,7 @@ class _IdentityWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<bool> pathExists(String path) async {
-    pathExistsChecks.add(path);
-    if (!pathExistsCheckStarted.isCompleted) {
-      pathExistsCheckStarted.complete();
-    }
-    final pendingResult = pendingPathExistsResult;
-    if (pendingResult != null) {
-      return pendingResult.future;
-    }
-    return documents.containsKey(path);
-  }
+  Future<bool> pathExists(String path) async => documents.containsKey(path);
 
   @override
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
@@ -2226,6 +2260,21 @@ class _IdentityWorkspaceService extends WorkspaceService {
   }
 
   @override
+  Future<WorkspaceFileSnapshot> saveNewFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
+    Future<void> Function()? onPublished,
+  }) {
+    authorization?.requireCurrent(path);
+    expect(stillCurrent?.call(), isNot(false));
+    return saveNewText(path, text, onPublished: onPublished);
+  }
+
+  @override
   Future<WorkspaceFileSnapshot> saveNewText(
     String path,
     String text, {
@@ -2245,6 +2294,22 @@ class _IdentityWorkspaceService extends WorkspaceService {
     final result = await saveText(path, text);
     await onPublished?.call();
     return result;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveFormattedTextReplacingPath(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+    WorkspaceFileSnapshot? expectedSnapshot,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
+    Future<void> Function()? onPublished,
+  }) {
+    authorization?.requireCurrent(path);
+    expect(stillCurrent?.call(), isNot(false));
+    return saveTextReplacingPath(path, text, onPublished: onPublished);
   }
 
   @override

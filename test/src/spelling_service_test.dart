@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -5933,6 +5934,7 @@ final class _DelayedAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
@@ -5961,6 +5963,7 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
@@ -6005,6 +6008,7 @@ final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
@@ -6036,6 +6040,7 @@ final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
@@ -6079,6 +6084,7 @@ final class _RejectedExchangeAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {

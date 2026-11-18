@@ -210,6 +210,7 @@ class BusyMarkClipboardPasteResolver {
           final decoded = const WysiwygClipboardHtml().decode(
             html,
             mode: markdownMode ?? MarkdownMode.commonMark,
+            external: snapshot.external,
           );
           if (decoded != null && hasUsableClipboardHtmlContent(decoded)) {
             candidates.add(

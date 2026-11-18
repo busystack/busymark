@@ -188,11 +188,19 @@ class MarkdownPdfExportService {
           request.destinationPath,
           pdfBytes,
           overwrite: request.overwrite,
+          authorization: request.authorization,
+          beforePublish: token.throwIfCancelled,
         );
       } on AtomicFileAlreadyExistsException catch (error) {
         throw MarkdownPdfExportException(
           MarkdownPdfFailureCode.destinationExists,
           detail: error.path,
+          cause: error,
+        );
+      } on AtomicFileChangedException catch (error) {
+        throw MarkdownPdfExportException(
+          MarkdownPdfFailureCode.fileSystem,
+          detail: error.toString(),
           cause: error,
         );
       } on FileSystemException catch (error) {
