@@ -863,8 +863,8 @@ class AppSettingsController extends Notifier<AppSettings> {
     );
   }
 
-  Future<void> setSidebarVisible(bool enabled) {
-    if (state.sidebarVisible != enabled) {
+  Future<void> setSidebarVisible(bool enabled, {bool animate = true}) {
+    if (animate && state.sidebarVisible != enabled) {
       ref.read(sidebarTransitionGenerationProvider.notifier).increment();
     }
     return _mutate((settings) => settings.copyWith(sidebarVisible: enabled));

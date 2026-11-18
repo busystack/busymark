@@ -1273,93 +1273,33 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   }
 }
 
-/// Opens an existing header menu after Flutter has observed the trigger's key
-/// releases. GTK grabs input while a native menu is open.
+/// Opens a header menu as soon as its trigger has been laid out.
 class BusyMarkHeaderMenuController {
   BusyMarkHeaderMenuController({this.debugLabel});
+
   final String? debugLabel;
   VoidCallback? _show;
   bool _pending = false;
-  bool _listening = false;
-  final _awaitingKeys = <PhysicalKeyboardKey>{};
 
-  void open({Iterable<ShortcutActivator> shortcuts = const []}) {
-    final keyboard = HardwareKeyboard.instance;
-    final triggerKeys = <LogicalKeyboardKey>{
-      for (final shortcut in shortcuts) ...?shortcut.triggers,
-      for (final shortcut in shortcuts.whereType<SingleActivator>()) ...{
-        if (shortcut.control) ...{
-          LogicalKeyboardKey.controlLeft,
-          LogicalKeyboardKey.controlRight,
-        },
-        if (shortcut.shift) ...{
-          LogicalKeyboardKey.shiftLeft,
-          LogicalKeyboardKey.shiftRight,
-        },
-        if (shortcut.alt) ...{
-          LogicalKeyboardKey.altLeft,
-          LogicalKeyboardKey.altRight,
-        },
-        if (shortcut.meta) ...{
-          LogicalKeyboardKey.metaLeft,
-          LogicalKeyboardKey.metaRight,
-        },
-      },
-    };
-    // Wait for the configured trigger and its concrete modifiers, rather than
-    // unrelated keys. In the live Linux keyboard state Num Lock can remain in
-    // physicalKeysPressed while its lock is enabled, indefinitely blocking an
-    // all-keys-up barrier. Keep actual lock-key bindings working as well.
-    _awaitingKeys
-      ..clear()
-      ..addAll(
-        keyboard.physicalKeysPressed.where(
-          (key) => triggerKeys.contains(keyboard.lookUpLayout(key)),
-        ),
-      );
+  void open() {
     if (debugLabel != null) {
       busyMarkViewSelectorTrace('controller-open', {
         'command': debugLabel,
         'attached': _show != null,
-        'pressedKeys': keyboard.physicalKeysPressed.length,
-        'awaitingKeys': _awaitingKeys.map((key) => key.debugName).toList(),
       });
     }
     _pending = true;
     _tryOpen();
   }
 
-  bool _released(KeyEvent event) {
-    _tryOpen();
-    return false;
-  }
-
   void _tryOpen() {
     if (!_pending || _show == null) return;
-    if (_awaitingKeys.any(
-      HardwareKeyboard.instance.physicalKeysPressed.contains,
-    )) {
-      if (!_listening) {
-        HardwareKeyboard.instance.addHandler(_released);
-        _listening = true;
-      }
-      return;
-    }
-    _stopListening();
     _pending = false;
-    // Let the release finish propagating before the host toolkit grabs input.
-    scheduleMicrotask(() => _show?.call());
-  }
-
-  void _stopListening() {
-    if (_listening) HardwareKeyboard.instance.removeHandler(_released);
-    _listening = false;
+    _show!();
   }
 
   void dispose() {
-    _stopListening();
     _pending = false;
-    _awaitingKeys.clear();
     _show = null;
   }
 }

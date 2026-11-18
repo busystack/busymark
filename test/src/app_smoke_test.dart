@@ -155,12 +155,25 @@ void main() {
         LogicalKeyboardKey key, {
         bool control = true,
         bool shift = true,
+        bool expectMenu = false,
       }) async {
         if (control) {
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         }
         if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-        await tester.sendKeyEvent(key);
+        await tester.sendKeyDownEvent(key);
+        if (expectMenu) {
+          await pumpUntil(
+            tester,
+            () => menus.isOpen,
+            operation: 'open the selector while the shortcut is held',
+          );
+          final presentations = menus.packets.length;
+          await tester.sendKeyRepeatEvent(key);
+          await tester.pumpAndSettle();
+          expect(menus.packets, hasLength(presentations));
+        }
+        await tester.sendKeyUpEvent(key);
         if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
         if (control) {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -168,12 +181,18 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await chord(LogicalKeyboardKey.f9);
-      await pumpUntil(
-        tester,
-        () => menus.isOpen,
-        operation: 'open Sidebar View with its registered shortcut',
+      await chord(LogicalKeyboardKey.f10, expectMenu: true);
+      expect(menus.isOpen, isTrue);
+      expect(
+        container.read(appSettingsControllerProvider).sidebarVisible,
+        isFalse,
       );
+      expect(menus.contains('Reading'), isTrue);
+      menus.close();
+      await tester.pumpAndSettle();
+
+      await chord(LogicalKeyboardKey.f9, expectMenu: true);
+      expect(menus.isOpen, isTrue);
       expect(
         container.read(appSettingsControllerProvider).sidebarVisible,
         isTrue,
@@ -199,7 +218,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byTooltip('Sidebar view (Ctrl+Shift+F9)'), findsOneWidget);
       expect(find.byTooltip('Hide sidebar (F9)'), findsOneWidget);
-      await chord(LogicalKeyboardKey.f10);
+      await chord(LogicalKeyboardKey.f10, expectMenu: true);
       expect(menus.isOpen, isTrue);
       expect(
         {for (final e in menus.entries) e['label']: e['mnemonic']},
@@ -253,11 +272,21 @@ void main() {
       expect(menus.isOpen, isFalse);
       await chord(LogicalKeyboardKey.f10);
       expect(menus.isOpen, isFalse);
-      await chord(LogicalKeyboardKey.f6, control: false, shift: false);
+      await chord(
+        LogicalKeyboardKey.f6,
+        control: false,
+        shift: false,
+        expectMenu: true,
+      );
       expect(menus.isOpen, isTrue);
       menus.close();
       await tester.pumpAndSettle();
-      await chord(LogicalKeyboardKey.f8, control: false, shift: false);
+      await chord(
+        LogicalKeyboardKey.f8,
+        control: false,
+        shift: false,
+        expectMenu: true,
+      );
       expect(menus.isOpen, isTrue);
       menus.close();
       await tester.pumpAndSettle();
@@ -392,9 +421,7 @@ void main() {
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
       await pumpUntil(
         tester,
         () => menus.isOpen,
@@ -406,6 +433,11 @@ void main() {
         'R',
         'D',
       ]);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(menus.isOpen, isTrue);
       expect(menus.packets, hasLength(2));
       menus.close();
       await tester.pumpAndSettle();

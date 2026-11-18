@@ -662,23 +662,15 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       }
       if (request.$1 == BusyMarkCommandIds.sidebarViewSelector) {
         final menu = ref.read(_sidebarViewMenuControllerProvider);
-        final wasHidden = !ref
-            .read(appSettingsControllerProvider)
-            .sidebarVisible;
         ref.read(_sidebarSelectorRevealProvider.notifier).reveal(workspace.id);
         ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
+        if (!ref.read(appSettingsControllerProvider).sidebarVisible) {
+          // Lay out the revealed selector at its final anchor for the popup.
+          unawaited(settingsController.setSidebarVisible(true, animate: false));
+        }
         unawaited(() async {
-          await settingsController.setSidebarVisible(true);
           await WidgetsBinding.instance.endOfFrame;
-          if (wasHidden) await Future<void>.delayed(BusyMarkMotion.sidebar);
-          if (context.mounted) {
-            menu.open(
-              shortcuts:
-                  (BusyMarkCommandRegistryScope.read(context) ??
-                          BusyMarkCommandCatalog.metadata)
-                      .activators(request.$1),
-            );
-          }
+          if (context.mounted) menu.open();
         }());
         return;
       }
@@ -687,14 +679,7 @@ class _WorkspaceScreenContents extends ConsumerWidget {
         ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
         unawaited(() async {
           await WidgetsBinding.instance.endOfFrame;
-          if (context.mounted) {
-            menu.open(
-              shortcuts:
-                  (BusyMarkCommandRegistryScope.read(context) ??
-                          BusyMarkCommandCatalog.metadata)
-                      .activators(request.$1),
-            );
-          }
+          if (context.mounted) menu.open();
         }());
         return;
       }

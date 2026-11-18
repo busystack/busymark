@@ -587,7 +587,12 @@ def main():
                 codes = [x.XKeysymToKeycode(desktop.display, x.XStringToKeysym(s.encode())) for s in command['names']]
                 if not all(codes):
                     raise ValueError('Unknown key')
-                for code, state in [(c, 1) for c in codes] + [(c, 0) for c in reversed(codes)]:
+                pressed = command.get('pressed')
+                if pressed is not None and not isinstance(pressed, bool):
+                    raise ValueError('Expected a boolean for a single key phase')
+                downs = [(code, 1) for code in codes] if pressed is not False else []
+                ups = [(code, 0) for code in reversed(codes)] if pressed is not True else []
+                for code, state in downs + ups:
                     xtest.XTestFakeKeyEvent(desktop.display, code, state, 0)
             elif kind == 'resize':
                 x.XResizeWindow(desktop.display, window.get_xid(), command['width'], command['height'])
