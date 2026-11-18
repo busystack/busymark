@@ -324,14 +324,20 @@ void main() {
     final reloaded = const MarkdownParser()
         .parse(filePath: '/pasted.md', source: source, mode: MarkdownMode.gfm)
         .busyDocument;
-    List<String> prose(BusyDocument document) => [
-      for (final block in document.blocks)
-        if (block.plainText.trim().isNotEmpty)
-          block.plainText.trim().replaceAll(RegExp(r'\s+'), ' '),
-    ];
+    Iterable<String> prose(Iterable<BusyBlock> blocks) sync* {
+      for (final block in blocks) {
+        if (block.plainText.trim().isNotEmpty) {
+          yield block.plainText.trim().replaceAll(RegExp(r'\s+'), ' ');
+        }
+        if (block.attributes['busymark-list-form'] == 'markdown') {
+          yield* prose(block.children);
+        }
+      }
+    }
+
     expect(
-      prose(reloaded),
-      prose(live),
+      prose(reloaded.blocks),
+      prose(live.blocks),
       reason: 'Formatting must not reload as literal Markdown markers.',
     );
     final projection = const WysiwygSpellingProjector().project(
@@ -341,6 +347,18 @@ void main() {
       documentGeneration: 1,
     );
     expect(projection.complete, isTrue, reason: projection.message);
+    final item = projection.runs.singleWhere(
+      (run) => run.text == 'Design accessible interfaces.',
+    );
+    expect(item.hasValidMapping, isTrue);
+    final listPlan = const SpellingReplacementPlanner().build(
+      occurrence: _rejected(item, 'accessible'),
+      suggestion: 'usable',
+    );
+    expect(
+      listPlan.applyToSource(source),
+      source.replaceFirst('accessible interfaces', 'usable interfaces'),
+    );
     final team = projection.runs.singleWhere(
       (run) => run.text.contains('Team responsibilities'),
     );

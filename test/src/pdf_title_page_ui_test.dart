@@ -5,6 +5,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/export/markdown_pdf_export_service.dart';
 import 'package:busymark/src/export/markdown_pdf_export_ui.dart';
@@ -224,7 +225,10 @@ void main() {
           const channel = MethodChannel('plugins.flutter.io/file_selector');
           tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
             channel,
-            (_) => picker.future,
+            (call) {
+              expect(call.method, 'getDirectoryPath');
+              return picker.future;
+            },
           );
           addTearDown(
             () => tester.binding.defaultBinaryMessenger
@@ -282,7 +286,15 @@ void main() {
           }
           await tester.tap(find.byKey(const ValueKey('export-options-submit')));
           await _settle(tester);
-          picker.complete(p.join(root.path, 'export.pdf'));
+          picker.complete(root.path);
+          await _settle(tester);
+          final name = find.byType(BusyMarkNativeTextEntry);
+          expect(
+            tester.widget<BusyMarkNativeTextEntry>(name).controller!.text,
+            endsWith('.pdf'),
+          );
+          await tester.enterText(name, 'export');
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
           for (var i = 0; i < 20; i++) {
             await _settle(tester);
             if (markdown.request != null || instance.request != null) break;
@@ -290,6 +302,12 @@ void main() {
           final titlePage = writerside
               ? instance.request!.titlePage!
               : markdown.request!.titlePage!;
+          expect(
+            writerside
+                ? instance.request!.destinationPath
+                : markdown.request!.destinationPath,
+            p.join(root.path, 'export.pdf'),
+          );
           expect(titlePage.subtitle, 'Only this request');
           expect(titlePage.author, '');
           if (writerside) {
