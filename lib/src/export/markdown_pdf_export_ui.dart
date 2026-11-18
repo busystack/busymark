@@ -137,6 +137,8 @@ Future<void> exportActiveMarkdownToPdf(
     initialDirectory: _initialDirectory(workspace, activePath),
     actionLabel: context.l10n.export,
     suffix: '.pdf',
+    filterLabel: context.l10n.fileTypePdf,
+    patterns: const ['*.[pP][dD][fF]'],
   );
   if (destination == null || !context.mounted) return;
 

@@ -1,4 +1,3 @@
-import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
@@ -17937,105 +17936,180 @@ Draft paragraph.
     );
   });
 
-  testWidgets('Reading linked block and inline images open their targets', (
-    tester,
-  ) async {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
-    addTearDown(() {
-      binding.platformDispatcher.defaultRouteNameTestValue = '/';
-    });
-    const rootPath = '/tmp/busymark-linked-images';
-    const readmePath = '$rootPath/README.md';
-    const blockTargetPath = '$rootPath/block-guide.md';
-    const inlineTargetPath = '$rootPath/inline-guide.md';
-    const source = '''
-[![Block logo](block-logo.png)](block-guide.md)
+  for (final remote in [false, true]) {
+    testWidgets('Reading linked block and inline images (remote: $remote)', (
+      tester,
+    ) async {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+      addTearDown(() {
+        binding.platformDispatcher.defaultRouteNameTestValue = '/';
+      });
+      const rootPath = '/tmp/busymark-linked-images';
+      const readmePath = '$rootPath/README.md';
+      const blockTargetPath = '$rootPath/block-guide.md';
+      const inlineTargetPath = '$rootPath/inline-guide.md';
+      final imageOrigin = remote ? 'https://example.com/' : '';
+      final source =
+          '''
+[![Block logo](${imageOrigin}block-logo.png)](block-guide.md)
 
-Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
+Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 ''';
-    final parsed = const MarkdownParser().parse(
-      filePath: readmePath,
-      source: source,
-    );
-    final workspace = Workspace(
-      id: readmePath,
-      rootPath: rootPath,
-      kind: WorkspaceKind.singleMarkdown,
-      openedAt: DateTime(2026),
-      activeFilePath: readmePath,
-      openFilePaths: const [readmePath],
-      files: [
-        for (final path in const [
-          readmePath,
-          blockTargetPath,
-          inlineTargetPath,
-        ])
-          DocumentFile(
-            absolutePath: path,
-            relativePath: p.basename(path),
-            kind: DocumentKind.markdown,
-            size: 1,
-            lastModified: DateTime(2026),
-          ),
-      ],
-      diagnostics: parsed.diagnostics,
-      markdown: parsed,
-    );
-    final controller = _MutableWorkspaceController(
-      WorkspaceState(
-        workspace: workspace,
-        // Production owns an active document buffer for this Reading surface.
-        // Keep the image-link regression in that same command/view context.
-        documentBuffers: [
-          DocumentBuffer(
-            id: 'linked-images',
-            filePath: readmePath,
-            text: source,
-            lastSavedText: source,
-            dirty: false,
-            editorState: const DocumentEditorState(
-              mode: DocumentViewModePreference.preview,
-            ),
-          ),
-        ],
-        activeBufferId: 'linked-images',
-        preview: const MarkdownPreviewBuilder().build(parsed),
-      ),
-    );
-    final settingsStore = _MemorySettingsStore()
-      ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.preview)
-          .toJson();
-    final container = ProviderContainer(
-      overrides: [
-        ..._smokeAccentOverrides,
-        localSettingsStoreProvider.overrideWithValue(settingsStore),
-        workspaceControllerProvider.overrideWith(() => controller),
-      ],
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const BusyMarkApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(MarkdownImageView), findsNWidgets(2));
-    for (final (destination, expectedPath) in const [
-      ('block-guide.md', blockTargetPath),
-      ('inline-guide.md', inlineTargetPath),
-    ]) {
-      await tester.tap(
-        find.byKey(ValueKey('preview-linked-image-$destination')),
+      final parsed = const MarkdownParser().parse(
+        filePath: readmePath,
+        source: source,
       );
-      await tester.pump();
-      expect(controller.openedFilePath, expectedPath);
-    }
-  });
+      final workspace = Workspace(
+        id: readmePath,
+        rootPath: rootPath,
+        kind: WorkspaceKind.singleMarkdown,
+        openedAt: DateTime(2026),
+        activeFilePath: readmePath,
+        openFilePaths: const [readmePath],
+        files: [
+          for (final path in const [
+            readmePath,
+            blockTargetPath,
+            inlineTargetPath,
+          ])
+            DocumentFile(
+              absolutePath: path,
+              relativePath: p.basename(path),
+              kind: DocumentKind.markdown,
+              size: 1,
+              lastModified: DateTime(2026),
+            ),
+        ],
+        diagnostics: parsed.diagnostics,
+        markdown: parsed,
+      );
+      final controller = _MutableWorkspaceController(
+        WorkspaceState(
+          workspace: workspace,
+          // Production owns an active document buffer for this Reading surface.
+          // Keep the image-link regression in that same command/view context.
+          documentBuffers: [
+            DocumentBuffer(
+              id: 'linked-images',
+              filePath: readmePath,
+              text: source,
+              lastSavedText: source,
+              dirty: false,
+              editorState: const DocumentEditorState(
+                mode: DocumentViewModePreference.preview,
+              ),
+            ),
+          ],
+          activeBufferId: 'linked-images',
+          preview: const MarkdownPreviewBuilder().build(parsed),
+        ),
+      );
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.preview)
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceControllerProvider.overrideWith(() => controller),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MarkdownImageView), findsNWidgets(2));
+      final blocked = find.text(l10n.remoteImageBlocked);
+      final permission = find.text(l10n.remoteImagesBlockedTitle);
+      final network = find.byWidgetPredicate(
+        (widget) => widget is Image && widget.image is NetworkImage,
+      );
+      if (remote) {
+        expect(blocked, findsNWidgets(2));
+        expect(network, findsNothing);
+        for (final destination in ['block-guide.md', 'inline-guide.md']) {
+          expect(
+            find.byKey(ValueKey('preview-linked-image-$destination')),
+            findsNothing,
+          );
+        }
+
+        await tester.tap(blocked.first);
+        await tester.pumpAndSettle();
+        expect(permission, findsOneWidget);
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
+
+        final semantics = tester.ensureSemantics();
+        try {
+          await tester.pump();
+          final inlinePermission = tester.getSemantics(
+            find.ancestor(
+              of: blocked.last,
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Semantics &&
+                    widget.properties.hint == l10n.remoteImageBlockedTooltip,
+              ),
+            ),
+          );
+          expect(
+            inlinePermission.getSemanticsData().hasAction(SemanticsAction.tap),
+            isTrue,
+          );
+          inlinePermission.owner!.performAction(
+            inlinePermission.id,
+            SemanticsAction.tap,
+          );
+          await tester.pumpAndSettle();
+        } finally {
+          semantics.dispose();
+        }
+        expect(permission, findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(permission, findsNothing);
+        expect(controller.openedFilePath, isNull);
+        expect(network, findsNothing);
+        expect(
+          container
+              .read(appSettingsControllerProvider)
+              .remoteImageAllowedWorkspacePaths,
+          isEmpty,
+        );
+
+        Focus.of(tester.element(blocked.last)).requestFocus();
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(permission, findsOneWidget);
+        await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        expect(network, findsNWidgets(2));
+        expect(controller.openedFilePath, isNull);
+      }
+
+      for (final (destination, expectedPath) in const [
+        ('block-guide.md', blockTargetPath),
+        ('inline-guide.md', inlineTargetPath),
+      ]) {
+        await tester.tap(
+          find.byKey(ValueKey('preview-linked-image-$destination')),
+        );
+        await tester.pump();
+        expect(controller.openedFilePath, expectedPath);
+      }
+    });
+  }
 
   testWidgets('new empty document leaves remembered preview mode for editor', (
     tester,
@@ -21585,14 +21659,12 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final temp = Directory.systemTemp.createTempSync('busymark_untitled_save_');
     final saveFile = File('${temp.path}/created.md');
     const editedText = '# Created\n\nDraft text.';
-    const fileSelectorChannel = MethodChannel(
-      'plugins.flutter.io/file_selector',
-    );
+    const fileSelectorChannel = MethodChannel('busymark/save_chooser');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       fileSelectorChannel,
       (call) async {
-        expect(call.method, 'getDirectoryPath');
-        return temp.path;
+        expect(call.method, 'save');
+        return SaveDestination.inspect(saveFile.path).chooserReview;
       },
     );
     addTearDown(() {
@@ -21657,13 +21729,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    final nameField = find.widgetWithText(
-      BusyMarkNativeTextEntry,
-      l10n.fileName,
-    );
-    await tester.enterText(nameField, 'created');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
     expect(service.saveCount, 1);
     expect(service.savedPath, saveFile.path);
     expect(service.savedText, editedText);

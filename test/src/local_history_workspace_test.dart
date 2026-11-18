@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -7489,13 +7488,15 @@ void main() {
         final copy = p.join(root.path, 'copy.md');
         final anchor = p.join(root.path, 'anchor.md');
         File(anchor).writeAsStringSync('Unchanged anchor');
-        const channel = MethodChannel('plugins.flutter.io/file_selector');
+        const channel = MethodChannel('busymark/save_chooser');
         final messenger = tester.binding.defaultBinaryMessenger;
         var chooserUses = 0;
         messenger.setMockMethodCallHandler(channel, (call) async {
-          expect(call.method, 'getDirectoryPath');
+          expect(call.method, 'save');
           chooserUses++;
-          return root.path;
+          return chooserUses == 1
+              ? null
+              : SaveDestination.inspect(copy).chooserReview;
         });
         addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
         final h = (await tester.runAsync(() async {
@@ -7550,18 +7551,9 @@ void main() {
         Future<void> showConfirmation() async {
           await tester.tap(action);
           if (!direct) {
-            final name = find.widgetWithText(
-              BusyMarkNativeTextEntry,
-              app.fileName,
-            );
-            await pumpUntil(
-              tester,
-              () => name.evaluate().isNotEmpty,
-              operation: 'Show restore filename',
-            );
-            await tester.pump(const Duration(milliseconds: 300));
-            await tester.enterText(name, 'copy');
-            await tester.testTextInput.receiveAction(TextInputAction.done);
+            await tester.pump();
+            expect(find.text(app.overwrite), findsNothing);
+            return;
           }
           final overwrite = find.text(app.overwrite);
           await pumpUntil(
@@ -7574,12 +7566,12 @@ void main() {
         }
 
         await showConfirmation();
-        await tester.tap(find.text(app.cancel));
+        if (direct) await tester.tap(find.text(app.cancel));
         await tester.pumpAndSettle();
         expect(replacement.readAsStringSync(), 'Arrived later');
         expect(h.state.activeText, 'Unchanged anchor');
         await showConfirmation();
-        await tester.tap(find.text(app.overwrite));
+        if (direct) await tester.tap(find.text(app.overwrite));
         await pumpUntil(
           tester,
           () => h.state.activeText == 'Historical revision',

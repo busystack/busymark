@@ -34,6 +34,24 @@ void main() {
     },
   );
 
+  test('chooser reviews bind consent to the entry observed before Replace', () {
+    final path = p.join(root.path, 'export.PDF');
+    SaveDestination accept(Map<String, Object?> review) =>
+        SaveDestination.fromChooserReview(
+          review,
+          kind: SaveDestinationKind.file,
+        );
+    final missing = SaveDestination.inspect(path).chooserReview;
+    expect(accept(missing).replacesExisting, isFalse);
+    final file = File(path)..writeAsStringSync('First version');
+    expect(() => accept(missing), throwsA(isA<AtomicFileChangedException>()));
+    final offer = SaveDestination.inspect(path).chooserReview;
+    expect(accept(offer).replacesExisting, isTrue);
+    file.writeAsStringSync('Modified while Replace was open');
+    expect(() => accept(offer), throwsA(isA<AtomicFileChangedException>()));
+    expect(file.readAsStringSync(), 'Modified while Replace was open');
+  });
+
   test(
     'a new final path refuses a file appearing while bytes are staged',
     () async {

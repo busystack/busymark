@@ -7,6 +7,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
@@ -15,6 +16,8 @@ import 'package:markdown/markdown.dart' as md;
 BusyMarkPastePlan _resolve(
   String html, {
   String? native,
+  BusyMarkPasteDestination destination =
+      BusyMarkPasteDestination.markdownSource,
   BusyMarkPasteMode mode = BusyMarkPasteMode.normal,
 }) => const BusyMarkClipboardPasteResolver().resolve(
   snapshot: BusyMarkClipboardSnapshot(
@@ -26,7 +29,7 @@ BusyMarkPastePlan _resolve(
     fromSystemClipboard: true,
   ),
   mode: mode,
-  destination: BusyMarkPasteDestination.markdownSource,
+  destination: destination,
   markdownMode: MarkdownMode.gfm,
 );
 
@@ -90,6 +93,81 @@ void main() {
       );
     },
   );
+
+  for (final destination in [
+    BusyMarkPasteDestination.markdownSource,
+    BusyMarkPasteDestination.editor,
+  ]) {
+    test('browser table preserves consecutive breaks in ${destination.name}', () {
+      for (final (imported, header, body) in [
+        (
+          '<table><tr><th>H</th></tr><tr><td>A<br><br>B</td></tr></table>',
+          'H',
+          'A<br><br>B',
+        ),
+        (
+          '<table><tr><th><p><strong>H</strong><br><br>I</p></th></tr>'
+              '<tr><td><p>A<span><br><br><em>B</em></span></p></td></tr></table>',
+          '**H**<br><br>I',
+          'A<br><br>*B*',
+        ),
+      ]) {
+        final plan = _resolve(imported, destination: destination);
+        final fragment =
+            (plan.candidates.first as BusyMarkStructuredPasteCandidate)
+                .fragment;
+        final table = fragment.documentBlocks.single;
+        expect(table.kind, BusyBlockKind.table);
+        for (final cell in table.children.expand((row) => row.children)) {
+          if (cell.plainText == 'H') continue;
+          expect(
+            cell.inlines.where(
+              (inline) => inline.kind == BusyInlineKind.hardBreak,
+            ),
+            hasLength(2),
+          );
+        }
+        final String output;
+        if (destination == BusyMarkPasteDestination.markdownSource) {
+          output = _paste(plan);
+        } else {
+          final document = const MarkdownParser()
+              .parse(
+                source: 'Target',
+                filePath: '/project/new.md',
+                mode: MarkdownMode.gfm,
+              )
+              .busyDocument;
+          final editor = BusyMarkWysiwygDocumentController(document: document);
+          addTearDown(editor.dispose);
+          expect(
+            editor.insertStyledBlocksAtSelection(
+              blockId: document.blocks.single.id,
+              selectionStart: 0,
+              selectionEnd: 6,
+              blocks: fragment.blocks,
+            ),
+            isNotNull,
+          );
+          output = editor.markdown;
+        }
+        expect(output.trim(), '| $header |\n| --- |\n| $body |');
+        final rendered = html.parseFragment(
+          md.markdownToHtml(
+            output,
+            extensionSet: md.ExtensionSet.gitHubFlavored,
+          ),
+        );
+        expect(rendered.querySelector('td')!.text, 'AB');
+        expect(rendered.querySelectorAll('td br'), hasLength(2));
+        if (header != 'H') {
+          expect(rendered.querySelectorAll('th br'), hasLength(2));
+          expect(rendered.querySelector('th strong')!.text, 'H');
+          expect(rendered.querySelector('td em')!.text, 'B');
+        }
+      }
+    });
+  }
 
   test(
     'a line break between linked words and an image-only link remain linked',

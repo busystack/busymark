@@ -12,50 +12,74 @@ import 'busymark_native_controls.dart';
 import 'busymark_toast.dart';
 import 'localization.dart';
 
-/// The native folder chooser works through the desktop portal and GTK.
-/// SaveFile responses provide neither the chosen entry's identity nor a
-/// portable indication of overwrite consent. BusyMark owns the name and the
-/// single confirmation, so both backends use the same authorization contract.
+const _saveChooser = MethodChannel('busymark/save_chooser');
+
+/// Use GTK's save dialog for a single file. GtkFileChooserNative and the
+/// FileChooser portal return a pathname without the pre-confirmation review.
 Future<SaveDestination?> pickSaveDestination(
   BuildContext context, {
   required String suggestedName,
   required String actionLabel,
+  required String filterLabel,
+  required List<String> patterns,
   String? initialDirectory,
   String? suffix,
   bool suffixOnlyWhenMissing = false,
   SaveDestinationKind kind = SaveDestinationKind.file,
   bool Function()? isCurrent,
-  Future<void> Function(String path)? validateReplacement,
-  String? replacementDetails,
 }) async {
-  final path = await chooseSaveDestinationPath(
-    context,
-    suggestedName: suggestedName,
-    actionLabel: actionLabel,
-    initialDirectory: initialDirectory,
-    suffix: suffix,
-    suffixOnlyWhenMissing: suffixOnlyWhenMissing,
-    isCurrent: isCurrent,
-  );
-  if (path == null || !context.mounted) return null;
-  return confirmSaveDestination(
-    context,
-    path,
-    kind: kind,
-    isCurrent: isCurrent,
-    validateReplacement: validateReplacement,
-    replacementDetails: replacementDetails,
-  );
+  try {
+    final review = await _saveChooser
+        .invokeMapMethod<Object?, Object?>('save', {
+          'suggestedName': SaveDestination.withSuffix(
+            suggestedName,
+            suffix,
+            onlyWhenMissing: suffixOnlyWhenMissing,
+          ),
+          'actionLabel': actionLabel,
+          'cancelLabel': context.l10n.cancel,
+          'filterLabel': filterLabel,
+          'patterns': patterns,
+          'initialDirectory': initialDirectory,
+          'suffix': suffix,
+          'suffixOnlyWhenMissing': suffixOnlyWhenMissing,
+          'allowLink': kind == SaveDestinationKind.fileOrSymbolicLink,
+        });
+    if (review == null || !context.mounted || isCurrent?.call() == false) {
+      return null;
+    }
+    final destination = SaveDestination.fromChooserReview(review, kind: kind);
+    if (SaveDestination.withSuffix(
+          destination.path,
+          suffix,
+          onlyWhenMissing: suffixOnlyWhenMissing,
+        ) !=
+        destination.path) {
+      throw const FormatException('Unexpected native save filename extension');
+    }
+    return destination;
+  } on Object catch (error) {
+    if (context.mounted) {
+      BusyMarkToastOverlay.show(
+        context,
+        message:
+            error is PlatformException ||
+                error is FileSystemException ||
+                error is FormatException
+            ? context.l10n.errorFileOperationInvalidTarget
+            : error.toString(),
+        priority: BusyMarkToastPriority.high,
+      );
+    }
+    return null;
+  }
 }
 
-Future<String?> chooseSaveDestinationPath(
+Future<SaveDestination?> pickHtmlSiteDestination(
   BuildContext context, {
   required String suggestedName,
-  required String actionLabel,
   String? initialDirectory,
-  String? suffix,
-  bool suffixOnlyWhenMissing = false,
-  bool Function()? isCurrent,
+  required Future<void> Function(String path) validateReplacement,
 }) async {
   String? selectedFolder;
   try {
@@ -74,23 +98,20 @@ Future<String?> chooseSaveDestinationPath(
     return null;
   }
   final folder = selectedFolder;
-  if (folder == null || !context.mounted || isCurrent?.call() == false) {
-    return null;
-  }
+  if (folder == null || !context.mounted) return null;
   final name = await showBusyMarkModalDialog<String>(
     context,
-    builder: (context) => _SaveDestinationName(
-      folder: folder,
-      suggestedName: suggestedName,
-      actionLabel: actionLabel,
-      suffix: suffix,
-      suffixOnlyWhenMissing: suffixOnlyWhenMissing,
-    ),
+    builder: (context) =>
+        _SiteDirectoryName(folder: folder, suggestedName: suggestedName),
   );
-  if (name == null || !context.mounted || isCurrent?.call() == false) {
-    return null;
-  }
-  return p.join(folder, name);
+  if (name == null || !context.mounted) return null;
+  return confirmSaveDestination(
+    context,
+    p.join(folder, name),
+    kind: SaveDestinationKind.directory,
+    replacementDetails: context.l10n.htmlOwnedDirectoryOnly,
+    validateReplacement: validateReplacement,
+  );
 }
 
 Future<SaveDestination?> confirmSaveDestination(
@@ -100,6 +121,7 @@ Future<SaveDestination?> confirmSaveDestination(
   bool Function()? isCurrent,
   Future<void> Function(String path)? validateReplacement,
   String? replacementDetails,
+  String? operation,
 }) async {
   if (!context.mounted || isCurrent?.call() == false) return null;
   try {
@@ -112,9 +134,9 @@ Future<SaveDestination?> confirmSaveDestination(
     final accepted = await showBusyMarkModalDialog<bool>(
       context,
       builder: (context) => BusyMarkAlert(
-        heading: context.l10n.errorPathAlreadyExists(
-          p.basename(destination.path),
-        ),
+        heading:
+            operation ??
+            context.l10n.errorPathAlreadyExists(p.basename(destination.path)),
         responses: [
           BusyMarkAlertResponse(
             label: context.l10n.cancel,
@@ -127,7 +149,11 @@ Future<SaveDestination?> confirmSaveDestination(
           ),
         ],
         children: [
-          Text(destination.path),
+          if (operation != null)
+            Text(
+              context.l10n.errorPathAlreadyExists(p.basename(destination.path)),
+            ),
+          Text(destination.path, textDirection: TextDirection.ltr),
           if (replacementDetails != null) Text(replacementDetails),
         ],
       ),
@@ -151,26 +177,17 @@ Future<SaveDestination?> confirmSaveDestination(
   }
 }
 
-class _SaveDestinationName extends StatefulWidget {
-  const _SaveDestinationName({
-    required this.folder,
-    required this.suggestedName,
-    required this.actionLabel,
-    required this.suffix,
-    required this.suffixOnlyWhenMissing,
-  });
+class _SiteDirectoryName extends StatefulWidget {
+  const _SiteDirectoryName({required this.folder, required this.suggestedName});
 
   final String folder;
   final String suggestedName;
-  final String actionLabel;
-  final String? suffix;
-  final bool suffixOnlyWhenMissing;
 
   @override
-  State<_SaveDestinationName> createState() => _SaveDestinationNameState();
+  State<_SiteDirectoryName> createState() => _SiteDirectoryNameState();
 }
 
-class _SaveDestinationNameState extends State<_SaveDestinationName> {
+class _SiteDirectoryNameState extends State<_SiteDirectoryName> {
   late final _name = TextEditingController(text: widget.suggestedName)
     ..selection = TextSelection(
       baseOffset: 0,
@@ -186,11 +203,7 @@ class _SaveDestinationNameState extends State<_SaveDestinationName> {
         name.contains('\u0000')) {
       return null;
     }
-    return SaveDestination.withSuffix(
-      name,
-      widget.suffix,
-      onlyWhenMissing: widget.suffixOnlyWhenMissing,
-    );
+    return name;
   }
 
   void _accept() {
@@ -205,14 +218,14 @@ class _SaveDestinationNameState extends State<_SaveDestinationName> {
 
   @override
   Widget build(BuildContext context) => BusyMarkNativeDialogShell(
-    title: widget.actionLabel,
+    title: context.l10n.export,
     actions: [
       BusyMarkNativeDialogButton(
         label: context.l10n.cancel,
         onPressed: () => Navigator.pop(context),
       ),
       BusyMarkNativeDialogButton(
-        label: widget.actionLabel,
+        label: context.l10n.export,
         suggested: true,
         onPressed: _destinationName == null ? null : _accept,
       ),
@@ -221,14 +234,13 @@ class _SaveDestinationNameState extends State<_SaveDestinationName> {
       Text(widget.folder),
       const SizedBox(height: BusyMarkSpacing.md),
       BusyMarkNativeTextEntry(
-        label: context.l10n.fileName,
+        label: context.l10n.folder,
         autofocus: true,
         controller: _name,
         textDirection: TextDirection.ltr,
         onChanged: (_) => setState(() {}),
         onSubmitted: (_) => _accept(),
       ),
-      if (_destinationName case final name? when name != _name.text) Text(name),
     ],
   );
 }

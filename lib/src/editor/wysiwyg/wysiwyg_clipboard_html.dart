@@ -636,6 +636,10 @@ class _HtmlNormalizer {
 // Only line-break runs in paragraph flow are browser spacing. A single break,
 // preformatted content, and breaks between words of a link label stay intact.
 void _normalizeBrowserParagraphs(dom.Element container) {
+  // These are real table cells. Layout tables were already unwrapped into
+  // document containers. Keep the entire cell subtree in its inline form.
+  final tag = container.localName;
+  if (tag == 'td' || tag == 'th') return;
   const flow = {
     'p',
     'div',
@@ -649,15 +653,12 @@ void _normalizeBrowserParagraphs(dom.Element container) {
     'details',
     'blockquote',
     'li',
-    'td',
-    'th',
   };
   for (final child in container.children.toList()) {
     if (child.localName != 'pre' && child.localName != 'code') {
       _normalizeBrowserParagraphs(child);
     }
   }
-  final tag = container.localName;
   if (!flow.contains(tag)) return;
 
   // A stream across wrapper boundaries, retaining the original DOM nodes so

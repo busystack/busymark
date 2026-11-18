@@ -9974,7 +9974,6 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         icon: visible ? BusyMarkGlyphs.hide : BusyMarkGlyphs.edit,
         onPressed: onToggle,
         accented: true,
-        elevated: true,
         foregroundColor: BusyMarkLinuxPalette.white,
       ),
     );

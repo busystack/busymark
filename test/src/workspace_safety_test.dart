@@ -6,7 +6,6 @@ import 'dart:io';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
-import 'package:path/path.dart' as p;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -495,15 +494,13 @@ void main() {
   ) async {
     final service = _IdentityWorkspaceService();
 
-    const fileSelectorChannel = MethodChannel(
-      'plugins.flutter.io/file_selector',
-    );
-    final pickerResult = Completer<String?>();
+    const fileSelectorChannel = MethodChannel('busymark/save_chooser');
+    final pickerResult = Completer<Map<String, Object?>?>();
     final pickerStarted = Completer<void>();
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       fileSelectorChannel,
       (call) async {
-        expect(call.method, 'getDirectoryPath');
+        expect(call.method, 'save');
         pickerStarted.complete();
         return pickerResult.future;
       },
@@ -559,7 +556,7 @@ void main() {
 
     await controller.openPath(service.secondPath);
     controller.updateActiveText('# Edited active document\n');
-    pickerResult.complete(service.rootPath);
+    pickerResult.complete({'path': service.saveAsPath});
     await tester.pumpAndSettle();
 
     expect(saved, isFalse);
@@ -582,14 +579,12 @@ void main() {
     (tester) async {
       final service = _saveAsFixture();
 
-      const fileSelectorChannel = MethodChannel(
-        'plugins.flutter.io/file_selector',
-      );
+      const fileSelectorChannel = MethodChannel('busymark/save_chooser');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         fileSelectorChannel,
         (call) async {
-          expect(call.method, 'getDirectoryPath');
-          return service.rootPath;
+          expect(call.method, 'save');
+          return null;
         },
       );
       addTearDown(() {
@@ -643,16 +638,7 @@ void main() {
       await tester.tap(find.text('Save document'));
       await tester.pumpAndSettle();
 
-      await _submitSaveName(tester, 'notes');
-      expect(find.text(l10n.overwrite), findsOneWidget);
-      expect(
-        find.text(
-          l10n.errorPathAlreadyExists(p.basename(service.saveAsNormalizedPath)),
-        ),
-        findsOneWidget,
-      );
-      await tester.tap(find.text(l10n.cancel));
-      await tester.pumpAndSettle();
+      expect(find.text(l10n.overwrite), findsNothing);
 
       expect(saved, isFalse);
       expect(
@@ -672,14 +658,14 @@ void main() {
     (tester) async {
       final service = _saveAsFixture();
 
-      const fileSelectorChannel = MethodChannel(
-        'plugins.flutter.io/file_selector',
-      );
+      const fileSelectorChannel = MethodChannel('busymark/save_chooser');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         fileSelectorChannel,
         (call) async {
-          expect(call.method, 'getDirectoryPath');
-          return service.rootPath;
+          expect(call.method, 'save');
+          return SaveDestination.inspect(
+            service.saveAsNormalizedPath,
+          ).chooserReview;
         },
       );
       addTearDown(() {
@@ -733,14 +719,7 @@ void main() {
       await tester.tap(find.text('Save document'));
       await tester.pumpAndSettle();
 
-      await _submitSaveName(tester, 'notes');
-      expect(find.text(l10n.overwrite), findsOneWidget);
-      expect(
-        service.documents[service.saveAsNormalizedPath],
-        '# Existing notes\n',
-      );
-      await tester.tap(find.text(l10n.overwrite));
-      await tester.pumpAndSettle();
+      expect(find.text(l10n.overwrite), findsNothing);
 
       expect(saved, isTrue);
       expect(
@@ -761,12 +740,14 @@ void main() {
     'Save As cancels when the document changes while overwrite confirmation is open',
     (tester) async {
       final service = _saveAsFixture();
-      const fileSelectorChannel = MethodChannel(
-        'plugins.flutter.io/file_selector',
-      );
+      final picker = Completer<Map<String, Object?>?>();
+      final review = SaveDestination.inspect(
+        service.saveAsNormalizedPath,
+      ).chooserReview;
+      const fileSelectorChannel = MethodChannel('busymark/save_chooser');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         fileSelectorChannel,
-        (call) async => service.rootPath,
+        (call) => picker.future,
       );
       addTearDown(() {
         tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -818,12 +799,10 @@ void main() {
 
       await tester.tap(find.text('Save document'));
       await tester.pumpAndSettle();
-      await _submitSaveName(tester, 'notes');
-      expect(find.text(l10n.overwrite), findsOneWidget);
 
       await controller.openPath(service.secondPath);
       controller.updateActiveText('# Edited active document\n');
-      await tester.tap(find.text(l10n.overwrite));
+      picker.complete(review);
       await tester.pumpAndSettle();
 
       expect(saved, isFalse);
@@ -1723,12 +1702,14 @@ void main() {
       final service = saveAs == 'save'
           ? _saveAsFixture()
           : _IdentityWorkspaceService();
-      const channel = MethodChannel('plugins.flutter.io/file_selector');
+      const channel = MethodChannel('busymark/save_chooser');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
         call,
       ) async {
-        expect(call.method, 'getDirectoryPath');
-        return saveAs == 'save' ? service.rootPath : null;
+        expect(call.method, 'save');
+        return saveAs == 'save'
+            ? SaveDestination.inspect(service.saveAsPath).chooserReview
+            : null;
       });
       addTearDown(
         () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -1745,7 +1726,6 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.save));
       await tester.pumpAndSettle();
-      if (saveAs == 'save') await _submitSaveName(tester, 'saved');
       expect(h.result(), saveAs == 'save');
       final state = h.ref.read(workspaceControllerProvider);
       if (saveAs == 'save') {
@@ -1890,7 +1870,7 @@ void main() {
     h.controller.updateActiveText('# Target to save\n');
     await h.controller.createMarkdownFile();
     h.controller.updateActiveText('# Untitled target\n');
-    const channel = MethodChannel('plugins.flutter.io/file_selector');
+    const channel = MethodChannel('busymark/save_chooser');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       channel,
       (_) async => null,
@@ -2140,15 +2120,6 @@ _IdentityWorkspaceService _saveAsFixture() {
     service.saveAsNormalizedPath,
   ).writeAsStringSync(service.documents[service.saveAsNormalizedPath]!);
   return service;
-}
-
-Future<void> _submitSaveName(WidgetTester tester, String name) async {
-  await tester.enterText(
-    find.widgetWithText(BusyMarkNativeTextEntry, AppLocalizationsEn().fileName),
-    name,
-  );
-  await tester.testTextInput.receiveAction(TextInputAction.done);
-  await tester.pumpAndSettle();
 }
 
 class _IdentityWorkspaceService extends WorkspaceService {

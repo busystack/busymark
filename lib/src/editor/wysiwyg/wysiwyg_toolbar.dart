@@ -410,7 +410,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         tooltip: context.l10n.writerside,
         icon: BusyMarkGlyphs.insertObject,
         transparent: false,
-        elevated: true,
         foregroundColor: BusyMarkLinuxPalette.white,
         backgroundColor: _editorToolbarButtonBackground(context),
         itemBuilder: (context) => [
@@ -521,7 +520,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       icon: BusyMarkGlyphs.font,
       shortcut: null,
       transparent: false,
-      elevated: true,
       foregroundColor: BusyMarkLinuxPalette.white,
       backgroundColor: _editorToolbarButtonBackground(context),
       itemBuilder: (context) => [
@@ -622,7 +620,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       onPressed: onPressed,
       shortcut: shortcut,
       transparent: false,
-      elevated: true,
       foregroundColor: BusyMarkLinuxPalette.white,
       backgroundColor: _editorToolbarButtonBackground(context),
     );

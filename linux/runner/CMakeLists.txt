@@ -15,6 +15,7 @@ add_executable(${BINARY_NAME}
   "gtk_window_preferences.cc"
   "linux_chrome_host.cc"
   "rich_clipboard_host.cc"
+  "save_chooser_host.cc"
   "secure_credential_host.cc"
   "video_player_host.cc"
   "web_render_host.cc"

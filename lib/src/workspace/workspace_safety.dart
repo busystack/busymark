@@ -516,6 +516,8 @@ Future<bool> _saveActiveAs(
         : p.dirname(activePath),
     actionLabel: context.l10n.save,
     suffix: '.md',
+    filterLabel: context.l10n.fileTypeMarkdown,
+    patterns: const ['*.[mM][dD]', '*.[mM][aA][rR][kK][dD][oO][wW][nN]'],
     suffixOnlyWhenMissing: true,
     kind: target.workspaceKind == WorkspaceKind.nextcloudNotes
         ? SaveDestinationKind.file

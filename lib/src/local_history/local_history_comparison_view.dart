@@ -1,7 +1,5 @@
-import '../core/save_destination.dart';
 import 'dart:async';
 
-import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -9,7 +7,9 @@ import 'package:path/path.dart' as p;
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
+import '../app/save_destination_picker.dart';
 import '../comparison/source_comparison.dart';
+import '../core/save_destination.dart';
 import '../workspace/document_buffer.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_safety.dart';
@@ -333,14 +333,14 @@ class _LocalHistoryComparisonViewState
         mounted &&
         ref.read(localHistoryControllerProvider).selectedRevisionId == selected;
 
-    var path = originalDestination;
-    if (path == null) {
+    SaveDestination? destination;
+    if (originalDestination == null) {
       final previous = ref.read(workspaceControllerProvider);
       final previousDocument = controller.captureActiveDocumentSaveTarget();
       final historicalPath =
           document.currentPath ?? revision.summary.historicalPath;
       final extension = p.extension(historicalPath ?? '');
-      path = await chooseSaveDestinationPath(
+      destination = await pickSaveDestination(
         context,
         suggestedName: p.basename(historicalPath ?? document.displayName),
         initialDirectory: historicalPath == null
@@ -349,6 +349,11 @@ class _LocalHistoryComparisonViewState
         actionLabel: context.l10n.localHistoryRestoreRevision,
         suffix: extension.isEmpty ? null : extension,
         suffixOnlyWhenMissing: true,
+        filterLabel: context.l10n.source,
+        patterns: extension.isEmpty
+            ? const []
+            : ['*${extension.toLowerCase()}', '*${extension.toUpperCase()}'],
+        kind: SaveDestinationKind.fileOrSymbolicLink,
         isCurrent: () =>
             ownsComparison() &&
             (previousDocument != null
@@ -357,7 +362,7 @@ class _LocalHistoryComparisonViewState
                       ref.read(workspaceControllerProvider).workspace?.id ==
                           previous.workspace?.id),
       );
-      if (path == null || !mounted || !ownsComparison()) return null;
+      if (destination == null || !mounted || !ownsComparison()) return null;
     }
     if (!await confirmSafeToContinue(context, ref) ||
         !mounted ||
@@ -374,9 +379,10 @@ class _LocalHistoryComparisonViewState
                   ref.read(workspaceControllerProvider).workspace?.id ==
                       previous.workspace?.id);
 
-    final destination = await confirmSaveDestination(
+    destination ??= await confirmSaveDestination(
       context,
-      path,
+      originalDestination!,
+      operation: context.l10n.localHistoryRestoreRevision,
       kind: SaveDestinationKind.fileOrSymbolicLink,
       isCurrent: isCurrent,
     );

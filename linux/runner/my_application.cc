@@ -15,6 +15,7 @@
 #include "linux_chrome_host.h"
 #include "native_shortcut_metadata.h"
 #include "rich_clipboard_host.h"
+#include "save_chooser_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
 #include "web_render_host.h"
@@ -59,6 +60,7 @@ struct _MyApplication {
   BusyMarkLinuxChromeHost* chrome_host;
   FlMethodChannel* native_menu_channel;
   FlMethodChannel* writerside_dialog_channel;
+  FlMethodChannel* save_chooser_channel;
   FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
   FlMethodChannel* rich_clipboard_channel;
@@ -1224,6 +1226,7 @@ static void my_application_activate(GApplication* application) {
   register_native_menu_channel(self, view);
   self->writerside_dialog_channel =
       busymark_writerside_dialog_channel_new(view, window);
+  self->save_chooser_channel = busymark_save_chooser_channel_new(view, window);
   register_asset_input_channel(self, view);
   self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
@@ -1283,6 +1286,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->native_surface_css_provider);
   g_clear_object(&self->native_menu_channel);
   g_clear_object(&self->writerside_dialog_channel);
+  g_clear_object(&self->save_chooser_channel);
   g_clear_object(&self->asset_input_channel);
   g_clear_object(&self->rich_clipboard_channel);
   g_clear_object(&self->secure_credential_channel);

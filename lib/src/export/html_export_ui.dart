@@ -1,7 +1,6 @@
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
-import '../core/save_destination.dart';
 import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,22 +81,24 @@ Future<void> exportWorkspaceToHtml(
       : p.basename(path);
   final service = ref.read(htmlExportServiceProvider);
   String? siteOwnership;
-  final authorization = await pickSaveDestination(
-    context,
-    suggestedName: site
-        ? '${instance!.id}-html'
-        : '${p.basenameWithoutExtension(name)}.html',
-    initialDirectory: workspace.filesystemRootPath,
-    actionLabel: context.l10n.export,
-    suffix: site ? null : '.html',
-    kind: site ? SaveDestinationKind.directory : SaveDestinationKind.file,
-    replacementDetails: site ? context.l10n.htmlOwnedDirectoryOnly : null,
-    validateReplacement: site
-        ? (path) async {
+  final authorization = site
+      ? await pickHtmlSiteDestination(
+          context,
+          suggestedName: '${instance!.id}-html',
+          initialDirectory: workspace.filesystemRootPath,
+          validateReplacement: (path) async {
             siteOwnership = await service.publisher.siteOwnership(path);
-          }
-        : null,
-  );
+          },
+        )
+      : await pickSaveDestination(
+          context,
+          suggestedName: '${p.basenameWithoutExtension(name)}.html',
+          initialDirectory: workspace.filesystemRootPath,
+          actionLabel: context.l10n.export,
+          suffix: '.html',
+          filterLabel: context.l10n.fileTypeHtml,
+          patterns: const ['*.[hH][tT][mM][lL]'],
+        );
   if (authorization == null || !context.mounted) return;
   final destination = authorization.path;
   final overwrite = authorization.replacesExisting;

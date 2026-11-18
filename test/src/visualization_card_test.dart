@@ -1,4 +1,4 @@
-import 'package:busymark/src/app/busymark_native_controls.dart';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
@@ -154,11 +154,13 @@ void main() {
         cache: _MemoryVisualizationCache(cacheDirectory),
       );
       addTearDown(coordinator.dispose);
-      const chooser = MethodChannel('plugins.flutter.io/file_selector');
+      const chooser = MethodChannel('busymark/save_chooser');
       final messenger = tester.binding.defaultBinaryMessenger;
+      Map<String, Object?>? selection;
       messenger.setMockMethodCallHandler(chooser, (call) async {
-        expect(call.method, 'getDirectoryPath');
-        return cacheDirectory.path;
+        expect(call.method, 'save');
+        expect((call.arguments as Map)['suffix'], '.svg');
+        return selection;
       });
       addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
       final protected = File('${cacheDirectory.path}/diagram.svg')
@@ -173,26 +175,26 @@ void main() {
       );
       await _pumpUntilFound(tester, find.byType(SvgPicture));
 
-      Future<void> chooseName(String name) async {
+      Future<void> choose(Map<String, Object?>? review) async {
+        selection = review;
         await tester.tap(find.byTooltip('Save image'));
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.widgetWithText(BusyMarkNativeTextEntry, 'File name'),
-          name,
-        );
-        await tester.testTextInput.receiveAction(TextInputAction.done);
         await tester.pumpAndSettle();
       }
 
-      await chooseName('diagram');
-      expect(find.text('Overwrite'), findsOneWidget);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
+      final reviewed = SaveDestination.inspect(protected.path).chooserReview;
+      await choose({...reviewed, 'path': '${cacheDirectory.path}/diagram'});
+      await choose({...reviewed, 'entry': null});
+      await choose(null);
       expect(protected.readAsStringSync(), 'existing SVG');
       expect(find.textContaining('Saved diagram.svg'), findsNothing);
 
-      await chooseName('new-diagram');
-      final published = File('${cacheDirectory.path}/new-diagram.svg');
+      for (var index = 0; index < 2; index++) {
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+      }
+
+      final published = File('${cacheDirectory.path}/new-diagram.SVG');
+      await choose(SaveDestination.inspect(published.path).chooserReview);
       await pumpUntil(
         tester,
         published.existsSync,
@@ -202,7 +204,7 @@ void main() {
       expect(protected.readAsStringSync(), 'existing SVG');
       await pumpUntil(
         tester,
-        () => find.text('Saved new-diagram.svg').evaluate().isNotEmpty,
+        () => find.text('Saved new-diagram.SVG').evaluate().isNotEmpty,
         operation: 'Show successful SVG publication',
       );
       await tester.pumpWidget(const SizedBox());

@@ -2333,7 +2333,7 @@ void main() {
         isEmpty,
       );
       expect(popups.every((popup) => !popup.transparent), isTrue);
-      expect(popups.every((popup) => popup.elevated), isTrue);
+      expect(popups.every((popup) => !popup.elevated), isTrue);
       expect(
         popups.every(
           (popup) => popup.foregroundColor == BusyMarkLinuxPalette.white,
@@ -2428,7 +2428,7 @@ void main() {
       );
       expect(actions, isNotEmpty);
       expect(actions.every((button) => !button.transparent), isTrue);
-      expect(actions.every((button) => button.elevated), isTrue);
+      expect(actions.every((button) => !button.elevated), isTrue);
       expect(
         actions.every(
           (button) => button.foregroundColor == BusyMarkLinuxPalette.white,
@@ -2454,19 +2454,30 @@ void main() {
         find.descendant(of: toolbar, matching: find.byType(YaruIconButton)),
       );
       expect(renderedButtons, isNotEmpty);
-      final expectedElevation =
-          theme.cardTheme.elevation ?? BusyMarkElevation.surface;
+      expect(
+        find.descendant(
+          of: toolbar,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is PhysicalShape && widget.elevation > 0,
+          ),
+        ),
+        findsNothing,
+      );
       for (final button in renderedButtons) {
-        expect(button.style?.backgroundColor?.resolve({}), accent);
-        expect(button.style?.elevation?.resolve({}), expectedElevation);
-        expect(
-          button.style?.shadowColor?.resolve({}),
-          theme.colorScheme.shadow,
-        );
-        expect(
-          button.style?.surfaceTintColor?.resolve({}),
-          BusyMarkLinuxPalette.transparent,
-        );
+        for (final states in [
+          <WidgetState>{},
+          {WidgetState.hovered},
+          {WidgetState.pressed},
+          {WidgetState.focused},
+          {WidgetState.disabled},
+        ]) {
+          expect(button.style?.elevation?.resolve(states), isNull);
+          expect(button.style?.shadowColor?.resolve(states), isNull);
+          expect(
+            button.style?.backgroundColor?.resolve(states),
+            states.contains(WidgetState.disabled) ? disabledBackground : accent,
+          );
+        }
         expect(
           button.style?.foregroundColor?.resolve({}),
           BusyMarkLinuxPalette.white,

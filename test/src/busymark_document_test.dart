@@ -5341,49 +5341,67 @@ void main() {}
     }
   });
 
-  testWidgets('WYSIWYG editor renders linked remote image blocks', (
-    tester,
-  ) async {
-    const imageUrl = 'https://example.com/remote.png';
-    final previousHttpClientProvider = debugNetworkImageHttpClientProvider;
-    final parsed = parser.parse(
-      filePath: 'README.md',
-      source: '[![busymark]($imageUrl)](https://snapcraft.io/busymark)\n',
-    );
+  testWidgets(
+    'WYSIWYG linked remote images request permission before rendering',
+    (tester) async {
+      const imageUrl = 'https://example.com/remote.png';
+      final previousHttpClientProvider = debugNetworkImageHttpClientProvider;
+      final parsed = parser.parse(
+        filePath: 'README.md',
+        source: '[![busymark]($imageUrl)](https://snapcraft.io/busymark)\n',
+      );
 
-    try {
-      debugNetworkImageHttpClientProvider = () => _FakeImageHttpClient();
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: SizedBox(
-              width: 900,
-              height: 640,
-              child: BusyMarkWysiwygEditor(
-                document: parsed.busyDocument,
-                allowRemoteImages: true,
-                onSourceChanged: (_, _) {},
+      try {
+        debugNetworkImageHttpClientProvider = () => _FakeImageHttpClient();
+        var requests = 0;
+        Future<void> render({required bool allow}) => tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  allowRemoteImages: allow,
+                  onRemoteImageBlocked: () => requests++,
+                  onSourceChanged: (_, _) {},
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await render(allow: false);
+        await tester.pump();
+        final denied = find.text(
+          AppLocalizations.of(
+            tester.element(find.byType(MarkdownImageView)),
+          ).remoteImageBlocked,
+        );
+        expect(denied, findsOneWidget);
+        expect(find.byType(Image), findsNothing);
+        await tester.tap(denied);
+        await tester.pump();
+        expect(requests, 1);
+        expect(denied, findsOneWidget);
 
-      final imageView = tester.widget<MarkdownImageView>(
-        find.byType(MarkdownImageView),
-      );
-      expect(imageView.source, imageUrl);
-      expect(imageView.alt, 'busymark');
-      expect(find.byType(Image), findsOneWidget);
-      expect(find.text(imageUrl), findsNothing);
-      expect(find.byType(TextField), findsNothing);
-    } finally {
-      debugNetworkImageHttpClientProvider = previousHttpClientProvider;
-    }
-  });
+        await render(allow: true);
+        await tester.pump();
+        expect(denied, findsNothing);
+        final imageView = tester.widget<MarkdownImageView>(
+          find.byType(MarkdownImageView),
+        );
+        expect(imageView.source, imageUrl);
+        expect(imageView.alt, 'busymark');
+        expect(find.byType(Image), findsOneWidget);
+        expect(find.text(imageUrl), findsNothing);
+        expect(find.byType(TextField), findsNothing);
+      } finally {
+        debugNetworkImageHttpClientProvider = previousHttpClientProvider;
+      }
+    },
+  );
 
   for (final mode in MarkdownMode.values) {
     test('WYSIWYG Enter recognizes a pasted bare URL in ${mode.name}', () {

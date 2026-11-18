@@ -14355,24 +14355,24 @@ class _PreviewImageBlock extends ConsumerWidget {
         ),
         child: Align(
           alignment: AlignmentDirectional.centerStart,
-          child: _previewLinkedImage(
-            destination: linkDestination,
-            onTap: followLink,
-            child: MarkdownImageView(
-              source: source,
-              alt: block.text,
-              activeFilePath: activeFilePath ?? '',
-              workspaceRoot: _imageWorkspaceRoot(workspace),
-              writersideRoot: workspace?.writersideModule?.rootPath,
-              imagesDir:
-                  workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-              allowRemoteImages: allowRemoteImages,
-              onRemoteImageBlocked:
-                  followLink ??
-                  () => unawaited(_showRemoteImagesPrompt(context, ref)),
-              width: width,
-              maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+          child: MarkdownImageView(
+            source: source,
+            alt: block.text,
+            activeFilePath: activeFilePath ?? '',
+            workspaceRoot: _imageWorkspaceRoot(workspace),
+            writersideRoot: workspace?.writersideModule?.rootPath,
+            imagesDir:
+                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: () =>
+                unawaited(_showRemoteImagesPrompt(context, ref)),
+            wrapAvailableImage: (child) => _previewLinkedImage(
+              child: child,
+              destination: linkDestination,
+              onTap: followLink,
             ),
+            width: width,
+            maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
           ),
         ),
       ),
@@ -14512,13 +14512,13 @@ Widget _previewLinkedImage({
     return child;
   }
   return Semantics(
+    container: true,
     link: true,
     onTap: onTap,
-    child: MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
+    child: BusyMarkFocusIndicator(
+      child: InkWell(
         key: ValueKey('preview-linked-image-$destination'),
-        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
         onTap: onTap,
         child: child,
       ),
@@ -14846,23 +14846,24 @@ InlineSpan _previewInlineImageSpan(
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: DefaultTextStyle.merge(
         style: style,
-        child: _previewLinkedImage(
-          destination: destination,
-          onTap: followLink,
-          child: MarkdownImageView(
-            source: inline.destination ?? '',
-            alt: inline.text,
-            activeFilePath: activeFilePath ?? '',
-            workspaceRoot: _imageWorkspaceRoot(workspace),
-            writersideRoot: workspace?.writersideModule?.rootPath,
-            imagesDir:
-                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: followLink ?? onRemoteImageBlocked,
-            maxWidth: BusyMarkSizes.previewMinWidth,
-            maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-            height: BusyMarkSizes.previewInlineImageHeight,
+        child: MarkdownImageView(
+          source: inline.destination ?? '',
+          alt: inline.text,
+          activeFilePath: activeFilePath ?? '',
+          workspaceRoot: _imageWorkspaceRoot(workspace),
+          writersideRoot: workspace?.writersideModule?.rootPath,
+          imagesDir:
+              workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: onRemoteImageBlocked,
+          wrapAvailableImage: (child) => _previewLinkedImage(
+            child: child,
+            destination: destination,
+            onTap: followLink,
           ),
+          maxWidth: BusyMarkSizes.previewMinWidth,
+          maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+          height: BusyMarkSizes.previewInlineImageHeight,
         ),
       ),
     ),

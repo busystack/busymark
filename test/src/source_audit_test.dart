@@ -1898,7 +1898,7 @@ void main() {
     );
     expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
     expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
-    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(3));
+    expect(toolbar, isNot(contains('elevated: true')));
     expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.hardEdge'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
@@ -1911,7 +1911,7 @@ void main() {
     final floatingToolbar = RegExp(
       r'class _FloatingWysiwygToolbar[\s\S]*?class _EditorToolbarMenuAction',
     ).firstMatch(editor)!.group(0)!;
-    expect(floatingToolbar, contains('elevated: true'));
+    expect(floatingToolbar, isNot(contains('elevated: true')));
     expect(floatingToolbar, contains('accented: true'));
     expect(
       floatingToolbar,

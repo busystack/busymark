@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -77,12 +76,13 @@ void main() {
       final root = Directory.systemTemp.createTempSync('html-ui-');
       addTearDown(() => root.deleteSync(recursive: true));
       final service = _RecordingExporter();
-      final picker = Completer<String?>();
-      const channel = MethodChannel('plugins.flutter.io/file_selector');
+      final picker = Completer<Map<String, Object?>?>();
+      const channel = MethodChannel('busymark/save_chooser');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
         call,
       ) async {
-        expect(call.method, 'getDirectoryPath');
+        expect(call.method, 'save');
+        expect((call.arguments as Map)['suggestedName'], endsWith('.html'));
         return picker.future;
       });
       addTearDown(
@@ -110,15 +110,9 @@ void main() {
       ref
           .read(workspaceControllerProvider.notifier)
           .updateActiveText('# Later edit');
-      picker.complete(root.path);
-      await tester.pumpAndSettle();
-      final field = find.widgetWithText(BusyMarkNativeTextEntry, 'File name');
-      expect(
-        tester.widget<BusyMarkNativeTextEntry>(field).controller!.text,
-        endsWith('.html'),
+      picker.complete(
+        SaveDestination.inspect('${root.path}/export.html').chooserReview,
       );
-      await tester.tap(find.text('Export').last);
-      await tester.pump();
       for (var i = 0; i < 15; i++) {
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 50)),

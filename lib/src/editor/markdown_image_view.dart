@@ -44,6 +44,7 @@ class MarkdownImageView extends StatelessWidget {
     required this.imagesDir,
     required this.allowRemoteImages,
     this.onRemoteImageBlocked,
+    this.wrapAvailableImage,
     this.width,
     this.height,
     this.maxWidth = BusyMarkSizes.documentImageMaxWidth,
@@ -58,6 +59,7 @@ class MarkdownImageView extends StatelessWidget {
   final String imagesDir;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
+  final Widget Function(Widget child)? wrapAvailableImage;
   final double? width;
   final double? height;
   final double maxWidth;
@@ -66,8 +68,18 @@ class MarkdownImageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trimmedSource = source.trim();
-    final image = _imageForSource(context, trimmedSource);
-    return DefaultTextStyle.merge(
+    final scheme = Uri.tryParse(trimmedSource)?.scheme;
+    final isBlocked =
+        !allowRemoteImages && (scheme == 'http' || scheme == 'https');
+    final image = isBlocked
+        ? _RemoteImageBlockedPlaceholder(
+            source: trimmedSource,
+            alt: alt,
+            height: height ?? 120,
+            onTap: onRemoteImageBlocked,
+          )
+        : _imageForSource(context, trimmedSource);
+    final content = DefaultTextStyle.merge(
       style: const TextStyle(
         decoration: TextDecoration.none,
         fontStyle: FontStyle.normal,
@@ -86,6 +98,7 @@ class MarkdownImageView extends StatelessWidget {
             ),
       ),
     );
+    return isBlocked ? content : wrapAvailableImage?.call(content) ?? content;
   }
 
   Widget? _imageForSource(BuildContext context, String source) {
@@ -125,14 +138,6 @@ class MarkdownImageView extends StatelessWidget {
         return _fileImage(File(resolvedPath), source, _isSvgPath(resolvedPath));
       }
       if (uri.scheme == 'http' || uri.scheme == 'https') {
-        if (!allowRemoteImages) {
-          return _RemoteImageBlockedPlaceholder(
-            source: source,
-            alt: alt,
-            height: height ?? 120,
-            onTap: onRemoteImageBlocked,
-          );
-        }
         if (_isSvgPath(uri.path)) {
           return _networkSvg(source);
         }
@@ -1055,7 +1060,20 @@ class _RemoteImageBlockedPlaceholder extends StatelessWidget {
     }
     return Tooltip(
       message: context.l10n.remoteImageBlockedTooltip,
-      child: InkWell(onTap: onTap, child: content),
+      excludeFromSemantics: true,
+      child: Semantics(
+        container: true,
+        button: true,
+        onTap: onTap,
+        hint: context.l10n.remoteImageBlockedTooltip,
+        child: BusyMarkFocusIndicator(
+          child: InkWell(
+            excludeFromSemantics: true,
+            onTap: onTap,
+            child: content,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -575,6 +575,8 @@ class _BusyMarkVisualizationCardState
             : p.dirname(widget.documentPath),
         actionLabel: context.l10n.save,
         suffix: '.$extension',
+        filterLabel: svg ? 'SVG' : 'PNG',
+        patterns: svg ? const ['*.[sS][vV][gG]'] : const ['*.[pP][nN][gG]'],
       );
       if (destination == null || !mounted) return;
       final bytes = svg

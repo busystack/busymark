@@ -80,6 +80,39 @@ final class SaveDestination {
     throw FileSystemException('Unsupported save destination', path);
   }
 
+  /// Validates the state captured by the chooser before its Replace prompt.
+  /// A response without an entry review can authorize only a missing target.
+  static SaveDestination fromChooserReview(
+    Map<Object?, Object?> review, {
+    required SaveDestinationKind kind,
+  }) {
+    final path = review['path'];
+    if (path is! String || !p.isAbsolute(path)) {
+      throw const FormatException('Invalid native save pathname');
+    }
+    final destination = inspect(path, kind: kind);
+    for (final field in destination.chooserReview.entries) {
+      if (review[field.key] != field.value) {
+        throw AtomicFileChangedException(path);
+      }
+    }
+    return destination;
+  }
+
+  Map<String, String?> get chooserReview => {
+    'path': path,
+    'parent': _parent,
+    'entry': _chooserVersion(_entry),
+    'linkTarget': _linkTarget,
+    'referent': _chooserVersion(_referent),
+  };
+
+  static String? _chooserVersion(LinuxFileVersion? version) => version == null
+      ? null
+      : '${version.identity}/${version.mode}/${version.size}/'
+            '${version.modified.$1}:${version.modified.$2}/'
+            '${version.changed.$1}:${version.changed.$2}';
+
   void requireCurrent(String destination) {
     if (!p.equals(path, p.normalize(p.absolute(destination))) ||
         !_matches(path, displaced: false)) {
