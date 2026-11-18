@@ -18375,6 +18375,60 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     },
   );
 
+  testWidgets('blocked remote image keeps wrapped details accessible', (
+    tester,
+  ) async {
+    final source =
+        'https://example.com/images/${'featured-article-photograph-' * 12}.png';
+    const alt = 'Portrait of W. S. Gilbert';
+    var promptCount = 0;
+    Widget buildImage({double? maxHeight}) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 441.5,
+            child: MarkdownImageView(
+              source: source,
+              alt: alt,
+              activeFilePath: 'doc.md',
+              workspaceRoot: null,
+              writersideRoot: null,
+              imagesDir: 'images',
+              allowRemoteImages: false,
+              onRemoteImageBlocked: () => promptCount++,
+              maxHeight: maxHeight,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(buildImage());
+    expect(tester.takeException(), isNull);
+    final image = find.byType(MarkdownImageView);
+    final details = find.text('$alt\n$source');
+    expect(tester.getSize(image).height, greaterThan(120));
+    expect(
+      tester.getRect(details).bottom,
+      lessThan(tester.getRect(image).bottom),
+    );
+    await tester.tap(find.text(l10n.remoteImageBlocked));
+    expect(promptCount, 1);
+
+    await tester.pumpWidget(buildImage(maxHeight: 120));
+    expect(tester.takeException(), isNull);
+    expect(tester.getSize(image).height, 120);
+    await tester.drag(find.byType(Scrollable), const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(details).bottom,
+      lessThan(tester.getRect(image).bottom),
+    );
+  });
+
   testWidgets(
     'shared Markdown image renderer resolves absolute paths with spaces',
     (tester) async {

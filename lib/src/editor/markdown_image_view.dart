@@ -963,10 +963,12 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
         : alt.trim().isEmpty
         ? source
         : '$alt\n$source';
-    return SizedBox(
-      height: height,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: height),
       child: Center(
-        child: Padding(
+        heightFactor: 1,
+        child: SingleChildScrollView(
+          primary: false,
           padding: const EdgeInsets.all(BusyMarkSpacing.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1011,10 +1013,12 @@ class _RemoteImageBlockedPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final label = alt.trim().isEmpty ? source : '$alt\n$source';
-    final content = SizedBox(
-      height: height,
+    final content = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: height),
       child: Center(
-        child: Padding(
+        heightFactor: 1,
+        child: SingleChildScrollView(
+          primary: false,
           padding: const EdgeInsets.all(BusyMarkSpacing.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
