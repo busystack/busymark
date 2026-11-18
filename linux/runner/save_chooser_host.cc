@@ -142,6 +142,34 @@ bool amend_name(GtkFileChooser* chooser, const gchar* path,
   return true;
 }
 
+bool confirm_replacement(GtkWindow* chooser, const gchar* path) {
+  g_autofree gchar* file = g_filename_display_basename(path);
+  g_autofree gchar* parent = g_path_get_dirname(path);
+  g_autofree gchar* folder = g_filename_display_basename(parent);
+  g_autoptr(GtkWidget) prompt = GTK_WIDGET(g_object_ref_sink(gtk_message_dialog_new(
+      chooser, static_cast<GtkDialogFlags>(GTK_DIALOG_MODAL |
+                                           GTK_DIALOG_DESTROY_WITH_PARENT),
+      GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+      g_dgettext("gtk30", "A file named “%s” already exists.  Do you want to "
+                          "replace it?"),
+      file)));
+  GtkDialog* dialog = GTK_DIALOG(prompt);
+  gtk_message_dialog_format_secondary_text(
+      GTK_MESSAGE_DIALOG(prompt),
+      g_dgettext("gtk30", "The file already exists in “%s”.  Replacing it will "
+                          "overwrite its contents."),
+      folder);
+  GtkWidget* cancel = gtk_dialog_add_button(
+      dialog, g_dgettext("gtk30", "_Cancel"), GTK_RESPONSE_CANCEL);
+  gtk_dialog_add_button(dialog, g_dgettext("gtk30", "_Replace"),
+                        GTK_RESPONSE_ACCEPT);
+  gtk_dialog_set_default_response(dialog, GTK_RESPONSE_CANCEL);
+  gtk_widget_grab_focus(cancel);
+  const int answer = gtk_dialog_run(dialog);
+  gtk_widget_destroy(prompt);
+  return answer == GTK_RESPONSE_ACCEPT;
+}
+
 GtkFileChooserConfirmation confirm_overwrite(GtkFileChooser* chooser,
                                               gpointer data) {
   auto* state = static_cast<SaveChooser*>(data);
@@ -151,11 +179,16 @@ GtkFileChooserConfirmation confirm_overwrite(GtkFileChooser* chooser,
   if (path == nullptr || amend_name(chooser, path, state)) {
     return GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN;
   }
-  // This hook runs before GTK shows its stock Cancel/Replace prompt. A later
-  // response is useful only for this exact entry and this exact pathname.
+  // GTK's built-in prompt defaults to Replace and can be bypassed by a failed
+  // folder metadata lookup. Require a positive response from the native dialog.
+  g_autoptr(GtkWidget) parent = GTK_WIDGET(g_object_ref(chooser));
+  g_autoptr(FlValue) review = selection(path, true, state->allow_link);
+  if (!confirm_replacement(GTK_WINDOW(parent), path) || state->replied) {
+    return GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN;
+  }
   state->reviewed_path = path;
-  state->review = selection(path, true, state->allow_link);
-  return GTK_FILE_CHOOSER_CONFIRMATION_CONFIRM;
+  state->review = g_steal_pointer(&review);
+  return GTK_FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME;
 }
 
 void response(GtkDialog* dialog, gint response_id, gpointer data) {
