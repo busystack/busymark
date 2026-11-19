@@ -954,11 +954,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "پاک کردن مجوزهای تصاویر راه دور",
+  "clearRemoteImagePermissions": "پاک کردن مجوزهای تصویر فضاهای کاری",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "فضاهای کاری‌ای را که اجازهٔ بارگیری تصاویر راه دور داشتند، فراموش کنید.",
+  "clearRemoteImagePermissionsDescription": "همهٔ مجوزهای تصاویر راه‌دور فضاهای کاری را فراموش کن.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1345,7 +1345,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "بارگیری برای این فضای کاری",
+  "loadThisRemoteImage": "بارگیری این تصویر",
+  "remoteImageMoreOptions": "گزینه‌های بیشتر…",
+  "remoteImageMoreOptionsTitle": "مجوزهای تصاویر راه‌دور",
+  "loadRemoteImagesInDocument": "بارگیری تصاویر این سند",
+  "remoteImageUntilClose": "تا زمان بسته شدن این سند.",
+  "remoteImageWorkspacePermissionDetail": "تصاویر راه‌دور در ⁨{workspace}⁩ مجاز هستند تا زمانی که مجوزهای فضای کاری را در تنظیمات حریم خصوصی پاک کنید.",
+  "remoteImageGlobalPermissionDetail": "تصاویر راه‌دور در سراسر BusyMark مجاز هستند تا زمانی که این گزینه را در تنظیمات حریم خصوصی خاموش کنید.",
+  "remoteImageGlobalSettingsDetail": "اجازهٔ بارگیری تصاویر راه‌دور در سراسر BusyMark. مجوزهای فضای کاری جداگانه مدیریت می‌شوند.",
+  "loadRemoteImagesForWorkspace": "همیشه در این فضای کاری مجاز باشد",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

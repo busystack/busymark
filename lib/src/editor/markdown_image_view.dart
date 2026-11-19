@@ -13,6 +13,9 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../core/local_image_resolver.dart';
+import '../core/source_span.dart';
+import '../core/uri_utils.dart';
+import 'markdown_image_permission_scope.dart';
 import '../assets/document_media_context.dart';
 
 /// Resolves an authored image width using the shared document-view bounds.
@@ -42,7 +45,8 @@ class MarkdownImageView extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
-    required this.allowRemoteImages,
+    this.allowRemoteImages = false,
+    this.sourceSpan,
     this.onRemoteImageBlocked,
     this.wrapAvailableImage,
     this.width,
@@ -58,6 +62,7 @@ class MarkdownImageView extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
+  final SourceSpan? sourceSpan;
   final VoidCallback? onRemoteImageBlocked;
   final Widget Function(Widget child)? wrapAvailableImage;
   final double? width;
@@ -68,15 +73,18 @@ class MarkdownImageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trimmedSource = source.trim();
-    final scheme = Uri.tryParse(trimmedSource)?.scheme;
-    final isBlocked =
-        !allowRemoteImages && (scheme == 'http' || scheme == 'https');
+    final remote = isRemoteImageSource(trimmedSource);
+    final actions = remote
+        ? MarkdownImagePermissionScope.of(context, trimmedSource, sourceSpan)
+        : null;
+    final isBlocked = remote && !(actions?.allowed ?? allowRemoteImages);
     final image = isBlocked
         ? _RemoteImageBlockedPlaceholder(
             source: trimmedSource,
             alt: alt,
             height: height ?? 120,
-            onTap: onRemoteImageBlocked,
+            loadImage: actions?.loadImage,
+            moreOptions: actions?.moreOptions ?? onRemoteImageBlocked,
           )
         : _imageForSource(context, trimmedSource);
     final content = DefaultTextStyle.merge(
@@ -86,7 +94,7 @@ class MarkdownImageView extends StatelessWidget {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: maxWidth,
+          maxWidth: isBlocked && maxWidth < 300 ? 300 : maxWidth,
           maxHeight: maxHeight ?? double.infinity,
         ),
         child:
@@ -143,6 +151,7 @@ class MarkdownImageView extends StatelessWidget {
         }
         return Image.network(
           source,
+          semanticLabel: alt.trim().isEmpty ? null : alt,
           width: width,
           height: height,
           fit: BoxFit.contain,
@@ -1006,19 +1015,21 @@ class _RemoteImageBlockedPlaceholder extends StatelessWidget {
     required this.source,
     required this.alt,
     required this.height,
-    required this.onTap,
+    required this.loadImage,
+    required this.moreOptions,
   });
 
   final String source;
   final String alt;
   final double height;
-  final VoidCallback? onTap;
+  final VoidCallback? loadImage;
+  final VoidCallback? moreOptions;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final label = alt.trim().isEmpty ? source : '$alt\n$source';
-    final content = ConstrainedBox(
+    return ConstrainedBox(
       constraints: BoxConstraints(minHeight: height),
       child: Center(
         heightFactor: 1,
@@ -1042,6 +1053,38 @@ class _RemoteImageBlockedPlaceholder extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              if (loadImage != null || moreOptions != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: BusyMarkSpacing.xs,
+                  ),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: BusyMarkSpacing.xs,
+                    runSpacing: BusyMarkSpacing.xs,
+                    children: [
+                      if (loadImage != null)
+                        Tooltip(
+                          message: context.l10n.remoteImageUntilClose,
+                          child: BusyMarkPushButton.suggested(
+                            onPressed: loadImage,
+                            child: Text(
+                              context.l10n.loadThisRemoteImage,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      if (moreOptions != null)
+                        BusyMarkPushButton.standard(
+                          onPressed: moreOptions,
+                          child: Text(
+                            context.l10n.remoteImageMoreOptions,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: BusyMarkSpacing.xxs),
               Text(
                 label,
@@ -1051,26 +1094,6 @@ class _RemoteImageBlockedPlaceholder extends StatelessWidget {
                 ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-    if (onTap == null) {
-      return content;
-    }
-    return Tooltip(
-      message: context.l10n.remoteImageBlockedTooltip,
-      excludeFromSemantics: true,
-      child: Semantics(
-        container: true,
-        button: true,
-        onTap: onTap,
-        hint: context.l10n.remoteImageBlockedTooltip,
-        child: BusyMarkFocusIndicator(
-          child: InkWell(
-            excludeFromSemantics: true,
-            onTap: onTap,
-            child: content,
           ),
         ),
       ),

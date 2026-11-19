@@ -441,6 +441,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       return BusyMarkWritersideVideoView(
         source: source,
         previewSource: block.attributes['preview-src'],
+        posterSpan: block.posterSpan,
         activeFilePath: documentFilePath,
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
@@ -958,14 +959,30 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
             ],
           ),
           const SizedBox(height: BusyMarkSpacing.sm),
-          _RenderedHtmlBlocks(
-            blocks: block.children,
-            documentFilePath: documentFilePath,
-            workspaceRoot: workspaceRoot,
-            writersideRoot: writersideRoot,
-            imagesDir: imagesDir,
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
+          _RenderedHtmlMedia(
+            buildImage: (inline) => MarkdownImageView(
+              source: inline.destination ?? '',
+              sourceSpan: inline.imageSpan,
+              alt: inline.text,
+              activeFilePath: documentFilePath,
+              workspaceRoot: workspaceRoot,
+              writersideRoot: writersideRoot,
+              imagesDir: imagesDir,
+              allowRemoteImages: allowRemoteImages,
+              onRemoteImageBlocked: onRemoteImageBlocked,
+              maxWidth: BusyMarkSizes.previewMinWidth,
+              maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+              height: BusyMarkSizes.previewInlineImageHeight,
+            ),
+            child: _RenderedHtmlBlocks(
+              blocks: block.children,
+              documentFilePath: documentFilePath,
+              workspaceRoot: workspaceRoot,
+              writersideRoot: writersideRoot,
+              imagesDir: imagesDir,
+              allowRemoteImages: allowRemoteImages,
+              onRemoteImageBlocked: onRemoteImageBlocked,
+            ),
           ),
         ],
       ),
@@ -1073,6 +1090,7 @@ class _RenderedHtmlBlock extends StatelessWidget {
           alignment: AlignmentDirectional.centerStart,
           child: MarkdownImageView(
             source: _imageSource(block),
+            sourceSpan: _imageSpan(block.inlines),
             alt: block.plainText,
             activeFilePath: documentFilePath,
             workspaceRoot: workspaceRoot,
@@ -1392,6 +1410,16 @@ class _RenderedHtmlTableCell extends StatelessWidget {
   }
 }
 
+class _RenderedHtmlMedia extends InheritedWidget {
+  const _RenderedHtmlMedia({required this.buildImage, required super.child});
+
+  final Widget Function(BusyInline) buildImage;
+
+  @override
+  bool updateShouldNotify(_RenderedHtmlMedia oldWidget) =>
+      buildImage != oldWidget.buildImage;
+}
+
 class _RenderedHtmlInlineText extends StatelessWidget {
   const _RenderedHtmlInlineText({required this.block, this.style});
 
@@ -1425,27 +1453,16 @@ class _RenderedHtmlInlineText extends StatelessWidget {
     BusyInline inline,
     TextStyle? baseStyle,
   ) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final scheme = Theme.of(context).colorScheme;
     final childBaseStyle = _styleForInline(context, inline, baseStyle);
     if (inline.kind == BusyInlineKind.image) {
-      final alt = inline.text.trim().isEmpty ? context.l10n.image : inline.text;
       return WidgetSpan(
         alignment: PlaceholderAlignment.middle,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                BusyMarkGlyphs.image,
-                size: BusyMarkSizes.iconSm,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: BusyMarkSpacing.xs),
-              Text(alt, style: childBaseStyle),
-            ],
-          ),
+          child: context
+              .dependOnInheritedWidgetOfExactType<_RenderedHtmlMedia>()!
+              .buildImage(inline),
         ),
       );
     }
@@ -2849,6 +2866,7 @@ class _ImageBlockEditor extends StatelessWidget {
       alignment: AlignmentDirectional.centerStart,
       child: MarkdownImageView(
         source: source,
+        sourceSpan: _imageSpan(block.inlines),
         alt: block.plainText,
         activeFilePath: documentFilePath,
         workspaceRoot: workspaceRoot,
@@ -2888,6 +2906,14 @@ String? _imageSourceFromInline(BusyInline inline) {
     if (source != null) {
       return source;
     }
+  }
+  return null;
+}
+
+SourceSpan? _imageSpan(List<BusyInline> inlines) {
+  for (final inline in inlines) {
+    if (inline.kind == BusyInlineKind.image) return inline.imageSpan;
+    if (_imageSpan(inline.children) case final span?) return span;
   }
   return null;
 }

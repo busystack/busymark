@@ -1221,11 +1221,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Очистити дозволи для віддалених зображень';
+      'Очистити дозволи на зображення в робочих просторах';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Забути робочі області, яким було дозволено завантажувати віддалені зображення.';
+      'Забути всі дозволи робочих просторів для віддалених зображень.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1598,8 +1598,37 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей документ посилається на зображення з інтернету. Їх завантаження може розкрити відомості про вашу мережу серверам, на яких розміщено зображення.';
 
   @override
+  String get loadThisRemoteImage => 'Завантажити це зображення';
+
+  @override
+  String get remoteImageMoreOptions => 'Інші варіанти…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Дозволи для віддалених зображень';
+
+  @override
+  String get loadRemoteImagesInDocument =>
+      'Завантажити зображення в цьому документі';
+
+  @override
+  String get remoteImageUntilClose => 'До закриття цього документа.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Дозволяє віддалені зображення в $workspace, доки не очистите дозволи робочих просторів у налаштуваннях конфіденційності.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Дозволяє віддалені зображення в усьому BusyMark, доки не вимкнете цю опцію в налаштуваннях конфіденційності.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Дозволяє віддалені зображення в усьому BusyMark. Дозволи робочих просторів налаштовуються окремо.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Завантажити для цієї робочої області';
+      'Завжди дозволяти в цьому робочому просторі';
 
   @override
   String get alwaysLoadRemoteImages =>

@@ -1223,11 +1223,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Cancella autorizzazioni per immagini remote';
+      'Cancella le autorizzazioni delle immagini degli spazi di lavoro';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Dimentica le aree di lavoro autorizzate a caricare immagini remote.';
+      'Dimentica tutte le autorizzazioni per le immagini remote degli spazi di lavoro.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1592,7 +1592,38 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questo documento fa riferimento a immagini su Internet. Il caricamento può rivelare informazioni di rete all’host delle immagini.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Carica per quest’area di lavoro';
+  String get loadThisRemoteImage => 'Carica questa immagine';
+
+  @override
+  String get remoteImageMoreOptions => 'Altre opzioni…';
+
+  @override
+  String get remoteImageMoreOptionsTitle =>
+      'Autorizzazioni per le immagini remote';
+
+  @override
+  String get loadRemoteImagesInDocument =>
+      'Carica le immagini in questo documento';
+
+  @override
+  String get remoteImageUntilClose => 'Fino alla chiusura di questo documento.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Consente le immagini remote in $workspace finché non cancelli le autorizzazioni degli spazi di lavoro nelle impostazioni di privacy.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Consente le immagini remote in tutto BusyMark finché non disattivi questa opzione nelle impostazioni di privacy.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Consenti le immagini remote in tutto BusyMark. Le autorizzazioni degli spazi di lavoro si gestiscono separatamente.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Consenti sempre in questo spazio di lavoro';
 
   @override
   String get alwaysLoadRemoteImages => 'Carica sempre le immagini remote';

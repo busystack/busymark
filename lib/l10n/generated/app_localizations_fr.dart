@@ -1232,11 +1232,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Effacer les autorisations d’images distantes';
+      'Effacer les autorisations d’images des espaces de travail';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Oublier les espaces de travail autorisés à charger des images distantes.';
+      'Oublier toutes les autorisations d’images distantes des espaces de travail.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1600,8 +1600,37 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce document fait référence à des images sur Internet. Leur chargement peut révéler des informations réseau à l’hôte des images.';
 
   @override
+  String get loadThisRemoteImage => 'Charger cette image';
+
+  @override
+  String get remoteImageMoreOptions => 'Plus d’options…';
+
+  @override
+  String get remoteImageMoreOptionsTitle =>
+      'Autorisations des images distantes';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Charger les images de ce document';
+
+  @override
+  String get remoteImageUntilClose => 'Jusqu’à la fermeture de ce document.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Autorise les images distantes dans $workspace jusqu’à l’effacement des autorisations dans les paramètres de confidentialité.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Autorise les images distantes dans tout BusyMark jusqu’à la désactivation de cette option dans les paramètres de confidentialité.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Autorise les images distantes dans tout BusyMark. Les autorisations des espaces de travail sont gérées séparément.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Charger pour cet espace de travail';
+      'Toujours autoriser dans cet espace de travail';
 
   @override
   String get alwaysLoadRemoteImages => 'Toujours charger les images distantes';

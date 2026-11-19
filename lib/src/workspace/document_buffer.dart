@@ -197,7 +197,8 @@ class DocumentEditorState {
 }
 
 class DocumentBuffer {
-  const DocumentBuffer({
+  DocumentBuffer({
+    Object? opening,
     required this.id,
     required this.text,
     required this.lastSavedText,
@@ -216,7 +217,8 @@ class DocumentBuffer {
     this.remoteTitle,
     this.remoteEditBase,
     this.readonly = false,
-  }) : assert(remoteNote == null || filePath == null);
+  }) : opening = opening ?? Object(),
+       assert(remoteNote == null || filePath == null);
 
   factory DocumentBuffer.file({
     required String id,
@@ -275,6 +277,7 @@ class DocumentBuffer {
     editorState: editorState,
   );
 
+  final Object opening;
   final String id;
   final String? filePath;
   final String? untitledName;
@@ -393,6 +396,7 @@ class DocumentBuffer {
     bool? readonly,
   }) {
     return DocumentBuffer(
+      opening: opening,
       id: id,
       filePath: identical(filePath, _bufferUnset)
           ? this.filePath

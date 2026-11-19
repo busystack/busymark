@@ -197,6 +197,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
       rebased = rebased.copyWith(blocks: rebased.blocks.map(commit).toList());
       _document = busyMarkWysiwygBindMarkdownReferences(rebased);
+    } else if (source.contains('http') ||
+        (_document.imageSource ?? _document.source ?? '').contains('http')) {
+      _document = const MarkdownParser().rebindImageSpans(_document, source);
     }
   }
 

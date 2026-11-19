@@ -954,11 +954,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Tøm tillatelser for eksterne bilder",
+  "clearRemoteImagePermissions": "Slett bildetillatelser for arbeidsområder",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.",
+  "clearRemoteImagePermissionsDescription": "Glem alle tillatelser for eksterne bilder i arbeidsområder.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1340,7 +1340,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Last inn for dette arbeidsområdet",
+  "loadThisRemoteImage": "Last inn dette bildet",
+  "remoteImageMoreOptions": "Flere valg…",
+  "remoteImageMoreOptionsTitle": "Tillatelser for eksterne bilder",
+  "loadRemoteImagesInDocument": "Last inn bilder i dette dokumentet",
+  "remoteImageUntilClose": "Til dette dokumentet lukkes.",
+  "remoteImageWorkspacePermissionDetail": "Tillater eksterne bilder i {workspace} til du sletter arbeidsområdetillatelsene i personverninnstillingene.",
+  "remoteImageGlobalPermissionDetail": "Tillater eksterne bilder i hele BusyMark til du slår dette av i personverninnstillingene.",
+  "remoteImageGlobalSettingsDetail": "Tillat eksterne bilder i hele BusyMark. Tillatelser for arbeidsområder administreres separat.",
+  "loadRemoteImagesForWorkspace": "Tillat alltid i dette arbeidsområdet",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

@@ -59,6 +59,35 @@ After.
     expect(previewVideo.attributes['preview-src'], 'poster.png');
   });
 
+  test(
+    'authored remote poster has the same source range in Editor and Preview',
+    () {
+      const tag =
+          '<video src="sample.mp4" preview-src="https://example.com/poster.png"/>';
+      const source = '# Video\n\n$tag\n\n$tag\n';
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: source,
+        mode: MarkdownMode.writersideMarkdown,
+        validateLocalReferences: false,
+      );
+      final editor = parsed.busyDocument.blocks.where(
+        (block) => block.kind == BusyBlockKind.video,
+      );
+      final preview = const MarkdownPreviewBuilder()
+          .build(parsed)
+          .blocks
+          .where((block) => block.kind == PreviewBlockKind.video);
+      final expected = [source.indexOf(tag), source.lastIndexOf(tag)];
+      expect(editor.map((block) => block.posterSpan?.startOffset), expected);
+      expect(preview.map((block) => block.posterSpan?.startOffset), expected);
+      expect(
+        preview.map((block) => block.posterSpan?.endOffset),
+        expected.map((start) => start + tag.length),
+      );
+    },
+  );
+
   test('video remains blocked raw HTML outside Writerside Markdown', () {
     const source = '<video src="sample.mp4"/>\n';
     final parsed = parser.parse(

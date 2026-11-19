@@ -1072,11 +1072,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Xóa quyền hình ảnh từ xa",
+  "clearRemoteImagePermissions": "Xóa quyền tải hình ảnh của không gian làm việc",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Quên các không gian làm việc đã được cho phép tải hình ảnh từ xa.",
+  "clearRemoteImagePermissionsDescription": "Quên mọi quyền tải hình ảnh từ xa của các không gian làm việc.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1504,7 +1504,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Tải cho không gian làm việc này",
+  "loadThisRemoteImage": "Tải hình ảnh này",
+  "remoteImageMoreOptions": "Tùy chọn khác…",
+  "remoteImageMoreOptionsTitle": "Quyền tải hình ảnh từ xa",
+  "loadRemoteImagesInDocument": "Tải hình ảnh trong tài liệu này",
+  "remoteImageUntilClose": "Cho đến khi đóng tài liệu này.",
+  "remoteImageWorkspacePermissionDetail": "Cho phép tải hình ảnh từ xa trong {workspace} cho đến khi bạn xóa quyền không gian làm việc trong phần Cài đặt quyền riêng tư.",
+  "remoteImageGlobalPermissionDetail": "Cho phép tải hình ảnh từ xa trong toàn bộ BusyMark cho đến khi bạn tắt tùy chọn này trong phần Cài đặt quyền riêng tư.",
+  "remoteImageGlobalSettingsDetail": "Cho phép tải hình ảnh từ xa trong toàn bộ BusyMark. Quyền của từng không gian làm việc được quản lý riêng.",
+  "loadRemoteImagesForWorkspace": "Luôn cho phép trong không gian làm việc này",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

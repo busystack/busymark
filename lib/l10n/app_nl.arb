@@ -1072,11 +1072,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Wis machtigingen voor externe afbeeldingen",
+  "clearRemoteImagePermissions": "Afbeeldingsmachtigingen voor werkruimten wissen",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Verwijder de opgeslagen rechten voor werkruimten die externe afbeeldingen mochten laden.",
+  "clearRemoteImagePermissionsDescription": "Vergeet alle machtigingen voor externe afbeeldingen in werkruimten.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1504,7 +1504,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Voor deze werkruimte laden",
+  "loadThisRemoteImage": "Deze afbeelding laden",
+  "remoteImageMoreOptions": "Meer opties…",
+  "remoteImageMoreOptionsTitle": "Machtigingen voor externe afbeeldingen",
+  "loadRemoteImagesInDocument": "Afbeeldingen in dit document laden",
+  "remoteImageUntilClose": "Totdat dit document wordt gesloten.",
+  "remoteImageWorkspacePermissionDetail": "Staat externe afbeeldingen in {workspace} toe totdat je de werkruimtemachtigingen wist in de privacyinstellingen.",
+  "remoteImageGlobalPermissionDetail": "Staat externe afbeeldingen in heel BusyMark toe totdat je dit uitschakelt in de privacyinstellingen.",
+  "remoteImageGlobalSettingsDetail": "Sta externe afbeeldingen in heel BusyMark toe. Werkruimtemachtigingen worden apart beheerd.",
+  "loadRemoteImagesForWorkspace": "Altijd toestaan in deze werkruimte",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

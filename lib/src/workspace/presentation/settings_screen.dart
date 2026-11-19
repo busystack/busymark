@@ -424,13 +424,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         filled: true,
         children: [
           BusyMarkSwitchRow(
-            title: l10n.allowRemoteImages,
-            subtitle: l10n.allowRemoteImagesDescription,
+            title: l10n.alwaysLoadRemoteImages,
+            subtitle: l10n.remoteImageGlobalSettingsDetail,
             value: settings.allowRemoteImages,
             onChanged: controller.setAllowRemoteImages,
             leading: const Icon(BusyMarkGlyphs.image),
           ),
-          if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
+          if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty ||
+              settings.remoteImageAllowedWorkspaceIds.isNotEmpty)
             BusyMarkActionRow(
               title: l10n.clearRemoteImagePermissions,
               subtitle: l10n.clearRemoteImagePermissionsDescription,

@@ -1216,11 +1216,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Tøm tillatelser for eksterne bilder';
+      'Slett bildetillatelser for arbeidsområder';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.';
+      'Glem alle tillatelser for eksterne bilder i arbeidsområder.';
 
   @override
   String get clearGitWorkspaceTrust => 'Tøm klarerte Git-arbeidsområder';
@@ -1583,8 +1583,36 @@ class AppLocalizationsNb extends AppLocalizations {
       'Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.';
 
   @override
+  String get loadThisRemoteImage => 'Last inn dette bildet';
+
+  @override
+  String get remoteImageMoreOptions => 'Flere valg…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Tillatelser for eksterne bilder';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Last inn bilder i dette dokumentet';
+
+  @override
+  String get remoteImageUntilClose => 'Til dette dokumentet lukkes.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Tillater eksterne bilder i $workspace til du sletter arbeidsområdetillatelsene i personverninnstillingene.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Tillater eksterne bilder i hele BusyMark til du slår dette av i personverninnstillingene.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Tillat eksterne bilder i hele BusyMark. Tillatelser for arbeidsområder administreres separat.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Last inn for dette arbeidsområdet';
+      'Tillat alltid i dette arbeidsområdet';
 
   @override
   String get alwaysLoadRemoteImages => 'Last alltid inn eksterne bilder';

@@ -1216,11 +1216,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Сбросить разрешения на удалённые изображения';
+      'Очистить разрешения для изображений в рабочих пространствах';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Забыть рабочие области, которым было разрешено загружать удалённые изображения.';
+      'Забыть все разрешения рабочих пространств на загрузку удалённых изображений.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1592,8 +1592,38 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот документ ссылается на изображения из интернета. Их загрузка может раскрыть сведения о вашей сети серверам, на которых размещены изображения.';
 
   @override
+  String get loadThisRemoteImage => 'Загрузить это изображение';
+
+  @override
+  String get remoteImageMoreOptions => 'Другие варианты…';
+
+  @override
+  String get remoteImageMoreOptionsTitle =>
+      'Разрешения для удалённых изображений';
+
+  @override
+  String get loadRemoteImagesInDocument =>
+      'Загрузить изображения в этом документе';
+
+  @override
+  String get remoteImageUntilClose => 'До закрытия этого документа.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Разрешает удалённые изображения в $workspace, пока вы не очистите разрешения для рабочих пространств в настройках конфиденциальности.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Разрешает удалённые изображения во всём BusyMark, пока вы не отключите эту настройку в разделе конфиденциальности.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Разрешает удалённые изображения во всём BusyMark. Разрешения рабочих пространств настраиваются отдельно.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Загрузить для этой рабочей области';
+      'Всегда разрешать в этом рабочем пространстве';
 
   @override
   String get alwaysLoadRemoteImages => 'Всегда загружать удалённые изображения';

@@ -1210,11 +1210,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Allow Markdown preview and editor images to load from http and https URLs.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions => 'Clear workspace image permissions';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'Forget all workspace permissions for remote images.';
 
   @override
   String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
@@ -1576,7 +1576,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'This document references images from the internet. Loading them can reveal network information to the image host.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadThisRemoteImage => 'Load this image';
+
+  @override
+  String get remoteImageMoreOptions => 'More options…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Remote image permissions';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Load images in this document';
+
+  @override
+  String get remoteImageUntilClose => 'Until this document closes.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Allows remote images in $workspace until you clear workspace permissions in Privacy settings.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Allows remote images throughout BusyMark until you turn this off in Privacy settings.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Allow remote images throughout BusyMark. Workspace permissions are managed separately.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Always allow in this workspace';
 
   @override
   String get alwaysLoadRemoteImages => 'Always load remote images';

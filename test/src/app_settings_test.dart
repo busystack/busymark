@@ -1,3 +1,5 @@
+import 'package:busymark/src/workspace/remote_image_permissions.dart';
+import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/keymap_controller.dart';
 import 'package:busymark/src/app/shortcut_binding.dart';
@@ -1844,6 +1846,72 @@ void main() {
     expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
     expect(store.value['remoteImageAllowedWorkspacePaths'], isEmpty);
   });
+
+  test(
+    'typed remote-image grants reload independently of legacy paths and global settings',
+    () async {
+      Workspace local(String path, WorkspaceKind kind) => Workspace(
+        id: path,
+        rootPath: kind == WorkspaceKind.singleMarkdown ? p.dirname(path) : path,
+        kind: kind,
+        openedAt: DateTime(2026),
+        files: const [],
+        diagnostics: const [],
+      );
+      final folder = local('/tmp/allowed', WorkspaceKind.markdownFolder);
+      final writerside = local('/tmp/allowed', WorkspaceKind.writersideModule);
+      final standalone = local(
+        '/tmp/allowed/readme.md',
+        WorkspaceKind.singleMarkdown,
+      );
+      final legacy = local(
+        '/tmp/legacy/readme.md',
+        WorkspaceKind.singleMarkdown,
+      );
+      final nextcloud = Workspace.nextcloudNotes('account-for-notes');
+      final otherAccount = Workspace.nextcloudNotes('other-account');
+      final store = _MemorySettingsStore()
+        ..value = {
+          'remoteImageAllowedWorkspacePaths': ['/tmp/legacy'],
+        };
+
+      final original = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      final controller = original.read(appSettingsControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      for (final workspace in [folder, nextcloud]) {
+        await controller.allowRemoteImagesForWorkspaceId(
+          remoteImageWorkspaceId(workspace)!,
+        );
+      }
+      await controller.setAllowRemoteImages(true);
+      original.dispose();
+
+      final restarted = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(restarted.dispose);
+      final reopened = restarted.read(appSettingsControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      AppSettings read() => restarted.read(appSettingsControllerProvider);
+      expect(allowsWorkspaceRemoteImages(read(), standalone), isTrue);
+      await reopened.setAllowRemoteImages(false);
+      expect(remoteImageWorkspaceId(standalone), isNull);
+      for (final workspace in [folder, legacy, nextcloud]) {
+        expect(allowsWorkspaceRemoteImages(read(), workspace), isTrue);
+      }
+      for (final workspace in [standalone, writerside, otherAccount]) {
+        expect(allowsWorkspaceRemoteImages(read(), workspace), isFalse);
+      }
+
+      await reopened.clearRemoteImageWorkspacePermissions();
+      expect(store.value['remoteImageAllowedWorkspacePaths'], isEmpty);
+      expect(store.value['remoteImageAllowedWorkspaceIds'], isEmpty);
+      expect(allowsWorkspaceRemoteImages(read(), legacy), isFalse);
+      expect(allowsWorkspaceRemoteImages(read(), nextcloud), isFalse);
+    },
+  );
 
   test(
     'Git workspace trust persists, normalizes, and can be cleared',

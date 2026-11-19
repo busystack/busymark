@@ -954,11 +954,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "दूरस्थ छवि अनुमतियाँ साफ़ करें",
+  "clearRemoteImagePermissions": "कार्यस्थानों की छवि अनुमतियाँ हटाएँ",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।",
+  "clearRemoteImagePermissionsDescription": "कार्यस्थानों की सभी दूरस्थ छवि अनुमतियाँ भूलें।",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1340,7 +1340,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "इस कार्यस्थान के लिए लोड करें",
+  "loadThisRemoteImage": "यह छवि लोड करें",
+  "remoteImageMoreOptions": "और विकल्प…",
+  "remoteImageMoreOptionsTitle": "दूरस्थ छवियों की अनुमतियाँ",
+  "loadRemoteImagesInDocument": "इस दस्तावेज़ की छवियाँ लोड करें",
+  "remoteImageUntilClose": "इस दस्तावेज़ के बंद होने तक।",
+  "remoteImageWorkspacePermissionDetail": "गोपनीयता सेटिंग में कार्यस्थान की अनुमतियाँ हटाने तक {workspace} में दूरस्थ छवियों की अनुमति देता है।",
+  "remoteImageGlobalPermissionDetail": "गोपनीयता सेटिंग में यह विकल्प बंद करने तक पूरे BusyMark में दूरस्थ छवियों की अनुमति देता है।",
+  "remoteImageGlobalSettingsDetail": "पूरे BusyMark में दूरस्थ छवियों की अनुमति दें। कार्यस्थानों की अनुमतियाँ अलग से प्रबंधित होती हैं।",
+  "loadRemoteImagesForWorkspace": "इस कार्यस्थान में हमेशा अनुमति दें",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

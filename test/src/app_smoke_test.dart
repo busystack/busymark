@@ -1,3 +1,4 @@
+import '../support/controlled_image_http_client.dart';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
@@ -17972,174 +17973,177 @@ Draft paragraph.
     testWidgets('Reading linked block and inline images (remote: $remote)', (
       tester,
     ) async {
-      final binding = TestWidgetsFlutterBinding.ensureInitialized();
-      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
-      addTearDown(() {
-        binding.platformDispatcher.defaultRouteNameTestValue = '/';
-      });
-      const rootPath = '/tmp/busymark-linked-images';
-      const readmePath = '$rootPath/README.md';
-      const blockTargetPath = '$rootPath/block-guide.md';
-      const inlineTargetPath = '$rootPath/inline-guide.md';
-      final imageOrigin = remote ? 'https://example.com/' : '';
-      final source =
-          '''
+      await _withControlledImageClient((http) async {
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+        addTearDown(() {
+          binding.platformDispatcher.defaultRouteNameTestValue = '/';
+        });
+        const rootPath = '/tmp/busymark-linked-images';
+        const readmePath = '$rootPath/README.md';
+        const blockTargetPath = '$rootPath/block-guide.md';
+        const inlineTargetPath = '$rootPath/inline-guide.md';
+        final imageOrigin = remote ? 'https://example.com/' : '';
+        final source =
+            '''
 [![Block logo](${imageOrigin}block-logo.png)](block-guide.md)
 
 Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 ''';
-      final parsed = const MarkdownParser().parse(
-        filePath: readmePath,
-        source: source,
-      );
-      final workspace = Workspace(
-        id: readmePath,
-        rootPath: rootPath,
-        kind: WorkspaceKind.singleMarkdown,
-        openedAt: DateTime(2026),
-        activeFilePath: readmePath,
-        openFilePaths: const [readmePath],
-        files: [
-          for (final path in const [
-            readmePath,
-            blockTargetPath,
-            inlineTargetPath,
-          ])
-            DocumentFile(
-              absolutePath: path,
-              relativePath: p.basename(path),
-              kind: DocumentKind.markdown,
-              size: 1,
-              lastModified: DateTime(2026),
-            ),
-        ],
-        diagnostics: parsed.diagnostics,
-        markdown: parsed,
-      );
-      final controller = _MutableWorkspaceController(
-        WorkspaceState(
-          workspace: workspace,
-          // Production owns an active document buffer for this Reading surface.
-          // Keep the image-link regression in that same command/view context.
-          documentBuffers: [
-            DocumentBuffer(
-              id: 'linked-images',
-              filePath: readmePath,
-              text: source,
-              lastSavedText: source,
-              dirty: false,
-              editorState: const DocumentEditorState(
-                mode: DocumentViewModePreference.preview,
+        final parsed = const MarkdownParser().parse(
+          filePath: readmePath,
+          source: source,
+        );
+        final workspace = Workspace(
+          id: readmePath,
+          rootPath: rootPath,
+          kind: WorkspaceKind.singleMarkdown,
+          openedAt: DateTime(2026),
+          activeFilePath: readmePath,
+          openFilePaths: const [readmePath],
+          files: [
+            for (final path in const [
+              readmePath,
+              blockTargetPath,
+              inlineTargetPath,
+            ])
+              DocumentFile(
+                absolutePath: path,
+                relativePath: p.basename(path),
+                kind: DocumentKind.markdown,
+                size: 1,
+                lastModified: DateTime(2026),
               ),
-            ),
           ],
-          activeBufferId: 'linked-images',
-          preview: const MarkdownPreviewBuilder().build(parsed),
-        ),
-      );
-      final settingsStore = _MemorySettingsStore()
-        ..value = AppSettings.defaults()
-            .copyWith(documentViewMode: DocumentViewModePreference.preview)
-            .toJson();
-      final container = ProviderContainer(
-        overrides: [
-          ..._smokeAccentOverrides,
-          localSettingsStoreProvider.overrideWithValue(settingsStore),
-          workspaceControllerProvider.overrideWith(() => controller),
-        ],
-      );
-      addTearDown(container.dispose);
+          diagnostics: parsed.diagnostics,
+          markdown: parsed,
+        );
+        final controller = _MutableWorkspaceController(
+          WorkspaceState(
+            workspace: workspace,
+            // Production owns an active document buffer for this Reading surface.
+            // Keep the image-link regression in that same command/view context.
+            documentBuffers: [
+              DocumentBuffer(
+                id: 'linked-images',
+                filePath: readmePath,
+                text: source,
+                lastSavedText: source,
+                dirty: false,
+                editorState: const DocumentEditorState(
+                  mode: DocumentViewModePreference.preview,
+                ),
+              ),
+            ],
+            activeBufferId: 'linked-images',
+            preview: const MarkdownPreviewBuilder().build(parsed),
+          ),
+        );
+        final settingsStore = _MemorySettingsStore()
+          ..value = AppSettings.defaults()
+              .copyWith(documentViewMode: DocumentViewModePreference.preview)
+              .toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+            workspaceControllerProvider.overrideWith(() => controller),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const BusyMarkApp(),
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byType(MarkdownImageView), findsNWidgets(2));
-      final blocked = find.text(l10n.remoteImageBlocked);
-      final permission = find.text(l10n.remoteImagesBlockedTitle);
-      final network = find.byWidgetPredicate(
-        (widget) => widget is Image && widget.image is NetworkImage,
-      );
-      if (remote) {
-        expect(blocked, findsNWidgets(2));
-        expect(network, findsNothing);
-        for (final destination in ['block-guide.md', 'inline-guide.md']) {
+        expect(find.byType(MarkdownImageView), findsNWidgets(2));
+        final blocked = find.text(l10n.remoteImageBlocked);
+        final moreOptions = find.text(l10n.remoteImageMoreOptions);
+        final load = find.text(l10n.loadThisRemoteImage);
+        final permission = find.text(l10n.remoteImageMoreOptionsTitle);
+        if (remote) {
+          expect(blocked, findsNWidgets(2));
+          expect(http.requests, isEmpty);
+          for (final destination in ['block-guide.md', 'inline-guide.md']) {
+            expect(
+              find.byKey(ValueKey('preview-linked-image-$destination')),
+              findsNothing,
+            );
+          }
+
+          await tester.tap(moreOptions.first);
+          await tester.pumpAndSettle();
+          expect(permission, findsOneWidget);
+          expect(find.text(l10n.loadRemoteImagesForWorkspace), findsNothing);
+          await tester.tap(find.text(l10n.cancel));
+          await tester.pumpAndSettle();
+
+          final semantics = tester.ensureSemantics();
+          try {
+            await tester.pump();
+            final inlineOptions = tester.getSemantics(moreOptions.last);
+            expect(
+              inlineOptions.getSemanticsData().hasAction(SemanticsAction.tap),
+              isTrue,
+            );
+            inlineOptions.owner!.performAction(
+              inlineOptions.id,
+              SemanticsAction.tap,
+            );
+            await tester.pumpAndSettle();
+          } finally {
+            semantics.dispose();
+          }
+          expect(permission, findsOneWidget);
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          await tester.pumpAndSettle();
+          expect(permission, findsNothing);
+          expect(controller.openedFilePath, isNull);
+          expect(http.requests, isEmpty);
+
+          Focus.of(tester.element(load.last)).requestFocus();
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          expect(blocked, findsOneWidget);
+          expect(http.requests.map((request) => request.path), [
+            '/inline-logo.png',
+          ]);
+          expect(controller.openedFilePath, isNull);
           expect(
-            find.byKey(ValueKey('preview-linked-image-$destination')),
+            find.byKey(const ValueKey('preview-linked-image-block-guide.md')),
             findsNothing,
           );
-        }
 
-        await tester.tap(blocked.first);
-        await tester.pumpAndSettle();
-        expect(permission, findsOneWidget);
-        await tester.tap(find.text(l10n.cancel));
-        await tester.pumpAndSettle();
-
-        final semantics = tester.ensureSemantics();
-        try {
-          await tester.pump();
-          final inlinePermission = tester.getSemantics(
-            find.ancestor(
-              of: blocked.last,
-              matching: find.byWidgetPredicate(
-                (widget) =>
-                    widget is Semantics &&
-                    widget.properties.hint == l10n.remoteImageBlockedTooltip,
-              ),
-            ),
-          );
-          expect(
-            inlinePermission.getSemanticsData().hasAction(SemanticsAction.tap),
-            isTrue,
-          );
-          inlinePermission.owner!.performAction(
-            inlinePermission.id,
-            SemanticsAction.tap,
-          );
+          await tester.tap(load);
           await tester.pumpAndSettle();
-        } finally {
-          semantics.dispose();
+          expect(blocked, findsNothing);
+          expect(http.requests.map((request) => request.path), [
+            '/inline-logo.png',
+            '/block-logo.png',
+          ]);
+          expect(controller.openedFilePath, isNull);
+          expect(
+            container.read(appSettingsControllerProvider).allowRemoteImages,
+            isFalse,
+          );
         }
-        expect(permission, findsOneWidget);
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-        await tester.pumpAndSettle();
-        expect(permission, findsNothing);
-        expect(controller.openedFilePath, isNull);
-        expect(network, findsNothing);
-        expect(
-          container
-              .read(appSettingsControllerProvider)
-              .remoteImageAllowedWorkspacePaths,
-          isEmpty,
-        );
 
-        Focus.of(tester.element(blocked.last)).requestFocus();
-        await tester.pump();
-        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-        await tester.pumpAndSettle();
-        expect(permission, findsOneWidget);
-        await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
-        await tester.pumpAndSettle();
-        expect(blocked, findsNothing);
-        expect(network, findsNWidgets(2));
-        expect(controller.openedFilePath, isNull);
-      }
-
-      for (final (destination, expectedPath) in const [
-        ('block-guide.md', blockTargetPath),
-        ('inline-guide.md', inlineTargetPath),
-      ]) {
-        await tester.tap(
-          find.byKey(ValueKey('preview-linked-image-$destination')),
-        );
-        await tester.pump();
-        expect(controller.openedFilePath, expectedPath);
-      }
+        for (final (destination, expectedPath) in const [
+          ('block-guide.md', blockTargetPath),
+          ('inline-guide.md', inlineTargetPath),
+        ]) {
+          await tester.tap(
+            find.byKey(ValueKey('preview-linked-image-$destination')),
+          );
+          await tester.pump();
+          expect(controller.openedFilePath, expectedPath);
+        }
+      });
     });
   }
 
@@ -18181,56 +18185,352 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     expect(find.byKey(const ValueKey('preview-document-scroll')), findsNothing);
   });
 
-  testWidgets('blocked remote image prompt allows the current workspace', (
-    tester,
-  ) async {
-    const startupPath = '/tmp/remote-image.md';
-    final service = _SearchWorkspaceService(
-      '![Remote](https://example.com/logo.png)\n',
-    );
-    final settingsStore = _MemorySettingsStore()
-      ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.preview)
-          .toJson();
-    final container = ProviderContainer(
-      overrides: [
-        ..._smokeAccentOverrides,
-        localSettingsStoreProvider.overrideWithValue(settingsStore),
-        workspaceServiceProvider.overrideWithValue(service),
-        startupPathProvider.overrideWithValue(startupPath),
-      ],
-    );
-    addTearDown(container.dispose);
+  testWidgets(
+    'remote image grants follow unsaved document and occurrence lifetimes',
+    (tester) async {
+      await _withControlledImageClient((http) async {
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+        addTearDown(
+          () => binding.platformDispatcher.defaultRouteNameTestValue = '/',
+        );
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-image-scopes-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        final settingsStore = _MemorySettingsStore()
+          ..value = AppSettings.defaults()
+              .copyWith(
+                autoSave: false,
+                validateOnEdit: false,
+                automaticSpelling: false,
+              )
+              .toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            startupPathProvider.overrideWithValue(null),
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        DocumentBuffer buffer() =>
+            container.read(workspaceControllerProvider).activeBuffer!;
+        await tabOperation(tester, controller.createMarkdownFile);
+        const url = 'https://example.com/lifetime.png';
+        const markup = '![Same]($url)';
+        const source = 'Introduction\n\n$markup\n\n$markup\n';
+        controller.updateActiveText(source);
+        await tester.pumpAndSettle();
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const BusyMarkApp(),
-      ),
-    );
-    for (var i = 0; i < 20; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.remoteImageBlocked).evaluate().isNotEmpty) {
-        break;
-      }
-    }
+        final load = find.text(l10n.loadThisRemoteImage);
+        final options = find.text(l10n.remoteImageMoreOptions);
+        final blocked = find.text(l10n.remoteImageBlocked);
+        final network = find.byWidgetPredicate(
+          (widget) => widget is Image && widget.image is NetworkImage,
+        );
+        expect(load, findsNWidgets(2));
+        expect(http.requests, isEmpty);
+        final beforePermission = buffer();
+        await tester.tap(load.first);
+        await tester.pumpAndSettle();
+        expect(network, findsOneWidget);
+        expect(blocked, findsOneWidget);
+        expect(http.requests, [Uri.parse(url)]);
+        expect(buffer().text, beforePermission.text);
+        expect(buffer().dirty, beforePermission.dirty);
+        expect(
+          buffer().editorState.undoState.undo,
+          same(beforePermission.editorState.undoState.undo),
+        );
+        final opening = buffer().opening;
 
-    expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
+        await tester.enterText(
+          historyField(DocumentViewModePreference.editor),
+          'Edited introduction',
+        );
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+        expect(network, findsOneWidget);
 
-    await tester.tap(find.text(l10n.remoteImageBlocked));
-    await tester.pumpAndSettle();
+        Future<void> show(DocumentViewModePreference mode) async {
+          controller.updateActiveEditorMode(mode);
+          await tabOperation(tester, controller.validateActive);
+          await tester.pumpAndSettle();
+        }
 
-    expect(find.text(l10n.remoteImagesBlockedTitle), findsOneWidget);
+        for (final mode in [
+          DocumentViewModePreference.preview,
+          DocumentViewModePreference.split,
+          DocumentViewModePreference.editor,
+        ]) {
+          await show(mode);
+          expect(blocked, findsOneWidget, reason: mode.name);
+          expect(network, findsOneWidget, reason: mode.name);
+        }
 
-    await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+        final firstId = buffer().id;
+        final edited = buffer().text;
+        await tabOperation(tester, controller.createMarkdownFile);
+        controller.updateActiveText(source);
+        await tester.pumpAndSettle();
+        expect(blocked, findsNWidgets(2));
+        expect(network, findsNothing);
+        await tester.tap(options.first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.loadRemoteImagesInDocument));
+        await tester.pumpAndSettle();
+        expect(network, findsNWidgets(2));
+        expect(buffer().isUntitled, isTrue);
+        expect(
+          container.read(appSettingsControllerProvider).allowRemoteImages,
+          isFalse,
+        );
+        await tabOperation(
+          tester,
+          () => controller.activateDocumentBuffer(firstId),
+        );
+        await tester.pumpAndSettle();
+        expect(network, findsOneWidget);
 
-    expect(
-      settingsStore.value['remoteImageAllowedWorkspacePaths'],
-      contains(startupPath),
-    );
-  });
+        final path = p.join(root.path, 'saved.md');
+        expect(
+          await tabOperation(tester, () => controller.saveActiveAs(path)),
+          isTrue,
+        );
+        await tester.pumpAndSettle();
+        expect(buffer().opening, same(opening));
+        expect(buffer().id, firstId);
+        expect(buffer().filePath, path);
+        expect(network, findsOneWidget);
+        expect(blocked, findsOneWidget);
+
+        await tester.tap(options);
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.loadRemoteImagesForWorkspace), findsNothing);
+        controller.updateActiveText(
+          edited.replaceAll(url, 'https://example.com/changed.png'),
+        );
+        await tester.tap(find.text(l10n.alwaysLoadRemoteImages));
+        await tester.pumpAndSettle();
+        expect(
+          container.read(appSettingsControllerProvider).allowRemoteImages,
+          isFalse,
+        );
+        expect(network, findsNothing);
+        expect(blocked, findsNWidgets(2));
+        expect(http.requests, [Uri.parse(url)]);
+
+        await tester.tap(options.first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.loadRemoteImagesInDocument));
+        await tester.pumpAndSettle();
+        expect(network, findsNWidgets(2));
+        controller.updateActiveText(
+          '${buffer().text}\n![New](https://example.com/after-grant.png)\n',
+        );
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        expect(http.requests.map((url) => url.path), [
+          '/lifetime.png',
+          '/changed.png',
+          '/after-grant.png',
+        ]);
+        expect(settingsStore.value['allowRemoteImages'], false);
+        expect(settingsStore.value['remoteImageAllowedWorkspaceIds'], isEmpty);
+
+        expect(
+          await tabOperation(
+            tester,
+            () => controller.closeDocumentBuffer(firstId, discard: true),
+          ),
+          isTrue,
+        );
+        await tabOperation(tester, () => controller.openPath(path));
+        await tester.pumpAndSettle();
+        final firstFileOpening = buffer().opening;
+        final fileId = buffer().id;
+        expect(blocked, findsNWidgets(2));
+        await tester.tap(load.first);
+        await tester.pumpAndSettle();
+        expect(network, findsOneWidget);
+        expect(
+          await tabOperation(
+            tester,
+            () => controller.closeDocumentBuffer(fileId),
+          ),
+          isTrue,
+        );
+        await tabOperation(tester, () => controller.openPath(path));
+        await tester.pumpAndSettle();
+        expect(buffer().id, fileId);
+        expect(buffer().opening, isNot(same(firstFileOpening)));
+        expect(blocked, findsNWidgets(2));
+        expect(network, findsNothing);
+      });
+    },
+  );
+
+  testWidgets(
+    'remote image workspace grant includes drafts and revokes immediately',
+    (tester) async {
+      await _withControlledImageClient((http) async {
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-image-workspace-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        final other = Directory(p.join(root.path, 'other'))..createSync();
+        const source = '![First](https://example.com/workspace.png)\n';
+        final standalone = File(p.join(root.path, 'standalone.md'))
+          ..writeAsStringSync(source);
+        File(p.join(other.path, 'other.md')).writeAsStringSync(source);
+
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            startupPathProvider.overrideWithValue(null),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(
+                      autoSave: false,
+                      validateOnEdit: false,
+                      automaticSpelling: false,
+                    )
+                    .toJson(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final settings = container.read(appSettingsControllerProvider.notifier);
+        final blocked = find.text(l10n.remoteImageBlocked);
+        final options = find.text(l10n.remoteImageMoreOptions);
+        await tabOperation(tester, () => controller.openPath(root.path));
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        expect(
+          container.read(workspaceControllerProvider).workspace?.kind,
+          WorkspaceKind.markdownFolder,
+        );
+        await tabOperation(tester, controller.createMarkdownFile);
+        controller.updateActiveText(source);
+        expect(container.read(workspaceControllerProvider).activeText, source);
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+
+        await tester.tap(options);
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            l10n.remoteImageWorkspacePermissionDetail(
+              root.resolveSymbolicLinksSync(),
+            ),
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        expect(http.requests, [Uri.parse('https://example.com/workspace.png')]);
+
+        await settings.setAllowRemoteImages(true);
+        await settings.setAllowRemoteImages(false);
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        for (final path in [other.path, standalone.path]) {
+          await tabOperation(tester, () => controller.openPath(path));
+          container.read(appRouterProvider).go('/workspace');
+          await tester.pumpAndSettle();
+          expect(blocked, findsOneWidget);
+        }
+        await tabOperation(tester, () => controller.openPath(root.path));
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        await settings.clearRemoteImageWorkspacePermissions();
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+        expect(http.requests, hasLength(1));
+      });
+    },
+  );
+
+  testWidgets(
+    'nested HTML uses the same remote image occurrence in all views',
+    (tester) async {
+      await _withControlledImageClient((http) async {
+        const source = '''
+<div>
+  <p>One <img src="https://example.com/html-occurrence.png" alt="first"> inline.</p>
+  <figure><img src="https://example.com/html-occurrence.png" alt="second"></figure>
+</div>
+''';
+        final container = await historyApp(
+          tester,
+          DocumentViewModePreference.editor,
+          initialSource: source,
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final load = find.text(l10n.loadThisRemoteImage);
+        final blocked = find.text(l10n.remoteImageBlocked);
+        expect(load, findsNWidgets(2));
+        expect(http.requests, isEmpty);
+        await tester.tap(load.first);
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+        for (final mode in [
+          DocumentViewModePreference.preview,
+          DocumentViewModePreference.split,
+        ]) {
+          controller.updateActiveEditorMode(mode);
+          await tabOperation(tester, controller.validateActive);
+          await tester.pumpAndSettle();
+          expect(blocked, findsOneWidget);
+          expect(
+            find.text('second\nhttps://example.com/html-occurrence.png'),
+            findsOneWidget,
+          );
+        }
+        expect(http.requests, [
+          Uri.parse('https://example.com/html-occurrence.png'),
+        ]);
+      });
+    },
+  );
 
   testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
     const startupPath = 'test/fixtures/markdown/basic.md';
@@ -18474,7 +18774,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
       expect(find.byType(Image), findsNothing);
 
-      await tester.tap(find.text(l10n.remoteImageBlocked));
+      await tester.tap(find.text(l10n.remoteImageMoreOptions));
       await tester.pump();
 
       expect(promptCount, 1);
@@ -18521,7 +18821,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       tester.getRect(details).bottom,
       lessThan(tester.getRect(image).bottom),
     );
-    await tester.tap(find.text(l10n.remoteImageBlocked));
+    await tester.tap(find.text(l10n.remoteImageMoreOptions));
     expect(promptCount, 1);
 
     await tester.pumpWidget(buildImage(maxHeight: 120));
@@ -24077,4 +24377,22 @@ Future<void> _executeViewCommand(WidgetTester tester, String id) async {
   final context = tester.element(find.byType(WorkspaceScreen));
   final container = ProviderScope.containerOf(context, listen: false);
   await container.read(busyMarkCommandRegistryProvider).execute(id);
+}
+
+Future<void> _withControlledImageClient(
+  Future<void> Function(ControlledImageHttpClient) run,
+) async {
+  final previous = debugNetworkImageHttpClientProvider;
+  final client = ControlledImageHttpClient();
+  final cache = PaintingBinding.instance.imageCache;
+  cache.clear();
+  cache.clearLiveImages();
+  debugNetworkImageHttpClientProvider = () => client;
+  try {
+    await run(client);
+  } finally {
+    debugNetworkImageHttpClientProvider = previous;
+    cache.clear();
+    cache.clearLiveImages();
+  }
 }

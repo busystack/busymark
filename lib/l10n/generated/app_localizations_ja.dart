@@ -1161,11 +1161,11 @@ class AppLocalizationsJa extends AppLocalizations {
       'Markdown のプレビューとエディターで http および https URL の画像を読み込めるようにする';
 
   @override
-  String get clearRemoteImagePermissions => 'リモート画像の権限を消去';
+  String get clearRemoteImagePermissions => 'ワークスペースの画像の許可を消去';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'リモート画像の読み込みを許可したワークスペースの権限を忘れる';
+      'すべてのワークスペースのリモート画像の許可を消去します。';
 
   @override
   String get clearGitWorkspaceTrust => '信頼済み Git ワークスペースを消去';
@@ -1519,7 +1519,35 @@ class AppLocalizationsJa extends AppLocalizations {
       'このドキュメントはインターネット上の画像を参照しています。読み込むと、画像ホストにネットワーク情報が公開される可能性があります。';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'このワークスペースで読み込む';
+  String get loadThisRemoteImage => 'この画像を読み込む';
+
+  @override
+  String get remoteImageMoreOptions => 'その他のオプション…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'リモート画像の許可';
+
+  @override
+  String get loadRemoteImagesInDocument => 'この文書の画像を読み込む';
+
+  @override
+  String get remoteImageUntilClose => 'この文書を閉じるまで有効です。';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'プライバシー設定でワークスペースの許可を消去するまで、$workspace のリモート画像を許可します。';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'プライバシー設定でこのオプションをオフにするまで、BusyMark 全体でリモート画像を許可します。';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'BusyMark 全体でリモート画像を許可します。ワークスペースの許可は個別に管理されます。';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'このワークスペースでは常に許可する';
 
   @override
   String get alwaysLoadRemoteImages => '常にリモート画像を読み込む';

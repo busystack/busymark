@@ -1,3 +1,4 @@
+import '../markdown_image_permission_scope.dart';
 import '../document_edit_history.dart';
 import '../../app/command_shortcuts.dart';
 import 'package:flutter/foundation.dart' show listEquals;
@@ -877,7 +878,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     }
     final selectedBlockIds = _fullySelectedBlockIds(blocks);
-    return BusyMarkCommandShortcuts(
+    final editor = BusyMarkCommandShortcuts(
       isComposing: () => _hasActiveClipboardComposition,
       shortcuts: {
         ...commandRegistry.blockedDefaultIntents(const {
@@ -1240,6 +1241,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           ),
         ),
       ),
+    );
+    return MarkdownImageProjection(
+      source:
+          _documentController.document.imageSource ??
+          _documentController.document.source,
+      child: editor,
     );
   }
 

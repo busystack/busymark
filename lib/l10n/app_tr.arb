@@ -1072,11 +1072,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Harici görsel izinlerini temizle",
+  "clearRemoteImagePermissions": "Çalışma alanı resim izinlerini temizle",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Harici görsellerin yüklenmesine izin verilen çalışma alanlarını unutun.",
+  "clearRemoteImagePermissionsDescription": "Çalışma alanlarının tüm uzak resim izinlerini unut.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1504,7 +1504,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Bu çalışma alanı için yükleme",
+  "loadThisRemoteImage": "Bu resmi yükle",
+  "remoteImageMoreOptions": "Diğer seçenekler…",
+  "remoteImageMoreOptionsTitle": "Uzak resim izinleri",
+  "loadRemoteImagesInDocument": "Bu belgedeki resimleri yükle",
+  "remoteImageUntilClose": "Bu belge kapanana kadar.",
+  "remoteImageWorkspacePermissionDetail": "Gizlilik ayarlarında çalışma alanı izinlerini temizleyene kadar {workspace} içindeki uzak resimlere izin verir.",
+  "remoteImageGlobalPermissionDetail": "Gizlilik ayarlarında bu seçeneği kapatana kadar BusyMark genelinde uzak resimlere izin verir.",
+  "remoteImageGlobalSettingsDetail": "BusyMark genelinde uzak resimlere izin ver. Çalışma alanı izinleri ayrı yönetilir.",
+  "loadRemoteImagesForWorkspace": "Bu çalışma alanında her zaman izin ver",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

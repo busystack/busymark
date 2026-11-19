@@ -1129,10 +1129,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。';
 
   @override
-  String get clearRemoteImagePermissions => '清除远程图像权限';
+  String get clearRemoteImagePermissions => '清除工作区图片权限';
 
   @override
-  String get clearRemoteImagePermissionsDescription => '忘记已获准加载远程图像的工作区。';
+  String get clearRemoteImagePermissionsDescription => '忘记所有工作区的远程图片权限。';
 
   @override
   String get clearGitWorkspaceTrust => '清除受信任的 Git 工作区';
@@ -1484,7 +1484,35 @@ class AppLocalizationsZh extends AppLocalizations {
       '本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。';
 
   @override
-  String get loadRemoteImagesForWorkspace => '为此工作区加载';
+  String get loadThisRemoteImage => '加载此图片';
+
+  @override
+  String get remoteImageMoreOptions => '更多选项…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => '远程图片权限';
+
+  @override
+  String get loadRemoteImagesInDocument => '加载此文档中的图片';
+
+  @override
+  String get remoteImageUntilClose => '在关闭此文档前有效。';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return '允许在 $workspace 中加载远程图片，直至在隐私设置中清除工作区权限。';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      '允许在整个 BusyMark 中加载远程图片，直至在隐私设置中关闭此选项。';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      '允许在整个 BusyMark 中加载远程图片。工作区权限单独管理。';
+
+  @override
+  String get loadRemoteImagesForWorkspace => '在此工作区中始终允许';
 
   @override
   String get alwaysLoadRemoteImages => '始终加载远程图像';
@@ -9726,10 +9754,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
       '允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。';
 
   @override
-  String get clearRemoteImagePermissions => '清除远程图像权限';
+  String get clearRemoteImagePermissions => '清除工作区图片权限';
 
   @override
-  String get clearRemoteImagePermissionsDescription => '忘记已获准加载远程图像的工作区。';
+  String get clearRemoteImagePermissionsDescription => '忘记所有工作区的远程图片权限。';
 
   @override
   String get clearGitWorkspaceTrust => '清除受信任的 Git 工作区';
@@ -10081,7 +10109,35 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
       '本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。';
 
   @override
-  String get loadRemoteImagesForWorkspace => '为此工作区加载';
+  String get loadThisRemoteImage => '加载此图片';
+
+  @override
+  String get remoteImageMoreOptions => '更多选项…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => '远程图片权限';
+
+  @override
+  String get loadRemoteImagesInDocument => '加载此文档中的图片';
+
+  @override
+  String get remoteImageUntilClose => '在关闭此文档前有效。';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return '允许在 $workspace 中加载远程图片，直至在隐私设置中清除工作区权限。';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      '允许在整个 BusyMark 中加载远程图片，直至在隐私设置中关闭此选项。';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      '允许在整个 BusyMark 中加载远程图片。工作区权限单独管理。';
+
+  @override
+  String get loadRemoteImagesForWorkspace => '在此工作区中始终允许';
 
   @override
   String get alwaysLoadRemoteImages => '始终加载远程图像';

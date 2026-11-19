@@ -1208,11 +1208,12 @@ class AppLocalizationsHi extends AppLocalizations {
       'Markdown पूर्वावलोकन और संपादक की छवियों को http और https URL से लोड होने दें।';
 
   @override
-  String get clearRemoteImagePermissions => 'दूरस्थ छवि अनुमतियाँ साफ़ करें';
+  String get clearRemoteImagePermissions =>
+      'कार्यस्थानों की छवि अनुमतियाँ हटाएँ';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।';
+      'कार्यस्थानों की सभी दूरस्थ छवि अनुमतियाँ भूलें।';
 
   @override
   String get clearGitWorkspaceTrust => 'विश्वसनीय Git कार्यस्थान साफ़ करें';
@@ -1577,7 +1578,36 @@ class AppLocalizationsHi extends AppLocalizations {
       'यह दस्तावेज़ इंटरनेट की छवियों का संदर्भ देता है। उन्हें लोड करने पर छवि होस्ट को नेटवर्क की जानकारी मिल सकती है।';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'इस कार्यस्थान के लिए लोड करें';
+  String get loadThisRemoteImage => 'यह छवि लोड करें';
+
+  @override
+  String get remoteImageMoreOptions => 'और विकल्प…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'दूरस्थ छवियों की अनुमतियाँ';
+
+  @override
+  String get loadRemoteImagesInDocument => 'इस दस्तावेज़ की छवियाँ लोड करें';
+
+  @override
+  String get remoteImageUntilClose => 'इस दस्तावेज़ के बंद होने तक।';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'गोपनीयता सेटिंग में कार्यस्थान की अनुमतियाँ हटाने तक $workspace में दूरस्थ छवियों की अनुमति देता है।';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'गोपनीयता सेटिंग में यह विकल्प बंद करने तक पूरे BusyMark में दूरस्थ छवियों की अनुमति देता है।';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'पूरे BusyMark में दूरस्थ छवियों की अनुमति दें। कार्यस्थानों की अनुमतियाँ अलग से प्रबंधित होती हैं।';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'इस कार्यस्थान में हमेशा अनुमति दें';
 
   @override
   String get alwaysLoadRemoteImages => 'दूरस्थ छवियाँ हमेशा लोड करें';

@@ -47,6 +47,7 @@ import '../writerside/writerside_topic_file_editor.dart';
 import '../writerside/writerside_toc_editor.dart';
 import '../writerside/writerside_title_editor.dart';
 import 'document_buffer.dart';
+import 'remote_image_permissions.dart';
 import 'recovery_persistence.dart';
 import 'session_persistence.dart';
 import 'text_format_metadata.dart';
@@ -213,6 +214,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
+  final remoteImages = RemoteImagePermissions();
   final propertyEdits = WritersidePropertySession();
 
   /// The mounted workspace owns inspector transitions and focus restoration.
@@ -368,7 +370,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         _scheduleAutoSave();
       }
     });
+    listenSelf(remoteImages.update);
     ref.onDispose(() {
+      remoteImages.dispose();
       _settingsController.processPendingProperties = null;
       propertyEdits.dispose();
       _cancelCreationFocus();
@@ -386,6 +390,42 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _notesCoordinator?.dispose();
     });
     return const WorkspaceState();
+  }
+
+  RemoteImagePermissionTarget? captureRemoteImagePermission(
+    DocumentBuffer buffer,
+    String? renderedSource,
+    SourceSpan? span,
+    String source,
+    String? workspaceId,
+  ) => remoteImages.capture(
+    state,
+    buffer,
+    renderedSource,
+    span,
+    source,
+    workspaceId,
+  );
+
+  Future<void> grantRemoteImagePermission(
+    RemoteImagePermissionTarget target,
+    RemoteImagePermission permission,
+  ) async {
+    if (!ref.mounted) return;
+    final accepted = remoteImages.apply(target, permission, state);
+    remoteImages.release(target);
+    if (!accepted) return;
+    switch (permission) {
+      case RemoteImagePermission.workspace:
+        await _settingsController.allowRemoteImagesForWorkspaceId(
+          target.workspaceId!,
+        );
+      case RemoteImagePermission.global:
+        await _settingsController.setAllowRemoteImages(true);
+      case RemoteImagePermission.image:
+      case RemoteImagePermission.document:
+        break;
+    }
   }
 
   void _queueFileMonitorEvent(WorkspaceFileMonitorEvent event) {

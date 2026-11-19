@@ -1042,11 +1042,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Eemalda välispiltide laadimise load",
+  "clearRemoteImagePermissions": "Kustuta tööruumide pildiõigused",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Unusta tööruumid, millel oli lubatud välispilte laadida.",
+  "clearRemoteImagePermissionsDescription": "Unusta kõik tööruumide kaugpiltide õigused.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1428,7 +1428,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Laadi selles tööruumis",
+  "loadThisRemoteImage": "Laadi see pilt",
+  "remoteImageMoreOptions": "Rohkem valikuid…",
+  "remoteImageMoreOptionsTitle": "Kaugpiltide õigused",
+  "loadRemoteImagesInDocument": "Laadi selle dokumendi pildid",
+  "remoteImageUntilClose": "Kuni selle dokumendi sulgemiseni.",
+  "remoteImageWorkspacePermissionDetail": "Lubab kaugpildid tööruumis {workspace}, kuni kustutad tööruumide õigused privaatsusseadetes.",
+  "remoteImageGlobalPermissionDetail": "Lubab kaugpildid kogu BusyMarkis, kuni lülitad selle privaatsusseadetes välja.",
+  "remoteImageGlobalSettingsDetail": "Luba kaugpildid kogu BusyMarkis. Tööruumide õigusi hallatakse eraldi.",
+  "loadRemoteImagesForWorkspace": "Luba selles tööruumis alati",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

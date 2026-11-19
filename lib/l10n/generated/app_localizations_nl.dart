@@ -1217,11 +1217,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Wis machtigingen voor externe afbeeldingen';
+      'Afbeeldingsmachtigingen voor werkruimten wissen';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Verwijder de opgeslagen rechten voor werkruimten die externe afbeeldingen mochten laden.';
+      'Vergeet alle machtigingen voor externe afbeeldingen in werkruimten.';
 
   @override
   String get clearGitWorkspaceTrust => 'Wis vertrouwde Git-werkruimten';
@@ -1586,7 +1586,37 @@ class AppLocalizationsNl extends AppLocalizations {
       'Dit document verwijst naar afbeeldingen van internet. Als u ze laadt, kan netwerkinformatie aan de afbeeldingshost worden onthuld.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Voor deze werkruimte laden';
+  String get loadThisRemoteImage => 'Deze afbeelding laden';
+
+  @override
+  String get remoteImageMoreOptions => 'Meer opties…';
+
+  @override
+  String get remoteImageMoreOptionsTitle =>
+      'Machtigingen voor externe afbeeldingen';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Afbeeldingen in dit document laden';
+
+  @override
+  String get remoteImageUntilClose => 'Totdat dit document wordt gesloten.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Staat externe afbeeldingen in $workspace toe totdat je de werkruimtemachtigingen wist in de privacyinstellingen.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Staat externe afbeeldingen in heel BusyMark toe totdat je dit uitschakelt in de privacyinstellingen.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Sta externe afbeeldingen in heel BusyMark toe. Werkruimtemachtigingen worden apart beheerd.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Altijd toestaan in deze werkruimte';
 
   @override
   String get alwaysLoadRemoteImages => 'Externe afbeeldingen altijd laden';

@@ -109,6 +109,7 @@ class BusyDocument {
     this.frontMatter = const {},
     this.rawFrontMatter,
     this.source,
+    this.imageSource,
     this.authoredXml,
   });
 
@@ -120,6 +121,7 @@ class BusyDocument {
   final Map<String, String> frontMatter;
   final String? rawFrontMatter;
   final String? source;
+  final String? imageSource;
 
   /// The unresolved authored XML tree. Presentation resolution never owns saves.
   final WritersideDocument? authoredXml;
@@ -134,6 +136,7 @@ class BusyDocument {
     Map<String, String>? frontMatter,
     String? rawFrontMatter,
     String? source,
+    String? imageSource,
     WritersideDocument? authoredXml,
   }) {
     return BusyDocument(
@@ -145,6 +148,7 @@ class BusyDocument {
       frontMatter: frontMatter ?? this.frontMatter,
       rawFrontMatter: rawFrontMatter ?? this.rawFrontMatter,
       source: source ?? this.source,
+      imageSource: imageSource ?? this.imageSource,
       authoredXml: authoredXml ?? this.authoredXml,
     );
   }
@@ -181,6 +185,7 @@ class BusyBlock {
     this.attributes = const {},
     this.rawSource,
     this.sourceSpan,
+    this.posterSpan,
     this.preserveRaw = false,
     this.isSourceOnly = false,
     this.isGenerated = false,
@@ -195,6 +200,7 @@ class BusyBlock {
   final Map<String, String> attributes;
   final String? rawSource;
   final SourceSpan? sourceSpan;
+  final SourceSpan? posterSpan;
   final bool preserveRaw;
   final bool isSourceOnly;
   final bool isGenerated;
@@ -211,6 +217,8 @@ class BusyBlock {
     Map<String, String>? attributes,
     String? rawSource,
     SourceSpan? sourceSpan,
+    SourceSpan? posterSpan,
+    bool clearPosterSpan = false,
     bool? preserveRaw,
     bool? isSourceOnly,
     bool? isGenerated,
@@ -225,6 +233,7 @@ class BusyBlock {
       attributes: attributes ?? this.attributes,
       rawSource: rawSource ?? this.rawSource,
       sourceSpan: sourceSpan ?? this.sourceSpan,
+      posterSpan: clearPosterSpan ? null : posterSpan ?? this.posterSpan,
       preserveRaw: preserveRaw ?? this.preserveRaw,
       isSourceOnly: isSourceOnly ?? this.isSourceOnly,
       isGenerated: isGenerated ?? this.isGenerated,
@@ -260,6 +269,7 @@ class BusyInline {
     required this.kind,
     required this.text,
     this.destination,
+    this.imageSpan,
     this.children = const [],
     this.attributes = const {},
   });
@@ -267,6 +277,7 @@ class BusyInline {
   final BusyInlineKind kind;
   final String text;
   final String? destination;
+  final SourceSpan? imageSpan;
   final List<BusyInline> children;
   final Map<String, String> attributes;
 
@@ -283,11 +294,14 @@ class BusyInline {
     String? destination,
     List<BusyInline>? children,
     Map<String, String>? attributes,
+    SourceSpan? imageSpan,
+    bool clearImageSpan = false,
   }) {
     return BusyInline(
       kind: kind ?? this.kind,
       text: text ?? this.text,
       destination: destination ?? this.destination,
+      imageSpan: clearImageSpan ? null : imageSpan ?? this.imageSpan,
       children: children ?? this.children,
       attributes: attributes ?? this.attributes,
     );

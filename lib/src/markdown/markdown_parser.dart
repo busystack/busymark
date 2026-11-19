@@ -57,10 +57,56 @@ class MarkdownParser {
   /// Rebind an already edited projection to its emitted source. This reuses
   /// the ordinary positioned scanner; it does not infer lists from adjacency.
   BusyDocument rebindSourceMetadata(BusyDocument document, String source) =>
-      _withScannedSourceMetadata(
-        document.copyWith(source: source),
-        document.diagnostics,
+      const MarkdownAstAdapter().bindImageSpans(
+        _withScannedSourceMetadata(
+          document.copyWith(source: source),
+          document.diagnostics,
+        ),
       );
+
+  /// Refresh presentation ranges while retaining the editor’s live blocks,
+  /// serializer metadata and rich editing state.
+  BusyDocument rebindImageSpans(BusyDocument document, String source) {
+    final projected = rebindSourceMetadata(document, source);
+    final positions = {
+      for (final block in _walkBlocks(projected.blocks)) block.id: block,
+    };
+
+    List<BusyInline> copySpans(
+      List<BusyInline> live,
+      List<BusyInline> positioned,
+    ) => [
+      for (final (index, inline) in live.indexed)
+        (() {
+          final mapped =
+              index < positioned.length &&
+                  inline.kind == positioned[index].kind &&
+                  inline.destination == positioned[index].destination
+              ? positioned[index]
+              : null;
+          return inline.copyWith(
+            imageSpan: mapped?.imageSpan,
+            clearImageSpan: mapped?.imageSpan == null,
+            children: copySpans(inline.children, mapped?.children ?? const []),
+          );
+        })(),
+    ];
+
+    BusyBlock bind(BusyBlock block) {
+      final positioned = positions[block.id];
+      return block.copyWith(
+        inlines: copySpans(block.inlines, positioned?.inlines ?? const []),
+        posterSpan: positioned?.posterSpan,
+        clearPosterSpan: positioned?.posterSpan == null,
+        children: block.children.map(bind).toList(),
+      );
+    }
+
+    return document.copyWith(
+      imageSource: source,
+      blocks: document.blocks.map(bind).toList(),
+    );
+  }
 
   /// Keeps cross-block reference context for the HTML export projection. The
   /// editor and source serializer retain their existing projection by default.
@@ -341,9 +387,11 @@ class MarkdownParser {
       title: title,
       preserveHtmlSemantics: preserveHtmlSemantics,
     );
-    var busyDocument = _withScannedSourceMetadata(
-      renderedDocument,
-      sortDiagnostics(diagnostics),
+    var busyDocument = astAdapter.bindImageSpans(
+      _withScannedSourceMetadata(
+        renderedDocument,
+        sortDiagnostics(diagnostics),
+      ),
     );
     final canonicalHeadings = _canonicalizeHeadings(
       document: busyDocument,

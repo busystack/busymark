@@ -1210,12 +1210,11 @@ class AppLocalizationsEt extends AppLocalizations {
       'Luba Markdowni eelvaatel ja redaktoril laadida pilte HTTP- ja HTTPS-aadressidelt.';
 
   @override
-  String get clearRemoteImagePermissions =>
-      'Eemalda välispiltide laadimise load';
+  String get clearRemoteImagePermissions => 'Kustuta tööruumide pildiõigused';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Unusta tööruumid, millel oli lubatud välispilte laadida.';
+      'Unusta kõik tööruumide kaugpiltide õigused.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1579,7 +1578,35 @@ class AppLocalizationsEt extends AppLocalizations {
       'See dokument viitab internetis olevatele piltidele. Nende laadimine võib avaldada pildi majutajale teie võrguteavet.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Laadi selles tööruumis';
+  String get loadThisRemoteImage => 'Laadi see pilt';
+
+  @override
+  String get remoteImageMoreOptions => 'Rohkem valikuid…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Kaugpiltide õigused';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Laadi selle dokumendi pildid';
+
+  @override
+  String get remoteImageUntilClose => 'Kuni selle dokumendi sulgemiseni.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Lubab kaugpildid tööruumis $workspace, kuni kustutad tööruumide õigused privaatsusseadetes.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Lubab kaugpildid kogu BusyMarkis, kuni lülitad selle privaatsusseadetes välja.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Luba kaugpildid kogu BusyMarkis. Tööruumide õigusi hallatakse eraldi.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Luba selles tööruumis alati';
 
   @override
   String get alwaysLoadRemoteImages => 'Laadi välispildid alati';

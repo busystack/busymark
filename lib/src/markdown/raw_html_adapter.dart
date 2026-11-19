@@ -8,6 +8,7 @@ import 'package:html/src/token.dart' as html_token;
 import 'package:html/src/tokenizer.dart' as html_tokenizer;
 
 import '../core/path_utils.dart';
+import '../core/source_span.dart';
 import 'busymark_document.dart';
 import 'raw_html_policy.dart';
 
@@ -66,12 +67,13 @@ class RawHtmlAdapter {
 
   RawHtmlBlockParseResult? parseRawHtmlBlock(
     String rawSource,
-    String Function() nextId,
-  ) {
+    String Function() nextId, {
+    bool trackImageSpans = false,
+  }) {
     if (!_mayContainHtml(rawSource)) {
       return null;
     }
-    final fragment = _parseFragment(rawSource);
+    final fragment = _parseFragment(rawSource, generateSpans: trackImageSpans);
     if (fragment == null) {
       return null;
     }
@@ -923,6 +925,20 @@ class RawHtmlAdapter {
     };
   }
 
+  SourceSpan? _imageSpan(html.Element element) {
+    final span = element.sourceSpan;
+    if (span == null) return null;
+    return SourceSpan(
+      filePath: '',
+      startOffset: span.start.offset,
+      endOffset: span.end.offset,
+      startLine: span.start.line + 1,
+      endLine: span.end.line + 1,
+      startColumn: span.start.column + 1,
+      endColumn: span.end.column + 1,
+    );
+  }
+
   BusyBlock _imageBlockFromElement(
     html.Element element,
     Map<String, String> attributes,
@@ -936,6 +952,7 @@ class RawHtmlAdapter {
           kind: BusyInlineKind.image,
           text: attributes['alt'] ?? '',
           destination: attributes['src'],
+          imageSpan: _imageSpan(element),
           attributes: attributes,
         ),
       ],
@@ -1047,6 +1064,7 @@ class RawHtmlAdapter {
           kind: BusyInlineKind.image,
           text: attributes['alt'] ?? '',
           destination: attributes['src'],
+          imageSpan: _imageSpan(element),
           attributes: attributes,
         ),
       ],

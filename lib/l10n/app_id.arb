@@ -1072,11 +1072,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Hapus izin gambar jarak jauh",
+  "clearRemoteImagePermissions": "Hapus izin gambar ruang kerja",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Lupakan ruang kerja yang diizinkan memuat gambar jarak jauh.",
+  "clearRemoteImagePermissionsDescription": "Lupakan semua izin gambar jarak jauh untuk ruang kerja.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1504,7 +1504,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Muat untuk ruang kerja ini",
+  "loadThisRemoteImage": "Muat gambar ini",
+  "remoteImageMoreOptions": "Opsi lainnya…",
+  "remoteImageMoreOptionsTitle": "Izin gambar jarak jauh",
+  "loadRemoteImagesInDocument": "Muat gambar di dokumen ini",
+  "remoteImageUntilClose": "Hingga dokumen ini ditutup.",
+  "remoteImageWorkspacePermissionDetail": "Mengizinkan gambar jarak jauh di {workspace} hingga izin ruang kerja dihapus di pengaturan Privasi.",
+  "remoteImageGlobalPermissionDetail": "Mengizinkan gambar jarak jauh di seluruh BusyMark hingga opsi ini dimatikan di pengaturan Privasi.",
+  "remoteImageGlobalSettingsDetail": "Izinkan gambar jarak jauh di seluruh BusyMark. Izin ruang kerja dikelola secara terpisah.",
+  "loadRemoteImagesForWorkspace": "Selalu izinkan di ruang kerja ini",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

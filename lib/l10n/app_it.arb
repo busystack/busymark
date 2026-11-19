@@ -954,11 +954,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Cancella autorizzazioni per immagini remote",
+  "clearRemoteImagePermissions": "Cancella le autorizzazioni delle immagini degli spazi di lavoro",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Dimentica le aree di lavoro autorizzate a caricare immagini remote.",
+  "clearRemoteImagePermissionsDescription": "Dimentica tutte le autorizzazioni per le immagini remote degli spazi di lavoro.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1340,7 +1340,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Carica per quest’area di lavoro",
+  "loadThisRemoteImage": "Carica questa immagine",
+  "remoteImageMoreOptions": "Altre opzioni…",
+  "remoteImageMoreOptionsTitle": "Autorizzazioni per le immagini remote",
+  "loadRemoteImagesInDocument": "Carica le immagini in questo documento",
+  "remoteImageUntilClose": "Fino alla chiusura di questo documento.",
+  "remoteImageWorkspacePermissionDetail": "Consente le immagini remote in {workspace} finché non cancelli le autorizzazioni degli spazi di lavoro nelle impostazioni di privacy.",
+  "remoteImageGlobalPermissionDetail": "Consente le immagini remote in tutto BusyMark finché non disattivi questa opzione nelle impostazioni di privacy.",
+  "remoteImageGlobalSettingsDetail": "Consenti le immagini remote in tutto BusyMark. Le autorizzazioni degli spazi di lavoro si gestiscono separatamente.",
+  "loadRemoteImagesForWorkspace": "Consenti sempre in questo spazio di lavoro",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

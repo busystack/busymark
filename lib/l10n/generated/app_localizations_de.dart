@@ -1230,11 +1230,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Berechtigungen für externe Bilder löschen';
+      'Bildberechtigungen für Arbeitsbereiche löschen';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Arbeitsbereiche vergessen, denen das Laden externer Bilder erlaubt wurde.';
+      'Alle Arbeitsbereichsberechtigungen für entfernte Bilder löschen.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1599,7 +1599,37 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieses Dokument verweist auf Bilder aus dem Internet. Beim Laden können Netzwerkinformationen an den Bildhost übermittelt werden.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Für diesen Arbeitsbereich laden';
+  String get loadThisRemoteImage => 'Dieses Bild laden';
+
+  @override
+  String get remoteImageMoreOptions => 'Weitere Optionen…';
+
+  @override
+  String get remoteImageMoreOptionsTitle =>
+      'Berechtigungen für entfernte Bilder';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Bilder in diesem Dokument laden';
+
+  @override
+  String get remoteImageUntilClose => 'Bis dieses Dokument geschlossen wird.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Erlaubt entfernte Bilder in $workspace, bis Sie die Arbeitsbereichsberechtigungen in den Datenschutzeinstellungen löschen.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Erlaubt entfernte Bilder in ganz BusyMark, bis Sie dies in den Datenschutzeinstellungen deaktivieren.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Entfernte Bilder überall in BusyMark erlauben. Arbeitsbereichsberechtigungen werden separat verwaltet.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'In diesem Arbeitsbereich immer erlauben';
 
   @override
   String get alwaysLoadRemoteImages => 'Externe Bilder immer laden';

@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show CheckedState;
 
+import '../support/controlled_image_http_client.dart';
 import '../support/document_history_harness.dart';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -5352,7 +5352,7 @@ void main() {}
       );
 
       try {
-        debugNetworkImageHttpClientProvider = () => _FakeImageHttpClient();
+        debugNetworkImageHttpClientProvider = () => ControlledImageHttpClient();
         var requests = 0;
         Future<void> render({required bool allow}) => tester.pumpWidget(
           MaterialApp(
@@ -5381,7 +5381,11 @@ void main() {}
         );
         expect(denied, findsOneWidget);
         expect(find.byType(Image), findsNothing);
-        await tester.tap(denied);
+        await tester.tap(
+          find.text(
+            AppLocalizations.of(tester.element(denied)).remoteImageMoreOptions,
+          ),
+        );
         await tester.pump();
         expect(requests, 1);
         expect(denied, findsOneWidget);
@@ -7858,66 +7862,4 @@ Future<void> _pressControlShortcut(
 
 class _TestTabIntent extends Intent {
   const _TestTabIntent();
-}
-
-class _FakeImageHttpClient implements HttpClient {
-  @override
-  Future<HttpClientRequest> getUrl(Uri url) async => _FakeImageRequest();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeImageRequest implements HttpClientRequest {
-  @override
-  HttpHeaders get headers => _FakeImageHeaders();
-
-  @override
-  Future<HttpClientResponse> close() async => _FakeImageResponse();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeImageHeaders implements HttpHeaders {
-  @override
-  void add(String name, Object value, {bool preserveHeaderCase = false}) {}
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeImageResponse extends Stream<List<int>>
-    implements HttpClientResponse {
-  static final _bytes = base64Decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
-  );
-
-  @override
-  int get statusCode => HttpStatus.ok;
-
-  @override
-  int get contentLength => _bytes.length;
-
-  @override
-  HttpClientResponseCompressionState get compressionState =>
-      HttpClientResponseCompressionState.notCompressed;
-
-  @override
-  StreamSubscription<List<int>> listen(
-    void Function(List<int> event)? onData, {
-    Function? onError,
-    void Function()? onDone,
-    bool? cancelOnError,
-  }) {
-    return Stream<List<int>>.fromIterable([_bytes]).listen(
-      onData,
-      onError: onError,
-      onDone: onDone,
-      cancelOnError: cancelOnError,
-    );
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

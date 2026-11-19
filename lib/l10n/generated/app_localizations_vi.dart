@@ -1207,11 +1207,12 @@ class AppLocalizationsVi extends AppLocalizations {
       'Cho phép hình ảnh trong phần xem trước và trình biên tập Markdown được tải từ các URL http và https.';
 
   @override
-  String get clearRemoteImagePermissions => 'Xóa quyền hình ảnh từ xa';
+  String get clearRemoteImagePermissions =>
+      'Xóa quyền tải hình ảnh của không gian làm việc';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Quên các không gian làm việc đã được cho phép tải hình ảnh từ xa.';
+      'Quên mọi quyền tải hình ảnh từ xa của các không gian làm việc.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1574,7 +1575,36 @@ class AppLocalizationsVi extends AppLocalizations {
       'Tài liệu này tham chiếu đến hình ảnh trên Internet. Việc tải chúng có thể tiết lộ thông tin mạng cho máy chủ lưu trữ hình ảnh.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Tải cho không gian làm việc này';
+  String get loadThisRemoteImage => 'Tải hình ảnh này';
+
+  @override
+  String get remoteImageMoreOptions => 'Tùy chọn khác…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Quyền tải hình ảnh từ xa';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Tải hình ảnh trong tài liệu này';
+
+  @override
+  String get remoteImageUntilClose => 'Cho đến khi đóng tài liệu này.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Cho phép tải hình ảnh từ xa trong $workspace cho đến khi bạn xóa quyền không gian làm việc trong phần Cài đặt quyền riêng tư.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Cho phép tải hình ảnh từ xa trong toàn bộ BusyMark cho đến khi bạn tắt tùy chọn này trong phần Cài đặt quyền riêng tư.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Cho phép tải hình ảnh từ xa trong toàn bộ BusyMark. Quyền của từng không gian làm việc được quản lý riêng.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Luôn cho phép trong không gian làm việc này';
 
   @override
   String get alwaysLoadRemoteImages => 'Luôn tải hình ảnh từ xa';

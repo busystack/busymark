@@ -1212,11 +1212,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Markdown önizleme ve düzenleme görsellerinin http ve https URL\'lerinden yüklenmesine izin verin.';
 
   @override
-  String get clearRemoteImagePermissions => 'Harici görsel izinlerini temizle';
+  String get clearRemoteImagePermissions =>
+      'Çalışma alanı resim izinlerini temizle';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Harici görsellerin yüklenmesine izin verilen çalışma alanlarını unutun.';
+      'Çalışma alanlarının tüm uzak resim izinlerini unut.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1580,7 +1581,36 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu belge internetteki görsellere başvuruyor. Bunları yüklemek ağ bilgilerini görselin barındırıldığı sunucuya açığa çıkarabilir.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Bu çalışma alanı için yükleme';
+  String get loadThisRemoteImage => 'Bu resmi yükle';
+
+  @override
+  String get remoteImageMoreOptions => 'Diğer seçenekler…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Uzak resim izinleri';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Bu belgedeki resimleri yükle';
+
+  @override
+  String get remoteImageUntilClose => 'Bu belge kapanana kadar.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Gizlilik ayarlarında çalışma alanı izinlerini temizleyene kadar $workspace içindeki uzak resimlere izin verir.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Gizlilik ayarlarında bu seçeneği kapatana kadar BusyMark genelinde uzak resimlere izin verir.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'BusyMark genelinde uzak resimlere izin ver. Çalışma alanı izinleri ayrı yönetilir.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Bu çalışma alanında her zaman izin ver';
 
   @override
   String get alwaysLoadRemoteImages => 'Harici görselleri her zaman yükle';

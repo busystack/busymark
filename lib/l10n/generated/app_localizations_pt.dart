@@ -1222,11 +1222,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Limpar permissões de imagens remotas';
+      'Limpar permissões de imagens dos espaços de trabalho';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Esquecer os espaços de trabalho autorizados a carregar imagens remotas.';
+      'Esquecer todas as permissões dos espaços de trabalho para imagens remotas.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1590,8 +1590,36 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este documento faz referência a imagens da Internet. Carregá-las pode revelar informações de rede ao servidor que as hospeda.';
 
   @override
+  String get loadThisRemoteImage => 'Carregar esta imagem';
+
+  @override
+  String get remoteImageMoreOptions => 'Mais opções…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Permissões de imagens remotas';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Carregar imagens neste documento';
+
+  @override
+  String get remoteImageUntilClose => 'Até fechar este documento.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Permite imagens remotas em $workspace até limpar as permissões de espaços de trabalho nas definições de privacidade.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Permite imagens remotas em todo o BusyMark até desativar esta opção nas definições de privacidade.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Permitir imagens remotas em todo o BusyMark. As permissões dos espaços de trabalho são geridas separadamente.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Carregar neste espaço de trabalho';
+      'Permitir sempre neste espaço de trabalho';
 
   @override
   String get alwaysLoadRemoteImages => 'Sempre carregar imagens remotas';
@@ -10282,11 +10310,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Limpar permissões de imagens remotas';
+      'Limpar permissões de imagens dos espaços de trabalho';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Esquecer os espaços de trabalho autorizados a carregar imagens remotas.';
+      'Esquecer todas as permissões de imagens remotas dos espaços de trabalho.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -10650,8 +10678,36 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Este documento faz referência a imagens da Internet. Carregá-las pode revelar informações de rede ao servidor que as hospeda.';
 
   @override
+  String get loadThisRemoteImage => 'Carregar esta imagem';
+
+  @override
+  String get remoteImageMoreOptions => 'Mais opções…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Permissões de imagens remotas';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Carregar imagens neste documento';
+
+  @override
+  String get remoteImageUntilClose => 'Até fechar este documento.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Permite imagens remotas em $workspace até limpar as permissões dos espaços de trabalho nas configurações de Privacidade.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Permite imagens remotas em todo o BusyMark até desativar esta opção nas configurações de Privacidade.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Permitir imagens remotas em todo o BusyMark. As permissões dos espaços de trabalho são gerenciadas separadamente.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Carregar neste espaço de trabalho';
+      'Sempre permitir neste espaço de trabalho';
 
   @override
   String get alwaysLoadRemoteImages => 'Sempre carregar imagens remotas';

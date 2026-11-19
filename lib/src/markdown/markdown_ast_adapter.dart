@@ -5,11 +5,13 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:xml/xml.dart';
 
 import '../core/path_utils.dart';
+import '../core/source_span.dart';
+import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_fence.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
-import 'markdown_source_annotation.dart';
+import 'markdown_source_map.dart';
 import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
@@ -97,6 +99,166 @@ class MarkdownAstAdapter {
       frontMatter: frontMatter?.values ?? const {},
       rawFrontMatter: frontMatter?.raw,
       source: source,
+    );
+  }
+
+  /// Binds rendered images to authored markup. The inline mapper provides
+  /// exact Markdown ranges and the HTML parser provides tag ranges, including
+  /// images inside HTML containers. If the two projections disagree about the
+  /// images in a chunk, the chunk contributes no guessed identities.
+  BusyDocument bindImageSpans(BusyDocument document) {
+    final source = document.source;
+    if (source == null) return document;
+    BusyMarkInlineParserContext? context;
+
+    Iterable<BusyInline> images(Iterable<BusyInline> inlines) sync* {
+      for (final inline in inlines) {
+        if (inline.kind == BusyInlineKind.image) yield inline;
+        yield* images(inline.children);
+      }
+    }
+
+    Iterable<BusyInline> blockImages(BusyBlock block) sync* {
+      yield* images(block.inlines);
+      for (final child in block.children) {
+        yield* blockImages(child);
+      }
+    }
+
+    Iterable<BusyBlock> posters(BusyBlock block) sync* {
+      if (block.kind == BusyBlockKind.video &&
+          isRemoteImageSource(block.attributes['preview-src'])) {
+        yield block;
+      }
+      for (final child in block.children) {
+        yield* posters(child);
+      }
+    }
+
+    BusyBlock bind(BusyBlock block) {
+      final rendered = blockImages(block).toList();
+      final renderedPosters = posters(block).toList();
+      if (rendered.isEmpty && renderedPosters.isEmpty) return block;
+      final blockSpan = block.sourceSpan;
+      final bindings = Map<BusyInline, SourceSpan>.identity();
+      final posterBindings = Map<BusyBlock, SourceSpan>.identity();
+      if (blockSpan != null &&
+          blockSpan.filePath == document.filePath &&
+          blockSpan.startOffset >= 0 &&
+          blockSpan.endOffset <= source.length &&
+          (renderedPosters.isNotEmpty ||
+              rendered.any(
+                (image) => isRemoteImageSource(image.destination),
+              ))) {
+        final start = blockSpan.startOffset;
+        final raw = source.substring(start, blockSpan.endOffset);
+        final candidates = <(BusyInline, int, int)>[];
+        SourceSpan bindRange(int from, int to) => SourceSpan.fromOffsets(
+          filePath: document.filePath,
+          source: source,
+          startOffset: start + from,
+          endOffset: start + to,
+        );
+
+        var id = 0;
+        String nextId() => 'media-${id++}';
+        final semantic =
+            document.mode == MarkdownMode.writersideMarkdown &&
+                block.attributes.containsKey('element') &&
+                raw.trimLeft().startsWith('<')
+            ? const WritersideEditingAdapter().parseMarkdownElement(raw, nextId)
+            : null;
+        if (semantic != null ||
+            (block.attributes['sourceFormat'] == 'html' &&
+                raw.trimLeft().startsWith('<'))) {
+          final children = semantic != null
+              ? [semantic]
+              : _rawHtmlAdapter
+                        .parseRawHtmlBlock(raw, nextId, trackImageSpans: true)
+                        ?.blocks ??
+                    const <BusyBlock>[];
+          for (final child in children) {
+            for (final image in blockImages(child)) {
+              if (image.imageSpan case final span?) {
+                candidates.add((image, span.startOffset, span.endOffset));
+              }
+            }
+          }
+          if (semantic != null && renderedPosters.isNotEmpty) {
+            final authored = posters(semantic).toList();
+            if (authored.length == renderedPosters.length) {
+              for (final (index, poster) in renderedPosters.indexed) {
+                final candidate = authored[index];
+                final span = candidate.posterSpan;
+                if (span != null &&
+                    candidate.attributes['preview-src'] ==
+                        poster.attributes['preview-src']) {
+                  posterBindings[poster] = bindRange(
+                    span.startOffset,
+                    span.endOffset,
+                  );
+                }
+              }
+            }
+          }
+        } else {
+          context ??= const MarkdownSourceMapper().createInlineParserContext(
+            documentSource: source,
+            mode: document.mode,
+          );
+          final replacements = <(int, int)>[];
+          final normalized = _protectImageDestinationsWithSpaces(
+            raw,
+            onReplacement: (end, shift) => replacements.add((end, shift)),
+          );
+          int authoredOffset(int offset) {
+            for (final (end, shift) in replacements.reversed) {
+              if (end <= offset) return offset - shift;
+            }
+            return offset;
+          }
+
+          final mapped = context!.parseMapped(normalized);
+          for (final image in images(mapped.inlines)) {
+            if (mapped.ranges[image] case final range?) {
+              candidates.add((
+                image,
+                authoredOffset(range.start),
+                authoredOffset(range.end),
+              ));
+            }
+          }
+        }
+
+        if (candidates.length == rendered.length &&
+            rendered.indexed.every(
+              (entry) =>
+                  entry.$2.destination == candidates[entry.$1].$1.destination,
+            )) {
+          for (final (index, image) in rendered.indexed) {
+            final (_, from, to) = candidates[index];
+            bindings[image] = bindRange(from, to);
+          }
+        }
+      }
+
+      BusyInline applyInline(BusyInline inline) => inline.copyWith(
+        children: inline.children.map(applyInline).toList(),
+        imageSpan: bindings[inline],
+        clearImageSpan: !bindings.containsKey(inline),
+      );
+      BusyBlock applyBlock(BusyBlock current) => current.copyWith(
+        posterSpan: posterBindings[current],
+        clearPosterSpan: !posterBindings.containsKey(current),
+        inlines: current.inlines.map(applyInline).toList(),
+        children: current.children.map(applyBlock).toList(),
+      );
+      return applyBlock(block);
+    }
+
+    return document.copyWith(
+      imageSource: source,
+      blocks: document.blocks.map(bind).toList(),
     );
   }
 
@@ -1793,7 +1955,10 @@ class MarkdownAstAdapter {
     return attributes;
   }
 
-  String _protectImageDestinationsWithSpaces(String source) {
+  String _protectImageDestinationsWithSpaces(
+    String source, {
+    void Function(int end, int shift)? onReplacement,
+  }) {
     final buffer = StringBuffer();
     var index = 0;
     while (index < source.length) {
@@ -1833,6 +1998,9 @@ class MarkdownAstAdapter {
         ..write(_protectImageDestination(rawDestination))
         ..write(')');
       index = destinationEnd + 1;
+      if (onReplacement != null) {
+        onReplacement(buffer.length, buffer.length - index);
+      }
     }
     return buffer.toString();
   }

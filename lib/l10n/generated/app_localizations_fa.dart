@@ -1205,11 +1205,12 @@ class AppLocalizationsFa extends AppLocalizations {
       'اجازه دهید تصاویر پیش‌نمایش و ویرایشگر Markdown از نشانی‌های http و https بارگیری شوند.';
 
   @override
-  String get clearRemoteImagePermissions => 'پاک کردن مجوزهای تصاویر راه دور';
+  String get clearRemoteImagePermissions =>
+      'پاک کردن مجوزهای تصویر فضاهای کاری';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'فضاهای کاری‌ای را که اجازهٔ بارگیری تصاویر راه دور داشتند، فراموش کنید.';
+      'همهٔ مجوزهای تصاویر راه‌دور فضاهای کاری را فراموش کن.';
 
   @override
   String get clearGitWorkspaceTrust => 'پاک کردن فضاهای کاری مورد اعتماد Git';
@@ -1595,7 +1596,35 @@ class AppLocalizationsFa extends AppLocalizations {
       'این سند به تصاویری در اینترنت ارجاع می‌دهد. بارگیری آن‌ها ممکن است اطلاعات شبکه را برای میزبان تصویر آشکار کند.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'بارگیری برای این فضای کاری';
+  String get loadThisRemoteImage => 'بارگیری این تصویر';
+
+  @override
+  String get remoteImageMoreOptions => 'گزینه‌های بیشتر…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'مجوزهای تصاویر راه‌دور';
+
+  @override
+  String get loadRemoteImagesInDocument => 'بارگیری تصاویر این سند';
+
+  @override
+  String get remoteImageUntilClose => 'تا زمان بسته شدن این سند.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'تصاویر راه‌دور در ⁨$workspace⁩ مجاز هستند تا زمانی که مجوزهای فضای کاری را در تنظیمات حریم خصوصی پاک کنید.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'تصاویر راه‌دور در سراسر BusyMark مجاز هستند تا زمانی که این گزینه را در تنظیمات حریم خصوصی خاموش کنید.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'اجازهٔ بارگیری تصاویر راه‌دور در سراسر BusyMark. مجوزهای فضای کاری جداگانه مدیریت می‌شوند.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'همیشه در این فضای کاری مجاز باشد';
 
   @override
   String get alwaysLoadRemoteImages => 'همیشه تصاویر راه دور بارگیری شوند';

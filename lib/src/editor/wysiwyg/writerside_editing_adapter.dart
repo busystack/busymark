@@ -568,6 +568,7 @@ class WritersideEditingAdapter {
       attributes: attributes,
       rawSource: node.rawSource,
       sourceSpan: node.span,
+      posterSpan: tag == 'video' ? node.span : null,
       preserveRaw:
           !editable ||
           (tag == 'p' &&
@@ -586,6 +587,7 @@ class WritersideEditingAdapter {
                 kind: BusyInlineKind.image,
                 text: node.attributes['alt'] ?? '',
                 destination: node.attributes['src'],
+                imageSpan: node.span,
                 attributes: node.attributes,
               ),
             ]
@@ -698,6 +700,7 @@ class WritersideEditingAdapter {
           ? '\n'
           : node.plainText,
       destination: node.attributes['href'] ?? node.attributes['src'],
+      imageSpan: kind == BusyInlineKind.image ? node.span : null,
       children: kind == BusyInlineKind.html
           ? const []
           : inlinesFromNodes(node.children, sourceBindings: sourceBindings),

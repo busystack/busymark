@@ -956,11 +956,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Berechtigungen für externe Bilder löschen",
+  "clearRemoteImagePermissions": "Bildberechtigungen für Arbeitsbereiche löschen",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Arbeitsbereiche vergessen, denen das Laden externer Bilder erlaubt wurde.",
+  "clearRemoteImagePermissionsDescription": "Alle Arbeitsbereichsberechtigungen für entfernte Bilder löschen.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1342,7 +1342,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Für diesen Arbeitsbereich laden",
+  "loadThisRemoteImage": "Dieses Bild laden",
+  "remoteImageMoreOptions": "Weitere Optionen…",
+  "remoteImageMoreOptionsTitle": "Berechtigungen für entfernte Bilder",
+  "loadRemoteImagesInDocument": "Bilder in diesem Dokument laden",
+  "remoteImageUntilClose": "Bis dieses Dokument geschlossen wird.",
+  "remoteImageWorkspacePermissionDetail": "Erlaubt entfernte Bilder in {workspace}, bis Sie die Arbeitsbereichsberechtigungen in den Datenschutzeinstellungen löschen.",
+  "remoteImageGlobalPermissionDetail": "Erlaubt entfernte Bilder in ganz BusyMark, bis Sie dies in den Datenschutzeinstellungen deaktivieren.",
+  "remoteImageGlobalSettingsDetail": "Entfernte Bilder überall in BusyMark erlauben. Arbeitsbereichsberechtigungen werden separat verwaltet.",
+  "loadRemoteImagesForWorkspace": "In diesem Arbeitsbereich immer erlauben",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

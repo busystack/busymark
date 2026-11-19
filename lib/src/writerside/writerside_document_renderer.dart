@@ -662,6 +662,7 @@ class _WritersideRenderSession {
             BusyBlock(
               id: _nodeId(element),
               kind: BusyBlockKind.video,
+              posterSpan: element.span,
               attributes: attributes,
               sourceSpan: element.span,
             ),
@@ -1188,6 +1189,7 @@ class _WritersideRenderSession {
       kind: BusyInlineKind.image,
       text: image.attributes['alt'] ?? '',
       destination: image.attributes['src'],
+      imageSpan: image.span,
       attributes: _attributes(image),
     );
   }

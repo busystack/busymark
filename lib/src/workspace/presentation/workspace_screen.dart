@@ -84,6 +84,7 @@ import '../../editor/document_text_direction.dart';
 import '../../editor/document_thematic_break.dart';
 import '../../editor/editor_text_context_menu.dart';
 import '../../editor/markdown_image_view.dart';
+import '../../editor/markdown_image_permission_scope.dart';
 import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_autocomplete.dart';
 import '../../editor/source/source_document.dart';
@@ -136,6 +137,7 @@ import 'document_status_bar.dart';
 import '../text_format_metadata.dart';
 import '../workspace_glyphs.dart';
 import '../workspace_model.dart';
+import '../remote_image_permissions.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
@@ -9567,9 +9569,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     final colors = BusyMarkSurfaceColors.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(widget.state.workspace),
-    );
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
     final wysiwygDocument =
         editorVisible && _canUseWysiwyg(widget.state.workspace)
@@ -9859,10 +9858,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                             .unavailable,
                               onAssetSaveRequired: () => unawaited(
                                 saveActiveToNewLocation(context, ref),
-                              ),
-                              allowRemoteImages: allowRemoteImages,
-                              onRemoteImageBlocked: () => unawaited(
-                                _showRemoteImagesPrompt(context, ref),
                               ),
                               onDocumentChanged: (document) =>
                                   _cacheWysiwygDocument(
@@ -10253,13 +10248,87 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         ),
       ),
     );
-    return DocumentMediaScope(
+    final workspace = widget.state.workspace;
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final workspaceId = remoteImageWorkspaceId(workspace);
+    final accountId = workspace?.nextcloudAccountId;
+    final account = accountId == null
+        ? null
+        : repository?.accountById(accountId);
+    final workspaceLabel = account == null
+        ? workspace?.filesystemRootPath ?? workspace?.nextcloudAccountId
+        : '${account.loginName} · ${account.server}';
+    final parserPath = activeBuffer == null || workspace == null
+        ? null
+        : resolveWorkspaceDocumentContext(workspace, activeBuffer).parserPath;
+    final mediaScope = DocumentMediaScope(
       media: remoteRef == null
           ? null
           : media?.context ?? DocumentMediaContext.unavailable,
       child: DocumentReadOnlyScope(
         readOnly: activeBuffer?.readonly ?? false,
         child: _withProperties(editor),
+      ),
+    );
+    return ListenableBuilder(
+      listenable: controller.remoteImages,
+      child: mediaScope,
+      builder: (context, child) => MarkdownImagePermissionScope(
+        resolve: (source, span, renderedSource) {
+          final ownedSpan = span?.filePath == parserPath ? span : null;
+          final allowed =
+              allowsWorkspaceRemoteImages(settings, workspace) ||
+              (activeBuffer != null &&
+                  controller.remoteImages.allows(
+                    activeBuffer,
+                    renderedSource,
+                    ownedSpan,
+                    source,
+                  ));
+          if (allowed ||
+              activeBuffer == null ||
+              activeBuffer.text != renderedSource) {
+            return MarkdownImageActions(allowed: allowed);
+          }
+          RemoteImagePermissionTarget? capture() =>
+              controller.captureRemoteImagePermission(
+                activeBuffer,
+                renderedSource,
+                ownedSpan,
+                source,
+                workspaceId,
+              );
+          return MarkdownImageActions(
+            allowed: false,
+            loadImage: ownedSpan == null
+                ? null
+                : () {
+                    final target = capture();
+                    if (target != null) {
+                      unawaited(
+                        controller.grantRemoteImagePermission(
+                          target,
+                          RemoteImagePermission.image,
+                        ),
+                      );
+                    }
+                  },
+            moreOptions: () {
+              final target = capture();
+              if (target != null) {
+                unawaited(
+                  _showRemoteImagesPrompt(
+                    context,
+                    controller,
+                    target,
+                    workspaceLabel,
+                  ),
+                );
+              }
+            },
+          );
+        },
+        child: child!,
       ),
     );
   }
@@ -13130,23 +13199,30 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.nothingToRead,
       );
     }
-    return WritersidePreviewScope(
-      key: ValueKey(workspace?.activeFilePath),
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: colors.view),
-        child: SelectionArea(
-          child: ScrollablePositionedList.builder(
-            key: const ValueKey('preview-document-scroll'),
-            itemScrollController: controller,
-            itemPositionsListener: itemPositionsListener,
-            padding: documentLayout.scrollPadding,
-            itemCount: document.blocks.length,
-            itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
-              layout: documentLayout,
-              contentKey: index == 0
-                  ? const ValueKey('preview-document-content')
-                  : null,
-              child: _keyedPreviewBlock(context, index, document.blocks[index]),
+    return MarkdownImageProjection(
+      source: document.source,
+      child: WritersidePreviewScope(
+        key: ValueKey(workspace?.activeFilePath),
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: colors.view),
+          child: SelectionArea(
+            child: ScrollablePositionedList.builder(
+              key: const ValueKey('preview-document-scroll'),
+              itemScrollController: controller,
+              itemPositionsListener: itemPositionsListener,
+              padding: documentLayout.scrollPadding,
+              itemCount: document.blocks.length,
+              itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
+                layout: documentLayout,
+                contentKey: index == 0
+                    ? const ValueKey('preview-document-content')
+                    : null,
+                child: _keyedPreviewBlock(
+                  context,
+                  index,
+                  document.blocks[index],
+                ),
+              ),
             ),
           ),
         ),
@@ -13936,10 +14012,6 @@ class _PreviewInlineText extends ConsumerWidget {
     final baseStyle = style ?? busyMarkDocumentBodyTextStyle(context);
     final searchState = ref.watch(searchSessionProvider);
     final workspace = ref.watch(workspaceControllerProvider).workspace;
-    final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(workspace),
-    );
     final highlightQuery = searchState.textActive ? searchState.query : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
@@ -13970,9 +14042,6 @@ class _PreviewInlineText extends ConsumerWidget {
                 inline,
                 workspace: workspace,
                 highlightQuery: highlightQuery,
-                allowRemoteImages: allowRemoteImages,
-                onRemoteImageBlocked: () =>
-                    unawaited(_showRemoteImagesPrompt(context, ref)),
                 onLinkTap: (destination) =>
                     _openPreviewLink(context, ref, destination),
                 editRevision: editRevision,
@@ -14328,10 +14397,6 @@ class _PreviewImageBlock extends ConsumerWidget {
         : () => unawaited(_openPreviewLink(context, ref, linkDestination));
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(workspace),
-    );
     return Padding(
       padding: padding,
       child: ConstrainedBox(
@@ -14343,14 +14408,12 @@ class _PreviewImageBlock extends ConsumerWidget {
           child: MarkdownImageView(
             source: source,
             alt: block.text,
+            sourceSpan: _previewImageSpan(block.inlines),
             activeFilePath: activeFilePath ?? '',
             workspaceRoot: _imageWorkspaceRoot(workspace),
             writersideRoot: workspace?.writersideModule?.rootPath,
             imagesDir:
                 workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: () =>
-                unawaited(_showRemoteImagesPrompt(context, ref)),
             wrapAvailableImage: (child) => _previewLinkedImage(
               child: child,
               destination: linkDestination,
@@ -14375,10 +14438,6 @@ class _PreviewVideoBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath ?? '';
-    final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(workspace),
-    );
     final source = block.attributes['src'] ?? block.text;
     return Padding(
       padding: BusyMarkInsets.documentImageBlock,
@@ -14387,14 +14446,12 @@ class _PreviewVideoBlock extends ConsumerWidget {
         child: BusyMarkWritersideVideoView(
           source: source,
           previewSource: block.attributes['preview-src'],
+          posterSpan: block.posterSpan,
           activeFilePath: activeFilePath,
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir:
               workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-          allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: () =>
-              unawaited(_showRemoteImagesPrompt(context, ref)),
           onOpenFailed: () => _showPreviewLinkMessage(
             context,
             context.l10n.couldNotOpenTarget(source),
@@ -14425,6 +14482,14 @@ String? _imageWorkspaceRoot(Workspace? workspace) {
       .where((topic) => topic.filePath == activeFilePath)
       .map((topic) => topic.topicRoot)
       .firstOrNull;
+}
+
+SourceSpan? _previewImageSpan(List<PreviewInline> inlines) {
+  for (final inline in inlines) {
+    if (inline.kind == PreviewInlineKind.image) return inline.imageSpan;
+    if (_previewImageSpan(inline.children) case final span?) return span;
+  }
+  return null;
 }
 
 String _previewImageSource(PreviewBlock block) {
@@ -14505,7 +14570,13 @@ Widget _previewLinkedImage({
         key: ValueKey('preview-linked-image-$destination'),
         excludeFromSemantics: true,
         onTap: onTap,
-        child: child,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: BusyMarkSizes.iconButton,
+            minHeight: BusyMarkSizes.iconButton,
+          ),
+          child: Align(widthFactor: 1, heightFactor: 1, child: child),
+        ),
       ),
     ),
   );
@@ -14516,8 +14587,6 @@ InlineSpan _previewInlineSpan(
   PreviewInline inline, {
   required Workspace? workspace,
   required String highlightQuery,
-  required bool allowRemoteImages,
-  required VoidCallback? onRemoteImageBlocked,
   required Future<void> Function(String destination) onLinkTap,
   required int editRevision,
   required void Function(String expressionId, String? code) onMathDiagnostic,
@@ -14621,8 +14690,6 @@ InlineSpan _previewInlineSpan(
       child,
       workspace: workspace,
       highlightQuery: highlightQuery,
-      allowRemoteImages: allowRemoteImages,
-      onRemoteImageBlocked: onRemoteImageBlocked,
       onLinkTap: onLinkTap,
       editRevision: editRevision,
       onMathDiagnostic: onMathDiagnostic,
@@ -14748,8 +14815,6 @@ InlineSpan _previewInlineSpan(
       context,
       inline,
       workspace,
-      allowRemoteImages: allowRemoteImages,
-      onRemoteImageBlocked: onRemoteImageBlocked,
       linkDestination: linkDestination,
       onLinkTap: onLinkTap,
       style: mergeStyle(
@@ -14809,8 +14874,6 @@ InlineSpan _previewInlineImageSpan(
   BuildContext context,
   PreviewInline inline,
   Workspace? workspace, {
-  required bool allowRemoteImages,
-  required VoidCallback? onRemoteImageBlocked,
   required String? linkDestination,
   required Future<void> Function(String destination) onLinkTap,
   required TextStyle? style,
@@ -14833,14 +14896,13 @@ InlineSpan _previewInlineImageSpan(
         style: style,
         child: MarkdownImageView(
           source: inline.destination ?? '',
+          sourceSpan: inline.imageSpan,
           alt: inline.text,
           activeFilePath: activeFilePath ?? '',
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir:
               workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-          allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: onRemoteImageBlocked,
           wrapAvailableImage: (child) => _previewLinkedImage(
             child: child,
             destination: destination,
@@ -15199,72 +15261,62 @@ void _showPreviewLinkMessage(BuildContext context, String message) {
   );
 }
 
-enum _RemoteImagesPromptAction { cancel, allowWorkspace, allowAlways }
-
 Future<void> _showRemoteImagesPrompt(
   BuildContext context,
-  WidgetRef ref,
+  WorkspaceController controller,
+  RemoteImagePermissionTarget target,
+  String? workspaceLabel,
 ) async {
-  final workspacePath = _remoteImageWorkspacePath(
-    ref.read(workspaceControllerProvider).workspace,
-  );
-  final action = await showBusyMarkModalDialog<_RemoteImagesPromptAction>(
-    context,
-    builder: (context) => BusyMarkDialogShell(
-      title: context.l10n.remoteImagesBlockedTitle,
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          icon: BusyMarkGlyphs.clear,
-          onPressed: () =>
-              Navigator.pop(context, _RemoteImagesPromptAction.cancel),
-        ),
-        if (workspacePath != null)
-          BusyMarkDialogButton(
-            label: context.l10n.loadRemoteImagesForWorkspace,
-            icon: BusyMarkGlyphs.folder,
-            onPressed: () => Navigator.pop(
-              context,
-              _RemoteImagesPromptAction.allowWorkspace,
+  try {
+    final action = await showBusyMarkModalDialog<RemoteImagePermission>(
+      context,
+      builder: (context) {
+        final l10n = context.l10n;
+        void choose(RemoteImagePermission permission) =>
+            Navigator.pop(context, permission);
+        return BusyMarkDialogShell(
+          title: l10n.remoteImageMoreOptionsTitle,
+          maxWidth: BusyMarkSizes.dialog,
+          actions: [
+            BusyMarkDialogButton(
+              label: l10n.cancel,
+              onPressed: () => Navigator.pop(context),
             ),
-          ),
-        BusyMarkDialogButton(
-          label: context.l10n.alwaysLoadRemoteImages,
-          icon: BusyMarkGlyphs.image,
-          suggested: true,
-          onPressed: () =>
-              Navigator.pop(context, _RemoteImagesPromptAction.allowAlways),
-        ),
-      ],
-      children: [Text(context.l10n.remoteImagesBlockedMessage)],
-    ),
-  );
-  if (action == _RemoteImagesPromptAction.allowWorkspace &&
-      workspacePath != null) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .allowRemoteImagesForWorkspace(workspacePath);
-    return;
+          ],
+          children: [
+            Text(l10n.remoteImagesBlockedMessage),
+            BusyMarkGroupedList(
+              children: [
+                BusyMarkActionRow(
+                  title: l10n.loadRemoteImagesInDocument,
+                  subtitleWidget: Text(l10n.remoteImageUntilClose),
+                  onTap: () => choose(RemoteImagePermission.document),
+                ),
+                if (target.workspaceId != null && workspaceLabel != null)
+                  BusyMarkActionRow(
+                    title: l10n.loadRemoteImagesForWorkspace,
+                    subtitleWidget: Text(
+                      l10n.remoteImageWorkspacePermissionDetail(workspaceLabel),
+                    ),
+                    onTap: () => choose(RemoteImagePermission.workspace),
+                  ),
+                BusyMarkActionRow(
+                  title: l10n.alwaysLoadRemoteImages,
+                  subtitleWidget: Text(l10n.remoteImageGlobalPermissionDetail),
+                  onTap: () => choose(RemoteImagePermission.global),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+    if (action != null) {
+      await controller.grantRemoteImagePermission(target, action);
+    }
+  } finally {
+    controller.remoteImages.release(target);
   }
-  if (action == _RemoteImagesPromptAction.allowAlways) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .setAllowRemoteImages(true);
-  }
-}
-
-String? _remoteImageWorkspacePath(Workspace? workspace) {
-  if (workspace == null) {
-    return null;
-  }
-  final root = (workspace.filesystemRootPath ?? '').trim();
-  if (root.isNotEmpty) {
-    return root;
-  }
-  final fallback = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  final trimmed = fallback?.trim();
-  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 String _decodePreviewAnchor(String value) {

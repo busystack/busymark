@@ -1214,11 +1214,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Izinkan pratinjau Markdown dan gambar editor dimuat dari URL http dan https.';
 
   @override
-  String get clearRemoteImagePermissions => 'Hapus izin gambar jarak jauh';
+  String get clearRemoteImagePermissions => 'Hapus izin gambar ruang kerja';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Lupakan ruang kerja yang diizinkan memuat gambar jarak jauh.';
+      'Lupakan semua izin gambar jarak jauh untuk ruang kerja.';
 
   @override
   String get clearGitWorkspaceTrust => 'Hapus ruang kerja Git yang tepercaya';
@@ -1580,7 +1580,36 @@ class AppLocalizationsId extends AppLocalizations {
       'Dokumen ini merujuk pada gambar dari internet. Memuatnya dapat mengungkapkan informasi jaringan ke host gambar.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Muat untuk ruang kerja ini';
+  String get loadThisRemoteImage => 'Muat gambar ini';
+
+  @override
+  String get remoteImageMoreOptions => 'Opsi lainnya…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Izin gambar jarak jauh';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Muat gambar di dokumen ini';
+
+  @override
+  String get remoteImageUntilClose => 'Hingga dokumen ini ditutup.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Mengizinkan gambar jarak jauh di $workspace hingga izin ruang kerja dihapus di pengaturan Privasi.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Mengizinkan gambar jarak jauh di seluruh BusyMark hingga opsi ini dimatikan di pengaturan Privasi.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Izinkan gambar jarak jauh di seluruh BusyMark. Izin ruang kerja dikelola secara terpisah.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Selalu izinkan di ruang kerja ini';
 
   @override
   String get alwaysLoadRemoteImages => 'Selalu muat gambar jarak jauh';

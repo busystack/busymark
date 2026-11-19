@@ -954,11 +954,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Borrar permisos de imágenes remotas",
+  "clearRemoteImagePermissions": "Borrar permisos de imágenes de espacios de trabajo",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Olvida los espacios de trabajo autorizados a cargar imágenes remotas.",
+  "clearRemoteImagePermissionsDescription": "Olvidar todos los permisos de imágenes remotas de espacios de trabajo.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1340,7 +1340,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Cargar en este espacio de trabajo",
+  "loadThisRemoteImage": "Cargar esta imagen",
+  "remoteImageMoreOptions": "Más opciones…",
+  "remoteImageMoreOptionsTitle": "Permisos de imágenes remotas",
+  "loadRemoteImagesInDocument": "Cargar imágenes en este documento",
+  "remoteImageUntilClose": "Hasta que se cierre este documento.",
+  "remoteImageWorkspacePermissionDetail": "Permite las imágenes remotas en {workspace} hasta que borres los permisos del espacio de trabajo en Privacidad.",
+  "remoteImageGlobalPermissionDetail": "Permite las imágenes remotas en todo BusyMark hasta que desactives esta opción en Privacidad.",
+  "remoteImageGlobalSettingsDetail": "Permite las imágenes remotas en todo BusyMark. Los permisos de los espacios de trabajo se administran por separado.",
+  "loadRemoteImagesForWorkspace": "Permitir siempre en este espacio de trabajo",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },

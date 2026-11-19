@@ -956,11 +956,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "مسح أذونات الصور البعيدة",
+  "clearRemoteImagePermissions": "مسح أذونات الصور لمساحات العمل",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "نسيان مساحات العمل التي سُمح لها بتحميل الصور البعيدة.",
+  "clearRemoteImagePermissionsDescription": "نسيان جميع أذونات الصور البعيدة لمساحات العمل.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1342,7 +1342,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "تحميل لمساحة العمل هذه",
+  "loadThisRemoteImage": "تحميل هذه الصورة",
+  "remoteImageMoreOptions": "خيارات إضافية…",
+  "remoteImageMoreOptionsTitle": "أذونات الصور البعيدة",
+  "loadRemoteImagesInDocument": "تحميل الصور في هذا المستند",
+  "remoteImageUntilClose": "حتى إغلاق هذا المستند.",
+  "remoteImageWorkspacePermissionDetail": "يسمح بالصور البعيدة في ⁨{workspace}⁩ حتى تمسح أذونات مساحة العمل في إعدادات الخصوصية.",
+  "remoteImageGlobalPermissionDetail": "يسمح بالصور البعيدة في كل BusyMark حتى توقف هذا الخيار في إعدادات الخصوصية.",
+  "remoteImageGlobalSettingsDetail": "السماح بالصور البعيدة في كل BusyMark. تُدار أذونات مساحات العمل بشكل منفصل.",
+  "loadRemoteImagesForWorkspace": "السماح دائمًا في مساحة العمل هذه",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
