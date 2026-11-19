@@ -1,4 +1,6 @@
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/remote_image_permissions.dart';
@@ -197,4 +199,93 @@ Before [![Link](https://example.com/linked.png)](https://example.org/) after.
       );
     },
   );
+  for (final (mode, source, markup) in [
+    (
+      MarkdownMode.commonMark,
+      '> ![Real](https://example.com/real.png)\n>\n>     ![Example](https://example.com/example.png)\n',
+      '![Real](https://example.com/real.png)',
+    ),
+    (
+      MarkdownMode.commonMark,
+      '>     ![Real](https://example.com/real.png)\n>\n> ![Real](https://example.com/real.png)\n',
+      '![Real](https://example.com/real.png)',
+    ),
+    (
+      MarkdownMode.commonMark,
+      '> - `![Example](https://example.com/example.png)` and [![Real][ref]](https://example.com/)\n>\n>   ```md\n>   ![Example](https://example.com/example.png)\n>   ```\n\n[ref]: https://example.com/real.png\n',
+      '![Real][ref]',
+    ),
+    (
+      MarkdownMode.writersideMarkdown,
+      '# Topic\n\n<chapter title="Images">\n<img src="https://example.com/real.png" alt="Real"/>\n</chapter>\n',
+      '<img src="https://example.com/real.png" alt="Real"/>',
+    ),
+  ]) {
+    test(
+      'binds only authored images in ${mode.name}: ${source.split('\n').first}',
+      () {
+        final document = const MarkdownParser()
+            .parse(filePath: 'draft.md', source: source, mode: mode)
+            .busyDocument;
+        Iterable<BusyInline> images(Iterable<BusyInline> inlines) sync* {
+          for (final inline in inlines) {
+            if (inline.kind == BusyInlineKind.image) yield inline;
+            yield* images(inline.children);
+          }
+        }
+
+        Iterable<BusyInline> blockImages(Iterable<BusyBlock> blocks) sync* {
+          for (final block in blocks) {
+            yield* images(block.inlines);
+            yield* blockImages(block.children);
+          }
+        }
+
+        final occurrence = blockImages(document.blocks).single;
+        final range = occurrence.imageSpan!;
+        const real = 'https://example.com/real.png';
+        expect(occurrence.destination, real);
+        expect(source.substring(range.startOffset, range.endOffset), markup);
+        expect(range.startOffset, source.lastIndexOf(markup));
+        final permissions = RemoteImagePermissions();
+        addTearDown(permissions.dispose);
+        final buffer = DocumentBuffer.untitled(
+          id: 'draft',
+          name: 'Draft',
+          text: source,
+        );
+        final target = permissions.capture(
+          state(buffer),
+          buffer,
+          source,
+          range,
+          real,
+          null,
+        )!;
+        expect(target.hasOccurrence, isTrue);
+        expect(
+          permissions.apply(target, RemoteImagePermission.image, state(buffer)),
+          isTrue,
+        );
+        expect(permissions.allows(buffer, source, range, real), isTrue);
+        expect(
+          permissions.allows(
+            buffer,
+            source,
+            range,
+            'https://example.com/example.png',
+          ),
+          isFalse,
+        );
+        expect(
+          permissions.apply(
+            target,
+            RemoteImagePermission.global,
+            state(buffer),
+          ),
+          isFalse,
+        );
+      },
+    );
+  }
 }

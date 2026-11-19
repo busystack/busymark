@@ -97,7 +97,7 @@ class BusyMarkResourceMenuButton extends ConsumerWidget {
           ),
       ],
       onSelected: (action) =>
-          unawaited(performWorkspaceResourceAction(context, ref, action)),
+          unawaited(performWorkspaceResourceAction(ref, action)),
     );
   }
 }

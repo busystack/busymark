@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
@@ -15,6 +16,7 @@ import '../app/localization.dart';
 import '../core/local_image_resolver.dart';
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
+import '../platform/native_menu_service.dart';
 import 'markdown_image_permission_scope.dart';
 import '../assets/document_media_context.dart';
 
@@ -47,10 +49,10 @@ class MarkdownImageView extends StatelessWidget {
     required this.imagesDir,
     this.allowRemoteImages = false,
     this.sourceSpan,
-    this.onRemoteImageBlocked,
     this.wrapAvailableImage,
     this.width,
     this.height,
+    this.preferredHeight,
     this.maxWidth = BusyMarkSizes.documentImageMaxWidth,
     this.maxHeight,
   });
@@ -63,10 +65,11 @@ class MarkdownImageView extends StatelessWidget {
   final String imagesDir;
   final bool allowRemoteImages;
   final SourceSpan? sourceSpan;
-  final VoidCallback? onRemoteImageBlocked;
   final Widget Function(Widget child)? wrapAvailableImage;
   final double? width;
   final double? height;
+  final double? preferredHeight;
+  double? get _imageHeight => height ?? preferredHeight;
   final double maxWidth;
   final double? maxHeight;
 
@@ -80,11 +83,17 @@ class MarkdownImageView extends StatelessWidget {
     final isBlocked = remote && !(actions?.allowed ?? allowRemoteImages);
     final image = isBlocked
         ? _RemoteImageBlockedPlaceholder(
+            key: ValueKey((
+              actions?.documentOpening,
+              sourceSpan?.startOffset,
+              sourceSpan?.endOffset,
+              trimmedSource,
+            )),
             source: trimmedSource,
             alt: alt,
-            height: height ?? 120,
-            loadImage: actions?.loadImage,
-            moreOptions: actions?.moreOptions ?? onRemoteImageBlocked,
+            width: width,
+            height: height,
+            openMenu: actions?.openMenu,
           )
         : _imageForSource(context, trimmedSource);
     final content = DefaultTextStyle.merge(
@@ -94,7 +103,7 @@ class MarkdownImageView extends StatelessWidget {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: isBlocked && maxWidth < 300 ? 300 : maxWidth,
+          maxWidth: maxWidth,
           maxHeight: maxHeight ?? double.infinity,
         ),
         child:
@@ -125,7 +134,7 @@ class MarkdownImageView extends StatelessWidget {
               ? _MarkdownImagePlaceholder(
                   source: source,
                   alt: alt,
-                  height: height ?? 120,
+                  height: _imageHeight ?? 120,
                 )
               : _fileImage(File(path), source, _isSvgPath(path));
         },
@@ -153,14 +162,14 @@ class MarkdownImageView extends StatelessWidget {
           source,
           semanticLabel: alt.trim().isEmpty ? null : alt,
           width: width,
-          height: height,
+          height: _imageHeight,
           fit: BoxFit.contain,
           alignment: Alignment.center,
           errorBuilder: (context, error, stackTrace) =>
               _MarkdownImagePlaceholder(
                 source: source,
                 alt: alt,
-                height: height ?? 120,
+                height: _imageHeight ?? 120,
               ),
         );
       }
@@ -186,26 +195,26 @@ class MarkdownImageView extends StatelessWidget {
         source: source,
         alt: alt,
         width: width,
-        height: height,
+        height: _imageHeight,
       );
     }
     if (!file.existsSync()) {
       return _MarkdownImagePlaceholder(
         source: source,
         alt: alt,
-        height: height ?? 120,
+        height: _imageHeight ?? 120,
       );
     }
     return Image.file(
       file,
       width: width,
-      height: height,
+      height: _imageHeight,
       fit: BoxFit.contain,
       alignment: Alignment.center,
       errorBuilder: (context, error, stackTrace) => _MarkdownImagePlaceholder(
         source: source,
         alt: alt,
-        height: height ?? 120,
+        height: _imageHeight ?? 120,
       ),
     );
   }
@@ -215,7 +224,7 @@ class MarkdownImageView extends StatelessWidget {
       source: source,
       alt: alt,
       width: width,
-      height: height,
+      height: _imageHeight,
     );
   }
 }
@@ -1010,94 +1019,167 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
   }
 }
 
-class _RemoteImageBlockedPlaceholder extends StatelessWidget {
+class _RemoteImageBlockedPlaceholder extends StatefulWidget {
   const _RemoteImageBlockedPlaceholder({
+    super.key,
     required this.source,
     required this.alt,
+    required this.width,
     required this.height,
-    required this.loadImage,
-    required this.moreOptions,
+    required this.openMenu,
   });
 
   final String source;
   final String alt;
-  final double height;
-  final VoidCallback? loadImage;
-  final VoidCallback? moreOptions;
+  final double? width;
+  final double? height;
+  final MarkdownImagePermissionMenu? openMenu;
+
+  @override
+  State<_RemoteImageBlockedPlaceholder> createState() =>
+      _RemoteImageBlockedPlaceholderState();
+}
+
+class _RemoteImageBlockedPlaceholderState
+    extends State<_RemoteImageBlockedPlaceholder> {
+  final _focus = FocusNode(debugLabel: 'Remote image permissions');
+  NativeMenuSession? _menu;
+
+  Future<void> _open([Offset? position]) async {
+    final openMenu = widget.openMenu;
+    if (_menu != null || openMenu == null) return;
+    _focus.requestFocus();
+    // The native service captures the primary focus when opening. Apply the
+    // pointer focus request before it takes that snapshot.
+    FocusManager.instance.applyFocusChangesIfNeeded();
+    final session = NativeMenuSession();
+    setState(() => _menu = session);
+    try {
+      await openMenu(context, position, session);
+    } finally {
+      if (mounted) setState(() => _menu = null);
+    }
+  }
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (isBusyMarkContextMenuKeyEvent(event)) {
+      unawaited(_open());
+      return KeyEventResult.handled;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (event is KeyDownEvent &&
+        !keyboard.isControlPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isShiftPressed &&
+        (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.numpadEnter ||
+            event.logicalKey == LogicalKeyboardKey.space)) {
+      unawaited(_open());
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
+  void dispose() {
+    if (_menu case final session?) {
+      unawaited(const NativeMenuService().dismiss(session));
+    }
+    _focus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final label = alt.trim().isEmpty ? source : '$alt\n$source';
-    return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: height),
-      child: Center(
-        heightFactor: 1,
-        child: SingleChildScrollView(
-          primary: false,
-          padding: const EdgeInsets.all(BusyMarkSpacing.md),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                BusyMarkGlyphs.imageMissing,
-                size: BusyMarkSizes.iconMd,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(height: BusyMarkSpacing.xs),
-              Text(
-                context.l10n.remoteImageBlocked,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.foreground,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (loadImage != null || moreOptions != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: BusyMarkSpacing.xs,
-                  ),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: BusyMarkSpacing.xs,
-                    runSpacing: BusyMarkSpacing.xs,
-                    children: [
-                      if (loadImage != null)
-                        Tooltip(
-                          message: context.l10n.remoteImageUntilClose,
-                          child: BusyMarkFocusIndicator(
-                            child: BusyMarkPushButton.suggested(
-                              onPressed: loadImage,
-                              child: Text(
-                                context.l10n.loadThisRemoteImage,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+    final l10n = context.l10n;
+    final enabled = widget.openMenu != null;
+    final details = [
+      if (widget.alt.trim().isNotEmpty) widget.alt.trim(),
+      widget.source,
+      if (enabled) l10n.remoteImageBlockedTooltip,
+    ].join('\n');
+    final radius = BorderRadius.circular(BusyMarkRadius.sm);
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      widthFactor: 1,
+      heightFactor: 1,
+      child: BusyMarkFocusIndicator(
+        borderRadius: radius,
+        enabled: enabled,
+        child: Focus(
+          focusNode: _focus,
+          canRequestFocus: enabled,
+          includeSemantics: false,
+          onFocusChange: (_) => setState(() {}),
+          onKeyEvent: enabled ? _onKey : null,
+          child: Semantics(
+            container: true,
+            button: enabled,
+            focusable: enabled,
+            focused: enabled ? _focus.hasFocus : null,
+            onFocus: enabled ? _focus.requestFocus : null,
+            label: l10n.remoteImageBlocked,
+            tooltip: details,
+            onTap: enabled ? () => unawaited(_open()) : null,
+            excludeSemantics: true,
+            child: Tooltip(
+              message: _menu == null ? details : '',
+              excludeFromSemantics: true,
+              child: MouseRegion(
+                cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  excludeFromSemantics: true,
+                  onTap: enabled ? () => unawaited(_open()) : null,
+                  onSecondaryTapUp: enabled
+                      ? (event) => unawaited(_open(event.globalPosition))
+                      : null,
+                  child: Container(
+                    width: widget.width,
+                    height: widget.height,
+                    constraints: const BoxConstraints(minHeight: 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BusyMarkSpacing.sm,
+                      vertical: BusyMarkSpacing.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.panel,
+                      border: Border.all(color: colors.border),
+                      borderRadius: radius,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          BusyMarkGlyphs.imageBlocked,
+                          size: BusyMarkSizes.iconSm,
+                          color: colors.mutedForeground,
+                        ),
+                        const SizedBox(width: BusyMarkSpacing.xs),
+                        Flexible(
+                          child: Text(
+                            l10n.remoteImageBlocked,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
-                      if (moreOptions != null)
-                        BusyMarkFocusIndicator(
-                          child: BusyMarkPushButton.standard(
-                            onPressed: moreOptions,
-                            child: Text(
-                              context.l10n.remoteImageMoreOptions,
-                              textAlign: TextAlign.center,
-                            ),
+                        if (enabled) ...[
+                          const SizedBox(width: BusyMarkSpacing.xs),
+                          Icon(
+                            BusyMarkGlyphs.downArrow,
+                            size: BusyMarkSizes.compactIcon,
+                            color: colors.mutedForeground,
                           ),
-                        ),
-                    ],
+                        ],
+                      ],
+                    ),
                   ),
                 ),
-              const SizedBox(height: BusyMarkSpacing.xxs),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
               ),
-            ],
+            ),
           ),
         ),
       ),

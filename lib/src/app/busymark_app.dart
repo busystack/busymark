@@ -384,7 +384,6 @@ class BusyMarkApp extends ConsumerWidget {
                     if (target != null) {
                       unawaited(
                         performWorkspaceResourceAction(
-                          target,
                           ref,
                           WorkspaceResourceAction.forNotes(intent.action),
                         ),

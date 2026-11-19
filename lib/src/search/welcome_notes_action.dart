@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../app/app_router.dart';
-import '../app/busymark_toast.dart';
-import '../app/localization.dart';
 import '../app/command_registry.dart';
 import '../local_history/local_history_controller.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
-import '../workspace/workspace_tab_actions.dart';
+import '../workspace/workspace_navigation.dart';
 import '../workspace/workspace_controller.dart';
 import 'search_session.dart';
-import '../workspace/workspace_safety.dart';
 
 enum WelcomeNotesAction { create, browse }
 
@@ -22,6 +18,7 @@ final welcomeNotesActionProvider =
 
 class WelcomeNotesActionController extends Notifier<WelcomeNotesAction?> {
   bool busy = false;
+
   @override
   WelcomeNotesAction? build() {
     final router = ref.read(appRouterProvider);
@@ -48,19 +45,16 @@ class WelcomeNotesActionController extends Notifier<WelcomeNotesAction?> {
 }
 
 Future<void> performWelcomeNotesAction(
-  BuildContext context,
-  WidgetRef ref,
+  WorkspaceNavigation navigation,
+  Uri origin,
+  bool Function() currentNavigation,
   WelcomeNotesAction action,
 ) async {
-  final pending = ref.read(welcomeNotesActionProvider.notifier);
+  final container = navigation.container;
+  final pending = container.read(welcomeNotesActionProvider.notifier);
   if (pending.busy) return;
   pending.busy = true;
   try {
-    final origin = ref
-        .read(appRouterProvider)
-        .routeInformationProvider
-        .value
-        .uri;
     final fromWorkspace =
         settingsReturnTargetForUri(origin) == SettingsReturnTarget.workspace;
     if (origin.path != '/' &&
@@ -68,36 +62,34 @@ Future<void> performWelcomeNotesAction(
         origin.path != settingsRoutePath) {
       return;
     }
-    await ref.read(nextcloudConnectionProvider.notifier).reload();
-    if (!context.mounted ||
-        ref.read(appRouterProvider).routeInformationProvider.value.uri !=
-            origin) {
+    await container.read(nextcloudConnectionProvider.notifier).reload();
+    if (!currentNavigation()) {
       pending.clear();
       return;
     }
     final activeAccount = fromWorkspace
-        ? ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId
+        ? container
+              .read(workspaceControllerProvider)
+              .workspace
+              ?.nextcloudAccountId
         : null;
-    final repository = ref.read(nextcloudNotesRepositoryProvider).value;
+    final repository = container.read(nextcloudNotesRepositoryProvider).value;
     final account = activeAccount == null
-        ? ref.read(nextcloudConnectionProvider).account
+        ? container.read(nextcloudConnectionProvider).account
         : repository?.accountById(activeAccount);
     if (activeAccount != null && account == null) {
       pending.clear();
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.searchResourceUnavailable,
-      );
+      navigation.showUnavailable();
       return;
     }
     if (account == null) {
       // Returning without a successful connection cancels the pending operation.
-      if (ref.read(welcomeNotesActionProvider) != null) {
+      if (container.read(welcomeNotesActionProvider) != null) {
         pending.clear();
         return;
       }
       pending.request(action);
-      context.go(
+      navigation.router.go(
         '${settingsLocation(SettingsReturnTarget.welcome)}&page=nextcloudNotes',
       );
       return;
@@ -105,21 +97,23 @@ Future<void> performWelcomeNotesAction(
     pending
         .clear(); // Claim once before any asynchronous work or pointer reactivation.
     bool currentRequest() =>
-        context.mounted &&
-        ref.read(appRouterProvider).routeInformationProvider.value.uri ==
-            origin &&
+        currentNavigation() &&
         (activeAccount == null
-            ? ref.read(nextcloudConnectionProvider).account?.id == account.id
-            : ref
+            ? container.read(nextcloudConnectionProvider).account?.id ==
+                  account.id
+            : container
                           .read(workspaceControllerProvider)
                           .workspace
                           ?.nextcloudAccountId ==
                       account.id &&
                   repository?.accountById(account.id) != null);
-    final controller = ref.read(workspaceControllerProvider.notifier);
-    if (ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
+    final controller = container.read(workspaceControllerProvider.notifier);
+    if (container
+            .read(workspaceControllerProvider)
+            .workspace
+            ?.nextcloudAccountId !=
         account.id) {
-      if (!await confirmSafeToContinue(context, ref) ||
+      if (!await navigation.confirmDeparture(canContinue: currentRequest) ||
           !currentRequest() ||
           !await controller.openNextcloudWorkspace(
             account.id,
@@ -128,17 +122,17 @@ Future<void> performWelcomeNotesAction(
         return;
       }
     }
-    if (!context.mounted ||
-        ref.read(appRouterProvider).routeInformationProvider.value.uri !=
-            origin ||
-        !currentRequest() ||
-        ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
+    if (!currentRequest() ||
+        container
+                .read(workspaceControllerProvider)
+                .workspace
+                ?.nextcloudAccountId !=
             account.id) {
       return;
     }
-    ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
+    container.read(searchSessionProvider.notifier).close(restoreFocus: false);
     if (action == WelcomeNotesAction.create) {
-      ref.read(localHistoryControllerProvider.notifier).clearComparison();
+      container.read(localHistoryControllerProvider.notifier).clearComparison();
       if (!await controller.createNextcloudNote(
         acceptNavigation: currentRequest,
         focusEditor: true,
@@ -146,16 +140,21 @@ Future<void> performWelcomeNotesAction(
         return;
       }
       if (!currentRequest()) return;
-      revealOpenedDocument(ref);
     }
-    if (context.mounted && currentRequest()) {
-      final router = ref.read(appRouterProvider);
-      final navigation = ref.read(workspaceNavigationCommandProvider.notifier);
-      router.go('/workspace');
+    if (currentRequest()) {
+      final router = navigation.router;
+      final commands = container.read(
+        workspaceNavigationCommandProvider.notifier,
+      );
+      if (action == WelcomeNotesAction.create) {
+        navigation.reveal();
+      } else {
+        router.go('/workspace');
+      }
       if (action == WelcomeNotesAction.browse && fromWorkspace) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (router.routeInformationProvider.value.uri.path == '/workspace') {
-            navigation.request(BusyMarkCommandIds.sidebarFiles);
+            commands.request(BusyMarkCommandIds.sidebarFiles);
           }
         });
       }

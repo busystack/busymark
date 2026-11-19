@@ -180,7 +180,6 @@ class RecentSidebarPanel extends ConsumerWidget {
               for (final resource in recent) RecentSearchResult(resource),
             ],
             onActivate: (result) => openRecentResource(
-              context,
               ref,
               (result as RecentSearchResult).resource,
             ),

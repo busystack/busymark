@@ -12,12 +12,15 @@ class BusyMarkCreateWritersideProjectDialog extends StatefulWidget {
     super.key,
     required this.parentDirectoryPath,
     required this.onCreate,
-    required this.message,
   });
 
   final String parentDirectoryPath;
-  final Future<bool> Function(WritersideProjectCreateRequest request) onCreate;
-  final WorkspaceMessage? Function() message;
+  final Future<bool> Function(
+    WritersideProjectCreateRequest request,
+    void Function(WorkspaceMessage) onError,
+    void Function(String bufferId) onPublished,
+  )
+  onCreate;
 
   @override
   State<BusyMarkCreateWritersideProjectDialog> createState() =>
@@ -290,7 +293,8 @@ class _BusyMarkCreateWritersideProjectDialogState
       _creating = true;
       _creationError = null;
     });
-    final created = await widget.onCreate(
+    WorkspaceMessage? error;
+    await widget.onCreate(
       WritersideProjectCreateRequest(
         parentDirectoryPath: normalizePath(widget.parentDirectoryPath),
         projectName: _projectNameController.text.trim(),
@@ -301,20 +305,19 @@ class _BusyMarkCreateWritersideProjectDialogState
         instanceId: _instanceIdController.text.trim(),
         topicTitle: _topicTitleController.text.trim(),
       ),
+      (message) => error = message,
+      (bufferId) {
+        if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+          Navigator.pop(context, bufferId);
+        }
+      },
     );
-    if (!mounted) {
-      return;
-    }
-    if (created) {
-      Navigator.pop(context, true);
-      return;
-    }
+    if (!mounted) return;
     setState(() {
       _creating = false;
-      final message = widget.message();
-      _creationError = message == null
-          ? context.l10n.createWritersideProjectFailed
-          : localizeWorkspaceMessage(context, message);
+      if (error case final message?) {
+        _creationError = localizeWorkspaceMessage(context, message);
+      }
     });
   }
 

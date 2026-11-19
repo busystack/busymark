@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../core/source_span.dart';
+import '../platform/native_menu_service.dart';
 
 typedef MarkdownImagePermissionResolver =
     MarkdownImageActions Function(
@@ -9,16 +10,23 @@ typedef MarkdownImagePermissionResolver =
       String? renderedSource,
     );
 
+typedef MarkdownImagePermissionMenu =
+    Future<void> Function(
+      BuildContext context,
+      Offset? position,
+      NativeMenuSession session,
+    );
+
 class MarkdownImageActions {
   const MarkdownImageActions({
     required this.allowed,
-    this.loadImage,
-    this.moreOptions,
+    this.documentOpening,
+    this.openMenu,
   });
 
   final bool allowed;
-  final VoidCallback? loadImage;
-  final VoidCallback? moreOptions;
+  final Object? documentOpening;
+  final MarkdownImagePermissionMenu? openMenu;
 }
 
 class MarkdownImagePermissionScope extends InheritedWidget {

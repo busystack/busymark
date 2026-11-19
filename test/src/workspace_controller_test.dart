@@ -1632,6 +1632,129 @@ code
     await parent.delete(recursive: true);
   });
 
+  for (final dirty in [false, true]) {
+    for (final outcome in [
+      'valid',
+      'nonempty',
+      'read failure',
+      'cancelled',
+      'superseded',
+    ]) {
+      test(
+        'Writerside creation from a ${dirty ? 'dirty' : 'clean'} workspace: $outcome',
+        () async {
+          final root = await Directory.systemTemp.createTemp(
+            'busymark-create-transaction-',
+          );
+          addTearDown(() => root.delete(recursive: true));
+          final source = File(p.join(root.path, 'original.md'))
+            ..writeAsStringSync('# Original');
+          final existing = Directory(p.join(root.path, 'destination'));
+          if (outcome == 'nonempty') {
+            existing.createSync();
+            File(
+              p.join(existing.path, 'keep.txt'),
+            ).writeAsStringSync('Keep this');
+          }
+          final service = _WritersideCreationService(
+            failRead: outcome == 'read failure',
+            pause: outcome == 'superseded',
+          );
+          final harness = await _createControllerHarness(service: service);
+          final controller = harness._container.read(
+            workspaceControllerProvider.notifier,
+          );
+          final settings = harness._container.read(
+            appSettingsControllerProvider.notifier,
+          );
+          await settings.setAutoSave(false);
+          await settings.setValidateOnEdit(false);
+          WorkspaceState state() =>
+              harness._container.read(workspaceControllerProvider);
+          await controller.openPath(source.path);
+          controller.updateActiveEditorState(
+            state().activeBuffer!.editorState.copyWith(
+              selection: const TextSelection.collapsed(offset: 2),
+            ),
+          );
+          if (dirty) controller.updateActiveText('# Dirty original');
+          await controller.validateActive();
+          final before = state();
+          expect(before.hasUnsavedChanges, dirty);
+          var authorized = false;
+          WorkspaceMessage? error;
+          final creation = controller.createWritersideProject(
+            WritersideProjectCreateRequest(
+              parentDirectoryPath: root.path,
+              projectName: 'Docs',
+              directoryName: 'destination',
+              instanceName: 'User Guide',
+              topicTitle: 'Getting started',
+            ),
+            authorizeReplacement: (isCurrent) async {
+              expect(isCurrent(), isTrue);
+              expect(state().workspace?.id, before.workspace?.id);
+              expect(state().workspace?.openedAt, before.workspace?.openedAt);
+              expect(state().activeBuffer, same(before.activeBuffer));
+              authorized = true;
+              return outcome != 'cancelled';
+            },
+            onError: (message) => error = message,
+          );
+          if (outcome == 'superseded') {
+            await service.entered.future;
+            expect(state().activeBuffer, same(before.activeBuffer));
+            await controller.createMarkdownFile();
+            final replacement = state();
+            service.release.complete();
+            expect(await creation, isFalse);
+            expect(state().workspace, same(replacement.workspace));
+            expect(state().activeBuffer, same(replacement.activeBuffer));
+            expect(state().documentBuffers, contains(before.activeBuffer));
+            expect(authorized, isFalse);
+            expect(error, isNull);
+            return;
+          }
+          expect(await creation, outcome == 'valid');
+          switch (outcome) {
+            case 'valid':
+              expect(authorized, isTrue);
+              expect(state().workspace?.kind, WorkspaceKind.writersideModule);
+              expect(state().documentBuffers, hasLength(1));
+              expect(state().activeText, contains('Getting started'));
+              expect(source.readAsStringSync(), '# Original');
+            case 'nonempty':
+            case 'read failure':
+              expect(authorized, isFalse);
+              expect(
+                error?.code,
+                WorkspaceMessageCode.createWritersideProjectFailed,
+              );
+              if (outcome == 'nonempty') {
+                expect(
+                  File(p.join(existing.path, 'keep.txt')).readAsStringSync(),
+                  'Keep this',
+                );
+              }
+            case 'cancelled':
+              expect(authorized, isTrue);
+              expect(error, isNull);
+          }
+          if (outcome != 'valid') {
+            expect(state().workspace?.id, before.workspace?.id);
+            expect(state().workspace?.openedAt, before.workspace?.openedAt);
+            expect(state().documentBuffers, same(before.documentBuffers));
+            expect(
+              state().activeBuffer!.editorState,
+              same(before.activeBuffer!.editorState),
+            );
+            expect(state().hasUnsavedChanges, dirty);
+          }
+        },
+      );
+    }
+  }
+
   test(
     'creates a Writerside topic and opens it without changing recents',
     () async {
@@ -6270,6 +6393,37 @@ void _registerResponsivenessTests() {
       );
     },
   );
+}
+
+class _WritersideCreationService extends WorkspaceService {
+  _WritersideCreationService({required this.failRead, required this.pause});
+
+  final bool failRead;
+  final bool pause;
+  final entered = Completer<void>();
+  final release = Completer<void>();
+  String? initialTopic;
+
+  @override
+  Future<Workspace> createWritersideProject(
+    WritersideProjectCreateRequest request,
+  ) async {
+    final project = await super.createWritersideProject(request);
+    initialTopic = project.activeFilePath;
+    if (pause) {
+      entered.complete();
+      await release.future;
+    }
+    return project;
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) {
+    if (failRead && path == initialTopic) {
+      throw FileSystemException('Injected initial-topic read failure', path);
+    }
+    return super.loadTextWithSnapshot(path);
+  }
 }
 
 class _ChangedDuringOpenService extends WorkspaceService {

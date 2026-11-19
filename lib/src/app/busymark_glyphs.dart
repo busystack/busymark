@@ -52,6 +52,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData home = YaruIcons.home;
   static const IconData htmlBlock = YaruIcons.code;
   static const IconData image = YaruIcons.image;
+  static const IconData imageBlocked = YaruIcons.hide;
   static const IconData imageMissing = YaruIcons.image_missing;
   static const IconData indent = YaruIcons.indent_more;
   static const IconData info = YaruIcons.information;

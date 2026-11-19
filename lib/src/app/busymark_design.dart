@@ -1914,7 +1914,7 @@ Future<T?> showBusyMarkContextMenu<T>(
   );
 }
 
-/// Sidebar entry menus use the existing GTK service without a Flutter route.
+/// Context menus use the existing GTK service without a Flutter route.
 /// Metadata entries never render; the service owns positioning and dismissal.
 Future<T?> showBusyMarkNativeContextMenu<T>(
   BuildContext context,
@@ -1927,7 +1927,7 @@ Future<T?> showBusyMarkNativeContextMenu<T>(
   final snapshot = List<PopupMenuEntry<T>>.unmodifiable(items);
   final entries = _busyMarkNativeMenuEntries(snapshot);
   if (entries == null) {
-    throw StateError('Sidebar menus require supported native menu entries.');
+    throw StateError('Context menus require supported native menu entries.');
   }
   final previousFocus = FocusManager.instance.primaryFocus;
   final owner = session ?? NativeMenuSession();

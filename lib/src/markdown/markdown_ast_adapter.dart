@@ -218,14 +218,19 @@ class MarkdownAstAdapter {
             return offset;
           }
 
-          final mapped = context!.parseMapped(normalized);
-          for (final image in images(mapped.inlines)) {
-            if (mapped.ranges[image] case final range?) {
-              candidates.add((
-                image,
-                authoredOffset(range.start),
-                authoredOffset(range.end),
-              ));
+          for (final mapped in context!.parsePositionedBlocks(
+            normalized,
+            includeCodeBlocks: false,
+            requireUnambiguousPositions: true,
+          )) {
+            for (final image in images(mapped.inlines)) {
+              if (mapped.ranges[image] case final range?) {
+                candidates.add((
+                  image,
+                  authoredOffset(range.start),
+                  authoredOffset(range.end),
+                ));
+              }
             }
           }
         }

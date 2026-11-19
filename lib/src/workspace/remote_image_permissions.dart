@@ -51,6 +51,8 @@ class RemoteImagePermissionTarget {
   _Occurrence? _occurrence;
   final String? workspaceId;
   bool _valid = true;
+
+  bool get hasOccurrence => _occurrence != null;
 }
 
 /// Session state lives with the workspace controller. The opening token

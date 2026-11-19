@@ -19,6 +19,7 @@ import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/markdown_image_permission_scope.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -5362,11 +5363,18 @@ void main() {}
               body: SizedBox(
                 width: 900,
                 height: 640,
-                child: BusyMarkWysiwygEditor(
-                  document: parsed.busyDocument,
-                  allowRemoteImages: allow,
-                  onRemoteImageBlocked: () => requests++,
-                  onSourceChanged: (_, _) {},
+                child: MarkdownImagePermissionScope(
+                  resolve: (_, _, _) => MarkdownImageActions(
+                    allowed: allow,
+                    openMenu: (_, _, _) async {
+                      requests++;
+                    },
+                  ),
+                  child: BusyMarkWysiwygEditor(
+                    document: parsed.busyDocument,
+                    allowRemoteImages: allow,
+                    onSourceChanged: (_, _) {},
+                  ),
                 ),
               ),
             ),
@@ -5381,11 +5389,7 @@ void main() {}
         );
         expect(denied, findsOneWidget);
         expect(find.byType(Image), findsNothing);
-        await tester.tap(
-          find.text(
-            AppLocalizations.of(tester.element(denied)).remoteImageMoreOptions,
-          ),
-        );
+        await tester.tap(denied);
         await tester.pump();
         expect(requests, 1);
         expect(denied, findsOneWidget);

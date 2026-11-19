@@ -1369,7 +1369,7 @@ void main() {
     expect(entries, isNot(contains('MouseRegion(')));
     expect(entries, isNot(contains('GestureDetector(')));
     expect(entries, isNot(contains('busyMarkSurfaceDecoration(')));
-    expect(operations, contains('showBusyMarkModalEditorDialog<bool>('));
+    expect(operations, contains('showBusyMarkModalEditorDialog<String>('));
     expect(projectDialog, contains('BusyMarkModalEditorScaffold('));
     expect(
       RegExp(r'BusyMarkGroupedTextEntry\(').allMatches(projectDialog).length,
@@ -1994,9 +1994,12 @@ void main() {
       dotAll: true,
     ).firstMatch(editor)!.group(0)!;
 
-    expect(imageView, isNot(contains('color: colors.panel')));
+    final imageRendering = imageView
+        .split('class _RemoteImageBlockedPlaceholder')
+        .first;
+    expect(imageRendering, isNot(contains('color: colors.panel')));
     expect(
-      imageView,
+      imageRendering,
       isNot(contains('Border.all(color: colors.subtleBorder)')),
     );
     expect(prefix, isNot(contains('BusyBlockKind.image => Icon')));

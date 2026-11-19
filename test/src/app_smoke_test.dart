@@ -13635,6 +13635,130 @@ code
       )
       .first;
 
+  testWidgets(
+    'Writerside creation keeps the dirty editor on failure and focuses the new topic on success',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-create-from-editor-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final original = File(p.join(root.path, 'original.md'))
+        ..writeAsStringSync('# Original');
+      final occupied = Directory(p.join(root.path, 'occupied'))..createSync();
+      final existing = File(p.join(occupied.path, 'keep.txt'))
+        ..writeAsStringSync('Keep');
+      const channel = MethodChannel('plugins.flutter.io/file_selector');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        (_) async => root.path,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          null,
+        ),
+      );
+
+      final container = await historyApp(
+        tester,
+        DocumentViewModePreference.source,
+        service: const WorkspaceService(),
+        startupPath: original.path,
+      );
+      final editor = historyField(DocumentViewModePreference.source);
+      await tester.enterText(editor, '# Dirty original');
+      await tester.pumpAndSettle();
+      final oldFocus = tester.widget<TextField>(editor).focusNode!;
+      final originalOpening = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .opening;
+
+      Future<void> submit(String projectName) async {
+        await tester.tap(find.byKey(const ValueKey('header-new-menu')));
+        await tester.pump();
+        await menus.choose(l10n.createWritersideProject);
+        final dialog = find.byType(BusyMarkModalEditorScaffold);
+        await tester.enterText(
+          find
+              .descendant(of: dialog, matching: find.byType(EditableText))
+              .first,
+          projectName,
+        );
+        await tester.pump();
+        await tester.tap(
+          find.descendant(of: dialog, matching: find.text(l10n.create)),
+        );
+      }
+
+      await submit('Occupied');
+      final error = find.descendant(
+        of: find.byType(BusyMarkModalEditorScaffold),
+        matching: find.textContaining(
+          l10n.errorTargetDirectoryNotEmpty(occupied.path),
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => error.evaluate().isNotEmpty,
+        operation: 'show the creation failure in the live dialog',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '# Dirty original',
+      );
+      expect(existing.readAsStringSync(), 'Keep');
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(oldFocus));
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.opening,
+        same(originalOpening),
+      );
+
+      await submit('New project');
+      await pumpUntil(
+        tester,
+        () => find.text(l10n.discard).evaluate().isNotEmpty,
+        operation: 'authorize replacing the dirty workspace',
+      );
+      await tester.tap(find.text(l10n.discard));
+      await pumpUntil(
+        tester,
+        () {
+          final state = container.read(workspaceControllerProvider);
+          return state.workspace?.kind == WorkspaceKind.writersideModule &&
+              find.byType(BusyMarkModalEditorScaffold).evaluate().isEmpty;
+        },
+        operation: 'activate the generated topic',
+        frameStep: const Duration(milliseconds: 20),
+        diagnostics: () {
+          final state = container.read(workspaceControllerProvider);
+          return 'kind=${state.workspace?.kind}; message=${state.message?.error}; '
+              'focus=${FocusManager.instance.primaryFocus?.debugLabel}';
+        },
+      );
+      await pumpUntil(
+        tester,
+        () =>
+            editor.evaluate().isNotEmpty &&
+            tester.widget<TextField>(editor).focusNode?.hasFocus == true,
+        operation: 'focus the generated topic',
+        frameStep: const Duration(milliseconds: 20),
+        diagnostics: () =>
+            'focus=${FocusManager.instance.primaryFocus?.debugLabel}; '
+            'view=${container.read(workspaceControllerProvider).activeBuffer?.editorState.mode}',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains(l10n.defaultStartTopicTitle),
+      );
+      expect(original.readAsStringSync(), '# Original');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   Future<void> historyKey(WidgetTester tester, {bool redo = false}) async {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     if (redo) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
@@ -18037,6 +18161,7 @@ Draft paragraph.
     testWidgets('Reading linked block and inline images (remote: $remote)', (
       tester,
     ) async {
+      final menus = NativeMenuProbe(tester);
       await _withControlledImageClient((http) async {
         final binding = TestWidgetsFlutterBinding.ensureInitialized();
         binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
@@ -18126,9 +18251,6 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         expect(find.byType(MarkdownImageView), findsNWidgets(2));
         final blocked = find.text(l10n.remoteImageBlocked);
-        final moreOptions = find.text(l10n.remoteImageMoreOptions);
-        final load = find.text(l10n.loadThisRemoteImage);
-        final permission = find.text(l10n.remoteImageMoreOptionsTitle);
         if (remote) {
           expect(blocked, findsNWidgets(2));
           expect(http.requests, isEmpty);
@@ -18139,40 +18261,63 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
             );
           }
 
-          await tester.tap(moreOptions.first);
-          await tester.pumpAndSettle();
-          expect(permission, findsOneWidget);
-          expect(find.text(l10n.loadRemoteImagesForWorkspace), findsNothing);
-          await tester.tap(find.text(l10n.cancel));
-          await tester.pumpAndSettle();
+          await tester.tap(blocked.first);
+          await tester.pump();
+          expect(menus.isOpen, isTrue);
+          expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isFalse);
+          expect(menus.entries.map((entry) => entry['label']), [
+            l10n.loadThisRemoteImage,
+            l10n.loadRemoteImagesInDocument,
+            '',
+            l10n.alwaysLoadRemoteImages,
+          ]);
+          expect(menus.packets.last['focusFirst'], isTrue);
+          expect(
+            (menus.packets.last['anchor'] as Map)['width'],
+            greaterThan(0),
+          );
+          expect(http.requests, isEmpty);
+          final focused = FocusManager.instance.primaryFocus;
+          menus.close();
+          await tester.pump();
+          expect(FocusManager.instance.primaryFocus, same(focused));
 
-          final semantics = tester.ensureSemantics();
-          try {
-            await tester.pump();
-            final inlineOptions = tester.getSemantics(moreOptions.last);
-            expect(
-              inlineOptions.getSemanticsData().hasAction(SemanticsAction.tap),
-              isTrue,
-            );
-            inlineOptions.owner!.performAction(
-              inlineOptions.id,
-              SemanticsAction.tap,
-            );
-            await tester.pumpAndSettle();
-          } finally {
-            semantics.dispose();
-          }
-          expect(permission, findsOneWidget);
-          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-          await tester.pumpAndSettle();
-          expect(permission, findsNothing);
+          final pointer = tester.getCenter(blocked.last);
+          await tester.tapAt(pointer, buttons: kSecondaryMouseButton);
+          await tester.pump();
+          expect(menus.packets.last['anchor'], {
+            'x': pointer.dx,
+            'y': pointer.dy,
+            'width': 0.0,
+            'height': 0.0,
+          });
+          menus.close();
+          await tester.pump();
           expect(controller.openedFilePath, isNull);
           expect(http.requests, isEmpty);
 
-          Focus.of(tester.element(load.last)).requestFocus();
-          await tester.pump();
-          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-          await tester.pumpAndSettle();
+          for (final key in [
+            LogicalKeyboardKey.contextMenu,
+            LogicalKeyboardKey.f10,
+            LogicalKeyboardKey.space,
+            LogicalKeyboardKey.enter,
+          ]) {
+            if (key == LogicalKeyboardKey.f10) {
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+            }
+            await tester.sendKeyEvent(key);
+            if (key == LogicalKeyboardKey.f10) {
+              await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+            }
+            await tester.pump();
+            expect(menus.isOpen, isTrue, reason: key.keyLabel);
+            expect(http.requests, isEmpty);
+            if (key != LogicalKeyboardKey.enter) {
+              menus.close();
+              await tester.pump();
+            }
+          }
+          await menus.choose(l10n.loadThisRemoteImage);
           expect(blocked, findsOneWidget);
           expect(http.requests.map((request) => request.path), [
             '/inline-logo.png',
@@ -18183,8 +18328,9 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
             findsNothing,
           );
 
-          await tester.tap(load);
-          await tester.pumpAndSettle();
+          await tester.tap(blocked);
+          await tester.pump();
+          await menus.choose(l10n.loadThisRemoteImage);
           expect(blocked, findsNothing);
           expect(http.requests.map((request) => request.path), [
             '/inline-logo.png',
@@ -18252,6 +18398,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'remote image grants follow unsaved document and occurrence lifetimes',
     (tester) async {
+      final menus = NativeMenuProbe(tester);
       await _withControlledImageClient((http) async {
         final binding = TestWidgetsFlutterBinding.ensureInitialized();
         binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
@@ -18303,17 +18450,16 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         controller.updateActiveText(source);
         await tester.pumpAndSettle();
 
-        final load = find.text(l10n.loadThisRemoteImage);
-        final options = find.text(l10n.remoteImageMoreOptions);
         final blocked = find.text(l10n.remoteImageBlocked);
         final network = find.byWidgetPredicate(
           (widget) => widget is Image && widget.image is NetworkImage,
         );
-        expect(load, findsNWidgets(2));
+        expect(blocked, findsNWidgets(2));
         expect(http.requests, isEmpty);
         final beforePermission = buffer();
-        await tester.tap(load.first);
-        await tester.pumpAndSettle();
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadThisRemoteImage);
         expect(network, findsOneWidget);
         expect(blocked, findsOneWidget);
         expect(http.requests, [Uri.parse(url)]);
@@ -18323,13 +18469,10 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
           buffer().editorState.undoState.undo,
           same(beforePermission.editorState.undoState.undo),
         );
-        Focus.of(tester.element(load)).requestFocus();
+        await tester.tap(blocked);
         await tester.pump();
-        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-        await tester.pumpAndSettle();
-        expect(find.text(l10n.remoteImageMoreOptionsTitle), findsOneWidget);
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        expect(menus.isOpen, isTrue);
+        menus.close();
         await tester.pumpAndSettle();
         expect(buffer().text, beforePermission.text);
         expect(http.requests, [Uri.parse(url)]);
@@ -18366,10 +18509,9 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         await tester.pumpAndSettle();
         expect(blocked, findsNWidgets(2));
         expect(network, findsNothing);
-        await tester.tap(options.first);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(l10n.loadRemoteImagesInDocument));
-        await tester.pumpAndSettle();
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadRemoteImagesInDocument);
         expect(network, findsNWidgets(2));
         expect(buffer().isUntitled, isTrue);
         expect(
@@ -18395,14 +18537,13 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         expect(network, findsOneWidget);
         expect(blocked, findsOneWidget);
 
-        await tester.tap(options);
-        await tester.pumpAndSettle();
-        expect(find.text(l10n.loadRemoteImagesForWorkspace), findsNothing);
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isFalse);
         controller.updateActiveText(
           edited.replaceAll(url, 'https://example.com/changed.png'),
         );
-        await tester.tap(find.text(l10n.alwaysLoadRemoteImages));
-        await tester.pumpAndSettle();
+        await menus.choose(l10n.alwaysLoadRemoteImages);
         expect(
           container.read(appSettingsControllerProvider).allowRemoteImages,
           isFalse,
@@ -18411,10 +18552,9 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         expect(blocked, findsNWidgets(2));
         expect(http.requests, [Uri.parse(url)]);
 
-        await tester.tap(options.first);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(l10n.loadRemoteImagesInDocument));
-        await tester.pumpAndSettle();
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadRemoteImagesInDocument);
         expect(network, findsNWidgets(2));
         controller.updateActiveText(
           '${buffer().text}\n![New](https://example.com/after-grant.png)\n',
@@ -18441,8 +18581,9 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         final firstFileOpening = buffer().opening;
         final fileId = buffer().id;
         expect(blocked, findsNWidgets(2));
-        await tester.tap(load.first);
-        await tester.pumpAndSettle();
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadThisRemoteImage);
         expect(network, findsOneWidget);
         expect(
           await tabOperation(
@@ -18464,6 +18605,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'remote image workspace grant includes drafts and revokes immediately',
     (tester) async {
+      final menus = NativeMenuProbe(tester);
       await _withControlledImageClient((http) async {
         final root = Directory.systemTemp.createTempSync(
           'busymark-image-workspace-',
@@ -18511,7 +18653,6 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         final controller = container.read(workspaceControllerProvider.notifier);
         final settings = container.read(appSettingsControllerProvider.notifier);
         final blocked = find.text(l10n.remoteImageBlocked);
-        final options = find.text(l10n.remoteImageMoreOptions);
         await tabOperation(tester, () => controller.openPath(root.path));
         container.read(appRouterProvider).go('/workspace');
         await tester.pumpAndSettle();
@@ -18526,25 +18667,27 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         await tester.pumpAndSettle();
         expect(blocked, findsOneWidget);
 
-        await tester.tap(options);
-        await tester.pumpAndSettle();
-        expect(
-          find.text(
-            l10n.remoteImageWorkspacePermissionDetail(
-              root.resolveSymbolicLinksSync(),
-            ),
-          ),
-          findsOneWidget,
-        );
-        await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
-        await tester.pumpAndSettle();
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isTrue);
+        await menus.choose(l10n.loadRemoteImagesForWorkspace);
         expect(blocked, findsNothing);
         expect(http.requests, [Uri.parse('https://example.com/workspace.png')]);
 
-        await settings.setAllowRemoteImages(true);
+        await tabOperation(tester, () => controller.openPath(standalone.path));
+        await tester.pumpAndSettle();
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isFalse);
+        await menus.choose(l10n.alwaysLoadRemoteImages);
+        expect(
+          container.read(appSettingsControllerProvider).allowRemoteImages,
+          isTrue,
+        );
+        expect(blocked, findsNothing);
         await settings.setAllowRemoteImages(false);
         await tester.pumpAndSettle();
-        expect(blocked, findsNothing);
+        expect(blocked, findsOneWidget);
         for (final path in [other.path, standalone.path]) {
           await tabOperation(tester, () => controller.openPath(path));
           container.read(appRouterProvider).go('/workspace');
@@ -18566,6 +18709,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'nested HTML uses the same remote image occurrence in all views',
     (tester) async {
+      final menus = NativeMenuProbe(tester);
       await _withControlledImageClient((http) async {
         const source = '''
 <div>
@@ -18579,12 +18723,12 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
           initialSource: source,
         );
         final controller = container.read(workspaceControllerProvider.notifier);
-        final load = find.text(l10n.loadThisRemoteImage);
         final blocked = find.text(l10n.remoteImageBlocked);
-        expect(load, findsNWidgets(2));
+        expect(blocked, findsNWidgets(2));
         expect(http.requests, isEmpty);
-        await tester.tap(load.first);
-        await tester.pumpAndSettle();
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadThisRemoteImage);
         expect(blocked, findsOneWidget);
         for (final mode in [
           DocumentViewModePreference.preview,
@@ -18596,13 +18740,207 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
           expect(blocked, findsOneWidget);
           expect(
             find.text('second\nhttps://example.com/html-occurrence.png'),
-            findsOneWidget,
+            findsNothing,
           );
         }
         expect(http.requests, [
           Uri.parse('https://example.com/html-occurrence.png'),
         ]);
       });
+    },
+  );
+
+  testWidgets('Open completes after Discard disposes the initiating header', (
+    tester,
+  ) async {
+    final menus = NativeMenuProbe(tester);
+    final service = _GatedResourceService('picked.md');
+    const picker = MethodChannel('plugins.flutter.io/file_selector');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      picker,
+      (_) async => ['picked.md'],
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        picker,
+        null,
+      );
+      if (!service.release.isCompleted) service.release.complete();
+    });
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        startupPathProvider.overrideWithValue(null),
+        workspaceServiceProvider.overrideWithValue(service),
+        workspaceFileMonitorProvider.overrideWithValue(
+          _SearchTestFileMonitor(),
+        ),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final controller = container.read(workspaceControllerProvider.notifier);
+    await tabOperation(tester, controller.createMarkdownFile);
+    controller.updateActiveText('# Discardable draft');
+    container.read(appRouterProvider).go('/workspace');
+    await tester.pumpAndSettle();
+    final button = find.byKey(const ValueKey('header-open-menu'));
+    final initiatingHeader = tester.element(button);
+    await tester.tap(button);
+    await tester.pump();
+    menus.select(l10n.openMarkdownFile);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.discard));
+    await pumpUntil(
+      tester,
+      () => service.entered.isCompleted && !initiatingHeader.mounted,
+      operation: 'dispose the dirty document header during Open',
+    );
+    expect(container.read(workspaceControllerProvider).workspace, isNull);
+    service.release.complete();
+    await pumpUntil(tester, () {
+      final live = container.read(workspaceControllerProvider);
+      return !live.isLoading && live.activeBuffer?.filePath == 'picked.md';
+    }, operation: 'finish the authorized Open');
+    expect(find.byKey(const ValueKey('workspace-page-frame')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Recent reveals the new workspace after its row is disposed behind Local History',
+    (tester) async {
+      NativeMenuProbe(tester);
+      final fixture = Directory.systemTemp.createTempSync(
+        'busymark-recent-retained-',
+      );
+      addTearDown(() => fixture.deleteSync(recursive: true));
+      final destination = File(p.join(fixture.path, 'replacement.md'))
+        ..writeAsStringSync('# Replacement');
+      final service = _GatedResourceService(destination.path);
+      addTearDown(() {
+        if (!service.release.isCompleted) service.release.complete();
+      });
+      final historyStore = MemoryLocalHistoryStore();
+      await historyStore.capture(
+        LocalHistoryCaptureRequest(
+          path: p.join(fixture.path, 'deleted.md'),
+          displayName: 'Deleted document',
+          source: 'retained needle',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.now().toUtc(),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        const LocalHistoryPolicy(),
+      );
+      await historyStore.markDeleted(
+        p.join(fixture.path, 'deleted.md'),
+        recursive: false,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          startupPathProvider.overrideWithValue('first.md'),
+          workspaceServiceProvider.overrideWithValue(service),
+          workspaceFileMonitorProvider.overrideWithValue(
+            _SearchTestFileMonitor(),
+          ),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localHistoryStoreProvider.overrideWithValue(historyStore),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => find
+            .byKey(const ValueKey('workspace-page-frame'))
+            .evaluate()
+            .isNotEmpty,
+        operation: 'open the starting document',
+      );
+      await container.read(localHistoryControllerProvider.notifier).refresh();
+      final session = container.read(searchSessionProvider.notifier);
+      session.openHistory();
+      session.query('retained needle');
+      await _waitForSearchCondition(
+        tester,
+        () => container.read(searchSessionProvider).results.isNotEmpty,
+      );
+      final result = container.read(searchSessionProvider).results.single;
+      final resultRow = find.byKey(ValueKey(result.identity));
+      await tester.tap(resultRow);
+      await tester.pump(kDoubleTapMinTime + const Duration(milliseconds: 1));
+      await tester.tap(resultRow);
+      await _waitForSearchCondition(
+        tester,
+        () => find.byType(LocalHistoryComparisonView).evaluate().isNotEmpty,
+      );
+      expect(
+        find.byKey(const ValueKey('local-history-panel-header')),
+        findsNothing,
+      );
+      session.close(restoreFocus: false);
+
+      final recent = RecentResource(
+        path: destination.path,
+        kind: 'singleMarkdown',
+        lastOpenedAt: DateTime.now(),
+      );
+      final controller = container.read(workspaceControllerProvider.notifier);
+      await controller.recordRecentResource(recent);
+      await tester.pumpAndSettle();
+      await _chooseNativeSidebar(tester, l10n.recent);
+      final recentRow = find.byKey(
+        ValueKey(RecentSearchResult(recent).identity),
+      );
+      final initiatingRow = tester.element(recentRow);
+      await tester.tap(recentRow);
+      await pumpUntil(
+        tester,
+        () => service.entered.isCompleted,
+        operation: 'start opening from Recent',
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .removeRecentWorkspace(recent.identity);
+      await tester.pumpAndSettle();
+      expect(initiatingRow.mounted, isFalse);
+      expect(find.byType(LocalHistoryComparisonView), findsOneWidget);
+
+      service.release.complete();
+      await pumpUntil(tester, () {
+        final live = container.read(workspaceControllerProvider);
+        return !live.isLoading &&
+            live.activeBuffer?.filePath == destination.path &&
+            container.read(localHistoryControllerProvider).selectedRevisionId ==
+                null;
+      }, operation: 'reveal the Recent document and retire the comparison');
+      expect(find.byType(LocalHistoryComparisonView), findsNothing);
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -18947,58 +19285,19 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     }
   });
 
-  testWidgets(
-    'shared Markdown image renderer blocks remote images by default',
-    (tester) async {
-      var promptCount = 0;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: MarkdownImageView(
-              source: 'https://example.com/logo.png',
-              alt: 'Logo',
-              activeFilePath: 'doc.md',
-              workspaceRoot: null,
-              writersideRoot: null,
-              imagesDir: 'images',
-              allowRemoteImages: false,
-              onRemoteImageBlocked: () {
-                promptCount += 1;
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
-      expect(find.byType(Image), findsNothing);
-
-      await tester.tap(find.text(l10n.remoteImageMoreOptions));
-      await tester.pump();
-
-      expect(promptCount, 1);
-    },
-  );
-
-  testWidgets('blocked remote image keeps wrapped details accessible', (
+  testWidgets('blocked remote image keeps compact accessible details', (
     tester,
   ) async {
     final source =
         'https://example.com/images/${'featured-article-photograph-' * 12}.png';
     const alt = 'Portrait of W. S. Gilbert';
-    var promptCount = 0;
-    Widget buildImage({double? maxHeight}) => MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.topLeft,
-          child: SizedBox(
-            width: 441.5,
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
             child: MarkdownImageView(
               source: source,
               alt: alt,
@@ -19006,36 +19305,23 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
               workspaceRoot: null,
               writersideRoot: null,
               imagesDir: 'images',
-              allowRemoteImages: false,
-              onRemoteImageBlocked: () => promptCount++,
-              maxHeight: maxHeight,
+              maxHeight: 120,
+              preferredHeight: 96,
             ),
           ),
         ),
       ),
     );
-
-    await tester.pumpWidget(buildImage());
-    expect(tester.takeException(), isNull);
     final image = find.byType(MarkdownImageView);
-    final details = find.text('$alt\n$source');
-    expect(tester.getSize(image).height, greaterThan(120));
-    expect(
-      tester.getRect(details).bottom,
-      lessThan(tester.getRect(image).bottom),
-    );
-    await tester.tap(find.text(l10n.remoteImageMoreOptions));
-    expect(promptCount, 1);
-
-    await tester.pumpWidget(buildImage(maxHeight: 120));
+    expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
+    expect(find.byIcon(BusyMarkGlyphs.imageBlocked), findsOneWidget);
+    expect(find.byIcon(BusyMarkGlyphs.imageMissing), findsNothing);
+    expect(find.byType(Image), findsNothing);
+    expect(find.byType(Scrollable), findsNothing);
+    expect(find.textContaining(source), findsNothing);
+    expect(tester.getSize(image).height, lessThan(60));
+    expect(find.byTooltip('$alt\n$source'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    expect(tester.getSize(image).height, 120);
-    await tester.drag(find.byType(Scrollable), const Offset(0, -400));
-    await tester.pumpAndSettle();
-    expect(
-      tester.getRect(details).bottom,
-      lessThan(tester.getRect(image).bottom),
-    );
   });
 
   testWidgets(
@@ -23154,6 +23440,23 @@ class _MutableWorkspaceController extends WorkspaceController {
 
   void replaceWorkspace(Workspace workspace) {
     state = state.copyWith(workspace: workspace);
+  }
+}
+
+class _GatedResourceService extends _StartupWorkspaceService {
+  _GatedResourceService(this.gatedPath);
+
+  final String gatedPath;
+  final entered = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    if (path == gatedPath) {
+      entered.complete();
+      await release.future;
+    }
+    return super.openPath(path);
   }
 }
 

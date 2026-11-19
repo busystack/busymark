@@ -64,7 +64,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 '/') {
           unawaited(
             performWorkspaceResourceAction(
-              context,
               ref,
               WorkspaceResourceAction.forNotes(pending),
             ),
@@ -77,7 +76,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (startupNavigation.claimStartupPath(startupPath)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          unawaited(openWorkspaceResourcePath(context, ref, startupPath!));
+          unawaited(openWorkspaceResourcePath(ref, startupPath!));
         }
       });
     } else if (startupNavigation.claimSessionRestore(startupPath)) {
@@ -298,7 +297,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 
   void _run(WorkspaceResourceAction action) =>
-      unawaited(performWorkspaceResourceAction(context, ref, action));
+      unawaited(performWorkspaceResourceAction(ref, action));
 
   void _toggleSidebar() {
     final settings = ref.read(appSettingsControllerProvider);

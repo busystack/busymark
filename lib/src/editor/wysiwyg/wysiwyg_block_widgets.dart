@@ -150,7 +150,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.writersideRoot,
     this.imagesDir = 'images',
     required this.allowRemoteImages,
-    this.onRemoteImageBlocked,
     this.onMathDiagnostic,
     required this.controller,
     required this.undoController,
@@ -206,7 +205,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
   final BusyMarkWysiwygTextController controller;
   final UndoHistoryController undoController;
@@ -447,7 +445,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         onOpenFailed: () => BusyMarkToastOverlay.maybeShow(
           context,
           message: context.l10n.couldNotOpenTarget(source),
@@ -481,7 +478,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         onEdit: _editHtmlBlock,
       );
     }
@@ -524,7 +520,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                         writersideRoot: writersideRoot,
                         imagesDir: imagesDir,
                         allowRemoteImages: allowRemoteImages,
-                        onRemoteImageBlocked: onRemoteImageBlocked,
                       )
                     : readOnly
                     ? SelectableText(
@@ -897,7 +892,6 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.onEdit,
   });
 
@@ -907,7 +901,6 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final VoidCallback onEdit;
 
   @override
@@ -969,10 +962,9 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
               writersideRoot: writersideRoot,
               imagesDir: imagesDir,
               allowRemoteImages: allowRemoteImages,
-              onRemoteImageBlocked: onRemoteImageBlocked,
               maxWidth: BusyMarkSizes.previewMinWidth,
               maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-              height: BusyMarkSizes.previewInlineImageHeight,
+              preferredHeight: BusyMarkSizes.previewInlineImageHeight,
             ),
             child: _RenderedHtmlBlocks(
               blocks: block.children,
@@ -981,7 +973,6 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
               writersideRoot: writersideRoot,
               imagesDir: imagesDir,
               allowRemoteImages: allowRemoteImages,
-              onRemoteImageBlocked: onRemoteImageBlocked,
             ),
           ),
         ],
@@ -998,7 +989,6 @@ class _RenderedHtmlBlocks extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
   });
 
   final List<BusyBlock> blocks;
@@ -1007,7 +997,6 @@ class _RenderedHtmlBlocks extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -1022,7 +1011,6 @@ class _RenderedHtmlBlocks extends StatelessWidget {
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
             allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
             first: index == 0,
           ),
       ],
@@ -1038,7 +1026,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -1048,7 +1035,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -1097,7 +1083,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
             allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
         ),
       ),
@@ -1129,7 +1114,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
                 writersideRoot: writersideRoot,
                 imagesDir: imagesDir,
                 allowRemoteImages: allowRemoteImages,
-                onRemoteImageBlocked: onRemoteImageBlocked,
               ),
       ),
       BusyBlockKind.table => _RenderedHtmlTable(block: block, first: first),
@@ -1142,7 +1126,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         first: first,
       ),
       BusyBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
@@ -1154,7 +1137,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
           writersideRoot: writersideRoot,
           imagesDir: imagesDir,
           allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: onRemoteImageBlocked,
           first: first,
         ),
       BusyBlockKind.htmlBlock => _RenderedHtmlBlocks(
@@ -1164,7 +1146,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
       ),
       _ => Padding(
         padding: EdgeInsets.only(
@@ -1193,7 +1174,6 @@ class _RenderedHtmlFigure extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -1203,7 +1183,6 @@ class _RenderedHtmlFigure extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -1234,7 +1213,6 @@ class _RenderedHtmlFigure extends StatelessWidget {
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
             allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
           if (captionBlocks.isNotEmpty)
             Padding(
@@ -1264,7 +1242,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -1274,7 +1251,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -1313,7 +1289,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
                 writersideRoot: writersideRoot,
                 imagesDir: imagesDir,
                 allowRemoteImages: allowRemoteImages,
-                onRemoteImageBlocked: onRemoteImageBlocked,
               ),
             ),
         ],
@@ -2847,7 +2822,6 @@ class _ImageBlockEditor extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
   });
 
   final BusyBlock block;
@@ -2856,7 +2830,6 @@ class _ImageBlockEditor extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -2873,7 +2846,6 @@ class _ImageBlockEditor extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         width: width,
         maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
       ),

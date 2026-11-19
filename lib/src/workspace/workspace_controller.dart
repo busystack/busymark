@@ -251,6 +251,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _validationSequence = 0;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
+  var _writersideProjectCreation = 0;
   ({String bufferId, BusyMarkDeferredEditorFocus request})? _creationFocus;
 
   BusyMarkDeferredEditorFocus? sourceCreationFocus(String? bufferId) =>
@@ -4157,17 +4158,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   bool _canReplaceWorkspace(
     WorkspaceState prior,
     int priorRevision,
-    bool Function()? acceptNavigation,
-  ) =>
+    bool Function()? acceptNavigation, {
+    bool allowDirty = false,
+  }) =>
       ref.mounted &&
       acceptNavigation?.call() != false &&
       priorRevision == _activeDocumentRevision &&
       state.workspace?.id == prior.workspace?.id &&
+      state.workspace?.openedAt == prior.workspace?.openedAt &&
       state.documentBuffers.length == prior.documentBuffers.length &&
       state.documentBuffers.indexed.every(
         (entry) =>
             identical(entry.$2, prior.documentBuffers[entry.$1]) ||
-            _sameCleanClosingSource(prior.documentBuffers[entry.$1], entry.$2),
+            (allowDirty
+                ? _sameClosingSource(prior.documentBuffers[entry.$1], entry.$2)
+                : _sameCleanClosingSource(
+                    prior.documentBuffers[entry.$1],
+                    entry.$2,
+                  )),
       );
 
   Future<void> openPath(
@@ -4339,67 +4347,153 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> createWritersideProject(
-    WritersideProjectCreateRequest request,
-  ) async {
-    if (!propertyEdits.flush()) return false;
-    _invalidateFileMonitorWorkspace();
-    _removalOperationRevision++;
-    final closingBuffers = state.documentBuffers;
-    final historySettled = await _localHistory.flushAll(closingBuffers);
-    _cancelPendingDerivedRefresh();
-    _cancelAllAutoSaves();
-    final operationRevision = _invalidateActiveDocumentOperations();
-    _resetSaveTracking();
-    _restoredRecoveryOwnerIdsByBuffer.clear();
-    state = const WorkspaceState(isLoading: true);
-    for (final buffer in closingBuffers) {
-      await _localHistory.handleBufferClosed(
-        buffer.id,
-        historySettled: historySettled,
-      );
+    WritersideProjectCreateRequest request, {
+    bool Function()? acceptNavigation,
+    Future<bool> Function(bool Function() isCurrent)? authorizeReplacement,
+    void Function(WorkspaceMessage)? onError,
+    void Function(String bufferId)? onPublished,
+  }) => _trackWorkspaceOpening(() async {
+    if (acceptNavigation?.call() == false ||
+        !propertyEdits.flush() ||
+        state.isLoading ||
+        (state.hasUnsavedChanges && authorizeReplacement == null)) {
+      return false;
     }
+    final previous = state;
+    final previousRevision = _activeDocumentRevision;
+    final creation = ++_writersideProjectCreation;
+    bool currentRequest() =>
+        ref.mounted &&
+        creation == _writersideProjectCreation &&
+        acceptNavigation?.call() != false;
+    bool canAuthorize() =>
+        currentRequest() &&
+        !state.isLoading &&
+        _canReplaceWorkspace(
+          previous,
+          previousRevision,
+          acceptNavigation,
+          allowDirty: true,
+        );
+
+    var published = false;
     try {
       final workspace = await _service.createWritersideProject(request);
-      final active = workspace.activeFilePath;
-      final load = active == null
-          ? null
-          : await _service.loadTextWithSnapshot(active);
-      final loadedWorkspace = workspace;
-      final buffer = load == null || active == null
-          ? null
-          : _fileBuffer(
-              active,
-              load,
-              mode: _settingsController.state.documentViewMode,
-            );
-      final preview = buffer == null
-          ? null
-          : _safePreview(loadedWorkspace, buffer);
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (!canAuthorize()) return false;
+      final active = workspace.activeFilePath!;
+      final load = await _service.loadTextWithSnapshot(active);
+      final buffer = _fileBuffer(
+        active,
+        load,
+        mode: _settingsController.state.documentViewMode,
+      );
+      final prepared = _writersideSourceMismatch(workspace, buffer)
+          ? await _service.prepareDocument(workspace, buffer, {
+              active: buffer.text,
+            })
+          : workspace;
+      final preview = _safePreview(prepared, buffer);
+      if (!canAuthorize() ||
+          (authorizeReplacement != null &&
+              !await authorizeReplacement(canAuthorize)) ||
+          !currentRequest()) {
         return false;
       }
-      state = WorkspaceState(
-        workspace: loadedWorkspace,
-        preview: preview,
-        documentBuffers: buffer == null ? const [] : [buffer],
-        activeBufferId: buffer?.id,
-      );
-      if (buffer != null) unawaited(_localHistory.observeOpened(buffer));
-      _recordActivePreviewRevision();
-      if (buffer != null &&
-          _writersideSourceMismatch(loadedWorkspace, buffer)) {
-        _requestDerivedRefresh(rebuildPreview: true);
+
+      // A confirmed Save As can promote an untitled workspace while retaining
+      // the original document openings. Confirmed discards remain untouched
+      // until the new workspace has been prepared and can be published.
+      final prior = state;
+      final priorRevision = _activeDocumentRevision;
+      final sameWorkspace =
+          prior.workspace?.id == previous.workspace?.id &&
+          prior.workspace?.openedAt == previous.workspace?.openedAt;
+      final promoted =
+          previous.workspace?.kind == WorkspaceKind.untitledMarkdown &&
+          prior.workspace?.kind == WorkspaceKind.singleMarkdown;
+      if (prior.isLoading ||
+          (!sameWorkspace && !promoted) ||
+          prior.activeBufferId != previous.activeBufferId ||
+          prior.documentBuffers.length != previous.documentBuffers.length ||
+          !prior.documentBuffers.indexed.every(
+            (entry) => identical(
+              entry.$2.opening,
+              previous.documentBuffers[entry.$1].opening,
+            ),
+          ) ||
+          prior.dirtyBuffers.any(
+            (dirty) => !previous.dirtyBuffers.any(
+              (before) => _sameClosingSource(before, dirty),
+            ),
+          )) {
+        return false;
       }
-      await _startMonitoring(loadedWorkspace);
-      _schedulePersistence();
-      _resetSaveTracking();
-      await _publishRecent(
-        () => _settingsController.recordOpenedWorkspace(
-          path: workspace.rootPath,
-          kind: workspace.kind.name,
-        ),
-      );
-      return true;
+      final closingBuffers = prior.documentBuffers;
+      final discardingRemote = prior.dirtyBuffers
+          .where((buffer) => buffer.isRemote)
+          .map((buffer) => buffer.id)
+          .toList();
+      if (discardingRemote.any(_pendingRemoteDiscards.contains)) return false;
+      _pendingRemoteDiscards.addAll(discardingRemote);
+      try {
+        for (final dirty in prior.dirtyBuffers) {
+          if (!_localHistory.canDiscardPristineDraft(dirty) &&
+              !await _localHistory.captureBeforeLoss(
+                LocalHistoryBufferSnapshot.fromBuffer(dirty),
+                LocalHistoryCaptureReason.beforeDiscard,
+              )) {
+            return false;
+          }
+        }
+        final historySettled = await _localHistory.flushAll(closingBuffers);
+        if (!currentRequest() ||
+            state.isLoading ||
+            !_canReplaceWorkspace(
+              prior,
+              priorRevision,
+              acceptNavigation,
+              allowDirty: true,
+            )) {
+          return false;
+        }
+        _invalidateFileMonitorWorkspace();
+        _removalOperationRevision++;
+        _cancelPendingDerivedRefresh();
+        _cancelAllAutoSaves();
+        final revision = _invalidateActiveDocumentOperations();
+        _resetSaveTracking();
+        _restoredRecoveryOwnerIdsByBuffer.clear();
+        state = WorkspaceState(
+          workspace: prepared,
+          preview: preview,
+          documentBuffers: [buffer],
+          activeBufferId: buffer.id,
+        );
+        published = true;
+        unawaited(_localHistory.observeOpened(buffer));
+        _recordActivePreviewRevision();
+        _schedulePersistence();
+        onPublished?.call(buffer.id);
+        for (final old in closingBuffers) {
+          await _localHistory.handleBufferClosed(
+            old.id,
+            historySettled: historySettled,
+          );
+        }
+        if (!_isCurrentActiveDocumentOperation(revision)) return true;
+        await _startMonitoring(prepared);
+        if (!_isCurrentActiveDocumentOperation(revision)) return true;
+        await _publishRecent(
+          () => _settingsController.recordOpenedWorkspace(
+            path: prepared.rootPath,
+            kind: prepared.kind.name,
+          ),
+        );
+        return true;
+      } finally {
+        _pendingRemoteDiscards.removeAll(discardingRemote);
+        if (discardingRemote.isNotEmpty && ref.mounted) _schedulePersistence();
+      }
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(
         '[BusyMark] Create Writerside project failed',
@@ -4410,18 +4504,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           'directory': request.directoryName,
         },
       );
-      if (_isCurrentActiveDocumentOperation(operationRevision)) {
-        state = state.copyWith(
-          isLoading: false,
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.createWritersideProjectFailed,
-            error: error,
-          ),
+      if (published) return true;
+      if (canAuthorize()) {
+        final message = WorkspaceMessage(
+          WorkspaceMessageCode.createWritersideProjectFailed,
+          error: error,
         );
+        state = state.copyWith(message: message);
+        onError?.call(message);
       }
       return false;
     }
-  }
+  });
 
   Future<bool> createWritersideTopic(
     WritersideTopicCreateRequest request, {
@@ -6203,8 +6297,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   // allow only that metadata refresh. Dirty discard and all source, filesystem
   // identity, origin and permission changes still invalidate publication.
   bool _sameCleanClosingSource(DocumentBuffer before, DocumentBuffer live) =>
-      !before.isDirty &&
-      !live.isDirty &&
+      !before.isDirty && !live.isDirty && _sameClosingSource(before, live);
+
+  bool _sameClosingSource(DocumentBuffer before, DocumentBuffer live) =>
+      before.isDirty == live.isDirty &&
+      identical(before.opening, live.opening) &&
       before.id == live.id &&
       before.revision == live.revision &&
       before.text == live.text &&

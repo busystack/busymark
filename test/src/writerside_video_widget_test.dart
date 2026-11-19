@@ -246,7 +246,8 @@ void main() {
                       expect(source, poster);
                       return MarkdownImageActions(
                         allowed: allowed,
-                        loadImage: () => setState(() => allowed = true),
+                        openMenu: (_, _, _) async =>
+                            setState(() => allowed = true),
                       );
                     },
                     child: BusyMarkWritersideVideoView(
@@ -271,7 +272,7 @@ void main() {
         final l10n = AppLocalizations.of(
           tester.element(find.byType(BusyMarkWritersideVideoView)),
         );
-        await tester.tap(find.text(l10n.loadThisRemoteImage));
+        await tester.tap(find.text(l10n.remoteImageBlocked));
         await tester.pumpAndSettle();
         expect(http.requests, [Uri.parse(poster)]);
         expect(host.shown, isEmpty);

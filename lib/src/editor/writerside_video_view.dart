@@ -25,7 +25,6 @@ class BusyMarkWritersideVideoView extends StatefulWidget {
     required this.imagesDir,
     this.allowRemoteImages = false,
     this.posterSpan,
-    this.onRemoteImageBlocked,
     this.onOpenFailed,
     this.playerHost = const PlatformWritersideVideoPlayerHost(),
     this.width,
@@ -43,7 +42,6 @@ class BusyMarkWritersideVideoView extends StatefulWidget {
   final String imagesDir;
   final bool allowRemoteImages;
   final SourceSpan? posterSpan;
-  final VoidCallback? onRemoteImageBlocked;
   final VoidCallback? onOpenFailed;
   final WritersideVideoPlayerHost playerHost;
   final double? width;
@@ -241,7 +239,6 @@ class _BusyMarkWritersideVideoViewState
       writersideRoot: widget.writersideRoot,
       imagesDir: widget.imagesDir,
       allowRemoteImages: widget.allowRemoteImages,
-      onRemoteImageBlocked: widget.onRemoteImageBlocked,
     );
     if (blocked) {
       return Material(

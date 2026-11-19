@@ -3,74 +3,57 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
-import '../app/app_router.dart';
 import '../app/app_settings.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../search/search_session.dart';
-import 'workspace_tab_actions.dart';
+import 'workspace_navigation.dart';
 import 'workspace_controller.dart';
-import 'workspace_safety.dart';
 
-final _recentNavigationProvider = Provider((ref) => _RecentNavigation());
-
-class _RecentNavigation {
-  bool opening = false;
-}
-
-Future<void> openRecentResource(
-  BuildContext context,
-  WidgetRef ref,
-  RecentResource resource,
-) async {
-  final navigation = ref.read(_recentNavigationProvider);
-  if (navigation.opening) return;
-  navigation.opening = true;
-  try {
-    await _openRecentResource(context, ref, resource);
-  } finally {
-    navigation.opening = false;
-  }
+Future<void> openRecentResource(WidgetRef ref, RecentResource resource) {
+  final navigation = ref.read(workspaceNavigationProvider);
+  return navigation.run(
+    (recent: resource.identity),
+    (_, currentRequest) =>
+        _openRecentResource(navigation, resource, currentRequest),
+  );
 }
 
 Future<void> _openRecentResource(
-  BuildContext context,
-  WidgetRef ref,
+  WorkspaceNavigation navigation,
   RecentResource resource,
+  bool Function() currentNavigation,
 ) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  final origin = ref.read(appRouterProvider).routeInformationProvider.value.uri;
-  final search = ref.read(searchSessionProvider);
-  bool currentRequest() =>
-      context.mounted &&
-      ref.read(appRouterProvider).routeInformationProvider.value.uri ==
-          origin &&
-      ref.read(searchSessionProvider).requestRevision ==
-          search.requestRevision &&
-      (!search.active ||
-          ref.read(searchSessionProvider).active &&
-              ref.read(searchSessionProvider).focusRequest ==
-                  search.focusRequest &&
-              ref.read(searchSessionProvider).category == search.category &&
-              ref.read(searchSessionProvider).query == search.query);
-  final current = ref.read(workspaceControllerProvider).workspace;
+  final container = navigation.container;
+  final controller = container.read(workspaceControllerProvider.notifier);
+  final search = container.read(searchSessionProvider);
+  bool currentRequest() {
+    if (!currentNavigation()) return false;
+    final live = container.read(searchSessionProvider);
+    return live.requestRevision == search.requestRevision &&
+        (!search.active ||
+            live.active &&
+                live.focusRequest == search.focusRequest &&
+                live.category == search.category &&
+                live.query == search.query);
+  }
+
+  final current = container.read(workspaceControllerProvider).workspace;
   void unavailable() {
     if (currentRequest()) {
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.searchResourceUnavailable,
-      );
+      navigation.showUnavailable();
     }
   }
 
   late final bool opened;
   if (resource.accountId case final accountId?) {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    final repository = await container.read(
+      nextcloudNotesRepositoryProvider.future,
+    );
     if (!currentRequest()) return;
     bool available() {
       if (repository.accountById(accountId) == null) return false;
@@ -92,10 +75,7 @@ Future<void> _openRecentResource(
             acceptNavigation: () => currentRequest() && available(),
           );
     } else {
-      if (!context.mounted) return;
-      if (!await confirmSafeToContinue(
-            context,
-            ref,
+      if (!await navigation.confirmDeparture(
             canContinue: () => currentRequest() && available(),
           ) ||
           !currentRequest()) {
@@ -139,9 +119,7 @@ Future<void> _openRecentResource(
         acceptNavigation: currentRequest,
       );
     } else {
-      if (!await confirmSafeToContinue(
-            context,
-            ref,
+      if (!await navigation.confirmDeparture(
             canContinue: () => currentRequest() && available(),
           ) ||
           !currentRequest()) {
@@ -163,6 +141,7 @@ Future<void> _openRecentResource(
     return;
   }
   if (currentRequest()) {
+    navigation.reveal();
     await controller.recordRecentResource(
       RecentResource(
         path: resource.path,
@@ -176,10 +155,6 @@ Future<void> _openRecentResource(
         lastOpenedAt: DateTime.now(),
       ),
     );
-    if (!context.mounted || !currentRequest()) return;
-    revealOpenedDocument(ref);
-    ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-    context.go('/workspace');
   }
 }
 

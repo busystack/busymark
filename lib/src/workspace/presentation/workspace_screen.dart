@@ -10176,13 +10176,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final workspace = widget.state.workspace;
     final controller = ref.read(workspaceControllerProvider.notifier);
     final workspaceId = remoteImageWorkspaceId(workspace);
-    final accountId = workspace?.nextcloudAccountId;
-    final account = accountId == null
-        ? null
-        : repository?.accountById(accountId);
-    final workspaceLabel = account == null
-        ? workspace?.filesystemRootPath ?? workspace?.nextcloudAccountId
-        : '${account.loginName} · ${account.server}';
     final parserPath = activeBuffer == null || workspace == null
         ? null
         : resolveWorkspaceDocumentContext(workspace, activeBuffer).parserPath;
@@ -10215,40 +10208,51 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               activeBuffer.text != renderedSource) {
             return MarkdownImageActions(allowed: allowed);
           }
-          RemoteImagePermissionTarget? capture() =>
-              controller.captureRemoteImagePermission(
+          return MarkdownImageActions(
+            allowed: false,
+            documentOpening: activeBuffer.opening,
+            openMenu: (anchor, position, session) async {
+              final target = controller.captureRemoteImagePermission(
                 activeBuffer,
                 renderedSource,
                 ownedSpan,
                 source,
                 workspaceId,
               );
-          return MarkdownImageActions(
-            allowed: false,
-            loadImage: ownedSpan == null
-                ? null
-                : () {
-                    final target = capture();
-                    if (target != null) {
-                      unawaited(
-                        controller.grantRemoteImagePermission(
-                          target,
-                          RemoteImagePermission.image,
-                        ),
-                      );
-                    }
-                  },
-            moreOptions: () {
-              final target = capture();
-              if (target != null) {
-                unawaited(
-                  _showRemoteImagesPrompt(
-                    context,
-                    controller,
-                    target,
-                    workspaceLabel,
-                  ),
+              if (target == null) return;
+              try {
+                final l10n = anchor.l10n;
+                final action = await showBusyMarkNativeContextMenu(
+                  anchor,
+                  position,
+                  session: session,
+                  items: <PopupMenuEntry<RemoteImagePermission>>[
+                    BusyMarkPopupMenuItem(
+                      value: RemoteImagePermission.image,
+                      label: l10n.loadThisRemoteImage,
+                      enabled: target.hasOccurrence,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: RemoteImagePermission.document,
+                      label: l10n.loadRemoteImagesInDocument,
+                    ),
+                    if (target.workspaceId != null)
+                      BusyMarkPopupMenuItem(
+                        value: RemoteImagePermission.workspace,
+                        label: l10n.loadRemoteImagesForWorkspace,
+                      ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: RemoteImagePermission.global,
+                      label: l10n.alwaysLoadRemoteImages,
+                    ),
+                  ],
                 );
+                if (action != null) {
+                  await controller.grantRemoteImagePermission(target, action);
+                }
+              } finally {
+                controller.remoteImages.release(target);
               }
             },
           );
@@ -14835,7 +14839,7 @@ InlineSpan _previewInlineImageSpan(
           ),
           maxWidth: BusyMarkSizes.previewMinWidth,
           maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-          height: BusyMarkSizes.previewInlineImageHeight,
+          preferredHeight: BusyMarkSizes.previewInlineImageHeight,
         ),
       ),
     ),
@@ -15184,64 +15188,6 @@ void _showPreviewLinkMessage(BuildContext context, String message) {
     message: message,
     priority: BusyMarkToastPriority.high,
   );
-}
-
-Future<void> _showRemoteImagesPrompt(
-  BuildContext context,
-  WorkspaceController controller,
-  RemoteImagePermissionTarget target,
-  String? workspaceLabel,
-) async {
-  try {
-    final action = await showBusyMarkModalDialog<RemoteImagePermission>(
-      context,
-      builder: (context) {
-        final l10n = context.l10n;
-        void choose(RemoteImagePermission permission) =>
-            Navigator.pop(context, permission);
-        return BusyMarkDialogShell(
-          title: l10n.remoteImageMoreOptionsTitle,
-          maxWidth: BusyMarkSizes.dialog,
-          actions: [
-            BusyMarkDialogButton(
-              label: l10n.cancel,
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-          children: [
-            Text(l10n.remoteImagesBlockedMessage),
-            BusyMarkGroupedList(
-              children: [
-                BusyMarkActionRow(
-                  title: l10n.loadRemoteImagesInDocument,
-                  subtitleWidget: Text(l10n.remoteImageUntilClose),
-                  onTap: () => choose(RemoteImagePermission.document),
-                ),
-                if (target.workspaceId != null && workspaceLabel != null)
-                  BusyMarkActionRow(
-                    title: l10n.loadRemoteImagesForWorkspace,
-                    subtitleWidget: Text(
-                      l10n.remoteImageWorkspacePermissionDetail(workspaceLabel),
-                    ),
-                    onTap: () => choose(RemoteImagePermission.workspace),
-                  ),
-                BusyMarkActionRow(
-                  title: l10n.alwaysLoadRemoteImages,
-                  subtitleWidget: Text(l10n.remoteImageGlobalPermissionDetail),
-                  onTap: () => choose(RemoteImagePermission.global),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-    if (action != null) {
-      await controller.grantRemoteImagePermission(target, action);
-    }
-  } finally {
-    controller.remoteImages.release(target);
-  }
 }
 
 String _decodePreviewAnchor(String value) {

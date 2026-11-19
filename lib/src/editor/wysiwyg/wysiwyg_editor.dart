@@ -133,7 +133,6 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onAssetSaveRequired,
     this.onChooseLink,
     this.allowRemoteImages = false,
-    this.onRemoteImageBlocked,
     this.toolbarPlacement = EditorToolbarPlacement.topLeft,
     this.toolbarDirection = EditorToolbarDirection.horizontal,
     this.onToolbarPlacementChanged,
@@ -198,7 +197,6 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final VoidCallback? onAssetSaveRequired;
   final Future<LinkDestination?> Function(String initial)? onChooseLink;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final EditorToolbarPlacement toolbarPlacement;
   final EditorToolbarDirection toolbarDirection;
   final ValueChanged<EditorToolbarPlacement>? onToolbarPlacementChanged;
@@ -1948,7 +1946,6 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           writersideRoot: widget.writersideRoot,
           imagesDir: widget.imagesDir,
           allowRemoteImages: widget.allowRemoteImages,
-          onRemoteImageBlocked: widget.onRemoteImageBlocked,
           onMathDiagnostic: widget.onMathDiagnostic,
           controller: _textControllerFor(block),
           undoController: _textUndoControllerFor(block),

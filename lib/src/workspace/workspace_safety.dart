@@ -25,25 +25,42 @@ Future<bool> confirmSafeToContinue(
   BuildContext context,
   WidgetRef ref, {
   bool Function()? canContinue,
+}) => confirmWorkspaceDeparture(
+  context,
+  _container(ref),
+  canContinue: canContinue,
+);
+
+Future<bool> confirmWorkspaceDeparture(
+  BuildContext context,
+  ProviderContainer container, {
+  bool Function()? canContinue,
+  bool deferDiscard = false,
 }) async {
-  if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
-      !context.mounted) {
+  if (!await container.read(busyMarkGitDismissalProvider).mayDismiss() ||
+      !context.mounted ||
+      canContinue?.call() == false) {
     return false;
   }
-  if (!ref.read(workspaceControllerProvider.notifier).propertyEdits.flush()) {
+  if (!container
+      .read(workspaceControllerProvider.notifier)
+      .propertyEdits
+      .flush()) {
     return false;
   }
-  final state = ref.read(workspaceControllerProvider);
-  if (!state.hasUnsavedChanges) {
-    return canContinue?.call() ?? true;
-  }
+  final state = container.read(workspaceControllerProvider);
+  if (!state.hasUnsavedChanges) return true;
   return _confirmUnsavedChanges(
     context,
-    ref,
+    container,
     dirtyBufferIds: state.dirtyBuffers.map((buffer) => buffer.id).toList(),
     canContinue: canContinue,
+    deferDiscard: deferDiscard,
   );
 }
+
+ProviderContainer _container(WidgetRef ref) =>
+    ProviderScope.containerOf(ref.context, listen: false);
 
 /// Covers every affected tab, including inactive dirty tree/topic buffers.
 Future<bool> confirmSafeToChangeWorkspaceFiles(
@@ -54,7 +71,7 @@ Future<bool> confirmSafeToChangeWorkspaceFiles(
   final affected = paths.toList();
   return _confirmUnsavedChanges(
     context,
-    ref,
+    _container(ref),
     dirtyBufferIds: [
       for (final buffer in ref.read(workspaceControllerProvider).dirtyBuffers)
         if (buffer.filePath != null &&
@@ -86,7 +103,7 @@ Future<bool> confirmSafeToRefactorWritersideProject(
   if (workspace == null) return Future.value(false);
   return _confirmUnsavedChanges(
     context,
-    ref,
+    _container(ref),
     withoutActivatingBuffers: true,
     dirtyBufferIds: [
       for (final buffer in state.dirtyBuffers)
@@ -108,7 +125,11 @@ Future<bool> confirmSafeToCloseActiveDocument(
   if (active == null || !active.isDirty) {
     return true;
   }
-  return _confirmUnsavedChanges(context, ref, dirtyBufferIds: [active.id]);
+  return _confirmUnsavedChanges(
+    context,
+    _container(ref),
+    dirtyBufferIds: [active.id],
+  );
 }
 
 /// Resolves only dirty documents in the requested close set, including
@@ -121,7 +142,7 @@ Future<bool> confirmSafeToCloseDocumentBuffers(
   final requested = bufferIds.toSet();
   return _confirmUnsavedChanges(
     context,
-    ref,
+    _container(ref),
     dirtyBufferIds: [
       for (final buffer in ref.read(workspaceControllerProvider).dirtyBuffers)
         if (requested.contains(buffer.id)) buffer.id,
@@ -131,12 +152,13 @@ Future<bool> confirmSafeToCloseDocumentBuffers(
 
 Future<bool> _confirmUnsavedChanges(
   BuildContext context,
-  WidgetRef ref, {
+  ProviderContainer container, {
   required List<String> dirtyBufferIds,
   bool withoutActivatingBuffers = false,
   bool Function()? canContinue,
+  bool deferDiscard = false,
 }) async {
-  final initialState = ref.read(workspaceControllerProvider);
+  final initialState = container.read(workspaceControllerProvider);
   final dirtyBuffers = [
     for (final id in dirtyBufferIds)
       if (initialState.documentBuffers
@@ -222,12 +244,10 @@ Future<bool> _confirmUnsavedChanges(
     ),
   );
 
-  if (canContinue?.call() == false ||
-      !context.mounted ||
-      !ref.context.mounted) {
+  if (canContinue?.call() == false || !context.mounted) {
     return false;
   }
-  final currentState = ref.read(workspaceControllerProvider);
+  final currentState = container.read(workspaceControllerProvider);
   final currentDirtyIds = currentState.dirtyBuffers
       .map((buffer) => buffer.id)
       .toSet();
@@ -246,30 +266,35 @@ Future<bool> _confirmUnsavedChanges(
   }
 
   if (action == _UnsavedChangesAction.discard) {
+    if (deferDiscard) return true;
     if (withoutActivatingBuffers) {
-      return ref
+      return container
           .read(workspaceControllerProvider.notifier)
           .discardDocumentBuffers(dirtyBufferIds);
     }
-    return _discardDirtyDocuments(ref, dirtyBufferIds);
+    return _discardDirtyDocuments(container, dirtyBufferIds);
   }
   if (action == _UnsavedChangesAction.save) {
     if (!context.mounted) {
       return false;
     }
     return withoutActivatingBuffers
-        ? _saveDirtyDocumentsWithoutActivation(context, ref, dirtyBufferIds)
-        : _saveDirtyDocuments(context, ref, dirtyBufferIds);
+        ? _saveDirtyDocumentsWithoutActivation(
+            context,
+            container,
+            dirtyBufferIds,
+          )
+        : _saveDirtyDocuments(context, container, dirtyBufferIds);
   }
   return false;
 }
 
 Future<bool> _saveDirtyDocumentsWithoutActivation(
   BuildContext context,
-  WidgetRef ref,
+  ProviderContainer container,
   List<String> bufferIds,
 ) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
+  final controller = container.read(workspaceControllerProvider.notifier);
   final firstResult = await controller.saveAll(bufferIds: bufferIds);
   if (firstResult.failedBufferIds.isNotEmpty ||
       firstResult.conflictBufferIds.isNotEmpty) {
@@ -279,7 +304,7 @@ Future<bool> _saveDirtyDocumentsWithoutActivation(
     final normalizations = <String, LineEndingNormalization>{};
     for (final bufferId in firstResult.normalizationRequiredBufferIds) {
       if (!context.mounted) return false;
-      final buffer = ref
+      final buffer = container
           .read(workspaceControllerProvider)
           .documentBuffers
           .where((candidate) => candidate.id == bufferId)
@@ -287,7 +312,6 @@ Future<bool> _saveDirtyDocumentsWithoutActivation(
       if (buffer == null || !buffer.isDirty) continue;
       final normalization = await _chooseMixedLineEndingNormalizationForFormat(
         context,
-        ref,
         buffer.format,
       );
       if (normalization == null) return false;
@@ -300,7 +324,7 @@ Future<bool> _saveDirtyDocumentsWithoutActivation(
     if (!normalizedResult.succeeded) return false;
   }
   return bufferIds.every((id) {
-    final buffer = ref
+    final buffer = container
         .read(workspaceControllerProvider)
         .documentBuffers
         .where((candidate) => candidate.id == id)
@@ -311,13 +335,15 @@ Future<bool> _saveDirtyDocumentsWithoutActivation(
 
 Future<bool> _saveDirtyDocuments(
   BuildContext context,
-  WidgetRef ref,
+  ProviderContainer container,
   List<String> bufferIds,
 ) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  final originalActiveId = ref.read(workspaceControllerProvider).activeBufferId;
+  final controller = container.read(workspaceControllerProvider.notifier);
+  final originalActiveId = container
+      .read(workspaceControllerProvider)
+      .activeBufferId;
   for (final bufferId in bufferIds) {
-    final current = ref
+    final current = container
         .read(workspaceControllerProvider)
         .documentBuffers
         .where((buffer) => buffer.id == bufferId)
@@ -327,14 +353,14 @@ Future<bool> _saveDirtyDocuments(
     }
     if (!await controller.activateDocumentBuffer(bufferId) ||
         !context.mounted ||
-        !await saveActiveWithOverwriteConfirmation(context, ref)) {
-      await _restoreActiveBuffer(ref, controller, originalActiveId);
+        !await _saveActiveWithOverwriteConfirmation(context, container)) {
+      await _restoreActiveBuffer(container, controller, originalActiveId);
       return false;
     }
   }
-  await _restoreActiveBuffer(ref, controller, originalActiveId);
+  await _restoreActiveBuffer(container, controller, originalActiveId);
   return bufferIds.every((id) {
-    final buffer = ref
+    final buffer = container
         .read(workspaceControllerProvider)
         .documentBuffers
         .where((candidate) => candidate.id == id)
@@ -344,13 +370,15 @@ Future<bool> _saveDirtyDocuments(
 }
 
 Future<bool> _discardDirtyDocuments(
-  WidgetRef ref,
+  ProviderContainer container,
   List<String> bufferIds,
 ) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  final originalActiveId = ref.read(workspaceControllerProvider).activeBufferId;
+  final controller = container.read(workspaceControllerProvider.notifier);
+  final originalActiveId = container
+      .read(workspaceControllerProvider)
+      .activeBufferId;
   for (final bufferId in bufferIds) {
-    final current = ref
+    final current = container
         .read(workspaceControllerProvider)
         .documentBuffers
         .where((buffer) => buffer.id == bufferId)
@@ -359,7 +387,7 @@ Future<bool> _discardDirtyDocuments(
       continue;
     }
     if (!await controller.activateDocumentBuffer(bufferId)) {
-      await _restoreActiveBuffer(ref, controller, originalActiveId);
+      await _restoreActiveBuffer(container, controller, originalActiveId);
       return false;
     }
     final target = controller.captureActiveDocumentSaveTarget();
@@ -367,21 +395,21 @@ Future<bool> _discardDirtyDocuments(
         ? await controller.closeDocumentBuffer(bufferId, discard: true)
         : await controller.discardActiveChanges(target: target);
     if (!discarded) {
-      await _restoreActiveBuffer(ref, controller, originalActiveId);
+      await _restoreActiveBuffer(container, controller, originalActiveId);
       return false;
     }
   }
-  await _restoreActiveBuffer(ref, controller, originalActiveId);
+  await _restoreActiveBuffer(container, controller, originalActiveId);
   return true;
 }
 
 Future<void> _restoreActiveBuffer(
-  WidgetRef ref,
+  ProviderContainer container,
   WorkspaceController controller,
   String? bufferId,
 ) async {
   if (bufferId != null &&
-      ref
+      container
           .read(workspaceControllerProvider)
           .documentBuffers
           .any((buffer) => buffer.id == bufferId)) {
@@ -412,8 +440,18 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   BuildContext context,
   WidgetRef ref, {
   ActiveDocumentSaveTarget? target,
+}) => _saveActiveWithOverwriteConfirmation(
+  context,
+  _container(ref),
+  target: target,
+);
+
+Future<bool> _saveActiveWithOverwriteConfirmation(
+  BuildContext context,
+  ProviderContainer container, {
+  ActiveDocumentSaveTarget? target,
 }) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
+  final controller = container.read(workspaceControllerProvider.notifier);
   if (!controller.propertyEdits.flush()) return false;
   final operationTarget =
       target ?? controller.captureActiveDocumentSaveTarget();
@@ -422,11 +460,10 @@ Future<bool> saveActiveWithOverwriteConfirmation(
     return false;
   }
   if (operationTarget.needsSaveLocation) {
-    return _saveActiveAs(context, ref, operationTarget);
+    return _saveActiveAs(context, container, operationTarget);
   }
   final normalization = await _chooseMixedLineEndingNormalization(
     context,
-    ref,
     operationTarget,
   );
   if (operationTarget.format.hasMixedLineEndings && normalization == null) {
@@ -441,7 +478,7 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   if (saved) {
     return true;
   }
-  final state = ref.read(workspaceControllerProvider);
+  final state = container.read(workspaceControllerProvider);
   if (!controller.isActiveDocumentSaveTargetCurrent(operationTarget) ||
       state.message?.code !=
           WorkspaceMessageCode.saveBlockedFileChangedOnDisk) {
@@ -487,26 +524,26 @@ Future<bool> saveActiveToNewLocation(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
+  final container = _container(ref);
+  final controller = container.read(workspaceControllerProvider.notifier);
   final target = controller.captureActiveDocumentSaveTarget();
   if (target == null) {
     return false;
   }
-  return _saveActiveAs(context, ref, target);
+  return _saveActiveAs(context, container, target);
 }
 
 Future<bool> _saveActiveAs(
   BuildContext context,
-  WidgetRef ref,
+  ProviderContainer container,
   ActiveDocumentSaveTarget target,
 ) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
+  final controller = container.read(workspaceControllerProvider.notifier);
   if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
     return false;
   }
   final normalization = await _chooseMixedLineEndingNormalization(
     context,
-    ref,
     target,
   );
   if (target.format.hasMixedLineEndings && normalization == null) {
@@ -549,13 +586,11 @@ Future<bool> _saveActiveAs(
 
 Future<LineEndingNormalization?> _chooseMixedLineEndingNormalization(
   BuildContext context,
-  WidgetRef ref,
   ActiveDocumentSaveTarget target,
-) => _chooseMixedLineEndingNormalizationForFormat(context, ref, target.format);
+) => _chooseMixedLineEndingNormalizationForFormat(context, target.format);
 
 Future<LineEndingNormalization?> _chooseMixedLineEndingNormalizationForFormat(
   BuildContext context,
-  WidgetRef ref,
   TextFormatMetadata format,
 ) async {
   if (!format.hasMixedLineEndings) {

@@ -1,5 +1,4 @@
 import 'package:file_selector/file_selector.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -9,13 +8,10 @@ import '../app/busymark_design.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/localization.dart';
 import '../nextcloud_notes/presentation/nextcloud_settings.dart';
-import '../local_history/local_history_controller.dart';
-import '../search/search_session.dart';
 import '../search/welcome_notes_action.dart';
-import 'workspace_tab_actions.dart';
 import 'presentation/create_writerside_project_dialog.dart';
 import 'workspace_controller.dart';
-import 'workspace_safety.dart';
+import 'workspace_navigation.dart';
 
 enum WorkspaceResourceAction {
   newMarkdown,
@@ -32,27 +28,25 @@ enum WorkspaceResourceAction {
       };
 }
 
-final _resourceActionProvider = Provider((ref) => _ResourceAction());
-
-class _ResourceAction {
-  bool running = false;
-}
-
 Future<void> performWorkspaceResourceAction(
-  BuildContext context,
   WidgetRef ref,
   WorkspaceResourceAction action,
-) async {
-  final operation = ref.read(_resourceActionProvider);
-  if (operation.running) return;
-  operation.running = true;
-  try {
-    final router = ref.read(appRouterProvider);
-    final origin = router.routeInformationProvider.value.uri;
-    bool currentRequest() =>
-        context.mounted && router.routeInformationProvider.value.uri == origin;
-    final controller = ref.read(workspaceControllerProvider.notifier);
-    final initialDirectory = _initialDirectory(ref);
+) {
+  final navigation = ref.read(workspaceNavigationProvider);
+  return navigation.run(action, (origin, currentRequest) async {
+    final context = navigation.dialogContext;
+    if (context == null) return;
+    final container = navigation.container;
+    final controller = container.read(workspaceControllerProvider.notifier);
+    final lastPath = container
+        .read(appSettingsControllerProvider)
+        .lastOpenedPath;
+    final initialDirectory = lastPath == null || lastPath.isEmpty
+        ? null
+        : p.extension(lastPath).isEmpty
+        ? lastPath
+        : p.dirname(lastPath);
+    final l10n = context.l10n;
 
     Future<bool> canDepartSettings() async =>
         currentRequest() &&
@@ -60,36 +54,41 @@ Future<void> performWorkspaceResourceAction(
             await confirmNotesSettingsDeparture(context)) &&
         currentRequest();
 
+    Future<bool> confirmDeparture({
+      bool deferDiscard = false,
+      bool Function()? canContinue,
+    }) => navigation.confirmDeparture(
+      canContinue: () => currentRequest() && canContinue?.call() != false,
+      deferDiscard: deferDiscard,
+    );
+
     switch (action) {
       case WorkspaceResourceAction.newMarkdown:
-        if (!await canDepartSettings() || !context.mounted) return;
+        if (!await canDepartSettings()) return;
         final replacesWorkspace =
             settingsReturnTargetForUri(origin) ==
                 SettingsReturnTarget.welcome ||
-            ref.read(workspaceControllerProvider).workspace?.isRemote == true;
+            container.read(workspaceControllerProvider).workspace?.isRemote ==
+                true;
         if (replacesWorkspace &&
-            (!await confirmSafeToContinue(context, ref) || !currentRequest())) {
+            (!await confirmDeparture() || !currentRequest())) {
           return;
         }
-        // Expose the editor before it tries to claim the creation focus.
-        ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         final created = replacesWorkspace
             ? await controller.createMarkdownWorkspace(
-                focusSource: true,
                 acceptNavigation: currentRequest,
               )
-            : await controller.createMarkdownFile(focusSource: true);
+            : await controller.createMarkdownFile();
         if (created && currentRequest()) {
-          revealOpenedDocument(ref);
-          router.go('/workspace');
+          navigation.reveal(focusNewDocument: true);
         }
       case WorkspaceResourceAction.newNote:
       case WorkspaceResourceAction.browseNotes:
-        if (!await canDepartSettings() || !context.mounted) return;
+        if (!await canDepartSettings()) return;
         await performWelcomeNotesAction(
-          context,
-          ref,
+          navigation,
+          origin,
+          currentRequest,
           action == WorkspaceResourceAction.newNote
               ? WelcomeNotesAction.create
               : WelcomeNotesAction.browse,
@@ -97,32 +96,37 @@ Future<void> performWorkspaceResourceAction(
       case WorkspaceResourceAction.newWriterside:
         final parentPath = await getDirectoryPath(
           initialDirectory: initialDirectory,
-          confirmButtonText: context.l10n.chooseLocation,
+          confirmButtonText: l10n.chooseLocation,
           canCreateDirectories: true,
         );
         if (parentPath == null ||
             !await canDepartSettings() ||
-            !context.mounted ||
-            !await confirmSafeToContinue(context, ref) ||
-            !context.mounted ||
-            !currentRequest()) {
+            !context.mounted) {
           return;
         }
-        final created = await showBusyMarkModalEditorDialog<bool>(
+        final bufferId = await showBusyMarkModalEditorDialog<String>(
           context,
           maxWidth: BusyMarkSizes.dialogWide,
           builder: (context) => BusyMarkCreateWritersideProjectDialog(
             parentDirectoryPath: parentPath,
-            onCreate: (request) => controller.createWritersideProject(request),
-            message: () => ref.read(workspaceControllerProvider).message,
+            onCreate: (request, onError, onPublished) =>
+                controller.createWritersideProject(
+                  request,
+                  authorizeReplacement: (isCurrent) => confirmDeparture(
+                    deferDiscard: true,
+                    canContinue: isCurrent,
+                  ),
+                  acceptNavigation: currentRequest,
+                  onError: onError,
+                  onPublished: onPublished,
+                ),
           ),
         );
-        if (created == true && currentRequest()) {
-          ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-          revealOpenedDocument(ref);
-          final bufferId = ref.read(workspaceControllerProvider).activeBufferId;
-          if (bufferId != null) controller.focusNewlyCreatedDocument(bufferId);
-          router.go('/workspace');
+        if (bufferId != null &&
+            currentRequest() &&
+            container.read(workspaceControllerProvider).activeBufferId ==
+                bufferId) {
+          navigation.reveal(focusNewDocument: true);
         }
       case WorkspaceResourceAction.openMarkdown:
       case WorkspaceResourceAction.openFolder:
@@ -130,55 +134,50 @@ Future<void> performWorkspaceResourceAction(
             ? (await openFile(
                 acceptedTypeGroups: [
                   XTypeGroup(
-                    label: context.l10n.fileTypeMarkdown,
+                    label: l10n.fileTypeMarkdown,
                     extensions: const ['md', 'markdown'],
                     mimeTypes: const ['text/markdown', 'text/x-markdown'],
                   ),
                 ],
                 initialDirectory: initialDirectory,
-                confirmButtonText: context.l10n.open,
+                confirmButtonText: l10n.open,
               ))?.path
             : await getDirectoryPath(
                 initialDirectory: initialDirectory,
-                confirmButtonText: context.l10n.open,
+                confirmButtonText: l10n.open,
                 canCreateDirectories: false,
               );
-        if (path != null && await canDepartSettings() && context.mounted) {
-          await openWorkspaceResourcePath(context, ref, path);
+        if (path != null && await canDepartSettings()) {
+          await _openPath(navigation, path, currentRequest);
         }
     }
-  } finally {
-    operation.running = false;
-  }
+  });
 }
 
-String? _initialDirectory(WidgetRef ref) {
-  final lastPath = ref.read(appSettingsControllerProvider).lastOpenedPath;
-  if (lastPath == null || lastPath.isEmpty) return null;
-  return p.extension(lastPath).isEmpty ? lastPath : p.dirname(lastPath);
+Future<void> openWorkspaceResourcePath(WidgetRef ref, String path) {
+  if (path.isEmpty) return Future.value();
+  final navigation = ref.read(workspaceNavigationProvider);
+  return navigation.run((
+    path: path,
+  ), (_, currentRequest) => _openPath(navigation, path, currentRequest));
 }
 
-Future<void> openWorkspaceResourcePath(
-  BuildContext context,
-  WidgetRef ref,
+Future<void> _openPath(
+  WorkspaceNavigation navigation,
   String path,
+  bool Function() currentRequest,
 ) async {
-  if (path.isEmpty) return;
-  final router = ref.read(appRouterProvider);
-  final origin = router.routeInformationProvider.value.uri;
-  bool currentRequest() =>
-      context.mounted && router.routeInformationProvider.value.uri == origin;
-  if (!await confirmSafeToContinue(context, ref) || !currentRequest()) return;
-  await ref
+  if (!await navigation.confirmDeparture(canContinue: currentRequest) ||
+      !currentRequest()) {
+    return;
+  }
+  await navigation.container
       .read(workspaceControllerProvider.notifier)
       .openPath(
         path,
         acceptNavigation: currentRequest,
         onOpened: () {
-          if (!currentRequest()) return;
-          revealOpenedDocument(ref);
-          ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-          router.go('/workspace');
+          if (currentRequest()) navigation.reveal();
         },
       );
 }
