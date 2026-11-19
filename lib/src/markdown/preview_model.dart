@@ -270,9 +270,7 @@ class BusyMarkPreviewBuilder {
       ),
       BusyBlockKind.image => PreviewBlock(
         kind: PreviewBlockKind.image,
-        text: block.inlines.isEmpty
-            ? block.plainText
-            : block.inlines.first.text,
+        text: block.plainText,
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: block.attributes,
       ),

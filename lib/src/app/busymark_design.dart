@@ -1177,30 +1177,26 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
       nativeIcon: nativeIcon,
       color: foreground,
     );
-    final yaruButton = YaruIconButton(
-      focusNode: focusNode,
-      isSelected: selected,
-      tooltip: label,
-      icon: artwork,
-      iconSize: BusyMarkSizes.iconButton,
-      padding: EdgeInsets.zero,
-      style: style,
-      hasFocusBorder: false,
-      onPressed: onPressed,
-    );
-    // Style.merge keeps the receiver's colors. Native header state layers
-    // take precedence over Yaru's default overlay where requested.
     final button = applyHeaderStateColors
-        ? IconButton(
+        ? _BusyMarkHeaderStateButton(
             focusNode: focusNode,
             isSelected: selected,
             tooltip: label,
             icon: artwork,
-            padding: EdgeInsets.zero,
-            style: style.merge(yaruButton.defaultStyleOf(context)),
+            style: style,
             onPressed: onPressed,
           )
-        : yaruButton;
+        : YaruIconButton(
+            focusNode: focusNode,
+            isSelected: selected,
+            tooltip: label,
+            icon: artwork,
+            iconSize: BusyMarkSizes.iconButton,
+            padding: EdgeInsets.zero,
+            style: style,
+            hasFocusBorder: false,
+            onPressed: onPressed,
+          );
     final painted = PhysicalShape(
       clipper: ShapeBorderClipper(shape: shape),
       color:
@@ -1224,6 +1220,27 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
       child: Semantics(label: label, child: content),
     );
   }
+}
+
+class _BusyMarkHeaderStateButton extends YaruIconButton {
+  const _BusyMarkHeaderStateButton({
+    required super.focusNode,
+    required super.isSelected,
+    required super.tooltip,
+    required super.icon,
+    required super.style,
+    required super.onPressed,
+  }) : super(
+         iconSize: BusyMarkSizes.iconButton,
+         padding: EdgeInsets.zero,
+         hasFocusBorder: false,
+       );
+
+  @override
+  // Yaru merges its default style first. Give the native header layers
+  // precedence while retaining Yaru's size and input behavior.
+  ButtonStyle defaultStyleOf(BuildContext context) =>
+      style!.merge(super.defaultStyleOf(context));
 }
 
 /// A compact icon action that keeps Yaru's interaction and focus behavior.

@@ -982,11 +982,8 @@ void main() {
       r'class BusyMarkHeaderIconButton[\s\S]*?class '
       r'BusyMarkCompactIconButton',
     ).firstMatch(design)!.group(0)!;
-    expect(headerIcon, contains('final yaruButton = YaruIconButton('));
-    expect(
-      headerIcon,
-      contains('style.merge(yaruButton.defaultStyleOf(context))'),
-    );
+    expect(headerIcon, contains('extends YaruIconButton'));
+    expect(headerIcon, contains('style!.merge(super.defaultStyleOf(context))'));
     expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));

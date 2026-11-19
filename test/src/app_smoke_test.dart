@@ -18406,6 +18406,12 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         await tester.pumpAndSettle();
 
         expect(find.byType(MarkdownImageView), findsNWidgets(2));
+        expect(
+          tester
+              .widgetList<MarkdownImageView>(find.byType(MarkdownImageView))
+              .map((image) => image.alt),
+          ['Block logo', 'Inline logo'],
+        );
         final blocked = find.text(l10n.remoteImageBlocked);
         if (remote) {
           expect(blocked, findsNWidgets(2));
