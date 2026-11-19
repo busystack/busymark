@@ -900,15 +900,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutGroupGeneral => 'عام';
 
   @override
-  String get shortcutNewDocument => 'إنشاء';
+  String get home => 'الرئيسية';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'إنشاء ملف Markdown أو مشروع Writerside';
+  String get openMenu => 'قائمة فتح';
 
   @override
-  String get shortcutOpenDescription =>
-      'فتح ملف Markdown أو مجلد أو مشروع Writerside';
+  String get newNextcloudNote => 'ملاحظة Nextcloud جديدة';
+
+  @override
+  String get shortcutNewDocument => 'قائمة جديد';
+
+  @override
+  String get shortcutNewDocumentDescription => 'افتح قائمة إنشاء الموارد';
+
+  @override
+  String get shortcutOpenDescription => 'افتح قائمة فتح الموارد';
 
   @override
   String get shortcutSaveDescription => 'حفظ المستند الحالي';
@@ -5565,7 +5572,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchCurrentWorkspace => 'مساحة العمل الحالية';
 
   @override
-  String get browseNotes => 'تصفح الملاحظات';
+  String get browseNotes => 'تصفح ملاحظات Nextcloud';
 
   @override
   String get searchActionsCommand => 'البحث عن إجراءات';

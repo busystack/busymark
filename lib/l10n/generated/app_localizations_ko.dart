@@ -881,14 +881,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shortcutGroupGeneral => '일반';
 
   @override
-  String get shortcutNewDocument => '만들기';
+  String get home => '홈';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Markdown 파일 또는 Writerside 프로젝트 만들기';
+  String get openMenu => '열기 메뉴';
 
   @override
-  String get shortcutOpenDescription => 'Markdown 파일, 폴더 또는 Writerside 프로젝트 열기';
+  String get newNextcloudNote => '새 Nextcloud 노트';
+
+  @override
+  String get shortcutNewDocument => '새로 만들기 메뉴';
+
+  @override
+  String get shortcutNewDocumentDescription => '리소스를 만드는 메뉴 표시';
+
+  @override
+  String get shortcutOpenDescription => '리소스를 여는 메뉴 표시';
 
   @override
   String get shortcutSaveDescription => '현재 문서 저장';
@@ -5385,7 +5393,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get searchCurrentWorkspace => '현재 작업 공간';
 
   @override
-  String get browseNotes => '노트 찾아보기';
+  String get browseNotes => 'Nextcloud 노트 찾아보기';
 
   @override
   String get searchActionsCommand => '작업 검색';

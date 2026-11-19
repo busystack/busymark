@@ -907,15 +907,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutGroupGeneral => 'Chung';
 
   @override
-  String get shortcutNewDocument => 'Tạo';
+  String get home => 'Trang chủ';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Tạo tệp Markdown hoặc dự án Writerside';
+  String get openMenu => 'Menu Mở';
 
   @override
-  String get shortcutOpenDescription =>
-      'Mở tệp Markdown, thư mục hoặc dự án Writerside';
+  String get newNextcloudNote => 'Ghi chú Nextcloud mới';
+
+  @override
+  String get shortcutNewDocument => 'Menu Tạo mới';
+
+  @override
+  String get shortcutNewDocumentDescription => 'Hiển thị menu tạo tài nguyên';
+
+  @override
+  String get shortcutOpenDescription => 'Hiển thị menu mở tài nguyên';
 
   @override
   String get shortcutSaveDescription => 'Lưu tài liệu hiện tại';
@@ -5532,7 +5539,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get searchCurrentWorkspace => 'Không gian làm việc hiện tại';
 
   @override
-  String get browseNotes => 'Duyệt ghi chú';
+  String get browseNotes => 'Duyệt ghi chú Nextcloud';
 
   @override
   String get searchActionsCommand => 'Tìm thao tác';

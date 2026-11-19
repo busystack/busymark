@@ -596,15 +596,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Crea",
+  "home": "Pagina iniziale",
+  "openMenu": "Menu Apri",
+  "newNextcloudNote": "Nuova nota Nextcloud",
+  "shortcutNewDocument": "Menu Nuovo",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Crea un file Markdown o un progetto Writerside",
+  "shortcutNewDocumentDescription": "Mostra il menu per creare risorse",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Apri un file Markdown, una cartella o un progetto Writerside",
+  "shortcutOpenDescription": "Mostra il menu per aprire risorse",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -3635,7 +3638,7 @@
   "searchTopicsCategory": "Argomenti",
   "searchCurrentDocument": "Documento corrente",
   "searchCurrentWorkspace": "Area di lavoro corrente",
-  "browseNotes": "Sfoglia note",
+  "browseNotes": "Sfoglia le note Nextcloud",
   "searchActionsCommand": "Cerca azioni",
   "searchDocumentsCommand": "Cerca documenti",
   "searchTopicsCommand": "Cerca argomenti",

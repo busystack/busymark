@@ -714,15 +714,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Maken",
+  "home": "Start",
+  "openMenu": "Menu Openen",
+  "newNextcloudNote": "Nieuwe Nextcloud-notitie",
+  "shortcutNewDocument": "Menu Nieuw",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Maak een Markdown-bestand of Writerside-project",
+  "shortcutNewDocumentDescription": "Toon het menu om bronnen te maken",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Open een Markdown-bestand, map of Writerside-project",
+  "shortcutOpenDescription": "Toon het menu om bronnen te openen",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -5165,7 +5168,7 @@
   "searchTopicsCategory": "Onderwerpen",
   "searchCurrentDocument": "Huidig document",
   "searchCurrentWorkspace": "Huidige werkruimte",
-  "browseNotes": "Notities bekijken",
+  "browseNotes": "Door Nextcloud-notities bladeren",
   "searchActionsCommand": "Acties zoeken",
   "searchDocumentsCommand": "Documenten zoeken",
   "searchTopicsCommand": "Onderwerpen zoeken",

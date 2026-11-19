@@ -3370,6 +3370,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void restoreEditingFocus() => _restoreEditingFocusAfterFrame();
 
+  void focusNewDocument() =>
+      _focusActiveOrFirstBlock(initialSelectionOffset: 0);
+
   void inspectCurrentSelection() {
     if (!_documentController.document.isWriterside) return;
     setState(() {

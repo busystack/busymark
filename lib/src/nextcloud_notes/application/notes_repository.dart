@@ -100,6 +100,20 @@ class NotesRepository {
   NextcloudAccount? accountById(String id) => _accounts[id];
   NextcloudNote? noteById(String id) => _notes[id];
 
+  NextcloudNote? availableRecentNote(String accountId, String localId) {
+    final note = noteById(localId);
+    if (note == null ||
+        accountById(accountId) == null ||
+        note.accountId != accountId ||
+        isNotesRecovery(note) ||
+        note.syncState == NoteSyncState.unavailable ||
+        note.syncState == NoteSyncState.forbidden ||
+        isCreationCandidateBinding(localId)) {
+      return null;
+    }
+    return note;
+  }
+
   Future<bool> confirmNoteWebRoute(String accountId) async {
     _assertMutableAccount(accountId);
     final account = _accounts[accountId]!;

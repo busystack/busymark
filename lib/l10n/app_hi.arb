@@ -596,15 +596,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "बनाएँ",
+  "home": "होम",
+  "openMenu": "खोलें मेनू",
+  "newNextcloudNote": "नया Nextcloud नोट",
+  "shortcutNewDocument": "नया मेनू",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Markdown फ़ाइल या Writerside प्रोजेक्ट बनाएँ",
+  "shortcutNewDocumentDescription": "संसाधन बनाने का मेनू दिखाएँ",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें",
+  "shortcutOpenDescription": "संसाधन खोलने का मेनू दिखाएँ",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -3635,7 +3638,7 @@
   "searchTopicsCategory": "विषय",
   "searchCurrentDocument": "वर्तमान दस्तावेज़",
   "searchCurrentWorkspace": "वर्तमान कार्यक्षेत्र",
-  "browseNotes": "नोट ब्राउज़ करें",
+  "browseNotes": "Nextcloud नोट ब्राउज़ करें",
   "searchActionsCommand": "क्रियाएँ खोजें",
   "searchDocumentsCommand": "दस्तावेज़ खोजें",
   "searchTopicsCommand": "विषय खोजें",

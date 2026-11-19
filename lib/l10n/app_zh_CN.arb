@@ -714,15 +714,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "创建",
+  "home": "主页",
+  "openMenu": "打开菜单",
+  "newNextcloudNote": "新建 Nextcloud 笔记",
+  "shortcutNewDocument": "新建菜单",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "创建 Markdown 文件或 Writerside 项目",
+  "shortcutNewDocumentDescription": "显示用于新建资源的菜单",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "打开 Markdown 文件、文件夹或 Writerside 项目",
+  "shortcutOpenDescription": "显示用于打开资源的菜单",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -5165,7 +5168,7 @@
   "searchTopicsCategory": "主题",
   "searchCurrentDocument": "当前文档",
   "searchCurrentWorkspace": "当前工作区",
-  "browseNotes": "浏览笔记",
+  "browseNotes": "浏览 Nextcloud 笔记",
   "searchActionsCommand": "搜索操作",
   "searchDocumentsCommand": "搜索文档",
   "searchTopicsCommand": "搜索主题",

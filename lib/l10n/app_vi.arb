@@ -714,15 +714,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Tạo",
+  "home": "Trang chủ",
+  "openMenu": "Menu Mở",
+  "newNextcloudNote": "Ghi chú Nextcloud mới",
+  "shortcutNewDocument": "Menu Tạo mới",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Tạo tệp Markdown hoặc dự án Writerside",
+  "shortcutNewDocumentDescription": "Hiển thị menu tạo tài nguyên",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Mở tệp Markdown, thư mục hoặc dự án Writerside",
+  "shortcutOpenDescription": "Hiển thị menu mở tài nguyên",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -5165,7 +5168,7 @@
   "searchTopicsCategory": "Chủ đề",
   "searchCurrentDocument": "Tài liệu hiện tại",
   "searchCurrentWorkspace": "Không gian làm việc hiện tại",
-  "browseNotes": "Duyệt ghi chú",
+  "browseNotes": "Duyệt ghi chú Nextcloud",
   "searchActionsCommand": "Tìm thao tác",
   "searchDocumentsCommand": "Tìm tài liệu",
   "searchTopicsCommand": "Tìm chủ đề",

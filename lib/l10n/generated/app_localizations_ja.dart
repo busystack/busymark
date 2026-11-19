@@ -880,15 +880,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shortcutGroupGeneral => '全般';
 
   @override
-  String get shortcutNewDocument => '作成';
+  String get home => 'ホーム';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Markdown ファイルまたは Writerside プロジェクトを作成';
+  String get openMenu => '開くメニュー';
 
   @override
-  String get shortcutOpenDescription =>
-      'Markdown ファイル、フォルダー、または Writerside プロジェクトを開く';
+  String get newNextcloudNote => '新しい Nextcloud ノート';
+
+  @override
+  String get shortcutNewDocument => '新規作成メニュー';
+
+  @override
+  String get shortcutNewDocumentDescription => 'リソースを作成するメニューを表示';
+
+  @override
+  String get shortcutOpenDescription => 'リソースを開くメニューを表示';
 
   @override
   String get shortcutSaveDescription => '現在のドキュメントを保存';
@@ -5385,7 +5392,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchCurrentWorkspace => '現在のワークスペース';
 
   @override
-  String get browseNotes => 'ノートを参照';
+  String get browseNotes => 'Nextcloud ノートを参照';
 
   @override
   String get searchActionsCommand => 'アクションを検索';

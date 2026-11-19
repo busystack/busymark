@@ -1,5 +1,6 @@
+import '../workspace/workspace_resource_actions.dart';
+import 'busymark_resource_menu.dart';
 import '../git/application/shared_git_tabs.dart';
-import '../workspace/recent_presentation.dart';
 import '../search/welcome_notes_action.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
@@ -11,14 +12,12 @@ import '../core/debug_log.dart';
 import '../editor/editor_text_context_menu.dart';
 
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path/path.dart' as p;
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -30,7 +29,6 @@ import '../platform/gtk_header_icon_service.dart';
 import '../local_history/local_history_controller.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
-import '../workspace/presentation/welcome_screen.dart';
 import '../workspace/workspace_safety.dart';
 import '../workspace/workspace_tabs.dart';
 import '../workspace/workspace_tab_actions.dart';
@@ -38,11 +36,9 @@ import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
 import '../search/search_session.dart';
-import '../workspace/recent_navigation.dart';
 import 'command_registry.dart';
 import 'command_shortcuts.dart';
 import 'keymap_controller.dart';
-import 'path_label.dart';
 import 'shortcut_capture.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
@@ -50,7 +46,6 @@ import 'busymark_design.dart';
 import 'busymark_search_field.dart';
 import 'busymark_glyphs.dart';
 import 'busymark_toast.dart';
-import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
 import 'git_dismissal.dart';
@@ -68,8 +63,6 @@ final _busyMarkDefaultCommandRegistryProvider =
         BusyMarkCommandIds.browseNotes: const _NotesActionIntent(
           WelcomeNotesAction.browse,
         ),
-        BusyMarkCommandIds.newDocument: const _NewWorkspaceIntent(),
-        BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
         BusyMarkCommandIds.save: const _SaveActiveIntent(),
         BusyMarkCommandIds.export: const _ExportIntent(),
         BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
@@ -100,6 +93,14 @@ final _busyMarkDefaultCommandRegistryProvider =
       };
       final defaults = BusyMarkCommandCatalog.create(
         executions: {
+          for (final id in BusyMarkResourceMenuButton.commandIds)
+            id: () {
+              if (!(rootNavigatorKey.currentState?.canPop() ?? false)) {
+                ref
+                    .read(resourceMenuControllerProvider(id))
+                    .open(allowPending: false);
+              }
+            },
           for (final id in [
             BusyMarkCommandIds.sidebarViewSelector,
             BusyMarkCommandIds.contentViewSelector,
@@ -156,12 +157,20 @@ final _busyMarkDefaultCommandRegistryProvider =
                 ref.read(searchSessionProvider.notifier).workspaceVisible &&
                 ref.read(workspaceControllerProvider).workspace?.isRemote ==
                     true,
-          BusyMarkCommandIds.sidebarViewSelector: () =>
-              ref.read(searchSessionProvider.notifier).workspaceVisible &&
-              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.sidebarViewSelector: () => switch (ref
+              .read(appRouterProvider)
+              .routeInformationProvider
+              .value
+              .uri
+              .path) {
+            '/' || '/workspace' => true,
+            _ => false,
+          },
           BusyMarkCommandIds.contentViewSelector: () =>
               ref.read(searchSessionProvider.notifier).workspaceVisible &&
               ref.read(workspaceControllerProvider).activeBuffer != null &&
+              ref.read(localHistoryControllerProvider).selectedRevision ==
+                  null &&
               ref
                       .read(sharedGitReviewProvider)[ref
                           .read(workspaceControllerProvider)
@@ -248,12 +257,6 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
 
 class BusyMarkApp extends ConsumerWidget {
   const BusyMarkApp({super.key});
-
-  XTypeGroup _markdownTypes(BuildContext context) => XTypeGroup(
-    label: context.l10n.fileTypeMarkdown,
-    extensions: <String>['md', 'markdown'],
-    mimeTypes: <String>['text/markdown', 'text/x-markdown'],
-  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -380,27 +383,11 @@ class BusyMarkApp extends ConsumerWidget {
                     final target = rootNavigatorKey.currentContext;
                     if (target != null) {
                       unawaited(
-                        performWelcomeNotesAction(target, ref, intent.action),
-                      );
-                    }
-                    return null;
-                  },
-                ),
-                _NewWorkspaceIntent: CallbackAction<_NewWorkspaceIntent>(
-                  onInvoke: (intent) {
-                    final navigatorContext = rootNavigatorKey.currentContext;
-                    if (navigatorContext != null) {
-                      unawaited(_showNewChooser(navigatorContext, ref, router));
-                    }
-                    return null;
-                  },
-                ),
-                _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
-                  onInvoke: (intent) {
-                    final navigatorContext = rootNavigatorKey.currentContext;
-                    if (navigatorContext != null) {
-                      unawaited(
-                        _showOpenChooser(navigatorContext, ref, router),
+                        performWorkspaceResourceAction(
+                          target,
+                          ref,
+                          WorkspaceResourceAction.forNotes(intent.action),
+                        ),
                       );
                     }
                     return null;
@@ -612,243 +599,6 @@ class BusyMarkApp extends ConsumerWidget {
     router.go('/');
   }
 
-  Future<void> _showOpenChooser(
-    BuildContext context,
-    WidgetRef ref,
-    GoRouter router,
-  ) async {
-    final recentWorkspaces = ref
-        .read(appSettingsControllerProvider)
-        .recentWorkspaces;
-    final container = ProviderScope.containerOf(context, listen: false);
-    final cachedAccounts = container.exists(nextcloudNotesRepositoryProvider)
-        ? ref.read(nextcloudNotesRepositoryProvider).value?.accounts
-        : null;
-    final connectedAccount = container.exists(nextcloudConnectionProvider)
-        ? ref.read(nextcloudConnectionProvider).account
-        : null;
-    final accountLabels = <String, String>{
-      for (final account in cachedAccounts ?? [])
-        account.id: '${account.loginName} · ${account.server.host}',
-      if (connectedAccount != null)
-        connectedAccount.id:
-            '${connectedAccount.loginName} · ${connectedAccount.server.host}',
-    };
-    final choice = await showBusyMarkModalDialog<_OpenChooserChoice>(
-      context,
-      builder: (dialogContext) => BusyMarkDialogShell(
-        title: context.l10n.open,
-        maxWidth: BusyMarkSizes.dialog,
-        children: [
-          BusyMarkGroupedList(
-            filled: true,
-            children: [
-              BusyMarkActionRow(
-                title: context.l10n.openMarkdownFile,
-                subtitle: context.l10n.markdownFileExtensions,
-                leading: const Icon(BusyMarkGlyphs.markdownFile),
-                trailing: Icon(
-                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
-                ),
-                onTap: () =>
-                    Navigator.pop(dialogContext, const _OpenMarkdownFile()),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.openFolderOrWritersideProject,
-                subtitle: context.l10n.markdownFolderOrWritersideProject,
-                leading: const Icon(BusyMarkGlyphs.folder),
-                trailing: Icon(
-                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
-                ),
-                onTap: () =>
-                    Navigator.pop(dialogContext, const _OpenWorkspaceFolder()),
-              ),
-            ],
-          ),
-          if (recentWorkspaces.isNotEmpty)
-            BusyMarkGroupedList(
-              title: context.l10n.recent,
-              filled: true,
-              children: [
-                for (final recent in recentWorkspaces)
-                  BusyMarkActionRow(
-                    title: busyMarkLtrIsolateFor(
-                      dialogContext,
-                      recentResourceTitle(dialogContext, recent),
-                    ),
-                    tooltip: recent.accountId == null
-                        ? recent.path
-                        : accountLabels[recent.accountId],
-                    subtitleWidget: recent.accountId == null
-                        ? BusyMarkPathLabel(
-                            path: recentResourceLocation(
-                              dialogContext,
-                              recent,
-                              recentResources: recentWorkspaces,
-                            ),
-                            style: Theme.of(dialogContext).textTheme.bodySmall,
-                          )
-                        : Text(
-                            recentResourceLocation(
-                              dialogContext,
-                              recent,
-                              accountLabel: accountLabels[recent.accountId],
-                            ),
-                          ),
-                    leading: const Icon(BusyMarkGlyphs.history),
-                    trailing: Icon(
-                      BusyMarkGlyphs.forwardFor(
-                        Directionality.of(dialogContext),
-                      ),
-                    ),
-                    onTap: () => Navigator.pop(
-                      dialogContext,
-                      _OpenRecentResource(recent),
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-    if (!context.mounted || choice == null) {
-      return;
-    }
-    if (choice case _OpenRecentResource(:final resource)) {
-      await openRecentResource(context, ref, resource);
-      return;
-    }
-    final path = switch (choice) {
-      _OpenMarkdownFile() => await _chooseMarkdownFile(ref),
-      _OpenWorkspaceFolder() => await _chooseWorkspaceFolder(ref),
-      _OpenRecentResource() => null,
-    };
-    if (path == null || path.isEmpty || !context.mounted) {
-      return;
-    }
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
-      return;
-    }
-    await ref.read(workspaceControllerProvider.notifier).openPath(path);
-    if (context.mounted &&
-        ref.read(workspaceControllerProvider).workspace != null) {
-      router.go('/workspace');
-    }
-  }
-
-  Future<void> _showNewChooser(
-    BuildContext context,
-    WidgetRef ref,
-    GoRouter router,
-  ) async {
-    final startsWorkspace =
-        settingsReturnTargetForUri(router.routeInformationProvider.value.uri) ==
-        SettingsReturnTarget.welcome;
-    final choice = await showBusyMarkModalDialog<_NewChooserChoice>(
-      context,
-      builder: (dialogContext) => BusyMarkDialogShell(
-        title: context.l10n.create,
-        maxWidth: BusyMarkSizes.dialog,
-        children: [
-          BusyMarkGroupedList(
-            filled: true,
-            children: [
-              BusyMarkActionRow(
-                title: context.l10n.createMarkdownFile,
-                subtitle: context.l10n.createMarkdownFileDescription,
-                leading: const Icon(BusyMarkGlyphs.newDocument),
-                trailing: Icon(
-                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
-                ),
-                onTap: () =>
-                    Navigator.pop(dialogContext, const _CreateMarkdownFile()),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.createWritersideProject,
-                subtitle: context.l10n.createWritersideProjectDescription,
-                leading: const Icon(BusyMarkGlyphs.writersideProject),
-                trailing: Icon(
-                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
-                ),
-                onTap: () => Navigator.pop(
-                  dialogContext,
-                  const _CreateWritersideProject(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-    if (choice == null || !context.mounted) {
-      return;
-    }
-    switch (choice) {
-      case _CreateMarkdownFile():
-        final controller = ref.read(workspaceControllerProvider.notifier);
-        if (startsWorkspace) {
-          if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
-            return;
-          }
-          if (!await controller.createMarkdownWorkspace(focusSource: true)) {
-            return;
-          }
-        } else {
-          await controller.createMarkdownFile(focusSource: true);
-        }
-        if (context.mounted) {
-          router.go('/workspace');
-        }
-      case _CreateWritersideProject():
-        if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
-          return;
-        }
-        await _createWritersideProject(context, ref, router);
-    }
-  }
-
-  Future<void> _createWritersideProject(
-    BuildContext context,
-    WidgetRef ref,
-    GoRouter router,
-  ) async {
-    final parentPath = await getDirectoryPath(
-      initialDirectory: _initialDirectory(ref),
-      confirmButtonText: context.l10n.chooseLocation,
-      canCreateDirectories: true,
-    );
-    if (parentPath == null || !context.mounted) {
-      return;
-    }
-    final created = await showBusyMarkModalEditorDialog<bool>(
-      context,
-      maxWidth: BusyMarkSizes.dialogWide,
-      builder: (context) => BusyMarkCreateWritersideProjectDialog(
-        parentDirectoryPath: parentPath,
-        onCreate: (request) => ref
-            .read(workspaceControllerProvider.notifier)
-            .createWritersideProject(request),
-        message: () => ref.read(workspaceControllerProvider).message,
-      ),
-    );
-    if (created == true && context.mounted) {
-      router.go('/workspace');
-    }
-  }
-
-  Future<String?> _chooseMarkdownFile(WidgetRef ref) async {
-    final context = rootNavigatorKey.currentContext;
-    if (context == null) {
-      return null;
-    }
-    final selected = await openFile(
-      acceptedTypeGroups: [_markdownTypes(context)],
-      initialDirectory: _initialDirectory(ref),
-      confirmButtonText: context.l10n.open,
-    );
-    return selected?.path;
-  }
-
   Future<void> _activateOpenFileTab(
     BuildContext context,
     WidgetRef ref, {
@@ -949,26 +699,6 @@ class BusyMarkApp extends ConsumerWidget {
             .read(sharedGitReviewProvider.notifier)
             .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
     }
-  }
-
-  Future<String?> _chooseWorkspaceFolder(WidgetRef ref) async {
-    final context = rootNavigatorKey.currentContext;
-    if (context == null) {
-      return null;
-    }
-    return getDirectoryPath(
-      initialDirectory: _initialDirectory(ref),
-      confirmButtonText: context.l10n.open,
-      canCreateDirectories: false,
-    );
-  }
-
-  String? _initialDirectory(WidgetRef ref) {
-    final lastPath = ref.read(appSettingsControllerProvider).lastOpenedPath;
-    if (lastPath == null || lastPath.isEmpty) {
-      return null;
-    }
-    return p.extension(lastPath).isEmpty ? lastPath : p.dirname(lastPath);
   }
 
   void _toggleSidebar(WidgetRef ref, {required bool allowWithoutWorkspace}) {
@@ -1227,7 +957,6 @@ class _BusyMarkSearchShortcutHandler extends ConsumerStatefulWidget {
 
 class _BusyMarkSearchShortcutHandlerState
     extends ConsumerState<_BusyMarkSearchShortcutHandler> {
-  final _editorContextKeys = BusyMarkContextMenuKeys();
   BusyMarkMenuSession? _editorContextMenuSession;
   @override
   void initState() {
@@ -1237,7 +966,6 @@ class _BusyMarkSearchShortcutHandlerState
 
   @override
   void dispose() {
-    _editorContextKeys.clear();
     unawaited(_editorContextMenuSession?.dismiss());
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     super.dispose();
@@ -1248,10 +976,9 @@ class _BusyMarkSearchShortcutHandlerState
         ?.findAncestorStateOfType<EditableTextState>();
     if (BusyMarkShortcutCapture.suppressing ||
         editable?.textEditingValue.composing.isValid == true) {
-      _editorContextKeys.clear();
       return KeyEventResult.ignored;
     }
-    return _editorContextKeys.handle(
+    return handleBusyMarkContextMenuKey(
           event,
           editable == null
               ? null
@@ -1352,44 +1079,6 @@ class _BusyMarkSearchShortcutHandlerState
       child: widget.child,
     );
   }
-}
-
-class _NewWorkspaceIntent extends Intent {
-  const _NewWorkspaceIntent();
-}
-
-class _OpenWorkspaceIntent extends Intent {
-  const _OpenWorkspaceIntent();
-}
-
-sealed class _OpenChooserChoice {
-  const _OpenChooserChoice();
-}
-
-final class _OpenMarkdownFile extends _OpenChooserChoice {
-  const _OpenMarkdownFile();
-}
-
-final class _OpenWorkspaceFolder extends _OpenChooserChoice {
-  const _OpenWorkspaceFolder();
-}
-
-final class _OpenRecentResource extends _OpenChooserChoice {
-  const _OpenRecentResource(this.resource);
-
-  final RecentResource resource;
-}
-
-sealed class _NewChooserChoice {
-  const _NewChooserChoice();
-}
-
-final class _CreateMarkdownFile extends _NewChooserChoice {
-  const _CreateMarkdownFile();
-}
-
-final class _CreateWritersideProject extends _NewChooserChoice {
-  const _CreateWritersideProject();
 }
 
 class _SaveActiveIntent extends Intent {

@@ -904,15 +904,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutGroupGeneral => 'Üldine';
 
   @override
-  String get shortcutNewDocument => 'Loo';
+  String get home => 'Avaleht';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Loo Markdowni fail või Writerside’i projekt';
+  String get openMenu => 'Avamismenüü';
 
   @override
-  String get shortcutOpenDescription =>
-      'Ava Markdowni fail, kaust või Writerside’i projekt';
+  String get newNextcloudNote => 'Uus Nextcloudi märge';
+
+  @override
+  String get shortcutNewDocument => 'Uue ressursi menüü';
+
+  @override
+  String get shortcutNewDocumentDescription => 'Kuva ressursside loomise menüü';
+
+  @override
+  String get shortcutOpenDescription => 'Kuva ressursside avamise menüü';
 
   @override
   String get shortcutSaveDescription => 'Salvesta praegune dokument';
@@ -5538,7 +5545,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get searchCurrentWorkspace => 'Praegune tööruum';
 
   @override
-  String get browseNotes => 'Sirvi märkmeid';
+  String get browseNotes => 'Sirvi Nextcloudi märkmeid';
 
   @override
   String get searchActionsCommand => 'Otsi toiminguid';

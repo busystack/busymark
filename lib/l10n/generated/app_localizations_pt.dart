@@ -912,15 +912,23 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shortcutGroupGeneral => 'Geral';
 
   @override
-  String get shortcutNewDocument => 'Criar';
+  String get home => 'Início';
+
+  @override
+  String get openMenu => 'Menu Abrir';
+
+  @override
+  String get newNextcloudNote => 'Nova nota do Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'Menu Novo';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Criar ficheiro Markdown ou projeto Writerside';
+      'Mostrar o menu para criar recursos';
 
   @override
-  String get shortcutOpenDescription =>
-      'Abrir um ficheiro Markdown, uma pasta ou um projeto Writerside';
+  String get shortcutOpenDescription => 'Mostrar o menu para abrir recursos';
 
   @override
   String get shortcutSaveDescription => 'Guardar o documento atual';
@@ -5604,7 +5612,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get searchCurrentWorkspace => 'Área de trabalho atual';
 
   @override
-  String get browseNotes => 'Explorar notas';
+  String get browseNotes => 'Explorar notas do Nextcloud';
 
   @override
   String get searchActionsCommand => 'Pesquisar ações';
@@ -9999,15 +10007,23 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get shortcutGroupGeneral => 'Geral';
 
   @override
-  String get shortcutNewDocument => 'Criar';
+  String get home => 'Início';
+
+  @override
+  String get openMenu => 'Menu Abrir';
+
+  @override
+  String get newNextcloudNote => 'Nova nota do Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'Menu Novo';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Criar arquivo Markdown ou projeto Writerside';
+      'Mostrar o menu para criar recursos';
 
   @override
-  String get shortcutOpenDescription =>
-      'Abrir um arquivo Markdown, uma pasta ou um projeto Writerside';
+  String get shortcutOpenDescription => 'Mostrar o menu para abrir recursos';
 
   @override
   String get shortcutSaveDescription => 'Salvar o documento atual';
@@ -14688,7 +14704,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get searchCurrentWorkspace => 'Área de trabalho atual';
 
   @override
-  String get browseNotes => 'Explorar notas';
+  String get browseNotes => 'Explorar notas do Nextcloud';
 
   @override
   String get searchActionsCommand => 'Pesquisar ações';

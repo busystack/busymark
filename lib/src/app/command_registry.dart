@@ -638,7 +638,7 @@ abstract final class BusyMarkCommandCatalog {
       ),
       command(
         id: BusyMarkCommandIds.newNote,
-        label: (c) => c.l10n.nextcloudNewNote,
+        label: (c) => c.l10n.newNextcloudNote,
         category: (c) => c.l10n.nextcloudNotes,
         scope: BusyMarkCommandScope.application,
       ),
@@ -926,7 +926,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction action,
   ) => switch (action) {
     BusyMarkAppShortcutAction.newDocument => context.l10n.shortcutNewDocument,
-    BusyMarkAppShortcutAction.open => context.l10n.open,
+    BusyMarkAppShortcutAction.open => context.l10n.openMenu,
     BusyMarkAppShortcutAction.save => context.l10n.save,
     BusyMarkAppShortcutAction.export => context.l10n.export,
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,

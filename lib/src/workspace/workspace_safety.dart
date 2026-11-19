@@ -21,7 +21,11 @@ enum _UnsavedChangesAction { cancel, discard, save }
 
 enum _OverwriteAction { cancel, overwrite }
 
-Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
+Future<bool> confirmSafeToContinue(
+  BuildContext context,
+  WidgetRef ref, {
+  bool Function()? canContinue,
+}) async {
   if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
       !context.mounted) {
     return false;
@@ -31,12 +35,13 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   }
   final state = ref.read(workspaceControllerProvider);
   if (!state.hasUnsavedChanges) {
-    return true;
+    return canContinue?.call() ?? true;
   }
   return _confirmUnsavedChanges(
     context,
     ref,
     dirtyBufferIds: state.dirtyBuffers.map((buffer) => buffer.id).toList(),
+    canContinue: canContinue,
   );
 }
 
@@ -129,6 +134,7 @@ Future<bool> _confirmUnsavedChanges(
   WidgetRef ref, {
   required List<String> dirtyBufferIds,
   bool withoutActivatingBuffers = false,
+  bool Function()? canContinue,
 }) async {
   final initialState = ref.read(workspaceControllerProvider);
   final dirtyBuffers = [
@@ -216,7 +222,11 @@ Future<bool> _confirmUnsavedChanges(
     ),
   );
 
-  if (!context.mounted || !ref.context.mounted) return false;
+  if (canContinue?.call() == false ||
+      !context.mounted ||
+      !ref.context.mounted) {
+    return false;
+  }
   final currentState = ref.read(workspaceControllerProvider);
   final currentDirtyIds = currentState.dirtyBuffers
       .map((buffer) => buffer.id)

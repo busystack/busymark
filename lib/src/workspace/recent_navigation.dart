@@ -12,13 +12,33 @@ import '../app/app_settings.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
-import '../nextcloud_notes/application/notes_navigation.dart';
 import '../search/search_session.dart';
 import 'document_navigation.dart';
 import 'workspace_controller.dart';
 import 'workspace_safety.dart';
 
+final _recentNavigationProvider = Provider((ref) => _RecentNavigation());
+
+class _RecentNavigation {
+  bool opening = false;
+}
+
 Future<void> openRecentResource(
+  BuildContext context,
+  WidgetRef ref,
+  RecentResource resource,
+) async {
+  final navigation = ref.read(_recentNavigationProvider);
+  if (navigation.opening) return;
+  navigation.opening = true;
+  try {
+    await _openRecentResource(context, ref, resource);
+  } finally {
+    navigation.opening = false;
+  }
+}
+
+Future<void> _openRecentResource(
   BuildContext context,
   WidgetRef ref,
   RecentResource resource,
@@ -39,64 +59,79 @@ Future<void> openRecentResource(
               ref.read(searchSessionProvider).category == search.category &&
               ref.read(searchSessionProvider).query == search.query);
   final current = ref.read(workspaceControllerProvider).workspace;
-  bool opened = false;
-  if (resource.accountId != null) {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    if (!context.mounted || !currentRequest()) return;
-    final account = repository.accounts
-        .where((a) => a.id == resource.accountId)
-        .firstOrNull;
-    final note = resource.localId == null
-        ? null
-        : repository.noteById(resource.localId!);
-    if (account == null ||
-        resource.isDocument &&
-            (note?.accountId != resource.accountId ||
-                isNotesRecovery(note!) ||
-                repository.isCreationCandidateBinding(note.localId))) {
+  void unavailable() {
+    if (currentRequest()) {
       BusyMarkToastOverlay.show(
         context,
         message: context.l10n.searchResourceUnavailable,
       );
+    }
+  }
+
+  late final bool opened;
+  if (resource.accountId case final accountId?) {
+    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    if (!currentRequest()) return;
+    bool available() {
+      if (repository.accountById(accountId) == null) return false;
+      if (!resource.isDocument) return true;
+      final localId = resource.localId;
+      return localId != null &&
+          repository.availableRecentNote(accountId, localId) != null;
+    }
+
+    if (!available()) {
+      unavailable();
       return;
     }
-    if (current?.nextcloudAccountId != resource.accountId) {
-      if (!await confirmSafeToContinue(context, ref) ||
-          !context.mounted ||
+    if (current?.nextcloudAccountId == accountId) {
+      opened =
+          resource.localId == null ||
+          await controller.openNextcloudNote(
+            resource.localId!,
+            acceptNavigation: () => currentRequest() && available(),
+          );
+    } else {
+      if (!context.mounted) return;
+      if (!await confirmSafeToContinue(
+            context,
+            ref,
+            canContinue: () => currentRequest() && available(),
+          ) ||
           !currentRequest()) {
+        if (!available()) unavailable();
         return;
       }
-      if (!await controller.openNextcloudWorkspace(
-        resource.accountId!,
+      opened = await controller.openNextcloudWorkspace(
+        accountId,
+        noteLocalId: resource.localId,
         acceptNavigation: currentRequest,
-      )) {
-        return;
-      }
+      );
     }
-    opened =
-        resource.localId == null ||
-        await controller.openNextcloudNote(
-          resource.localId!,
-          acceptNavigation: currentRequest,
-        );
   } else {
-    if (!await FileSystemEntity.isFile(resource.path) &&
-        !await Directory(resource.path).exists()) {
-      if (context.mounted) {
-        BusyMarkToastOverlay.show(
-          context,
-          message: context.l10n.searchResourceUnavailable,
-        );
-      }
+    bool available() {
+      final type = FileSystemEntity.typeSync(resource.path);
+      return (resource.isDocument
+              ? type == FileSystemEntityType.file
+              : type == FileSystemEntityType.file ||
+                    type == FileSystemEntityType.directory) &&
+          (resource.ownerRoot == null ||
+              Directory(resource.ownerRoot!).existsSync());
+    }
+
+    if (!available()) {
+      unavailable();
       return;
     }
-    if (!context.mounted || !currentRequest()) return;
+    final currentRoot = current?.filesystemRootPath;
     final sameOwner =
-        current != null &&
+        currentRoot != null &&
         (resource.ownerRoot != null
-            ? p.equals(current.rootPath, resource.ownerRoot!)
-            : current.files.any(
-                (f) => p.equals(f.absolutePath, resource.path),
+            ? (current!.writersideProject != null ||
+                      current.writersideModule != null) &&
+                  p.equals(currentRoot, resource.ownerRoot!)
+            : current!.files.any(
+                (file) => p.equals(file.absolutePath, resource.path),
               ));
     if (resource.isDocument && sameOwner) {
       opened = await controller.openActiveFile(
@@ -104,36 +139,30 @@ Future<void> openRecentResource(
         acceptNavigation: currentRequest,
       );
     } else {
-      if (!await confirmSafeToContinue(context, ref) ||
-          !context.mounted ||
+      if (!await confirmSafeToContinue(
+            context,
+            ref,
+            canContinue: () => currentRequest() && available(),
+          ) ||
           !currentRequest()) {
+        if (!available()) unavailable();
         return;
       }
+      var published = false;
       await controller.openPath(
         resource.ownerRoot ?? resource.path,
+        documentPath: resource.ownerRoot == null ? null : resource.path,
         acceptNavigation: currentRequest,
+        onOpened: () => published = true,
       );
-      if (!context.mounted || !currentRequest()) return;
-      final workspace = ref.read(workspaceControllerProvider).workspace;
-      if (workspace == null) return;
-      if (resource.ownerRoot != null &&
-          workspace.writersideProject == null &&
-          workspace.writersideModule == null) {
-        BusyMarkToastOverlay.show(
-          context,
-          message: context.l10n.searchResourceUnavailable,
-        );
-        return;
-      }
-      opened =
-          resource.ownerRoot == null ||
-          await controller.openActiveFile(
-            resource.path,
-            acceptNavigation: currentRequest,
-          );
+      opened = published;
     }
   }
-  if (opened && context.mounted) {
+  if (!opened) {
+    unavailable();
+    return;
+  }
+  if (currentRequest()) {
     await controller.recordRecentResource(
       RecentResource(
         path: resource.path,

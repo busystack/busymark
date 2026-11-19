@@ -207,6 +207,7 @@ void main() {
         'Local History': 'L',
         'Clipboard History': 'B',
         'References': 'R',
+        'Recent': 'E',
       };
       expect({
         for (final e in menus.entries) e['label']: e['mnemonic'],
@@ -405,15 +406,14 @@ void main() {
       final menus = NativeMenuProbe(tester);
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
-      await tester.pump();
-      expect(menus.isOpen, isFalse, reason: 'wait for Shift release');
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
       await pumpUntil(
         tester,
         () => menus.isOpen,
-        operation: 'open the focused Source context menu',
+        operation: 'open the focused Source context menu on keydown',
       );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       expect(menus.contains(l10n.selectAll), isTrue);
       expect(menus.contains(l10n.source), isFalse);
       menus.close();
@@ -2621,7 +2621,7 @@ void main() {
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text(l10n.markdownFolderOrWritersideProject), findsOneWidget);
     expect(find.text(l10n.browseNotes), findsOneWidget);
-    expect(find.text(l10n.nextcloudNewNote), findsOneWidget);
+    expect(find.text(l10n.newNextcloudNote), findsOneWidget);
     expect(
       tester.getTopLeft(find.text(l10n.markdownFolderOrWritersideProject)).dy,
       lessThan(tester.getTopLeft(find.text(l10n.browseNotes)).dy),
@@ -4642,6 +4642,7 @@ void main() {
   testWidgets('Writerside project dialog syncs generated fields until edited', (
     tester,
   ) async {
+    final menus = NativeMenuProbe(tester);
     final temp = Directory.systemTemp.createTempSync('busymark-create-dialog-');
     const fileSelectorChannel = MethodChannel(
       'plugins.flutter.io/file_selector',
@@ -4677,14 +4678,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    final newDialog = find.byType(BusyMarkDialogShell);
-    expect(newDialog, findsOneWidget);
-    await tester.tap(
-      find.descendant(
-        of: newDialog,
-        matching: find.text(l10n.createWritersideProject),
-      ),
-    );
+    menus.select(l10n.createWritersideProject);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.createWritersideProject), findsWidgets);
@@ -5499,19 +5493,120 @@ void main() {
     expect(logoSize.height, lessThanOrEqualTo(BusyMarkSizes.aboutLogoViewport));
   });
 
-  testWidgets('Ctrl+N chooses between Markdown and Writerside creation', (
+  testWidgets(
+    'New and Open pointer and held shortcuts share the header anchor',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      final service = _StartupWorkspaceService();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final search = find.byTooltip(l10n.search);
+      final open = find.byKey(const ValueKey('header-open-menu'));
+      final create = find.byKey(const ValueKey('header-new-menu'));
+      final main = find.byTooltip(l10n.mainMenu);
+      expect(tester.getCenter(search).dx, lessThan(tester.getCenter(open).dx));
+      expect(tester.getCenter(open).dx, lessThan(tester.getCenter(create).dx));
+      expect(tester.getCenter(create).dx, lessThan(tester.getCenter(main).dx));
+
+      for (final (button, key, entries) in [
+        (
+          create,
+          LogicalKeyboardKey.keyN,
+          {
+            'M': l10n.createMarkdownFile,
+            'N': l10n.newNextcloudNote,
+            'W': l10n.createWritersideProject,
+          },
+        ),
+        (
+          open,
+          LogicalKeyboardKey.keyO,
+          {
+            'M': l10n.openMarkdownFile,
+            'F': l10n.openFolderOrWritersideProject,
+            'N': l10n.browseNotes,
+          },
+        ),
+      ]) {
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        final pointer = menus.packets.last;
+        expect(pointer['focusFirst'], isFalse);
+        expect({
+          for (final row in menus.entries) row['mnemonic']: row['label'],
+        }, entries);
+        menus.close();
+        await tester.pumpAndSettle();
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(key);
+        await tester.pumpAndSettle();
+        final shortcut = menus.packets.last;
+        expect(shortcut['focusFirst'], isTrue);
+        expect(shortcut['anchor'], pointer['anchor']);
+        expect(shortcut['entries'], pointer['entries']);
+        final count = menus.packets.length;
+        await tester.sendKeyRepeatEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyRepeatEvent(key);
+        await tester.sendKeyUpEvent(key);
+        await tester.pumpAndSettle();
+        expect(menus.packets, hasLength(count));
+        expect(menus.isOpen, isTrue);
+        menus.close();
+        await tester.pumpAndSettle();
+      }
+      expect(service.untitledCount, 0);
+      expect(find.byType(BusyMarkDialogShell), findsNothing);
+
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .saveShortcutOverrides({
+            BusyMarkCommandIds.newDocument: const BusyMarkKeyBinding(
+              LogicalKeyboardKey.f6,
+              alt: true,
+            ),
+          });
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
+      await tester.pumpAndSettle();
+      expect(menus.isOpen, isTrue);
+      expect(menus.contains(l10n.newNextcloudNote), isTrue);
+      expect(
+        find.byTooltip('${l10n.shortcutNewDocument} (Alt+F6)'),
+        findsOneWidget,
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      menus.close();
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('Welcome Markdown creation focuses the visual editor', (
     tester,
   ) async {
     final service = _StartupWorkspaceService();
-    final settingsStore = _MemorySettingsStore()
-      ..value = AppSettings.defaults()
-          .copyWith(defaultSpellingLanguage: null)
-          .toJson();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: const BusyMarkApp(),
@@ -5519,63 +5614,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(find.text(l10n.createMarkdownFile));
     await tester.pumpAndSettle();
-
-    final newDialog = find.byType(BusyMarkDialogShell);
-    final createMarkdown = find.descendant(
-      of: newDialog,
-      matching: find.text(l10n.createMarkdownFile),
-    );
-    final createWriterside = find.descendant(
-      of: newDialog,
-      matching: find.text(l10n.createWritersideProject),
-    );
-    expect(service.untitledCount, 0);
-    expect(newDialog, findsOneWidget);
-    expect(createMarkdown, findsOneWidget);
-    expect(createWriterside, findsOneWidget);
-    expect(
-      find.descendant(
-        of: newDialog,
-        matching: find.byIcon(BusyMarkGlyphs.newDocument),
-      ),
-      findsOneWidget,
+    final fields = find.descendant(
+      of: find.byType(BusyMarkWysiwygEditor),
+      matching: find.byType(EditableText),
     );
     expect(
-      find.descendant(
-        of: newDialog,
-        matching: find.byIcon(BusyMarkGlyphs.writersideProject),
-      ),
-      findsOneWidget,
+      tester
+          .widgetList<EditableText>(fields)
+          .where((field) => field.focusNode.hasPrimaryFocus),
+      hasLength(1),
     );
-
-    await tester.tap(createMarkdown);
-    await tester.pumpAndSettle();
-
+    tester.testTextInput.enterText('Typed in Editor');
+    await tester.pump();
     expect(service.untitledCount, 1);
-    expect(find.text(l10n.createMarkdownFile), findsNothing);
-    expect(find.text(l10n.untitledMarkdownFileName), findsWidgets);
-    expect(find.byKey(const ValueKey('editor-tab-strip')), findsNothing);
-    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
-    expect(find.text('LF'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('document-spelling-language-status')),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.spellingLanguageUnsetStatus), findsOneWidget);
-    final spellingBanner = find.byKey(const ValueKey('spelling-banner'));
-    expect(spellingBanner, findsOneWidget);
-    expect(tester.widget<BusyMarkBanner>(spellingBanner).revealed, isFalse);
+    expect(find.text('Typed in Editor'), findsWidgets);
   });
 
   testWidgets('Ctrl+N keeps unsaved documents in independent tabs', (
     tester,
   ) async {
     final service = _StartupWorkspaceService();
+    final menus = NativeMenuProbe(tester);
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
@@ -5618,29 +5679,10 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    final firstNewDialog = find.byType(BusyMarkDialogShell);
-    expect(
-      find.descendant(
-        of: firstNewDialog,
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: firstNewDialog,
-        matching: find.text(l10n.createWritersideProject),
-      ),
-      findsOneWidget,
-    );
+    expect(menus.contains(l10n.createMarkdownFile), isTrue);
+    expect(menus.contains(l10n.createWritersideProject), isTrue);
     expect(find.text(l10n.unsavedChanges), findsNothing);
-
-    await tester.tap(
-      find.descendant(
-        of: firstNewDialog,
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pumpAndSettle();
 
     final source = find.descendant(
@@ -5681,12 +5723,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(BusyMarkDialogShell),
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
@@ -5825,6 +5862,7 @@ void main() {
   testWidgets('Ctrl+N creates real CommonMark inside a Writerside workspace', (
     tester,
   ) async {
+    final menus = NativeMenuProbe(tester);
     const yaruWindowChannel = MethodChannel('yaru_window');
     const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -5885,14 +5923,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.runAsync(
-      () => tester.tap(
-        find.descendant(
-          of: find.byType(BusyMarkDialogShell),
-          matching: find.text(l10n.createMarkdownFile),
-        ),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
@@ -11255,17 +11286,23 @@ code
       leftTooltip: l10n.validate,
       rightTooltip: l10n.search,
     );
-    _expectHeaderControlGap(
-      tester,
-      leftTooltip: l10n.search,
-      rightTooltip: l10n.mainMenu,
-    );
+    final openMenu = '${l10n.openMenu} (Ctrl+O)';
+    final newMenu = '${l10n.shortcutNewDocument} (Ctrl+N)';
+    for (final (left, right) in [
+      (l10n.search, openMenu),
+      (openMenu, newMenu),
+      (newMenu, l10n.mainMenu),
+    ]) {
+      _expectHeaderControlGap(tester, leftTooltip: left, rightTooltip: right);
+    }
     _expectHeaderGeometry(tester);
     for (final tooltip in [
       l10n.back,
       '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
       l10n.validate,
       l10n.search,
+      openMenu,
+      newMenu,
       l10n.mainMenu,
     ]) {
       await _expectNeutralHeaderControl(tester, tooltip, selected: false);
@@ -16753,6 +16790,7 @@ After break.
   testWidgets('window close still warns when active changes are unsaved', (
     tester,
   ) async {
+    final menus = NativeMenuProbe(tester);
     final nativeWindow = _FakeNativeWindowController();
     await tester.pumpWidget(
       ProviderScope(
@@ -16775,12 +16813,7 @@ After break.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(BusyMarkDialogShell),
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pumpAndSettle();
 
     nativeWindow.listeners.single.onWindowClose();
@@ -18542,7 +18575,111 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     },
   );
 
-  testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
+  testWidgets('Open uses the native Markdown and folder choosers', (
+    tester,
+  ) async {
+    final fixture = Directory.systemTemp.createTempSync('busymark-open-menu-');
+    addTearDown(() => fixture.deleteSync(recursive: true));
+    final document = File(p.join(fixture.path, 'picked.md'))
+      ..writeAsStringSync('# Picked');
+    final service = _StartupWorkspaceService();
+    final menus = NativeMenuProbe(tester);
+    final calls = <String>[];
+    const picker = MethodChannel('plugins.flutter.io/file_selector');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(picker, (
+      call,
+    ) async {
+      calls.add(call.method);
+      return switch (call.method) {
+        'openFile' => [document.path],
+        'getDirectoryPath' => fixture.path,
+        _ => throw StateError(call.method),
+      };
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        picker,
+        null,
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (final (label, expectedPath) in [
+      (l10n.openMarkdownFile, document.path),
+      (l10n.openFolderOrWritersideProject, fixture.path),
+    ]) {
+      await tester.tap(find.byKey(const ValueKey('header-open-menu')));
+      await tester.pumpAndSettle();
+      menus.select(label);
+      await _waitForSearchCondition(
+        tester,
+        () => service.openedPath == expectedPath,
+      );
+      await tester.pumpAndSettle();
+    }
+    expect(calls, ['openFile', 'getDirectoryPath']);
+    expect(find.byKey(const ValueKey('workspace-page-frame')), findsOneWidget);
+  });
+
+  testWidgets('Welcome reveals its remapped Sidebar View in a narrow window', (
+    tester,
+  ) async {
+    final menus = NativeMenuProbe(tester);
+    await tester.binding.setSurfaceSize(const Size(530, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            sidebarVisible: false,
+            shortcutOverrides: {
+              BusyMarkCommandIds.sidebarViewSelector: const BusyMarkKeyBinding(
+                LogicalKeyboardKey.f6,
+              ),
+            },
+          )
+          .toJson();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(settings),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
+    await pumpUntil(
+      tester,
+      () => menus.isOpen,
+      operation: 'reveal Welcome sidebar on keydown',
+    );
+    expect(menus.entries.single['label'], l10n.recent);
+    expect(menus.entries.single['selected'], isTrue);
+    expect(menus.entries.single['mnemonic'], 'E');
+    expect(find.text(l10n.home), findsOneWidget);
+    expect(find.byTooltip('${l10n.sidebarViewMenu} (F6)'), findsOneWidget);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
+    menus.close();
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('workspace-content-view-menu')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Recent is a separate global sidebar view', (tester) async {
+    final menus = NativeMenuProbe(tester);
     const startupPath = 'test/fixtures/markdown/basic.md';
     final recentDirectory = Directory.systemTemp.createTempSync(
       'busymark-recent-docs-',
@@ -18592,8 +18729,33 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.openMarkdownFile), findsOneWidget);
-    expect(find.text(l10n.recent), findsOneWidget);
+    expect(menus.contains(l10n.openMarkdownFile), isTrue);
+    expect(menus.contains(l10n.recent), isFalse);
+    expect(menus.contains(p.basename(recentPath)), isFalse);
+    menus.close();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-view-menu')));
+    await tester.pumpAndSettle();
+    expect(
+      menus.entries.singleWhere((entry) => entry['selected'] == true)['label'],
+      l10n.outline,
+    );
+    expect(
+      menus.entries.singleWhere(
+        (entry) => entry['label'] == l10n.recent,
+      )['mnemonic'],
+      'E',
+    );
+    menus.select(l10n.recent);
+    await tester.pumpAndSettle();
+    expect(find.text(p.basename(recentPath)), findsOneWidget);
+    expect(service.openedPath, startupPath);
+    final search = container.read(searchSessionProvider.notifier);
+    search.open(category: SearchCategory.recent);
+    await tester.pumpAndSettle();
+    search.close();
+    await tester.pumpAndSettle();
     expect(find.text(p.basename(recentPath)), findsOneWidget);
 
     await tester.tap(find.text(p.basename(recentPath)));
@@ -19599,7 +19761,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     }
   }
 
-  testWidgets('Welcome, Recent search and Open use the same mixed chronology', (
+  testWidgets('Welcome and Recent search use the same mixed chronology', (
     tester,
   ) async {
     final settings = _MemorySettingsStore()
@@ -19675,24 +19837,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     expectChronologicalRows();
     search.close();
     await tester.pumpAndSettle();
-    final opening = container
-        .read(busyMarkCommandRegistryProvider)
-        .execute(BusyMarkCommandIds.open);
-    await tester.pumpAndSettle();
-    final recentRows = tester
-        .widgetList<BusyMarkActionRow>(
-          find.descendant(
-            of: find.byType(BusyMarkDialogShell),
-            matching: find.byType(BusyMarkActionRow),
-          ),
-        )
-        .where((r) => r.title.contains('entry'))
-        .map((r) => r.title.replaceAll('\u2066', '').replaceAll('\u2069', ''))
-        .toList();
-    expect(recentRows, ['Newest entry', 'Middle entry', 'Oldest entry']);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-    await opening;
+    expectChronologicalRows();
   });
 
   for (final mode in [

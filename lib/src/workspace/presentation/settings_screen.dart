@@ -1,3 +1,4 @@
+import '../../app/busymark_resource_menu.dart';
 import 'keyboard_shortcuts_settings.dart';
 import '../../nextcloud_notes/presentation/nextcloud_settings.dart';
 import 'dart:async';
@@ -1446,7 +1447,10 @@ class _SettingsFallbackHeader extends StatelessWidget {
       ),
       title: BusyMarkLinuxHeaderTitle(title),
       trailing: BusyMarkLinuxHeaderControlGroup(
-        children: [BusyMarkMainMenuButton(onSelected: onMenuSelected)],
+        children: [
+          ...BusyMarkResourceMenuButton.buttons,
+          BusyMarkMainMenuButton(onSelected: onMenuSelected),
+        ],
       ),
     );
   }

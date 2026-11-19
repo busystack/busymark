@@ -596,15 +596,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "ایجاد",
+  "home": "خانه",
+  "openMenu": "منوی باز کردن",
+  "newNextcloudNote": "یادداشت جدید Nextcloud",
+  "shortcutNewDocument": "منوی جدید",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "ایجاد فایل Markdown یا پروژهٔ Writerside",
+  "shortcutNewDocumentDescription": "نمایش منوی ایجاد منابع",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "باز کردن فایل Markdown، پوشه یا پروژهٔ Writerside",
+  "shortcutOpenDescription": "نمایش منوی باز کردن منابع",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -3677,7 +3680,7 @@
   "searchTopicsCategory": "موضوع‌ها",
   "searchCurrentDocument": "سند کنونی",
   "searchCurrentWorkspace": "فضای کاری کنونی",
-  "browseNotes": "مرور یادداشت‌ها",
+  "browseNotes": "مرور یادداشت‌های Nextcloud",
   "searchActionsCommand": "جستجوی کنش‌ها",
   "searchDocumentsCommand": "جستجوی سندها",
   "searchTopicsCommand": "جستجوی موضوع‌ها",

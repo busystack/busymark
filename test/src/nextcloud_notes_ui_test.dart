@@ -1,3 +1,4 @@
+import '../support/widget_async.dart';
 import '../support/native_menu_probe.dart';
 import 'dart:async';
 import 'package:busymark/src/search/search_session.dart';
@@ -13,6 +14,7 @@ import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_conflict.dart';
 import 'package:busymark/src/app/app_router.dart';
@@ -399,6 +401,7 @@ void main() {
     Future<NotesRepository> Function()? repositoryLoader,
     NativeWindowController? nativeWindow,
     NotesSettingsController? serverSettings,
+    Duration? persistenceDelay,
   }) async {
     tester.view.physicalSize = const Size(1100, 1000);
     tester.view.devicePixelRatio = 1;
@@ -406,6 +409,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final container = ProviderContainer(
       overrides: [
+        if (persistenceDelay != null)
+          documentPersistenceDelayProvider.overrideWithValue(persistenceDelay),
         if (nativeWindow != null)
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         if (serverSettings != null)
@@ -456,6 +461,54 @@ void main() {
     );
     fixtureClosed = true;
   }
+
+  testWidgets('New from Settings honors its unsaved server settings guard', (
+    tester,
+  ) async {
+    final menus = NativeMenuProbe(tester);
+    final container = await pumpWelcome(
+      tester,
+      serverSettings: _WindowDraftSettings(),
+    );
+    final router = container.read(appRouterProvider);
+    router.go('/settings?returnTo=welcome&page=nextcloudNotes');
+    await settleStorage(tester);
+    expect(container.read(notesSettingsProvider).dirty, isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.pumpAndSettle();
+    expect(menus.contains('New Markdown File'), isTrue);
+    expect(menus.packets.last['focusFirst'], isTrue);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    menus.select('New Markdown File');
+    await settleStorage(tester);
+    final dialog = find.byType(BusyMarkDialogShell);
+    await tester.tap(
+      find.descendant(of: dialog, matching: find.text('Cancel')),
+    );
+    await settleStorage(tester);
+    expect(router.routeInformationProvider.value.uri.path, '/settings');
+    expect(container.read(notesSettingsProvider).dirty, isTrue);
+    expect(container.read(workspaceControllerProvider).workspace, isNull);
+
+    await tester.tap(find.byKey(const ValueKey('header-new-menu')));
+    await tester.pumpAndSettle();
+    menus.select('New Markdown File');
+    await settleStorage(tester);
+    await tester.tap(
+      find.descendant(of: dialog, matching: find.text('Discard')),
+    );
+    await settleStorage(tester);
+    expect(router.routeInformationProvider.value.uri.path, '/workspace');
+    expect(
+      container.read(workspaceControllerProvider).activeBuffer?.isUntitled,
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('native close protects a dirty or saving server settings draft', (
     tester,
@@ -678,6 +731,300 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'New Markdown from Notes guards dirty work and focuses local Source',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      final settings = _RecentReopenSettings(
+        failSave: false,
+        value: AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              automaticSpelling: false,
+              documentViewMode: DocumentViewModePreference.source,
+            )
+            .toJson(),
+      );
+      final connection = _ConnectingWelcomeAccount(repository.accounts.first)
+        ..connected = true;
+      final container = await pumpWelcome(
+        tester,
+        settings: settings,
+        persistenceDelay: const Duration(hours: 1),
+        connection: connection,
+      );
+      try {
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final before = repository.notes.length;
+        await tester.tap(find.byKey(const ValueKey('header-open-menu')));
+        await tester.pumpAndSettle();
+        menus.select('Browse Nextcloud Notes');
+        await settleStorage(tester);
+        expect(
+          container
+              .read(workspaceControllerProvider)
+              .workspace
+              ?.nextcloudAccountId,
+          accountId,
+        );
+
+        controller.updateActiveEditorMode(DocumentViewModePreference.source);
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .setDocumentViewMode(DocumentViewModePreference.source);
+        await settleStorage(tester);
+        await tester.tap(find.byKey(const ValueKey('header-new-menu')));
+        await tester.pumpAndSettle();
+        menus.select('New Nextcloud Note');
+        await settleStorage(tester);
+        expect(repository.notes.length, before + 1);
+        final active = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        expect(active.remoteNote?.accountId, accountId);
+        expect(active.editorState.mode, DocumentViewModePreference.source);
+        final source = find.descendant(
+          of: find.byType(BusyMarkSourceEditor),
+          matching: find.byType(EditableText),
+        );
+        expect(
+          tester.widget<EditableText>(source).focusNode.hasPrimaryFocus,
+          isTrue,
+        );
+        controller.updateActiveText('Unsaved note draft');
+        await settleStorage(tester);
+
+        for (final choice in ['Cancel', 'Discard']) {
+          await tester.tap(find.byKey(const ValueKey('header-new-menu')));
+          await tester.pumpAndSettle();
+          menus.select('New Markdown File');
+          await tester.pumpAndSettle();
+          expect(find.text('Discard'), findsOneWidget);
+          await tester.tap(find.text(choice));
+          await settleStorage(tester);
+          if (choice == 'Cancel') {
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              'Unsaved note draft',
+            );
+            expect(
+              container.read(workspaceControllerProvider).activeBuffer?.id,
+              active.id,
+            );
+          }
+        }
+
+        final state = container.read(workspaceControllerProvider);
+        expect(state.workspace?.kind, WorkspaceKind.untitledMarkdown);
+        expect(state.documentBuffers.single.isRemote, isFalse);
+        expect(repository.notes.length, before + 1);
+        expect(
+          repository.noteById(active.remoteNote!.localId)?.content,
+          active.text,
+        );
+
+        final field = tester.widget<EditableText>(source);
+        expect(field.focusNode.hasPrimaryFocus, isTrue);
+        expect(
+          field.controller.selection,
+          const TextSelection.collapsed(offset: 0),
+        );
+        tester.testTextInput.enterText('First local keystrokes');
+        await tester.pump();
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          'First local keystrokes',
+        );
+        expect(tester.takeException(), isNull);
+      } finally {
+        await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+        await closeFixture(tester);
+      }
+    },
+  );
+
+  testWidgets('Recent opens a Writerside-owned document from Notes and back', (
+    tester,
+  ) async {
+    final menus = NativeMenuProbe(tester);
+    final project = Directory('test/fixtures/writerside/toc_ui').absolute;
+    final topic = p.join(project.path, 'topics', 'home.md');
+    final missing = p.join(project.path, 'topics', 'missing.md');
+    const localId = '223e4567-e89b-42d3-a456-426614174000';
+    final settings = _RecentReopenSettings(
+      failSave: false,
+      value: AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            automaticSpelling: false,
+            recentWorkspaces: [
+              RecentResource(
+                path: topic,
+                ownerRoot: project.path,
+                kind: 'writersideModule',
+                document: true,
+                title: 'Writerside recent topic',
+                lastOpenedAt: DateTime.utc(2026, 10, 20),
+              ),
+              RecentResource(
+                path: missing,
+                ownerRoot: project.path,
+                kind: 'writersideModule',
+                document: true,
+                title: 'Missing recent topic',
+                lastOpenedAt: DateTime.utc(2026, 10, 20),
+              ),
+              RecentResource(
+                path: '',
+                accountId: 'removed',
+                localId: localId,
+                kind: 'nextcloudNote',
+                document: true,
+                title: 'Removed account entry',
+                lastOpenedAt: DateTime.utc(2026, 10, 20),
+              ),
+              RecentResource(
+                path: '',
+                accountId: accountId,
+                localId: '423e4567-e89b-42d3-a456-426614174000',
+                kind: 'nextcloudNote',
+                document: true,
+                title: 'Unavailable note entry',
+                lastOpenedAt: DateTime.utc(2026, 10, 20),
+              ),
+              RecentResource(
+                path: '',
+                accountId: accountId,
+                localId: localId,
+                kind: 'nextcloudNote',
+                document: true,
+                title: 'Recent cached note',
+                lastOpenedAt: DateTime.utc(2026, 10, 20),
+              ),
+            ],
+          )
+          .toJson(),
+    );
+    final container = await pumpWelcome(
+      tester,
+      settings: settings,
+      persistenceDelay: const Duration(hours: 1),
+    );
+    try {
+      final router = container.read(appRouterProvider);
+      final controller = container.read(workspaceControllerProvider.notifier);
+      WorkspaceState state() => container.read(workspaceControllerProvider);
+
+      Future<void> showRecent(String initialView) async {
+        await tester.tap(
+          find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          menus.entries.singleWhere((row) => row['selected'] == true)['label'],
+          initialView,
+        );
+        menus.select('Recent');
+        await settleStorage(tester);
+      }
+
+      await tester.tap(find.text('Recent cached note'));
+      await settleStorage(tester);
+      expect(state().workspace?.nextcloudAccountId, accountId);
+      expect(state().activeBuffer?.remoteNote?.localId, localId);
+      await showRecent('Nextcloud Notes');
+      controller.updateActiveText('Keep my remote edits');
+      await settleStorage(tester);
+      final unavailable = container
+          .read(appSettingsControllerProvider)
+          .recentWorkspaces
+          .where(
+            (resource) =>
+                resource.path == missing ||
+                resource.localId == '423e4567-e89b-42d3-a456-426614174000' ||
+                resource.accountId == 'removed',
+          )
+          .toList();
+      expect(unavailable, hasLength(3));
+      for (final resource in unavailable) {
+        await tester.tap(
+          find.byKey(ValueKey(RecentSearchResult(resource).identity)),
+        );
+        await settleStorage(tester);
+        expect(state().activeText, 'Keep my remote edits');
+        expect(state().workspace?.nextcloudAccountId, accountId);
+      }
+
+      final item = tester.widget<BusyMarkSidebarRecordRow>(
+        find.ancestor(
+          of: find.text('Writerside recent topic'),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is BusyMarkSidebarRecordRow,
+          ),
+        ),
+      );
+      item.onTap!();
+      item.onTap!();
+      await settleStorage(tester);
+      expect(find.text('Discard'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await settleStorage(tester);
+      expect(state().activeText, 'Keep my remote edits');
+      expect(router.routeInformationProvider.value.uri.path, '/workspace');
+
+      await tester.tap(find.text('Writerside recent topic'));
+      await settleStorage(tester);
+      await tester.tap(find.text('Discard'));
+      await pumpUntil(
+        tester,
+        () =>
+            state().workspace?.kind == WorkspaceKind.writersideModule &&
+            !state().isLoading,
+        operation: 'open the recorded Writerside document after discard',
+        diagnostics: () =>
+            '${state().workspace?.kind}, dirty=${state().isDirty}, '
+            'loading=${state().isLoading}, message=${state().message?.error}',
+      );
+      await settleStorage(tester);
+      expect(state().workspace?.kind, WorkspaceKind.writersideModule);
+      expect(state().activeBuffer?.filePath, topic);
+      await showRecent('Files');
+      final sameWorkspace = state().workspace!.id;
+      final sameBuffer = state().activeBuffer!.id;
+      final topicRecent = state().activeBuffer!.displayName;
+      final topicRecord = container
+          .read(appSettingsControllerProvider)
+          .recentWorkspaces
+          .firstWhere(
+            (resource) =>
+                resource.path == topic && resource.ownerRoot == project.path,
+          );
+      await tester.tap(
+        find.byKey(ValueKey(RecentSearchResult(topicRecord).identity)),
+      );
+      await settleStorage(tester);
+      expect(state().workspace!.id, sameWorkspace, reason: topicRecent);
+      expect(state().documentBuffers.single.id, sameBuffer);
+
+      final noteRecord = container
+          .read(appSettingsControllerProvider)
+          .recentWorkspaces
+          .firstWhere((resource) => resource.localId == localId);
+      await tester.tap(
+        find.byKey(ValueKey(RecentSearchResult(noteRecord).identity)),
+      );
+      await settleStorage(tester);
+      expect(state().workspace?.nextcloudAccountId, accountId);
+      expect(state().activeBuffer?.remoteNote?.localId, localId);
+      expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      container.dispose();
+      await closeFixture(tester);
+    }
+  });
 
   testWidgets(
     'Welcome retains a remote revocation warning without a phantom connected account',

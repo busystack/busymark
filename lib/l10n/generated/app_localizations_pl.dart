@@ -908,15 +908,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shortcutGroupGeneral => 'Ogólne';
 
   @override
-  String get shortcutNewDocument => 'Utwórz';
+  String get home => 'Strona główna';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Utwórz plik Markdown lub projekt Writerside';
+  String get openMenu => 'Menu Otwórz';
 
   @override
-  String get shortcutOpenDescription =>
-      'Otwórz plik Markdown, folder lub projekt Writerside';
+  String get newNextcloudNote => 'Nowa notatka Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'Menu Nowy';
+
+  @override
+  String get shortcutNewDocumentDescription => 'Pokaż menu tworzenia zasobów';
+
+  @override
+  String get shortcutOpenDescription => 'Pokaż menu otwierania zasobów';
 
   @override
   String get shortcutSaveDescription => 'Zapisz bieżący dokument';
@@ -5596,7 +5603,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get searchCurrentWorkspace => 'Bieżący obszar roboczy';
 
   @override
-  String get browseNotes => 'Przeglądaj notatki';
+  String get browseNotes => 'Przeglądaj notatki Nextcloud';
 
   @override
   String get searchActionsCommand => 'Szukaj działań';

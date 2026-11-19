@@ -19,7 +19,7 @@ from sidebar_native_acceptance import wait_state
 
 SIDEBAR = {'F': 'Files', 'T': 'Table of Contents', 'O': 'Outline', 'C': 'Commit',
            'G': 'Git Log', 'L': 'Local History', 'B': 'Clipboard History',
-           'R': 'References'}
+           'R': 'References', 'E': 'Recent'}
 CONTENT = {'E': 'Editor', 'S': 'Source', 'R': 'Reading', 'D': 'Dual'}
 
 

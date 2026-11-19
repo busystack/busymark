@@ -714,15 +714,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "만들기",
+  "home": "홈",
+  "openMenu": "열기 메뉴",
+  "newNextcloudNote": "새 Nextcloud 노트",
+  "shortcutNewDocument": "새로 만들기 메뉴",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Markdown 파일 또는 Writerside 프로젝트 만들기",
+  "shortcutNewDocumentDescription": "리소스를 만드는 메뉴 표시",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Markdown 파일, 폴더 또는 Writerside 프로젝트 열기",
+  "shortcutOpenDescription": "리소스를 여는 메뉴 표시",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -5165,7 +5168,7 @@
   "searchTopicsCategory": "주제",
   "searchCurrentDocument": "현재 문서",
   "searchCurrentWorkspace": "현재 작업 공간",
-  "browseNotes": "노트 찾아보기",
+  "browseNotes": "Nextcloud 노트 찾아보기",
   "searchActionsCommand": "작업 검색",
   "searchDocumentsCommand": "문서 검색",
   "searchTopicsCommand": "주제 검색",

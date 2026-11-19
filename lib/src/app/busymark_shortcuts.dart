@@ -98,12 +98,20 @@ abstract final class BusyMarkAppShortcuts {
 
   static const newDocument = BusyMarkShortcutDefinition(
     label: newDocumentLabel,
-    activator: SingleActivator(LogicalKeyboardKey.keyN, control: true),
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyN,
+      control: true,
+      includeRepeats: false,
+    ),
     gtkAccelerator: newDocumentGtkAccelerator,
   );
   static const open = BusyMarkShortcutDefinition(
     label: openLabel,
-    activator: SingleActivator(LogicalKeyboardKey.keyO, control: true),
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyO,
+      control: true,
+      includeRepeats: false,
+    ),
     gtkAccelerator: openGtkAccelerator,
   );
   static const save = BusyMarkShortcutDefinition(

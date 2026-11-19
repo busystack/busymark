@@ -907,15 +907,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutGroupGeneral => 'Genel';
 
   @override
-  String get shortcutNewDocument => 'Oluştur';
+  String get home => 'Ana Sayfa';
+
+  @override
+  String get openMenu => 'Aç Menüsü';
+
+  @override
+  String get newNextcloudNote => 'Yeni Nextcloud Notu';
+
+  @override
+  String get shortcutNewDocument => 'Yeni Menüsü';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Markdown dosyası veya Writerside projesi oluştur';
+      'Kaynak oluşturma menüsünü göster';
 
   @override
-  String get shortcutOpenDescription =>
-      'Markdown dosyasını, klasörünü veya Writerside projesini açın';
+  String get shortcutOpenDescription => 'Kaynak açma menüsünü göster';
 
   @override
   String get shortcutSaveDescription => 'Geçerli belgeyi kaydet';
@@ -5541,7 +5549,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchCurrentWorkspace => 'Geçerli çalışma alanı';
 
   @override
-  String get browseNotes => 'Notlara göz at';
+  String get browseNotes => 'Nextcloud Notlarına Göz At';
 
   @override
   String get searchActionsCommand => 'Eylemleri ara';

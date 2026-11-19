@@ -911,15 +911,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shortcutGroupGeneral => 'Общие';
 
   @override
-  String get shortcutNewDocument => 'Создать';
+  String get home => 'Главная';
+
+  @override
+  String get openMenu => 'Меню «Открыть»';
+
+  @override
+  String get newNextcloudNote => 'Новая заметка Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'Меню «Создать»';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Создать файл Markdown или проект Writerside';
+      'Показать меню создания ресурсов';
 
   @override
-  String get shortcutOpenDescription =>
-      'Открыть файл Markdown, папку или проект Writerside';
+  String get shortcutOpenDescription => 'Показать меню открытия ресурсов';
 
   @override
   String get shortcutSaveDescription => 'Сохранить текущий документ';
@@ -5600,7 +5608,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchCurrentWorkspace => 'Текущая рабочая область';
 
   @override
-  String get browseNotes => 'Обзор заметок';
+  String get browseNotes => 'Просмотр заметок Nextcloud';
 
   @override
   String get searchActionsCommand => 'Поиск действий';

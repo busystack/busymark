@@ -714,15 +714,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Oluştur",
+  "home": "Ana Sayfa",
+  "openMenu": "Aç Menüsü",
+  "newNextcloudNote": "Yeni Nextcloud Notu",
+  "shortcutNewDocument": "Yeni Menüsü",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Markdown dosyası veya Writerside projesi oluştur",
+  "shortcutNewDocumentDescription": "Kaynak oluşturma menüsünü göster",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Markdown dosyasını, klasörünü veya Writerside projesini açın",
+  "shortcutOpenDescription": "Kaynak açma menüsünü göster",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -5165,7 +5168,7 @@
   "searchTopicsCategory": "Konular",
   "searchCurrentDocument": "Geçerli belge",
   "searchCurrentWorkspace": "Geçerli çalışma alanı",
-  "browseNotes": "Notlara göz at",
+  "browseNotes": "Nextcloud Notlarına Göz At",
   "searchActionsCommand": "Eylemleri ara",
   "searchDocumentsCommand": "Belgeleri ara",
   "searchTopicsCommand": "Konuları ara",

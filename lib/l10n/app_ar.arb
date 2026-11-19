@@ -598,15 +598,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "إنشاء",
+  "home": "الرئيسية",
+  "openMenu": "قائمة فتح",
+  "newNextcloudNote": "ملاحظة Nextcloud جديدة",
+  "shortcutNewDocument": "قائمة جديد",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "إنشاء ملف Markdown أو مشروع Writerside",
+  "shortcutNewDocumentDescription": "افتح قائمة إنشاء الموارد",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "فتح ملف Markdown أو مجلد أو مشروع Writerside",
+  "shortcutOpenDescription": "افتح قائمة فتح الموارد",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -3647,7 +3650,7 @@
   "searchTopicsCategory": "المواضيع",
   "searchCurrentDocument": "المستند الحالي",
   "searchCurrentWorkspace": "مساحة العمل الحالية",
-  "browseNotes": "تصفح الملاحظات",
+  "browseNotes": "تصفح ملاحظات Nextcloud",
   "searchActionsCommand": "البحث عن إجراءات",
   "searchDocumentsCommand": "البحث عن مستندات",
   "searchTopicsCommand": "البحث عن مواضيع",

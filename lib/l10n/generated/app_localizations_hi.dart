@@ -911,15 +911,22 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutGroupGeneral => 'सामान्य';
 
   @override
-  String get shortcutNewDocument => 'बनाएँ';
+  String get home => 'होम';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Markdown फ़ाइल या Writerside प्रोजेक्ट बनाएँ';
+  String get openMenu => 'खोलें मेनू';
 
   @override
-  String get shortcutOpenDescription =>
-      'Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें';
+  String get newNextcloudNote => 'नया Nextcloud नोट';
+
+  @override
+  String get shortcutNewDocument => 'नया मेनू';
+
+  @override
+  String get shortcutNewDocumentDescription => 'संसाधन बनाने का मेनू दिखाएँ';
+
+  @override
+  String get shortcutOpenDescription => 'संसाधन खोलने का मेनू दिखाएँ';
 
   @override
   String get shortcutSaveDescription => 'मौजूदा दस्तावेज़ सहेजें';
@@ -5533,7 +5540,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get searchCurrentWorkspace => 'वर्तमान कार्यक्षेत्र';
 
   @override
-  String get browseNotes => 'नोट ब्राउज़ करें';
+  String get browseNotes => 'Nextcloud नोट ब्राउज़ करें';
 
   @override
   String get searchActionsCommand => 'क्रियाएँ खोजें';

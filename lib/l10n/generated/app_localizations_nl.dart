@@ -914,15 +914,23 @@ class AppLocalizationsNl extends AppLocalizations {
   String get shortcutGroupGeneral => 'Algemeen';
 
   @override
-  String get shortcutNewDocument => 'Maken';
+  String get home => 'Start';
+
+  @override
+  String get openMenu => 'Menu Openen';
+
+  @override
+  String get newNextcloudNote => 'Nieuwe Nextcloud-notitie';
+
+  @override
+  String get shortcutNewDocument => 'Menu Nieuw';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Maak een Markdown-bestand of Writerside-project';
+      'Toon het menu om bronnen te maken';
 
   @override
-  String get shortcutOpenDescription =>
-      'Open een Markdown-bestand, map of Writerside-project';
+  String get shortcutOpenDescription => 'Toon het menu om bronnen te openen';
 
   @override
   String get shortcutSaveDescription => 'Sla het huidige document op';
@@ -5593,7 +5601,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchCurrentWorkspace => 'Huidige werkruimte';
 
   @override
-  String get browseNotes => 'Notities bekijken';
+  String get browseNotes => 'Door Nextcloud-notities bladeren';
 
   @override
   String get searchActionsCommand => 'Acties zoeken';

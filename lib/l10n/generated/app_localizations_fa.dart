@@ -906,15 +906,22 @@ class AppLocalizationsFa extends AppLocalizations {
   String get shortcutGroupGeneral => 'عمومی';
 
   @override
-  String get shortcutNewDocument => 'ایجاد';
+  String get home => 'خانه';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'ایجاد فایل Markdown یا پروژهٔ Writerside';
+  String get openMenu => 'منوی باز کردن';
 
   @override
-  String get shortcutOpenDescription =>
-      'باز کردن فایل Markdown، پوشه یا پروژهٔ Writerside';
+  String get newNextcloudNote => 'یادداشت جدید Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'منوی جدید';
+
+  @override
+  String get shortcutNewDocumentDescription => 'نمایش منوی ایجاد منابع';
+
+  @override
+  String get shortcutOpenDescription => 'نمایش منوی باز کردن منابع';
 
   @override
   String get shortcutSaveDescription => 'ذخیرهٔ سند فعلی';
@@ -5578,7 +5585,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get searchCurrentWorkspace => 'فضای کاری کنونی';
 
   @override
-  String get browseNotes => 'مرور یادداشت‌ها';
+  String get browseNotes => 'مرور یادداشت‌های Nextcloud';
 
   @override
   String get searchActionsCommand => 'جستجوی کنش‌ها';

@@ -6,7 +6,8 @@ import 'dart:io';
 
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show mapEquals, setEquals;
+import 'package:flutter/foundation.dart'
+    show mapEquals, setEquals, VoidCallback;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -230,6 +231,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   bool _notesApplicationVisible = true;
   bool _notesWorkspaceActive = true;
   final _remoteDurabilityWrites = <String, int>{};
+  final _pendingRemoteDiscards = <String>{};
   var _restoringLocalHistorySession = false;
   StreamSubscription<WorkspaceFileMonitorEvent>? _fileMonitorSubscription;
   Future<void>? _fileMonitorLifecycle;
@@ -259,18 +261,23 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _creationFocus = null;
   }
 
+  void focusNewlyCreatedDocument(String bufferId) {
+    final buffer = state.activeBuffer;
+    if (buffer == null || buffer.id != bufferId) return;
+    _cancelCreationFocus();
+    if (buffer.editorState.mode == DocumentViewModePreference.preview) {
+      updateActiveEditorMode(DocumentViewModePreference.editor);
+    }
+    _retainCreationFocus(buffer, BusyMarkDeferredEditorFocus());
+    state = state.copyWith();
+  }
+
   void _retainCreationFocus(
     DocumentBuffer buffer,
     BusyMarkDeferredEditorFocus? request,
   ) {
     if (request == null || !request.isPending) return;
-    final mode = buffer.editorState.mode;
-    if (mode == DocumentViewModePreference.source ||
-        mode == DocumentViewModePreference.split) {
-      _creationFocus = (bufferId: buffer.id, request: request);
-    } else {
-      request.cancel();
-    }
+    _creationFocus = (bufferId: buffer.id, request: request);
   }
 
   // Removal follows workspace/request lifetime, not active-tab navigation.
@@ -296,6 +303,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   late Future<RecoverySnapshot> _recoveryStart;
   final _workspaceOpenings = <Future<void>>{};
+  var _pathOpenRequest = 0;
   Future<void> _persistenceWrites = Future.value();
 
   int get editRevision => state.activeBuffer?.revision ?? _editRevision;
@@ -682,6 +690,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String accountId, {
     List<DocumentSessionEntry>? restoredTabs,
     String? activeBufferId,
+    String? noteLocalId,
     bool Function()? acceptNavigation,
   }) async {
     if (acceptNavigation?.call() == false) return false;
@@ -691,33 +700,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final priorRevision = _activeDocumentRevision;
     try {
       final repository = await _ensureNotesRepository();
-      if (!repository.accounts.any((account) => account.id == accountId)) {
+      if (repository.accountById(accountId) == null ||
+          (noteLocalId != null &&
+              repository.availableRecentNote(accountId, noteLocalId) == null)) {
         return false;
       }
       final settled = await _localHistory.flushAll(prior.documentBuffers);
-      if (!ref.mounted ||
-          acceptNavigation?.call() == false ||
-          priorRevision != _activeDocumentRevision ||
-          !identical(prior.workspace, state.workspace) ||
-          state.hasUnsavedChanges) {
+      final requestedNote = noteLocalId == null
+          ? null
+          : repository.availableRecentNote(accountId, noteLocalId);
+      if (!_canReplaceWorkspace(prior, priorRevision, acceptNavigation) ||
+          state.hasUnsavedChanges ||
+          repository.accountById(accountId) == null ||
+          (noteLocalId != null && requestedNote == null)) {
         return false;
-      }
-      _cancelPendingDerivedRefresh();
-      _cancelAllAutoSaves();
-      final operationRevision = _invalidateActiveDocumentOperations();
-      await _fileMonitor.stop();
-      for (final buffer in prior.documentBuffers) {
-        await _localHistory.handleBufferClosed(
-          buffer.id,
-          historySettled: settled,
-        );
       }
       final workspace = Workspace.nextcloudNotes(accountId);
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) return false;
-      if (acceptNavigation?.call() == false) {
-        await _restoreCancelledNavigation(prior);
-        return false;
-      }
       final buffers = <DocumentBuffer>[];
       for (final tab in restoredTabs ?? const <DocumentSessionEntry>[]) {
         final reference = tab.remoteNote;
@@ -729,7 +727,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           buffers.add(_remoteBuffer(note, editorState: tab.editorState));
         }
       }
-      if (buffers.isEmpty && restoredTabs == null) {
+      if (requestedNote case final note?) {
+        buffers.add(_remoteBuffer(note));
+      } else if (buffers.isEmpty && restoredTabs == null) {
         final first = repository.notes
             .where(
               (note) =>
@@ -740,6 +740,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             .firstOrNull;
         if (first != null) buffers.add(_remoteBuffer(first));
       }
+      _invalidateFileMonitorWorkspace();
+      _cancelPendingDerivedRefresh();
+      _cancelAllAutoSaves();
+      final operationRevision = _invalidateActiveDocumentOperations();
+      _restoredRecoveryOwnerIdsByBuffer.clear();
       state = WorkspaceState(
         workspace: workspace,
         documentBuffers: buffers,
@@ -747,6 +752,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             ? activeBufferId
             : buffers.firstOrNull?.id,
       );
+      await _startMonitoring(workspace);
+      for (final buffer in prior.documentBuffers) {
+        await _localHistory.handleBufferClosed(
+          buffer.id,
+          historySettled: settled,
+        );
+      }
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) return false;
       for (final buffer in buffers) {
         unawaited(_localHistory.observeOpened(buffer));
       }
@@ -795,6 +808,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> openNextcloudNote(
     String localId, {
     bool Function()? acceptNavigation,
+  }) => _openNextcloudNote(localId, acceptNavigation: acceptNavigation);
+
+  Future<bool> _openNextcloudNote(
+    String localId, {
+    bool Function()? acceptNavigation,
+    BusyMarkDeferredEditorFocus? creationFocus,
   }) async {
     if (acceptNavigation?.call() == false) return false;
     if (!propertyEdits.flush()) return false;
@@ -810,7 +829,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final existing = state.documentBuffers
         .where((buffer) => buffer.remoteNote?.localId == localId)
         .firstOrNull;
-    final buffer = existing ?? _remoteBuffer(note);
+    final mode =
+        state.activeBuffer?.editorState.mode ??
+        _settingsController.state.documentViewMode;
+    final buffer =
+        existing ??
+        _remoteBuffer(
+          note,
+          editorState: creationFocus == null
+              ? null
+              : DocumentEditorState(
+                  mode: mode == DocumentViewModePreference.preview
+                      ? DocumentViewModePreference.editor
+                      : mode,
+                ),
+        );
     if (existing == null) {
       // Navigation validates the live buffer after asynchronous parsing. Publish
       // the new logical tab first so that validation can retain newer edits.
@@ -824,6 +857,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       documentBuffers: state.documentBuffers,
       openFilePaths: const [],
       acceptNavigation: acceptNavigation,
+      creationFocus: creationFocus,
     );
     if (result) await _recordOpenedDocument();
     if (result && existing == null) {
@@ -867,9 +901,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? category,
     String content = '',
     bool Function()? acceptNavigation,
+    bool focusEditor = false,
   }) async {
     if (acceptNavigation?.call() == false) return false;
     if (!propertyEdits.flush()) return false;
+    final request = focusEditor ? BusyMarkDeferredEditorFocus() : null;
     try {
       final accountId = state.workspace?.nextcloudAccountId;
       if (accountId == null) return false;
@@ -889,9 +925,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
                 : ''),
         content: content,
       );
-      final opened = await openNextcloudNote(
+      final opened = await _openNextcloudNote(
         note.localId,
         acceptNavigation: acceptNavigation,
+        creationFocus: request,
       );
       _scheduleRemoteSync(accountId);
       _publishCreatedNextcloudNote(note, repository.notes);
@@ -899,6 +936,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     } on Object catch (error) {
       _reportNextcloudFailure(error);
       return false;
+    } finally {
+      if (_creationFocus?.request != request) request?.cancel();
     }
   }
 
@@ -2644,15 +2683,25 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     for (final buffer in snapshot.documentBuffers) {
       if (buffer.isRemote &&
           buffer.isDirty &&
-          !_remoteDurabilityWrites.containsKey(buffer.id)) {
-        final saved = await _enqueueBufferWrite(
-          buffer.id,
-          () => _saveRemoteBufferSnapshot(
-            buffer,
+          !_remoteDurabilityWrites.containsKey(buffer.id) &&
+          !_pendingRemoteDiscards.contains(buffer.id)) {
+        final saved = await _enqueueBufferWrite(buffer.id, () async {
+          if (!ref.mounted) return true;
+          final live = state.documentBuffers
+              .where((candidate) => candidate.id == buffer.id)
+              .firstOrNull;
+          if (live == null ||
+              !live.isDirty ||
+              live.revision != buffer.revision ||
+              live.text != buffer.text) {
+            return true;
+          }
+          return _saveRemoteBufferSnapshot(
+            live,
             scheduleSync: _settingsController.state.autoSave,
             captureHistory: false,
-          ),
-        );
+          );
+        });
         if (!saved) throw StateError('Could not durably store Nextcloud note');
       }
     }
@@ -3981,10 +4030,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   /// Starts a document from Welcome, replacing the previous workspace only
   /// after its buffers have been resolved and their history has been flushed.
-  Future<bool> createMarkdownWorkspace({bool focusSource = false}) async {
+  Future<bool> createMarkdownWorkspace({
+    bool focusSource = false,
+    bool Function()? acceptNavigation,
+  }) async {
     final request = focusSource ? BusyMarkDeferredEditorFocus() : null;
     try {
-      return await _createMarkdownWorkspace(request);
+      return await _createMarkdownWorkspace(request, acceptNavigation);
     } finally {
       if (_creationFocus?.request != request) request?.cancel();
     }
@@ -3992,8 +4044,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> _createMarkdownWorkspace(
     BusyMarkDeferredEditorFocus? request,
+    bool Function()? acceptNavigation,
   ) async {
-    if (!propertyEdits.flush()) return false;
+    if (acceptNavigation?.call() == false || !propertyEdits.flush()) {
+      return false;
+    }
     final previous = state;
     final previousOperation = _activeDocumentRevision;
     if (previous.hasUnsavedChanges || previous.isLoading) return false;
@@ -4001,13 +4056,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       previous.documentBuffers,
     );
     if (!ref.mounted) return false;
-    final liveBuffers = state.documentBuffers;
-    if (_activeDocumentRevision != previousOperation ||
-        !identical(state.workspace, previous.workspace) ||
-        liveBuffers.length != previous.documentBuffers.length ||
-        liveBuffers.indexed.any(
-          (entry) => !identical(entry.$2, previous.documentBuffers[entry.$1]),
-        )) {
+    if (!_canReplaceWorkspace(previous, previousOperation, acceptNavigation)) {
       return false;
     }
     _invalidateFileMonitorWorkspace();
@@ -4016,37 +4065,39 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _invalidateActiveDocumentOperations();
     _removalOperationRevision++;
     _restoredRecoveryOwnerIdsByBuffer.clear();
-    state = const WorkspaceState();
+    // Publish the new local workspace directly. The old remote workspace
+    // must never contain a local document, even during the transition.
+    final creation = _createMarkdownFile(request, replaceWorkspace: true);
     for (final buffer in previous.documentBuffers) {
       await _localHistory.handleBufferClosed(
         buffer.id,
         historySettled: historySettled,
       );
     }
-    await _createMarkdownFile(request);
-    return true;
+    return creation;
   }
 
-  Future<void> createMarkdownFile({bool focusSource = false}) async {
+  Future<bool> createMarkdownFile({bool focusSource = false}) async {
     final request = focusSource ? BusyMarkDeferredEditorFocus() : null;
     try {
-      await _createMarkdownFile(request);
+      return await (state.workspace?.isRemote == true
+          ? _createMarkdownWorkspace(request, null)
+          : _createMarkdownFile(request));
     } finally {
       if (_creationFocus?.request != request) request?.cancel();
     }
   }
 
-  Future<void> _createMarkdownFile(BusyMarkDeferredEditorFocus? request) async {
-    if (!propertyEdits.flush()) return;
-    if (state.workspace?.isRemote == true) {
-      await createNextcloudNote();
-      return;
-    }
+  Future<bool> _createMarkdownFile(
+    BusyMarkDeferredEditorFocus? request, {
+    bool replaceWorkspace = false,
+  }) async {
+    if (!propertyEdits.flush() || state.isLoading) return false;
     _cancelPendingDerivedRefresh();
     final operationRevision = _invalidateActiveDocumentOperations();
     _resetSaveTracking(dirty: true);
     final viewModeChange = _showEditorForNewFile();
-    final currentWorkspace = state.workspace;
+    final currentWorkspace = replaceWorkspace ? null : state.workspace;
     final untitledWorkspace = _service.createUntitledMarkdown();
     final sequence = ++_untitledSequence;
     final buffer = DocumentBuffer.untitled(
@@ -4058,7 +4109,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ? DocumentViewModePreference.editor
           : _settingsController.state.documentViewMode,
     );
-    final buffers = [...state.documentBuffers, buffer];
+    final buffers = [if (!replaceWorkspace) ...state.documentBuffers, buffer];
     final workspace = currentWorkspace == null
         ? untitledWorkspace.copyWith(markdown: null)
         : currentWorkspace.copyWith(activeFilePath: null, markdown: null);
@@ -4074,11 +4125,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _recordActivePreviewRevision();
     _schedulePersistence();
     await viewModeChange;
+    if (!ref.mounted) return false;
     final reparsed = await _reparseWithDocumentBuffers(
       workspace,
       buffer,
       buffers: buffers,
     );
+    if (!ref.mounted) return false;
     if (_preparedInputsCurrent(reparsed, state.documentBuffers) &&
         _canPublishActiveDerivedContent(
           operationRevision: operationRevision,
@@ -4094,48 +4147,87 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       _recordActivePreviewRevision();
     }
-    await _startMonitoring(state.workspace ?? workspace);
+    if (state.workspace?.id == workspace.id) {
+      await _startMonitoring(state.workspace!);
+    }
+    return ref.mounted &&
+        state.documentBuffers.any((candidate) => candidate.id == buffer.id);
   }
 
-  Future<void> openPath(String path, {bool Function()? acceptNavigation}) =>
-      _trackWorkspaceOpening(
-        () => _openPath(path, acceptNavigation: acceptNavigation),
+  bool _canReplaceWorkspace(
+    WorkspaceState prior,
+    int priorRevision,
+    bool Function()? acceptNavigation,
+  ) =>
+      ref.mounted &&
+      acceptNavigation?.call() != false &&
+      priorRevision == _activeDocumentRevision &&
+      state.workspace?.id == prior.workspace?.id &&
+      state.documentBuffers.length == prior.documentBuffers.length &&
+      state.documentBuffers.indexed.every(
+        (entry) =>
+            identical(entry.$2, prior.documentBuffers[entry.$1]) ||
+            _sameCleanClosingSource(prior.documentBuffers[entry.$1], entry.$2),
       );
+
+  Future<void> openPath(
+    String path, {
+    String? documentPath,
+    bool Function()? acceptNavigation,
+    VoidCallback? onOpened,
+  }) => _trackWorkspaceOpening(
+    () => _openPath(
+      path,
+      documentPath: documentPath,
+      acceptNavigation: acceptNavigation,
+      onOpened: onOpened,
+    ),
+  );
 
   Future<void> _openPath(
     String path, {
+    String? documentPath,
     bool Function()? acceptNavigation,
+    VoidCallback? onOpened,
   }) async {
-    if (acceptNavigation?.call() == false) return;
-    if (!propertyEdits.flush()) return;
+    if (acceptNavigation?.call() == false || !propertyEdits.flush()) return;
     final prior = state;
-    final recoveryOwners = Map<String, String>.of(
-      _restoredRecoveryOwnerIdsByBuffer,
-    );
-    final closingBuffers = state.documentBuffers;
-    final historySettled = await _localHistory.flushAll(closingBuffers);
-    if (!ref.mounted || acceptNavigation?.call() == false) return;
-    _invalidateFileMonitorWorkspace();
-    _removalOperationRevision++;
-    _cancelPendingDerivedRefresh();
-    _cancelAllAutoSaves();
-    final operationRevision = _invalidateActiveDocumentOperations();
-    _resetSaveTracking();
-    _restoredRecoveryOwnerIdsByBuffer.clear();
-    state = const WorkspaceState(isLoading: true);
-    for (final buffer in closingBuffers) {
-      await _localHistory.handleBufferClosed(
-        buffer.id,
-        historySettled: historySettled,
-      );
+    if (acceptNavigation != null &&
+        (prior.hasUnsavedChanges || prior.isLoading)) {
+      return;
     }
+    final priorRevision = _activeDocumentRevision;
+    final request = ++_pathOpenRequest;
+    final closingBuffers = prior.documentBuffers;
+    int? operationRevision;
+    // Keep the existing workspace mounted while validating a prospective
+    // destination. Its authoring state remains usable on any read failure.
+    _invalidateFileMonitorWorkspace();
+    state = prior.copyWith(isLoading: true, clearMessage: true);
     try {
       final workspace = await _service.openPath(path);
-      final active = workspace.activeFilePath;
+      if (documentPath != null &&
+          ((workspace.writersideProject == null &&
+                  workspace.writersideModule == null) ||
+              !workspace.files.any(
+                (file) => p.equals(file.absolutePath, documentPath),
+              ))) {
+        throw FileSystemException(
+          'Recent document is unavailable',
+          documentPath,
+        );
+      }
+      final active = documentPath ?? workspace.activeFilePath;
       final load = active == null
           ? null
           : await _service.loadTextWithSnapshot(active);
-      var loadedWorkspace = workspace;
+      var loadedWorkspace = documentPath == null
+          ? workspace
+          : workspace.copyWith(
+              activeFilePath: documentPath,
+              openFilePaths: [documentPath],
+              markdown: null,
+            );
       final buffer = load == null || active == null
           ? null
           : _fileBuffer(
@@ -4148,7 +4240,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       // editor never synchronously reparses a mismatching model during build.
       final markdown = loadedWorkspace.markdown;
       if (buffer != null &&
-          (_writersideSourceMismatch(loadedWorkspace, buffer) ||
+          (documentPath != null ||
+              _writersideSourceMismatch(loadedWorkspace, buffer) ||
               (markdown != null &&
                   p.equals(markdown.filePath, active!) &&
                   markdown.source != buffer.text))) {
@@ -4161,16 +4254,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final preview = buffer == null
           ? null
           : _safePreview(loadedWorkspace, buffer);
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      final historySettled = await _localHistory.flushAll(closingBuffers);
+      if (request != _pathOpenRequest ||
+          !_canReplaceWorkspace(prior, priorRevision, acceptNavigation)) {
         return;
       }
-      if (acceptNavigation?.call() == false) {
-        await _restoreCancelledNavigation(
-          prior,
-          recoveryOwners: recoveryOwners,
-        );
-        return;
-      }
+      _removalOperationRevision++;
+      _cancelPendingDerivedRefresh();
+      _cancelAllAutoSaves();
+      operationRevision = _invalidateActiveDocumentOperations();
+      _resetSaveTracking();
+      _restoredRecoveryOwnerIdsByBuffer.clear();
       state = WorkspaceState(
         isLoading: true,
         workspace: loadedWorkspace,
@@ -4178,6 +4272,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
       );
+      for (final oldBuffer in closingBuffers) {
+        await _localHistory.handleBufferClosed(
+          oldBuffer.id,
+          historySettled: historySettled,
+        );
+      }
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) return;
       if (buffer != null) unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
       if (buffer != null &&
@@ -4189,6 +4290,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = state.copyWith(isLoading: false);
       _schedulePersistence();
       _resetSaveTracking();
+      onOpened?.call();
       final recentPath = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.activeFilePath ?? workspace.rootPath
           : workspace.rootPath;
@@ -4209,7 +4311,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         stackTrace,
         context: {'path': busyMarkLogPath(path)},
       );
-      if (_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (request == _pathOpenRequest &&
+          _isCurrentActiveDocumentOperation(
+            operationRevision ?? priorRevision,
+          )) {
         state = state.copyWith(
           isLoading: false,
           message: WorkspaceMessage(
@@ -4218,26 +4323,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ),
         );
       }
-    }
-  }
-
-  Future<void> _restoreCancelledNavigation(
-    WorkspaceState prior, {
-    Map<String, String>? recoveryOwners,
-  }) async {
-    if (recoveryOwners != null) {
-      _restoredRecoveryOwnerIdsByBuffer
-        ..clear()
-        ..addAll(recoveryOwners);
-    }
-    state = prior;
-    _recordActivePreviewRevision();
-    if (prior.workspace case final workspace?) {
-      await _startMonitoring(workspace);
-    }
-    for (final buffer in prior.documentBuffers) {
-      unawaited(_localHistory.observeOpened(buffer));
-      _scheduleAutoSave(buffer.id);
+    } finally {
+      // A prospective path can fail or be cancelled after the old monitor
+      // has been invalidated. Resume the retained workspace's monitor.
+      if (operationRevision == null &&
+          ref.mounted &&
+          request == _pathOpenRequest &&
+          state.workspace?.id == prior.workspace?.id) {
+        if (state.isLoading) state = state.copyWith(isLoading: false);
+        if (state.workspace case final workspace?) {
+          await _startMonitoring(workspace);
+        }
+      }
     }
   }
 
@@ -5898,6 +5995,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required List<DocumentBuffer> documentBuffers,
     required List<String> openFilePaths,
     bool Function()? acceptNavigation,
+    BusyMarkDeferredEditorFocus? creationFocus,
   }) async {
     if (acceptNavigation?.call() == false) return false;
     if (!propertyEdits.flush()) return false;
@@ -6062,6 +6160,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (sourceStayedCurrent) {
       _preparedInputs[publishedWorkspace] = _preparedInputs[reparsed];
     }
+    if (creationFocus != null) _retainCreationFocus(liveBuffer, creationFocus);
     state = state.copyWith(
       workspace: publishedWorkspace,
       preview: sourceStayedCurrent
@@ -7712,10 +7811,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     _cancelAutoSave(operationTarget.bufferId);
     _cancelPendingDerivedRefresh();
-    return _enqueueBufferWrite(
-      operationTarget.bufferId,
-      () => _discardBufferChangesNow(operationTarget),
-    );
+    return _discardBufferChanges(operationTarget);
   }
 
   /// Discards the selected buffers without changing the active document.
@@ -7744,10 +7840,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       _cancelAutoSave(buffer.id);
       _cancelPendingDerivedRefresh();
-      final discarded = await _enqueueBufferWrite(
-        buffer.id,
-        () => _discardBufferChangesNow(target),
-      );
+      final discarded = await _discardBufferChanges(target);
       if (!discarded) return false;
     }
     return true;
@@ -8346,6 +8439,25 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
   }
 
+  Future<bool> _discardBufferChanges(ActiveDocumentSaveTarget target) async {
+    final remote = target.workspaceKind == WorkspaceKind.nextcloudNotes;
+    final bufferId = target.bufferId;
+    // History protection persists the session while discard owns the buffer
+    // write queue. The protected text belongs in History, not the note outbox.
+    if (remote && !_pendingRemoteDiscards.add(bufferId)) return false;
+    try {
+      return await _enqueueBufferWrite(
+        bufferId,
+        () => _discardBufferChangesNow(target),
+      );
+    } finally {
+      if (remote) {
+        _pendingRemoteDiscards.remove(bufferId);
+        if (ref.mounted) _schedulePersistence();
+      }
+    }
+  }
+
   Future<bool> _discardBufferChangesNow(
     ActiveDocumentSaveTarget operationTarget,
   ) async {
@@ -8369,18 +8481,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       )) {
         return false;
       }
-      final latest = state.documentBuffers
-          .where((b) => b.id == current.id)
-          .firstOrNull;
-      if (!identical(latest, current)) return false;
       final cached = (await _ensureNotesRepository()).noteById(
         current.remoteNote!.localId,
       );
-      if (cached == null) return false;
+      if (cached == null ||
+          !ref.mounted ||
+          !_isBufferSaveTargetCurrent(refreshedTarget)) {
+        return false;
+      }
+      final latest = state.documentBuffers.firstWhere(
+        (b) => b.id == current.id,
+      );
+      if (latest.remoteNote != current.remoteNote) return false;
       state = state.copyWith(
         documentBuffers: _replaceBuffer(
           state.documentBuffers,
-          current
+          latest
               .replaced(cached.content)
               .copyWith(
                 lastSavedText: cached.content,

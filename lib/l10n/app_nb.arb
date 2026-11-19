@@ -596,15 +596,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Opprett",
+  "home": "Hjem",
+  "openMenu": "Åpne-meny",
+  "newNextcloudNote": "Nytt Nextcloud-notat",
+  "shortcutNewDocument": "Ny-meny",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Opprett en Markdown-fil eller et Writerside-prosjekt",
+  "shortcutNewDocumentDescription": "Vis menyen for å opprette ressurser",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt",
+  "shortcutOpenDescription": "Vis menyen for å åpne ressurser",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -3635,7 +3638,7 @@
   "searchTopicsCategory": "Emner",
   "searchCurrentDocument": "Gjeldende dokument",
   "searchCurrentWorkspace": "Gjeldende arbeidsområde",
-  "browseNotes": "Bla gjennom notater",
+  "browseNotes": "Bla gjennom Nextcloud-notater",
   "searchActionsCommand": "Søk etter handlinger",
   "searchDocumentsCommand": "Søk etter dokumenter",
   "searchTopicsCommand": "Søk etter emner",

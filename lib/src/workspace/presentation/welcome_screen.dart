@@ -1,18 +1,17 @@
+import '../../app/busymark_resource_menu.dart';
+import '../workspace_resource_actions.dart';
 import '../../app/command_registry.dart';
-import '../recent_navigation.dart';
+import 'workspace_sidebar.dart';
 import '../../search/search_session.dart';
 import '../../search/search_sidebar.dart';
 import '../../search/welcome_notes_action.dart';
 import '../../nextcloud_notes/application/nextcloud_connection.dart';
 import 'dart:async';
-import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path/path.dart' as p;
 
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
@@ -24,14 +23,10 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
-import '../../core/debug_log.dart';
-import '../../core/path_utils.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/gtk_header_icon_service.dart';
-import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_message.dart';
-import '../workspace_safety.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -41,26 +36,9 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  bool _navigateWhenContentReady = false;
-
-  XTypeGroup _markdownTypes(BuildContext context) => XTypeGroup(
-    label: context.l10n.fileTypeMarkdown,
-    extensions: <String>['md', 'markdown'],
-    mimeTypes: <String>['text/markdown', 'text/x-markdown'],
-  );
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
-    ref.listen(workspaceControllerProvider, (previous, next) {
-      if (_navigateWhenContentReady &&
-          previous?.isLoading == true &&
-          !next.isLoading &&
-          next.workspace != null &&
-          mounted) {
-        _navigateWhenContentReady = false;
-        context.go('/workspace');
-      }
-    });
     final settings = ref.watch(appSettingsControllerProvider);
     final colors = BusyMarkSurfaceColors.of(context);
     final search = ref.watch(searchSessionProvider);
@@ -84,7 +62,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     .uri
                     .path ==
                 '/') {
-          unawaited(performWelcomeNotesAction(context, ref, pending));
+          unawaited(
+            performWorkspaceResourceAction(
+              context,
+              ref,
+              WorkspaceResourceAction.forNotes(pending),
+            ),
+          );
         }
       });
     }
@@ -93,7 +77,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (startupNavigation.claimStartupPath(startupPath)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          unawaited(_openPath(startupPath!));
+          unawaited(openWorkspaceResourcePath(context, ref, startupPath!));
         }
       });
     } else if (startupNavigation.claimSessionRestore(startupPath)) {
@@ -113,32 +97,40 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     final welcomeMainColor = colors.view;
-    final welcomeSidebar = SizedBox(
-      width: BusyMarkSizes.sidebarWidth,
-      child: BusyMarkSidebarSurface(
-        showEndBorder: false,
-        child: IndexedStack(
-          index: search.active ? 1 : 0,
-          children: [
-            ExcludeFocus(
-              excluding: search.active,
-              child: SearchResultList(
-                recordDensity: BusyMarkRecordDensity.comfortable,
-                results: [
-                  for (final r in settings.recentWorkspaces)
-                    RecentSearchResult(r),
-                ],
-                onActivate: (r) => openRecentResource(
-                  context,
-                  ref,
-                  (r as RecentSearchResult).resource,
-                ),
-              ),
+    final sidebarRevealed = watchSidebarSelectorReveal(
+      context,
+      ref,
+      workspaceId: null,
+    );
+    final welcomeSidebar = WorkspaceSidebar<bool>(
+      contextLabel: Row(
+        children: [
+          const Icon(BusyMarkGlyphs.home, size: BusyMarkSizes.iconSm),
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Expanded(
+            child: Text(
+              context.l10n.home,
+              key: const ValueKey('workspace-sidebar-primary-label'),
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const SearchSidebar(),
-          ],
-        ),
+          ),
+        ],
       ),
+      items: [
+        BusyMarkPopupMenuItem(
+          value: true,
+          label: context.l10n.recent,
+          icon: BusyMarkGlyphs.history,
+          mnemonic: 'E',
+          shortcut: 'E',
+          gtkAccelerator: 'e',
+          checked: true,
+          trailingCheck: true,
+        ),
+      ],
+      onSelected: (_) {},
+      content: const RecentSidebarPanel(),
     );
     final welcomeContent = ColoredBox(
       color: welcomeMainColor,
@@ -165,22 +157,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   trailing: Icon(
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  onTap: _createMarkdownFile,
+                  onTap: () => _run(WorkspaceResourceAction.newMarkdown),
                 ),
                 BusyMarkActionRow(
                   key: const ValueKey('welcome-new-nextcloud-note'),
-                  title: context.l10n.nextcloudNewNote,
+                  title: context.l10n.newNextcloudNote,
                   subtitle: connection.account == null
                       ? context.l10n.nextcloudNotes
                       : 'Nextcloud · ${connection.account!.server}',
                   leading: const Icon(BusyMarkGlyphs.newDocument),
-                  onTap: () => unawaited(
-                    performWelcomeNotesAction(
-                      context,
-                      ref,
-                      WelcomeNotesAction.create,
-                    ),
-                  ),
+                  onTap: () => _run(WorkspaceResourceAction.newNote),
                 ),
                 BusyMarkActionRow(
                   title: context.l10n.createWritersideProject,
@@ -189,7 +175,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   trailing: Icon(
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  onTap: _createWritersideProject,
+                  onTap: () => _run(WorkspaceResourceAction.newWriterside),
                 ),
               ],
             ),
@@ -204,7 +190,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   trailing: Icon(
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  onTap: _chooseMarkdownFile,
+                  onTap: () => _run(WorkspaceResourceAction.openMarkdown),
                 ),
                 BusyMarkActionRow(
                   title: context.l10n.openFolderOrWritersideProject,
@@ -213,7 +199,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   trailing: Icon(
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  onTap: () => _chooseDirectory(context.l10n.open),
+                  onTap: () => _run(WorkspaceResourceAction.openFolder),
                 ),
                 BusyMarkActionRow(
                   key: const ValueKey('welcome-nextcloud-notes'),
@@ -225,13 +211,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   trailing: Icon(
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  onTap: () => unawaited(
-                    performWelcomeNotesAction(
-                      context,
-                      ref,
-                      WelcomeNotesAction.browse,
-                    ),
-                  ),
+                  onTap: () => _run(WorkspaceResourceAction.browseNotes),
                 ),
               ],
             ),
@@ -254,68 +234,71 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     return Scaffold(
       backgroundColor: welcomeMainColor,
       body: LayoutBuilder(
-        builder: (context, constraints) => LinuxPageFrame(
-          sidebarHeader: const BusyMarkLinuxBrandHeader(),
-          sidebarBody: welcomeSidebar,
-          sidebarAvailable:
-              search.active ||
-              constraints.maxWidth >=
-                  BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
-          sidebarOverlay:
-              search.active &&
+        builder: (context, constraints) {
+          final narrow =
               constraints.maxWidth <
-                  BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
-          sidebarExpanded: sidebarVisible,
-          sidebarTransitionGeneration: ref.watch(
-            sidebarTransitionGenerationProvider,
-          ),
-          header: BusyMarkLinuxHeaderLayout(
-            leading: BusyMarkLinuxHeaderControlGroup(
-              children: [
-                BusyMarkLinuxHeaderIconButton(
-                  tooltip: sidebarVisible
-                      ? context.l10n.hideSidebar
-                      : context.l10n.showSidebar,
-                  icon: BusyMarkGlyphs.sidebar,
-                  nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
-                  selected: sidebarVisible,
-                  shortcut:
-                      (BusyMarkCommandRegistryScope.maybeOf(context) ??
-                              BusyMarkCommandCatalog
-                                  .metadata)[BusyMarkCommandIds.toggleSidebar]
-                          ?.shortcut
-                          ?.label,
-                  onPressed: _toggleSidebar,
-                ),
-              ],
+              BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth;
+          return LinuxPageFrame(
+            sidebarHeader: const BusyMarkLinuxBrandHeader(),
+            sidebarBody: welcomeSidebar,
+            sidebarAvailable: !narrow || search.active || sidebarRevealed,
+            sidebarOverlay: narrow && (search.active || sidebarRevealed),
+            sidebarExpanded: sidebarVisible,
+            sidebarTransitionGeneration: ref.watch(
+              sidebarTransitionGenerationProvider,
             ),
-            centerAllocation: search.active
-                ? BusyMarkLinuxHeaderCenterAllocation.fillBetweenControls
-                : BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls,
-            title: search.active
-                ? const SearchHeaderField()
-                : BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
-            trailing: BusyMarkLinuxHeaderControlGroup(
-              children: [
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.search,
-                  icon: BusyMarkGlyphs.search,
-                  selected: search.active,
-                  onPressed: () =>
-                      ref.read(searchSessionProvider.notifier).toggle(),
-                ),
-                BusyMarkMainMenuButton(
-                  onSelected: (action) =>
-                      _handleMainMenuAction(context, action),
-                ),
-              ],
+            header: BusyMarkLinuxHeaderLayout(
+              leading: BusyMarkLinuxHeaderControlGroup(
+                children: [
+                  BusyMarkLinuxHeaderIconButton(
+                    tooltip: sidebarVisible
+                        ? context.l10n.hideSidebar
+                        : context.l10n.showSidebar,
+                    icon: BusyMarkGlyphs.sidebar,
+                    nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
+                    selected: sidebarVisible,
+                    shortcut:
+                        (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                                BusyMarkCommandCatalog
+                                    .metadata)[BusyMarkCommandIds.toggleSidebar]
+                            ?.shortcut
+                            ?.label,
+                    onPressed: _toggleSidebar,
+                  ),
+                ],
+              ),
+              centerAllocation: search.active
+                  ? BusyMarkLinuxHeaderCenterAllocation.fillBetweenControls
+                  : BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls,
+              title: search.active
+                  ? const SearchHeaderField()
+                  : BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
+              trailing: BusyMarkLinuxHeaderControlGroup(
+                children: [
+                  BusyMarkHeaderIconButton(
+                    tooltip: context.l10n.search,
+                    icon: BusyMarkGlyphs.search,
+                    selected: search.active,
+                    onPressed: () =>
+                        ref.read(searchSessionProvider.notifier).toggle(),
+                  ),
+                  ...BusyMarkResourceMenuButton.buttons,
+                  BusyMarkMainMenuButton(
+                    onSelected: (action) =>
+                        _handleMainMenuAction(context, action),
+                  ),
+                ],
+              ),
             ),
-          ),
-          body: welcomeContent,
-        ),
+            body: welcomeContent,
+          );
+        },
       ),
     );
   }
+
+  void _run(WorkspaceResourceAction action) =>
+      unawaited(performWorkspaceResourceAction(context, ref, action));
 
   void _toggleSidebar() {
     final settings = ref.read(appSettingsControllerProvider);
@@ -344,490 +327,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }
-  }
-
-  Future<void> _chooseMarkdownFile() async {
-    final selected = await openFile(
-      acceptedTypeGroups: [_markdownTypes(context)],
-      initialDirectory: _initialDirectory(),
-      confirmButtonText: context.l10n.open,
-    );
-    final path = selected?.path;
-    if (path == null) {
-      return;
-    }
-    _logSelectedPickerPath(path);
-    await _openPath(path);
-  }
-
-  Future<void> _chooseDirectory(String confirmButtonText) async {
-    final path = await getDirectoryPath(
-      initialDirectory: _initialDirectory(),
-      confirmButtonText: confirmButtonText,
-      canCreateDirectories: false,
-    );
-    if (path == null) {
-      return;
-    }
-    _logSelectedPickerPath(path);
-    await _openPath(path);
-  }
-
-  void _logSelectedPickerPath(String rawPath) {
-    try {
-      final normalizedPath = normalizePath(rawPath);
-      final fileType = FileSystemEntity.typeSync(normalizedPath);
-      busyMarkDebugLogLines([
-        '[BusyMark] Picker selected path',
-        '[BusyMark]   raw: ${busyMarkLogPath(rawPath)}',
-        '[BusyMark]   normalized: ${busyMarkLogPath(normalizedPath)}',
-        '[BusyMark]   raw startsWith file://: ${isFileUriPath(rawPath)}',
-        '[BusyMark]   raw startsWith /run/user/: ${rawPath.startsWith('/run/user/')}',
-        '[BusyMark]   normalized startsWith /run/user/: ${normalizedPath.startsWith('/run/user/')}',
-        '[BusyMark]   entity type: ${_fileTypeLabel(fileType)}',
-      ]);
-    } on Object catch (error, stackTrace) {
-      busyMarkDebugLogError(
-        '[BusyMark] Picker path logging failed',
-        error,
-        stackTrace,
-        context: {'raw': busyMarkLogPath(rawPath)},
-      );
-    }
-  }
-
-  String _fileTypeLabel(FileSystemEntityType type) {
-    if (type == FileSystemEntityType.file) {
-      return 'file';
-    }
-    if (type == FileSystemEntityType.directory) {
-      return 'directory';
-    }
-    if (type == FileSystemEntityType.link) {
-      return 'link';
-    }
-    if (type == FileSystemEntityType.notFound) {
-      return 'notFound';
-    }
-    return type.toString();
-  }
-
-  Future<void> _createMarkdownFile() async {
-    final safe = await confirmSafeToContinue(context, ref);
-    if (!safe) {
-      return;
-    }
-    final created = await ref
-        .read(workspaceControllerProvider.notifier)
-        .createMarkdownWorkspace(focusSource: true);
-    if (created && mounted) {
-      context.go('/workspace');
-    }
-  }
-
-  Future<void> _createWritersideProject() async {
-    final safe = await confirmSafeToContinue(context, ref);
-    if (!safe || !mounted) {
-      return;
-    }
-    final parentPath = await getDirectoryPath(
-      initialDirectory: _initialDirectory(),
-      confirmButtonText: context.l10n.chooseLocation,
-      canCreateDirectories: true,
-    );
-    if (parentPath == null || !mounted) {
-      return;
-    }
-    _logSelectedPickerPath(parentPath);
-
-    final created = await showBusyMarkModalEditorDialog<bool>(
-      context,
-      maxWidth: BusyMarkSizes.dialogWide,
-      builder: (context) => BusyMarkCreateWritersideProjectDialog(
-        parentDirectoryPath: parentPath,
-        onCreate: (request) => ref
-            .read(workspaceControllerProvider.notifier)
-            .createWritersideProject(request),
-        message: () => ref.read(workspaceControllerProvider).message,
-      ),
-    );
-    if (!mounted) {
-      return;
-    }
-    if (created == true) {
-      context.go('/workspace');
-    }
-  }
-
-  String? _initialDirectory() {
-    final settings = ref.read(appSettingsControllerProvider);
-    final lastPath = settings.lastOpenedPath;
-    if (lastPath == null || lastPath.isEmpty) {
-      return null;
-    }
-    final extension = p.extension(lastPath);
-    return extension.isEmpty ? lastPath : p.dirname(lastPath);
-  }
-
-  Future<void> _openPath(String path) async {
-    if (path.isEmpty) {
-      return;
-    }
-    final safe = await confirmSafeToContinue(context, ref);
-    if (!safe) {
-      return;
-    }
-    _navigateWhenContentReady = true;
-    try {
-      // The operation still awaits bookkeeping and reports its errors. The
-      // listener may publish the prepared, monitored editor while that write
-      // is pending, without making it a fire-and-forget persistence operation.
-      await ref.read(workspaceControllerProvider.notifier).openPath(path);
-    } finally {
-      _navigateWhenContentReady = false;
-    }
-    if (!mounted) {
-      return;
-    }
-    final workspace = ref.read(workspaceControllerProvider).workspace;
-    if (workspace != null) {
-      context.go('/workspace');
-    }
-  }
-}
-
-class BusyMarkCreateWritersideProjectDialog extends StatefulWidget {
-  const BusyMarkCreateWritersideProjectDialog({
-    super.key,
-    required this.parentDirectoryPath,
-    required this.onCreate,
-    required this.message,
-  });
-
-  final String parentDirectoryPath;
-  final Future<bool> Function(WritersideProjectCreateRequest request) onCreate;
-  final WorkspaceMessage? Function() message;
-
-  @override
-  State<BusyMarkCreateWritersideProjectDialog> createState() =>
-      _BusyMarkCreateWritersideProjectDialogState();
-}
-
-class _BusyMarkCreateWritersideProjectDialogState
-    extends State<BusyMarkCreateWritersideProjectDialog> {
-  static final _directorySlugCharacterPattern = RegExp(
-    r'[\p{L}\p{M}\p{N}_-]',
-    unicode: true,
-  );
-
-  late final TextEditingController _projectNameController;
-  late final TextEditingController _directoryNameController;
-  late final TextEditingController _instanceNameController;
-  late final TextEditingController _instanceIdController;
-  late final TextEditingController _topicTitleController;
-  late String _lastGeneratedDirectoryName;
-  late String _lastGeneratedInstanceId;
-  var _directoryEdited = false;
-  var _syncingDirectory = false;
-  var _instanceIdEdited = false;
-  var _syncingInstanceId = false;
-  var _creating = false;
-  String? _creationError;
-  var _localizedDefaultsApplied = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _projectNameController = TextEditingController()
-      ..addListener(_handleProjectNameChanged);
-    _lastGeneratedDirectoryName = _slugDirectoryName('');
-    _directoryNameController = TextEditingController(
-      text: _lastGeneratedDirectoryName,
-    )..addListener(_handleDirectoryNameChanged);
-    _instanceNameController = TextEditingController()
-      ..addListener(_handleInstanceNameChanged);
-    _lastGeneratedInstanceId = 'user-guide';
-    _instanceIdController = TextEditingController(
-      text: _lastGeneratedInstanceId,
-    )..addListener(_handleInstanceIdChanged);
-    _topicTitleController = TextEditingController()
-      ..addListener(_handleFieldChanged);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_localizedDefaultsApplied) {
-      return;
-    }
-    _localizedDefaultsApplied = true;
-    _instanceNameController.text = context.l10n.defaultInstanceName;
-    _topicTitleController.text = context.l10n.defaultStartTopicTitle;
-  }
-
-  @override
-  void dispose() {
-    _projectNameController.dispose();
-    _directoryNameController.dispose();
-    _instanceNameController.dispose();
-    _instanceIdController.dispose();
-    _topicTitleController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final projectError = _projectNameError(context);
-    final directoryError = _directoryNameError(context);
-    final instanceIdError = _instanceIdError(context);
-    final topicTitleError = _topicTitleError(context);
-    final canCreate =
-        !_creating &&
-        projectError == null &&
-        directoryError == null &&
-        instanceIdError == null &&
-        topicTitleError == null;
-    return PopScope(
-      canPop: !_creating,
-      child: BusyMarkModalEditorScaffold(
-        title: context.l10n.createWritersideProject,
-        cancelLabel: context.l10n.cancel,
-        saveLabel: context.l10n.create,
-        onCancel: () => Navigator.pop(context),
-        cancelEnabled: !_creating,
-        onSave: canCreate ? _submit : null,
-        saving: _creating,
-        children: [
-          BusyMarkGroupedList(
-            filled: true,
-            children: [
-              BusyMarkGroupedTextEntry(
-                label: context.l10n.projectName,
-                controller: _projectNameController,
-                textInputAction: TextInputAction.next,
-                errorText: projectError,
-              ),
-              BusyMarkGroupedTextEntry(
-                label: context.l10n.directoryName,
-                controller: _directoryNameController,
-                textDirection: TextDirection.ltr,
-                textInputAction: TextInputAction.next,
-                errorText: directoryError,
-              ),
-              BusyMarkGroupedTextEntry(
-                label: context.l10n.instanceName,
-                controller: _instanceNameController,
-                textInputAction: TextInputAction.next,
-              ),
-              BusyMarkGroupedTextEntry(
-                label: context.l10n.instanceId,
-                controller: _instanceIdController,
-                textDirection: TextDirection.ltr,
-                textInputAction: TextInputAction.next,
-                errorText: instanceIdError,
-              ),
-              BusyMarkGroupedTextEntry(
-                label: context.l10n.startTopicTitle,
-                controller: _topicTitleController,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) {
-                  if (canCreate) {
-                    _submit();
-                  }
-                },
-                errorText: topicTitleError,
-              ),
-            ],
-          ),
-          if (_creationError != null) ...[
-            const SizedBox(height: BusyMarkSpacing.md),
-            BusyMarkStatusBox(
-              message: _creationError!,
-              kind: BusyMarkStatusKind.error,
-            ),
-          ],
-          BusyMarkGroupedList(
-            title: context.l10n.location,
-            filled: true,
-            children: [
-              BusyMarkListTile.square(
-                title: Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: SelectableText(
-                    _targetPath,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: colors.foreground),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: BusyMarkSpacing.lg),
-        ],
-      ),
-    );
-  }
-
-  String? _projectNameError(BuildContext context) {
-    if (_projectNameController.text.trim().isEmpty) {
-      return context.l10n.projectNameRequired;
-    }
-    return null;
-  }
-
-  String? _directoryNameError(BuildContext context) {
-    final value = _directoryNameController.text.trim();
-    if (value.isEmpty) {
-      return context.l10n.directoryNameRequired;
-    }
-    if (value == '.' ||
-        value == '..' ||
-        p.isAbsolute(value) ||
-        value.contains('..') ||
-        value.contains('/') ||
-        value.contains(r'\')) {
-      return context.l10n.useSingleSafeDirectoryName;
-    }
-    return null;
-  }
-
-  String? _instanceIdError(BuildContext context) {
-    final value = _instanceIdController.text.trim();
-    if (!WritersideProjectCreator.isValidInstanceId(value)) {
-      return context.l10n.useLowercaseIdentifier;
-    }
-    return null;
-  }
-
-  String? _topicTitleError(BuildContext context) {
-    if (_topicTitleController.text.trim().isEmpty) {
-      return context.l10n.startTopicTitleRequired;
-    }
-    return null;
-  }
-
-  String get _targetPath {
-    final directoryName = _directoryNameController.text.trim();
-    final safeDirectoryName = directoryName.isEmpty
-        ? _slugDirectoryName(_projectNameController.text)
-        : directoryName;
-    return p.join(normalizePath(widget.parentDirectoryPath), safeDirectoryName);
-  }
-
-  void _handleProjectNameChanged() {
-    _creationError = null;
-    final nextDirectoryName = _slugDirectoryName(_projectNameController.text);
-    if (!_directoryEdited ||
-        _directoryNameController.text == _lastGeneratedDirectoryName) {
-      _syncingDirectory = true;
-      _lastGeneratedDirectoryName = nextDirectoryName;
-      _directoryNameController.text = nextDirectoryName;
-      _syncingDirectory = false;
-      _directoryEdited = false;
-    }
-    setState(() {});
-  }
-
-  void _handleDirectoryNameChanged() {
-    _creationError = null;
-    if (!_syncingDirectory) {
-      _directoryEdited =
-          _directoryNameController.text != _lastGeneratedDirectoryName;
-    }
-    setState(() {});
-  }
-
-  void _handleInstanceNameChanged() {
-    _creationError = null;
-    final nextInstanceId = _slugInstanceId(_instanceNameController.text);
-    if (!_instanceIdEdited ||
-        _instanceIdController.text == _lastGeneratedInstanceId) {
-      _syncingInstanceId = true;
-      _lastGeneratedInstanceId = nextInstanceId;
-      _instanceIdController.text = nextInstanceId;
-      _syncingInstanceId = false;
-      _instanceIdEdited = false;
-    }
-    setState(() {});
-  }
-
-  void _handleInstanceIdChanged() {
-    _creationError = null;
-    if (!_syncingInstanceId) {
-      _instanceIdEdited =
-          _instanceIdController.text != _lastGeneratedInstanceId;
-    }
-    setState(() {});
-  }
-
-  void _handleFieldChanged() {
-    _creationError = null;
-    setState(() {});
-  }
-
-  Future<void> _submit() async {
-    if (_creating ||
-        _projectNameError(context) != null ||
-        _directoryNameError(context) != null ||
-        _instanceIdError(context) != null ||
-        _topicTitleError(context) != null) {
-      return;
-    }
-    setState(() {
-      _creating = true;
-      _creationError = null;
-    });
-    final created = await widget.onCreate(
-      WritersideProjectCreateRequest(
-        parentDirectoryPath: normalizePath(widget.parentDirectoryPath),
-        projectName: _projectNameController.text.trim(),
-        directoryName: _directoryNameController.text.trim(),
-        instanceName: _instanceNameController.text.trim().isEmpty
-            ? context.l10n.defaultInstanceName
-            : _instanceNameController.text.trim(),
-        instanceId: _instanceIdController.text.trim(),
-        topicTitle: _topicTitleController.text.trim(),
-      ),
-    );
-    if (!mounted) {
-      return;
-    }
-    if (created) {
-      Navigator.pop(context, true);
-      return;
-    }
-    setState(() {
-      _creating = false;
-      final message = widget.message();
-      _creationError = message == null
-          ? context.l10n.createWritersideProjectFailed
-          : localizeWorkspaceMessage(context, message);
-    });
-  }
-
-  String _slugDirectoryName(String value) {
-    final buffer = StringBuffer();
-    var pendingSeparator = false;
-    for (final rune in value.toLowerCase().trim().runes) {
-      final character = String.fromCharCode(rune);
-      if (_directorySlugCharacterPattern.hasMatch(character)) {
-        if (pendingSeparator && buffer.isNotEmpty) {
-          buffer.write('-');
-        }
-        buffer.write(character);
-        pendingSeparator = false;
-      } else {
-        pendingSeparator = true;
-      }
-    }
-    final slug = buffer.toString().replaceAll(RegExp(r'^[-_]+|[-_]+$'), '');
-    return slug.isEmpty ? 'writerside-project' : slug;
-  }
-
-  String _slugInstanceId(String value) {
-    return WritersideProjectCreator.slugInstanceId(value);
   }
 }
 

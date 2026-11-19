@@ -26,7 +26,6 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   final _listScrollController = ScrollController();
   final _listFocusNode = FocusNode(debugLabel: 'Clipboard History list');
   final _entryKeys = <String, GlobalKey>{};
-  final _menuKeys = BusyMarkContextMenuKeys();
   String? _selectedId;
 
   @override
@@ -47,7 +46,6 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   void dispose() {
     _listScrollController.dispose();
     _listFocusNode.dispose();
-    _menuKeys.clear();
     super.dispose();
   }
 
@@ -70,9 +68,6 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     _entryKeys.removeWhere((id, _) => !visibleIds.contains(id));
     return Focus(
       focusNode: _listFocusNode,
-      onFocusChange: (focused) {
-        if (!focused) _menuKeys.clear();
-      },
       onKeyEvent: (_, event) => _handleKey(event, visible, registry),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -189,7 +184,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     BusyMarkClipboardInsertionRegistry registry,
   ) {
     if (_listFocusNode.hasPrimaryFocus &&
-        _menuKeys.handle(event, () {
+        handleBusyMarkContextMenuKey(event, () {
           final selected = visible
               .where((entry) => entry.id == _selectedId)
               .firstOrNull;

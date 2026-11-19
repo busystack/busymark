@@ -1281,7 +1281,8 @@ class BusyMarkHeaderMenuController {
   VoidCallback? _show;
   bool _pending = false;
 
-  void open() {
+  void open({bool allowPending = true}) {
+    if (!allowPending && _show == null) return;
     if (debugLabel != null) {
       busyMarkViewSelectorTrace('controller-open', {
         'command': debugLabel,
@@ -1393,14 +1394,20 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
   void didUpdateWidget(covariant BusyMarkHeaderPopupMenuButton<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
-      oldWidget.controller?._show = null;
+      _detachController(oldWidget.controller);
       _attachController();
+    }
+  }
+
+  void _detachController(BusyMarkHeaderMenuController? controller) {
+    if (controller != null && controller._show == _openFromKeyboard) {
+      controller._show = null;
     }
   }
 
   @override
   void dispose() {
-    widget.controller?._show = null;
+    _detachController(widget.controller);
     final session = _activeMenuSession;
     _activeMenuSession = null;
     if (session != null) {
@@ -1441,7 +1448,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
     final onSelected = widget.onSelected;
     final onCanceled = widget.onCanceled;
     final previousFocus = FocusManager.instance.primaryFocus;
-    final restoreSelectorFocus = widget.controller != null;
+    var restoreFocus = widget.controller != null;
     final owningRoute = ModalRoute.of(context);
     try {
       final items = await widget.itemBuilder(context);
@@ -1482,8 +1489,10 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           });
         }
       }
+      restoreFocus = restoreFocus && !session.dismissed;
       if (mounted && !session.dismissed) {
         if (selection != null) {
+          restoreFocus = false;
           onSelected(selection);
         } else {
           onCanceled?.call(context);
@@ -1497,7 +1506,8 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
         );
       }
     } finally {
-      if (restoreSelectorFocus &&
+      if (restoreFocus &&
+          mounted &&
           (owningRoute?.isCurrent ?? true) &&
           previousFocus?.context?.mounted == true) {
         previousFocus!.requestFocus();
@@ -2482,6 +2492,12 @@ bool isBusyMarkContextMenuKeyEvent(KeyEvent event) {
               keyboard.isShiftPressed);
 }
 
+bool handleBusyMarkContextMenuKey(KeyEvent event, VoidCallback? open) {
+  if (open == null || !isBusyMarkContextMenuKeyEvent(event)) return false;
+  open();
+  return true;
+}
+
 class BusyMarkPopupSelectorOption<T> {
   const BusyMarkPopupSelectorOption({
     required this.value,
@@ -3235,7 +3251,6 @@ class _BusyMarkSidebarRecordRowState<T>
   late final FocusNode _rowFocusNode;
   var _contextMenuOpen = false;
   DateTime? _lastTapAt;
-  final _menuKeys = BusyMarkContextMenuKeys();
   NativeMenuSession? _menuSession;
 
   bool get _hasMenu =>
@@ -3250,7 +3265,6 @@ class _BusyMarkSidebarRecordRowState<T>
 
   @override
   void dispose() {
-    _menuKeys.clear();
     if (_menuSession case final session?) {
       unawaited(const NativeMenuService().dismiss(session));
     }
@@ -3259,7 +3273,7 @@ class _BusyMarkSidebarRecordRowState<T>
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    return _menuKeys.handle(
+    return handleBusyMarkContextMenuKey(
           event,
           _hasMenu ? () => unawaited(_showContextMenu()) : null,
         )
@@ -3361,10 +3375,7 @@ class _BusyMarkSidebarRecordRowState<T>
         clickable: enabled,
         selected: widget.selected || _contextMenuOpen,
         onKeyEvent: _handleKeyEvent,
-        onFocusChange: (focused) {
-          if (!focused) _menuKeys.clear();
-          widget.onFocusChange?.call(focused);
-        },
+        onFocusChange: widget.onFocusChange,
         onTap: widget.onTap == null ? null : _handleTap,
         onSecondaryTapUp: !_hasMenu
             ? null
@@ -5220,14 +5231,6 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
 }
 
 class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
-  final _menuKeys = BusyMarkContextMenuKeys();
-
-  @override
-  void dispose() {
-    _menuKeys.clear();
-    super.dispose();
-  }
-
   void showMenuFromKeyboard() {
     final onMenuRequested = widget.onMenuRequested;
     if (!widget.enabled || onMenuRequested == null) {
@@ -5268,7 +5271,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
         return KeyEventResult.handled;
       }
     }
-    return _menuKeys.handle(
+    return handleBusyMarkContextMenuKey(
           event,
           widget.enabled && widget.onMenuRequested != null
               ? showMenuFromKeyboard
@@ -5320,10 +5323,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
               ? null
               : (details) =>
                     widget.onMenuRequested!(context, details.globalPosition)),
-      onFocusChange: (focused) {
-        if (!focused) _menuKeys.clear();
-        widget.onFocusChange?.call(focused);
-      },
+      onFocusChange: widget.onFocusChange,
       child: Row(
         children: [
           SizedBox(

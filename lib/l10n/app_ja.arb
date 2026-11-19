@@ -716,15 +716,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "作成",
+  "home": "ホーム",
+  "openMenu": "開くメニュー",
+  "newNextcloudNote": "新しい Nextcloud ノート",
+  "shortcutNewDocument": "新規作成メニュー",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Markdown ファイルまたは Writerside プロジェクトを作成",
+  "shortcutNewDocumentDescription": "リソースを作成するメニューを表示",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Markdown ファイル、フォルダー、または Writerside プロジェクトを開く",
+  "shortcutOpenDescription": "リソースを開くメニューを表示",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -5177,7 +5180,7 @@
   "searchTopicsCategory": "トピック",
   "searchCurrentDocument": "現在のドキュメント",
   "searchCurrentWorkspace": "現在のワークスペース",
-  "browseNotes": "ノートを参照",
+  "browseNotes": "Nextcloud ノートを参照",
   "searchActionsCommand": "アクションを検索",
   "searchDocumentsCommand": "ドキュメントを検索",
   "searchTopicsCommand": "トピックを検索",

@@ -855,13 +855,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutGroupGeneral => '常规';
 
   @override
-  String get shortcutNewDocument => '创建';
+  String get home => '主页';
 
   @override
-  String get shortcutNewDocumentDescription => '创建 Markdown 文件或 Writerside 项目';
+  String get openMenu => '打开菜单';
 
   @override
-  String get shortcutOpenDescription => '打开 Markdown 文件、文件夹或 Writerside 项目';
+  String get newNextcloudNote => '新建 Nextcloud 笔记';
+
+  @override
+  String get shortcutNewDocument => '新建菜单';
+
+  @override
+  String get shortcutNewDocumentDescription => '显示用于新建资源的菜单';
+
+  @override
+  String get shortcutOpenDescription => '显示用于打开资源的菜单';
 
   @override
   String get shortcutSaveDescription => '保存当前文档';
@@ -5287,7 +5296,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchCurrentWorkspace => '当前工作区';
 
   @override
-  String get browseNotes => '浏览笔记';
+  String get browseNotes => '浏览 Nextcloud 笔记';
 
   @override
   String get searchActionsCommand => '搜索操作';
@@ -9480,13 +9489,22 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get shortcutGroupGeneral => '常规';
 
   @override
-  String get shortcutNewDocument => '创建';
+  String get home => '主页';
 
   @override
-  String get shortcutNewDocumentDescription => '创建 Markdown 文件或 Writerside 项目';
+  String get openMenu => '打开菜单';
 
   @override
-  String get shortcutOpenDescription => '打开 Markdown 文件、文件夹或 Writerside 项目';
+  String get newNextcloudNote => '新建 Nextcloud 笔记';
+
+  @override
+  String get shortcutNewDocument => '新建菜单';
+
+  @override
+  String get shortcutNewDocumentDescription => '显示用于新建资源的菜单';
+
+  @override
+  String get shortcutOpenDescription => '显示用于打开资源的菜单';
 
   @override
   String get shortcutSaveDescription => '保存当前文档';
@@ -13912,7 +13930,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get searchCurrentWorkspace => '当前工作区';
 
   @override
-  String get browseNotes => '浏览笔记';
+  String get browseNotes => '浏览 Nextcloud 笔记';
 
   @override
   String get searchActionsCommand => '搜索操作';

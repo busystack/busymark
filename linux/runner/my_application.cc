@@ -378,7 +378,11 @@ static gboolean native_menu_view_event(GtkWidget*,
   if (event->type == GDK_KEY_RELEASE) {
     auto* state = native_menu_key_state(data, &event->key);
     if (is_current_key_release(state, event->key.time)) {
+      const bool pressed_in_menu = state->owner == NativeMenuKeyOwner::kMenu;
       record_key_release(state, event->key.time);
+      // An activation or Escape can ungrab the keyboard before the key comes
+      // back up. FlView never saw this press and must not see its release.
+      if (pressed_in_menu) return GDK_EVENT_STOP;
     }
     return GDK_EVENT_PROPAGATE;
   }

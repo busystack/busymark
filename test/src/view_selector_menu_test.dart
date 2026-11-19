@@ -340,7 +340,6 @@ void main() {
   }
 
   testWidgets('Linux context-menu keys exclude Ctrl+Shift+F10', (tester) async {
-    final keys = BusyMarkContextMenuKeys();
     var opened = 0;
     const event = KeyDownEvent(
       physicalKey: PhysicalKeyboardKey.f10,
@@ -351,7 +350,8 @@ void main() {
       MaterialApp(
         home: Focus(
           autofocus: true,
-          onKeyEvent: (_, event) => keys.handle(event, () => opened++)
+          onKeyEvent: (_, event) =>
+              handleBusyMarkContextMenuKey(event, () => opened++)
               ? KeyEventResult.handled
               : KeyEventResult.ignored,
           child: const SizedBox(),
@@ -362,9 +362,10 @@ void main() {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     expect(isBusyMarkContextMenuKeyEvent(event), isTrue);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
-    expect(opened, 0);
+    expect(opened, 1, reason: 'Shift+F10 opens on keydown');
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.f10);
+    expect(opened, 1, reason: 'Repeats do not reopen a native menu');
     await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
-    expect(opened, 0, reason: 'GTK must wait for Shift release');
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     expect(opened, 1);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);

@@ -684,15 +684,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Loo",
+  "home": "Avaleht",
+  "openMenu": "Avamismenüü",
+  "newNextcloudNote": "Uus Nextcloudi märge",
+  "shortcutNewDocument": "Uue ressursi menüü",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Loo Markdowni fail või Writerside’i projekt",
+  "shortcutNewDocumentDescription": "Kuva ressursside loomise menüü",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Ava Markdowni fail, kaust või Writerside’i projekt",
+  "shortcutOpenDescription": "Kuva ressursside avamise menüü",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -4095,7 +4098,7 @@
   "searchTopicsCategory": "Teemad",
   "searchCurrentDocument": "Praegune dokument",
   "searchCurrentWorkspace": "Praegune tööruum",
-  "browseNotes": "Sirvi märkmeid",
+  "browseNotes": "Sirvi Nextcloudi märkmeid",
   "searchActionsCommand": "Otsi toiminguid",
   "searchDocumentsCommand": "Otsi dokumente",
   "searchTopicsCommand": "Otsi teemasid",

@@ -909,15 +909,24 @@ class AppLocalizationsId extends AppLocalizations {
   String get shortcutGroupGeneral => 'Umum';
 
   @override
-  String get shortcutNewDocument => 'Buat';
+  String get home => 'Beranda';
+
+  @override
+  String get openMenu => 'Menu Buka';
+
+  @override
+  String get newNextcloudNote => 'Catatan Nextcloud Baru';
+
+  @override
+  String get shortcutNewDocument => 'Menu Baru';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Buat file Markdown atau proyek Writerside';
+      'Tampilkan menu untuk membuat sumber daya';
 
   @override
   String get shortcutOpenDescription =>
-      'Buka file Markdown, folder, atau proyek Writerside';
+      'Tampilkan menu untuk membuka sumber daya';
 
   @override
   String get shortcutSaveDescription => 'Simpan dokumen saat ini';
@@ -5540,7 +5549,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get searchCurrentWorkspace => 'Ruang kerja saat ini';
 
   @override
-  String get browseNotes => 'Jelajahi catatan';
+  String get browseNotes => 'Jelajahi Catatan Nextcloud';
 
   @override
   String get searchActionsCommand => 'Cari tindakan';

@@ -1771,22 +1771,40 @@ abstract class AppLocalizations {
   /// **'General'**
   String get shortcutGroupGeneral;
 
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @openMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Menu'**
+  String get openMenu;
+
+  /// No description provided for @newNextcloudNote.
+  ///
+  /// In en, this message translates to:
+  /// **'New Nextcloud Note'**
+  String get newNextcloudNote;
+
   /// Keyboard shortcut label for opening the content creation chooser.
   ///
   /// In en, this message translates to:
-  /// **'Create'**
+  /// **'New Menu'**
   String get shortcutNewDocument;
 
   /// Keyboard shortcut description for creating Markdown files or Writerside projects.
   ///
   /// In en, this message translates to:
-  /// **'Create a Markdown file or Writerside project'**
+  /// **'Show the menu for creating resources'**
   String get shortcutNewDocumentDescription;
 
   /// Keyboard shortcut description for opening content.
   ///
   /// In en, this message translates to:
-  /// **'Open a Markdown file, folder, or Writerside project'**
+  /// **'Show the menu for opening resources'**
   String get shortcutOpenDescription;
 
   /// Keyboard shortcut description for saving content.
@@ -2104,7 +2122,7 @@ abstract class AppLocalizations {
   /// Welcome screen action for creating a Markdown file.
   ///
   /// In en, this message translates to:
-  /// **'Create Markdown File'**
+  /// **'New Markdown File'**
   String get createMarkdownFile;
 
   /// Welcome screen subtitle for creating a Markdown file.
@@ -2116,7 +2134,7 @@ abstract class AppLocalizations {
   /// Welcome screen action for creating a Writerside project.
   ///
   /// In en, this message translates to:
-  /// **'Create Writerside Project'**
+  /// **'New Writerside Project'**
   String get createWritersideProject;
 
   /// Welcome screen subtitle for creating a Writerside project.
@@ -9471,7 +9489,7 @@ abstract class AppLocalizations {
   /// No description provided for @browseNotes.
   ///
   /// In en, this message translates to:
-  /// **'Browse Notes'**
+  /// **'Browse Nextcloud Notes'**
   String get browseNotes;
 
   /// No description provided for @searchActionsCommand.
