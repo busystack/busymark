@@ -173,13 +173,21 @@ class WritersideProjectCreator {
     };
     String? publishedRootId;
     try {
-      final stage = await _projectRootAnchor(parent, staging.path);
+      final privateRoot = await _projectRootAnchor(parent, staging.path);
       if (!_owns(staging.path, stagingId)) {
         throw FileSystemException(
           'Project staging directory changed',
           staging.path,
         );
       }
+      // Keep the temporary boundary private while giving the published
+      // project the same creation permissions as an ordinary directory.
+      await _createProjectDirectory(privateRoot, 'project');
+      final stage = await _projectRootAnchor(
+        privateRoot,
+        p.join(staging.path, 'project'),
+      );
+      final stageId = _identity(stage.rootPath);
       const directories = ['topics', 'images', 'cfg'];
       for (final name in directories) {
         await _createProjectDirectory(stage, name);
@@ -195,7 +203,7 @@ class WritersideProjectCreator {
       }
       if (!canPublish()) return null;
       destination.requireCurrent(root.path);
-      if (!_owns(staging.path, stagingId)) {
+      if (!_owns(staging.path, stagingId) || !_owns(stage.rootPath, stageId)) {
         throw FileSystemException(
           'Project staging directory changed',
           staging.path,
@@ -213,7 +221,7 @@ class WritersideProjectCreator {
         }
       } else {
         _publish(stage.rootPath, root.path, directory: true);
-        publishedRootId = stagingId;
+        publishedRootId = stageId;
         moved.addAll(entries.keys);
       }
       final rootId = publishedRootId;
