@@ -31,14 +31,14 @@ def run(binary, output, theme, remapped):
                           'alt': False, 'meta': False}
                 for command, key in [('file.newDocument', 0x100000806),
                                      ('file.open', 0x100000808),
-                                     ('view.sidebarSelector', 0x100000807)]}
+                                     ('view.sidebarSelector', 0x100000804)]}
         settings.write_text(json.dumps(values))
         os.environ['BUSYSTACK_NATIVE_PLAIN_DIRECTORY'] = '1'
         os.environ['BUSYSTACK_NATIVE_THEME'] = theme
         desktop = DesktopRun(binary, output, root, 1.0)
         new_key = ('F6',) if remapped else ('Control_L', 'n')
         open_key = ('F8',) if remapped else ('Control_L', 'o')
-        sidebar_key = ('F7',) if remapped else ('Control_L', 'Shift_L', 'F9')
+        sidebar_key = ('F4',) if remapped else ('Control_L', 'Shift_L', 'F9')
         new_name = 'New Menu (F6)' if remapped else 'New Menu (Ctrl+N)'
         open_name = 'Open Menu (F8)' if remapped else 'Open Menu (Ctrl+O)'
 
@@ -131,15 +131,15 @@ def run(binary, output, theme, remapped):
             menu('_editor-cancel', NEW)
             desktop.key('Escape')
             closed()
-            desktop.send('text', value='editor-focus')
-            wait_document_text(desktop, original + 'editor-focus')
+            desktop.send('text', value='editorfocusn')
+            wait_document_text(desktop, original + 'editorfocusn')
 
             desktop.key(*new_key)
             menu('_create-from-source', NEW)
             desktop.key('m')
             closed()
-            desktop.send('text', value='first-keystrokes')
-            wait_document_text(desktop, 'first-keystrokes')
+            desktop.send('text', value='firstkeystrokes')
+            wait_document_text(desktop, 'firstkeystrokes')
             desktop.capture('workspace-new-source')
             desktop.send('resize', width=600, height=730)
             desktop.key(*sidebar_key)
