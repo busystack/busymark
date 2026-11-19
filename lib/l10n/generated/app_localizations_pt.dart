@@ -729,6 +729,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Novo';
+
+  @override
   String get open => 'Abrir';
 
   @override
@@ -9822,6 +9825,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get markdown => 'Markdown';
+
+  @override
+  String get newResource => 'Novo';
 
   @override
   String get open => 'Abrir';

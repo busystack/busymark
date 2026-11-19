@@ -724,6 +724,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Yeni';
+
+  @override
   String get open => 'Aç';
 
   @override

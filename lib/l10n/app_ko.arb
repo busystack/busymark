@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "새로 만들기",
   "open": "열기",
   "@open": {
     "description": "Open action label."

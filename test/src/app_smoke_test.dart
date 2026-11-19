@@ -5515,8 +5515,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final search = find.byTooltip(l10n.search);
-      final open = find.byKey(const ValueKey('header-open-menu'));
-      final create = find.byKey(const ValueKey('header-new-menu'));
+      final open = find.byTooltip('Open (Ctrl+O)');
+      final create = find.byTooltip('New (Ctrl+N)');
       final main = find.byTooltip(l10n.mainMenu);
       expect(tester.getCenter(search).dx, lessThan(tester.getCenter(open).dx));
       expect(tester.getCenter(open).dx, lessThan(tester.getCenter(create).dx));
@@ -5587,10 +5587,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(menus.isOpen, isTrue);
       expect(menus.contains(l10n.newNextcloudNote), isTrue);
-      expect(
-        find.byTooltip('${l10n.shortcutNewDocument} (Alt+F6)'),
-        findsOneWidget,
-      );
+      expect(find.byTooltip('New (Alt+F6)'), findsOneWidget);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
       menus.close();
@@ -11320,8 +11317,8 @@ code
       leftTooltip: l10n.validate,
       rightTooltip: l10n.search,
     );
-    final openMenu = '${l10n.openMenu} (Ctrl+O)';
-    final newMenu = '${l10n.shortcutNewDocument} (Ctrl+N)';
+    final openMenu = '${l10n.open} (Ctrl+O)';
+    final newMenu = '${l10n.newResource} (Ctrl+N)';
     for (final (left, right) in [
       (l10n.search, openMenu),
       (openMenu, newMenu),

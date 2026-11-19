@@ -721,6 +721,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Uus';
+
+  @override
   String get open => 'Ava';
 
   @override

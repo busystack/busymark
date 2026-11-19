@@ -727,6 +727,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Створити';
+
+  @override
   String get open => 'Відкрити';
 
   @override

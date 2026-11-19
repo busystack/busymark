@@ -723,6 +723,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'جدید';
+
+  @override
   String get open => 'باز کردن';
 
   @override

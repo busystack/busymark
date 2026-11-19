@@ -731,6 +731,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Nieuw';
+
+  @override
   String get open => 'Openen';
 
   @override

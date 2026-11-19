@@ -728,6 +728,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'नया';
+
+  @override
   String get open => 'खोलें';
 
   @override

@@ -724,6 +724,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Tạo mới';
+
+  @override
   String get open => 'Mở';
 
   @override

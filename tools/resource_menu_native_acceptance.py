@@ -39,8 +39,8 @@ def run(binary, output, theme, remapped):
         new_key = ('F6',) if remapped else ('Control_L', 'n')
         open_key = ('F8',) if remapped else ('Control_L', 'o')
         sidebar_key = ('F4',) if remapped else ('Control_L', 'Shift_L', 'F9')
-        new_name = 'New Menu (F6)' if remapped else 'New Menu (Ctrl+N)'
-        open_name = 'Open Menu (F8)' if remapped else 'Open Menu (Ctrl+O)'
+        new_name = 'New (F6)' if remapped else 'New (Ctrl+N)'
+        open_name = 'Open (F8)' if remapped else 'Open (Ctrl+O)'
 
         def snapshot(name, **kwargs):
             desktop.send('accessibility', name=name, **kwargs)

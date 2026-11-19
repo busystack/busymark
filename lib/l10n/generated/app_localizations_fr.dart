@@ -735,6 +735,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Nouveau';
+
+  @override
   String get open => 'Ouvrir';
 
   @override

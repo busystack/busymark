@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "नया",
   "open": "खोलें",
   "@open": {
     "description": "Open action label."

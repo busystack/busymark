@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Yeni",
   "open": "Aç",
   "@open": {
     "description": "Open action label."

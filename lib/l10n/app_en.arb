@@ -401,6 +401,8 @@
   "@fullScreen": {"description": "Command that toggles full-screen window mode."},
   "markdown": "Markdown",
   "@markdown": {"description": "Markdown format label."},
+  "newResource": "New",
+  "@newResource": {"description": "Short tooltip for the header button that opens creation options."},
   "open": "Open",
   "@open": {"description": "Open action label."},
   "openInFiles": "Open in Files",

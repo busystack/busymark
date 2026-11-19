@@ -718,6 +718,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'جديد';
+
+  @override
   String get open => 'فتح';
 
   @override

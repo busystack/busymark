@@ -699,6 +699,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => '새로 만들기';
+
+  @override
   String get open => '열기';
 
   @override

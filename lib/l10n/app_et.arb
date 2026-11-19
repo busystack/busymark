@@ -447,6 +447,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Uus",
   "open": "Ava",
   "@open": {
     "description": "Open action label."

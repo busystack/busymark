@@ -725,6 +725,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Nowy';
+
+  @override
   String get open => 'Otwórz';
 
   @override

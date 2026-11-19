@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "جدید",
   "open": "باز کردن",
   "@open": {
     "description": "Open action label."

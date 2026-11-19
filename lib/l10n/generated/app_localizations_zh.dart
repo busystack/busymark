@@ -674,6 +674,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => '新建';
+
+  @override
   String get open => '打开';
 
   @override
@@ -9306,6 +9309,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get markdown => 'Markdown';
+
+  @override
+  String get newResource => '新建';
 
   @override
   String get open => '打开';

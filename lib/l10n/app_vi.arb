@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Tạo mới",
   "open": "Mở",
   "@open": {
     "description": "Open action label."

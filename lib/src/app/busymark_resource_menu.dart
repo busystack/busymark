@@ -82,7 +82,7 @@ class BusyMarkResourceMenuButton extends ConsumerWidget {
     return BusyMarkHeaderPopupMenuButton<WorkspaceResourceAction>(
       key: ValueKey(isNew ? 'header-new-menu' : 'header-open-menu'),
       controller: ref.watch(resourceMenuControllerProvider(commandId)),
-      tooltip: command.label(context),
+      tooltip: isNew ? l10n.newResource : l10n.open,
       shortcut: command.shortcut?.label,
       icon: isNew ? BusyMarkGlyphs.add : BusyMarkGlyphs.folder,
       itemBuilder: (_) => [

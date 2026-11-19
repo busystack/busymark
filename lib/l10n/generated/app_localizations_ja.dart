@@ -698,6 +698,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => '新規作成';
+
+  @override
   String get open => '開く';
 
   @override

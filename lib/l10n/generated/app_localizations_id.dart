@@ -726,6 +726,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Baru';
+
+  @override
   String get open => 'Buka';
 
   @override

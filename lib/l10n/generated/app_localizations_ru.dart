@@ -728,6 +728,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Создать';
+
+  @override
   String get open => 'Открыть';
 
   @override

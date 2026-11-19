@@ -1411,6 +1411,12 @@ abstract class AppLocalizations {
   /// **'Markdown'**
   String get markdown;
 
+  /// Short tooltip for the header button that opens creation options.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newResource;
+
   /// Open action label.
   ///
   /// In en, this message translates to:

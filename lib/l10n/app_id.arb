@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Baru",
   "open": "Buka",
   "@open": {
     "description": "Open action label."
