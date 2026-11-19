@@ -116,16 +116,14 @@ def run(binary, output, theme, remapped):
             menu('_welcome-sidebar', ['Recent'])
             desktop.key('Escape')
             closed()
+            def is_recent_fixture(row):
+                return (row['role'] == 'push button' and row['enabled'] and
+                        row['name'].split('\n', 1)[0] == root.name)
+
             rows = desktop.wait_accessible(
-                lambda rs: any(r['name'].split('\n', 1)[0] == root.name for r in rs),
-                '_recent-fixture')
-            recent = next(r['name'] for r in rows if r['name'].split('\n', 1)[0] == root.name)
-            desktop.send('activateAccessible', name=recent, role='panel')
-            desktop.key('Control_L', 'Shift_L', 'd')
-            desktop.wait_accessible(lambda rows: any(row['role'] == 'text' and row['focused']
-                                    for row in rows), '_document-query-focused')
-            desktop.send('text', value=document.name)
-            desktop.key('Return')
+                lambda rows: any(map(is_recent_fixture, rows)), '_recent-fixture')
+            recent = next(row['name'] for row in rows if is_recent_fixture(row))
+            desktop.send('activateAccessible', name=recent, role='push button')
             wait_document_text(desktop, original)
             desktop.send('click', x=402, y=125)
             desktop.key('Control_L', 'End')

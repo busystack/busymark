@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../git/application/shared_git_tabs.dart';
 import '../local_history/local_history_controller.dart';
 import 'workspace_controller.dart';
 
@@ -10,6 +11,11 @@ import 'workspace_controller.dart';
 void revealOpenedDocument(WidgetRef ref) {
   final history = ref.read(localHistoryControllerProvider.notifier);
   history.clearComparison();
-  final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-  if (buffer != null) unawaited(history.selectDocumentForBuffer(buffer));
+  final state = ref.read(workspaceControllerProvider);
+  final buffer = state.activeBuffer;
+  if (buffer == null) return;
+  if (state.workspace case final workspace?) {
+    ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
+  }
+  unawaited(history.selectDocumentForBuffer(buffer));
 }

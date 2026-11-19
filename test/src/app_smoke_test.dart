@@ -10017,6 +10017,40 @@ code
     await tester.pump(const Duration(milliseconds: 800));
   });
 
+  testWidgets('Recent reveals the existing document behind a Git comparison', (
+    tester,
+  ) async {
+    final h = await tabWorkspace(tester, count: 1, git: true);
+    final before = h.container.read(workspaceControllerProvider);
+    final review = _comparisonTabs(h.container).active!;
+    final document = before.activeBuffer!;
+    final resource = RecentResource(
+      path: document.filePath!,
+      kind: 'markdown',
+      document: true,
+      lastOpenedAt: DateTime.now(),
+    );
+    await h.controller.recordRecentResource(resource);
+    await _chooseNativeSidebar(tester, l10n.recent);
+    await tester.pumpAndSettle();
+    expect(_comparisonTabs(h.container).active, same(review));
+
+    await tester.tap(
+      find.byKey(ValueKey(RecentSearchResult(resource).identity)),
+    );
+    await pumpUntil(
+      tester,
+      () => _comparisonTabs(h.container).active == null,
+      operation: 'reveal the existing authoring document from Recent',
+    );
+    final after = h.container.read(workspaceControllerProvider);
+    expect(after.documentBuffers.single.id, document.id);
+    expect(after.activeText, document.text);
+    expect(after.workspace!.id, before.workspace!.id);
+    expect(_comparisonTabs(h.container).entries, contains(review));
+    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
+  });
+
   testWidgets('Git diff files are shown as separate editor tabs', (
     tester,
   ) async {
