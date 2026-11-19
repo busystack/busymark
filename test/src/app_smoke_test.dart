@@ -19497,11 +19497,8 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       expect(find.byIcon(BusyMarkGlyphs.downArrow), findsNothing);
       expect(find.byTooltip(l10n.remoteImageBlockedTooltip), findsOneWidget);
       expect(
-        tester
-            .getSemantics(find.bySemanticsLabel(l10n.remoteImageBlocked))
-            .getSemanticsData()
-            .hint,
-        '$alt\n$source',
+        find.bySemanticsLabel('${l10n.remoteImageBlocked}\n$alt\n$source'),
+        findsOneWidget,
       );
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       addTearDown(mouse.removePointer);

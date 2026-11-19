@@ -494,7 +494,7 @@ void main() {
       ).readAsStringSync();
 
       expect(workspace, contains('const SearchHeaderField()'));
-      expect(workspace, contains('if (!searchState.active)'));
+      expect(workspace, contains("ValueKey('workspace-home')"));
       final sidebar = File(
         'lib/src/search/search_sidebar.dart',
       ).readAsStringSync();
@@ -982,7 +982,11 @@ void main() {
       r'class BusyMarkHeaderIconButton[\s\S]*?class '
       r'BusyMarkCompactIconButton',
     ).firstMatch(design)!.group(0)!;
-    expect(headerIcon, contains('final button = YaruIconButton('));
+    expect(headerIcon, contains('final yaruButton = YaruIconButton('));
+    expect(
+      headerIcon,
+      contains('style.merge(yaruButton.defaultStyleOf(context))'),
+    );
     expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));

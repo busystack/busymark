@@ -1132,8 +1132,9 @@ class _RemoteImageBlockedPlaceholderState
             focusable: enabled,
             focused: enabled ? _focus.hasFocus : null,
             onFocus: enabled ? _focus.requestFocus : null,
-            label: l10n.remoteImageBlocked,
-            hint: details,
+            // Linux exposes the label to assistive technology. The visible
+            // tooltip below remains short regardless of the source length.
+            label: '${l10n.remoteImageBlocked}\n$details',
             onTap: enabled ? () => unawaited(_open()) : null,
             excludeSemantics: true,
             child: Tooltip(
