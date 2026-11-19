@@ -45,7 +45,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-Future<void> settleStorage(WidgetTester tester) async {
+Future<void> settleStorage(
+  WidgetTester tester, {
+  bool Function()? until,
+}) async {
   // Give real history/attachment I/O a real async turn before settling frames.
   // Animating an indeterminate loader in fake time cannot complete that I/O.
   final deadline = DateTime.now().add(const Duration(seconds: 10));
@@ -64,7 +67,8 @@ Future<void> settleStorage(WidgetTester tester) async {
     );
     await tester.pump(const Duration(milliseconds: 30));
     rounds++;
-  } while ((rounds < 10 || loading()) && DateTime.now().isBefore(deadline));
+  } while ((rounds < 10 || loading() || until?.call() == false) &&
+      DateTime.now().isBefore(deadline));
   await tester.pumpAndSettle();
 }
 
@@ -774,10 +778,19 @@ void main() {
             .read(appSettingsControllerProvider.notifier)
             .setDocumentViewMode(DocumentViewModePreference.source);
         await settleStorage(tester);
+        final priorBufferId = container
+            .read(workspaceControllerProvider)
+            .activeBufferId;
         await tester.tap(find.byKey(const ValueKey('header-new-menu')));
         await tester.pumpAndSettle();
         menus.select('New Nextcloud Note');
-        await settleStorage(tester);
+        await settleStorage(
+          tester,
+          until: () =>
+              repository.notes.length == before + 1 &&
+              container.read(workspaceControllerProvider).activeBufferId !=
+                  priorBufferId,
+        );
         expect(repository.notes.length, before + 1);
         final active = container
             .read(workspaceControllerProvider)
@@ -802,7 +815,17 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.text('Discard'), findsOneWidget);
           await tester.tap(find.text(choice));
-          await settleStorage(tester);
+          await settleStorage(
+            tester,
+            until: choice == 'Discard'
+                ? () =>
+                      container
+                          .read(workspaceControllerProvider)
+                          .workspace
+                          ?.kind ==
+                      WorkspaceKind.untitledMarkdown
+                : null,
+          );
           if (choice == 'Cancel') {
             expect(
               container.read(workspaceControllerProvider).activeText,

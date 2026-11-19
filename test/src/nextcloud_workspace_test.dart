@@ -164,7 +164,12 @@ void main() {
         final localPath = p.join(h.root.path, 'local.md');
         await File(localPath).writeAsString('local source');
         await h.controller.openPath(localPath);
-        if (dirty) h.controller.updateActiveText('unsaved local source');
+        if (dirty) {
+          await h.container
+              .read(appSettingsControllerProvider.notifier)
+              .setAutoSave(false);
+          h.controller.updateActiveText('unsaved local source');
+        }
         final current = await h.controller.localHistoryCurrentSource(
           captured.document,
           revision,

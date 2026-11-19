@@ -2745,20 +2745,35 @@ CommonMark paragraph.
     },
   );
 
-  test('failed open clears stale workspace state', () async {
-    final harness = await _createControllerHarness();
-    final settingsController = harness.settingsController;
-    final controller = harness.controller;
+  test(
+    'failed open preserves the current workspace and dirty document',
+    () async {
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
-    await controller.openPath('test/fixtures/markdown/basic.md');
-    await controller.openPath('test/fixtures/markdown/does-not-exist.md');
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final workspaceId = controller.state.workspace!.id;
+      final bufferId = controller.state.activeBufferId;
+      await controller.openPath('test/fixtures/markdown/does-not-exist.md');
+      expect(controller.state.workspace?.id, workspaceId);
+      expect(controller.state.activeBufferId, bufferId);
+      expect(controller.state.message?.code, WorkspaceMessageCode.openFailed);
 
-    expect(controller.state.workspace, isNull);
-    expect(controller.state.message?.code, WorkspaceMessageCode.openFailed);
+      await settingsController.setAutoSave(false);
+      controller.updateActiveText('# Unsaved work\n');
+      await controller.openPath('test/fixtures/markdown/does-not-exist.md');
 
-    controller.dispose();
-    settingsController.dispose();
-  });
+      expect(controller.state.workspace?.id, workspaceId);
+      expect(controller.state.activeBufferId, bufferId);
+      expect(controller.state.activeText, '# Unsaved work\n');
+      expect(controller.state.hasUnsavedChanges, isTrue);
+      expect(controller.state.isLoading, isFalse);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
 
   test(
     'math renderer failures become source-linked runtime diagnostics',
