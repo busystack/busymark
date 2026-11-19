@@ -2555,6 +2555,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     FocusNode node,
     KeyEvent event,
   ) {
+    // The selection node is also an ancestor of interactive block content.
+    // Its editing keys belong to the selection input when that input owns focus.
+    if (identical(node, _selectionFocusNode) && !node.hasPrimaryFocus) {
+      return KeyEventResult.ignored;
+    }
     final key = event.logicalKey;
     if (_hasDocumentInputComposition &&
         (key == LogicalKeyboardKey.backspace ||
@@ -6719,6 +6724,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _insertTabIntoBlock(String blockId) {
     if (_hasBlockSelection) {
       return _replaceDocumentSelectionWithText('\t');
+    }
+    final block = _documentController.blockById(blockId);
+    if (block == null ||
+        block.kind == BusyBlockKind.image ||
+        !_isFocusableTextBlock(block)) {
+      return false;
     }
     final controller = _textControllers[blockId];
     if (controller == null) {

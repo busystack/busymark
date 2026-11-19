@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:busystack_git_flutter/busystack_git_flutter.dart'
+    show NativeFocusIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as p;
@@ -1066,20 +1068,24 @@ class _RemoteImageBlockedPlaceholder extends StatelessWidget {
                       if (loadImage != null)
                         Tooltip(
                           message: context.l10n.remoteImageUntilClose,
-                          child: BusyMarkPushButton.suggested(
-                            onPressed: loadImage,
-                            child: Text(
-                              context.l10n.loadThisRemoteImage,
-                              textAlign: TextAlign.center,
+                          child: NativeFocusIndicator(
+                            child: BusyMarkPushButton.suggested(
+                              onPressed: loadImage,
+                              child: Text(
+                                context.l10n.loadThisRemoteImage,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
                         ),
                       if (moreOptions != null)
-                        BusyMarkPushButton.standard(
-                          onPressed: moreOptions,
-                          child: Text(
-                            context.l10n.remoteImageMoreOptions,
-                            textAlign: TextAlign.center,
+                        NativeFocusIndicator(
+                          child: BusyMarkPushButton.standard(
+                            onPressed: moreOptions,
+                            child: Text(
+                              context.l10n.remoteImageMoreOptions,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                     ],

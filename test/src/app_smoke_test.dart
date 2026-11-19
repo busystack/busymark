@@ -18259,6 +18259,16 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
           buffer().editorState.undoState.undo,
           same(beforePermission.editorState.undoState.undo),
         );
+        Focus.of(tester.element(load)).requestFocus();
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.remoteImageMoreOptionsTitle), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(buffer().text, beforePermission.text);
+        expect(http.requests, [Uri.parse(url)]);
         final opening = buffer().opening;
 
         await tester.enterText(
