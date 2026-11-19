@@ -13666,7 +13666,19 @@ code
         service: const WorkspaceService(),
         startupPath: original.path,
       );
-      final editor = historyField(DocumentViewModePreference.source);
+      final editorFields = find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(TextField),
+      );
+      await pumpUntil(
+        tester,
+        () =>
+            !container.read(workspaceControllerProvider).isLoading &&
+            editorFields.evaluate().isNotEmpty,
+        operation: 'finish opening the original editor',
+        frameStep: const Duration(milliseconds: 20),
+      );
+      final editor = editorFields.first;
       await tester.enterText(editor, '# Dirty original');
       await tester.pumpAndSettle();
       final oldFocus = tester.widget<TextField>(editor).focusNode!;
@@ -13703,6 +13715,7 @@ code
         tester,
         () => error.evaluate().isNotEmpty,
         operation: 'show the creation failure in the live dialog',
+        frameStep: const Duration(milliseconds: 20),
       );
       expect(
         container.read(workspaceControllerProvider).activeText,
@@ -13722,6 +13735,12 @@ code
         tester,
         () => find.text(l10n.discard).evaluate().isNotEmpty,
         operation: 'authorize replacing the dirty workspace',
+        frameStep: const Duration(milliseconds: 20),
+        diagnostics: () {
+          final state = container.read(workspaceControllerProvider);
+          return 'dirty=${state.hasUnsavedChanges}; '
+              'loading=${state.isLoading}; message=${state.message?.error}';
+        },
       );
       await tester.tap(find.text(l10n.discard));
       await pumpUntil(
@@ -13742,7 +13761,7 @@ code
       await pumpUntil(
         tester,
         () =>
-            editor.evaluate().isNotEmpty &&
+            editorFields.evaluate().isNotEmpty &&
             tester.widget<TextField>(editor).focusNode?.hasFocus == true,
         operation: 'focus the generated topic',
         frameStep: const Duration(milliseconds: 20),
@@ -18283,8 +18302,18 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
           expect(FocusManager.instance.primaryFocus, same(focused));
 
           final pointer = tester.getCenter(blocked.last);
-          await tester.tapAt(pointer, buttons: kSecondaryMouseButton);
+          final rightClick = await tester.startGesture(
+            pointer,
+            kind: PointerDeviceKind.mouse,
+            buttons: kSecondaryMouseButton,
+          );
+          await tester.pump(kPressTimeout + const Duration(milliseconds: 50));
+          expect(menus.isOpen, isFalse);
+          expect(find.byType(AdaptiveTextSelectionToolbar), findsNothing);
+          await rightClick.up();
           await tester.pump();
+          expect(menus.isOpen, isTrue);
+          expect(find.byType(AdaptiveTextSelectionToolbar), findsNothing);
           expect(menus.packets.last['anchor'], {
             'x': pointer.dx,
             'y': pointer.dy,

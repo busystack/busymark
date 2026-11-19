@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -1019,6 +1020,19 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
   }
 }
 
+/// Preview's selection region opens its toolbar on secondary button down.
+/// Claim that button for the image before the selection recognizer's deadline,
+/// while still waiting for the pointer release to present the GTK menu.
+class _RemoteImageMenuTapRecognizer extends TapGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    if (event.buttons == kSecondaryMouseButton) {
+      resolve(GestureDisposition.accepted);
+    }
+  }
+}
+
 class _RemoteImageBlockedPlaceholder extends StatefulWidget {
   const _RemoteImageBlockedPlaceholder({
     super.key,
@@ -1129,13 +1143,20 @@ class _RemoteImageBlockedPlaceholderState
               excludeFromSemantics: true,
               child: MouseRegion(
                 cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
-                child: GestureDetector(
+                child: RawGestureDetector(
                   behavior: HitTestBehavior.opaque,
                   excludeFromSemantics: true,
-                  onTap: enabled ? () => unawaited(_open()) : null,
-                  onSecondaryTapUp: enabled
-                      ? (event) => unawaited(_open(event.globalPosition))
-                      : null,
+                  gestures: {
+                    if (enabled)
+                      _RemoteImageMenuTapRecognizer:
+                          GestureRecognizerFactoryWithHandlers<
+                            _RemoteImageMenuTapRecognizer
+                          >(_RemoteImageMenuTapRecognizer.new, (recognizer) {
+                            recognizer.onTap = () => unawaited(_open());
+                            recognizer.onSecondaryTapUp = (event) =>
+                                unawaited(_open(event.globalPosition));
+                          }),
+                  },
                   child: Container(
                     width: widget.width,
                     height: widget.height,

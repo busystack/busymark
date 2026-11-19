@@ -3157,9 +3157,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _workspaceRefreshDebounce?.cancel();
     _workspaceRefreshDebounce = Timer(const Duration(milliseconds: 250), () {
       if (!ref.mounted) return;
-      // Our own filesystem writes also emit notifications. A background
-      // refresh must not invalidate an operation already loading its result.
-      if (state.isLoading || _workspaceFileOperationDepth > 0) {
+      // Generated files can notify the current workspace's monitor while a
+      // replacement is being prepared. Reconcile the retained workspace only
+      // after the opening settles, just as for in-place file operations.
+      if (state.isLoading ||
+          _workspaceFileOperationDepth > 0 ||
+          _workspaceOpenings.isNotEmpty) {
         _scheduleMonitoredWorkspaceRefresh();
         return;
       }
@@ -4387,12 +4390,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         load,
         mode: _settingsController.state.documentViewMode,
       );
-      final prepared = _writersideSourceMismatch(workspace, buffer)
-          ? await _service.prepareDocument(workspace, buffer, {
-              active: buffer.text,
-            })
-          : workspace;
-      final preview = _safePreview(prepared, buffer);
+      final preview = _safePreview(workspace, buffer);
       if (!canAuthorize() ||
           (authorizeReplacement != null &&
               !await authorizeReplacement(canAuthorize)) ||
@@ -4456,6 +4454,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             )) {
           return false;
         }
+        _workspaceRefreshDebounce?.cancel();
+        _workspaceRefreshDebounce = null;
         _invalidateFileMonitorWorkspace();
         _removalOperationRevision++;
         _cancelPendingDerivedRefresh();
@@ -4464,7 +4464,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         _resetSaveTracking();
         _restoredRecoveryOwnerIdsByBuffer.clear();
         state = WorkspaceState(
-          workspace: prepared,
+          workspace: workspace,
           preview: preview,
           documentBuffers: [buffer],
           activeBufferId: buffer.id,
@@ -4472,6 +4472,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         published = true;
         unawaited(_localHistory.observeOpened(buffer));
         _recordActivePreviewRevision();
+        if (_writersideSourceMismatch(workspace, buffer)) {
+          _requestDerivedRefresh(rebuildPreview: true);
+        }
         _schedulePersistence();
         onPublished?.call(buffer.id);
         for (final old in closingBuffers) {
@@ -4481,12 +4484,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           );
         }
         if (!_isCurrentActiveDocumentOperation(revision)) return true;
-        await _startMonitoring(prepared);
+        await _startMonitoring(workspace);
         if (!_isCurrentActiveDocumentOperation(revision)) return true;
         await _publishRecent(
           () => _settingsController.recordOpenedWorkspace(
-            path: prepared.rootPath,
-            kind: prepared.kind.name,
+            path: workspace.rootPath,
+            kind: workspace.kind.name,
           ),
         );
         return true;
