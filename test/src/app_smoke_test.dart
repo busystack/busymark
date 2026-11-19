@@ -13718,6 +13718,10 @@ code
         frameStep: const Duration(milliseconds: 20),
       );
       expect(
+        find.textContaining(l10n.errorTargetDirectoryNotEmpty(occupied.path)),
+        findsOneWidget,
+      );
+      expect(
         container.read(workspaceControllerProvider).activeText,
         '# Dirty original',
       );

@@ -4513,8 +4513,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           WorkspaceMessageCode.createWritersideProjectFailed,
           error: error,
         );
-        state = state.copyWith(message: message);
-        onError?.call(message);
+        if (onError case final report?) {
+          report(message);
+        } else {
+          state = state.copyWith(message: message);
+        }
       }
       return false;
     }
