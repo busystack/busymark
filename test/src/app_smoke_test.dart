@@ -11438,7 +11438,7 @@ code
     _expectHeaderControlGap(
       tester,
       leftTooltip: l10n.hideSidebar,
-      rightTooltip: l10n.back,
+      rightTooltip: l10n.home,
     );
     _expectHeaderControlGap(
       tester,
@@ -11461,7 +11461,7 @@ code
     }
     _expectHeaderGeometry(tester);
     for (final tooltip in [
-      l10n.back,
+      l10n.home,
       '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
       l10n.validate,
       l10n.search,
