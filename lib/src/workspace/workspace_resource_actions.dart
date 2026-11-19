@@ -12,7 +12,7 @@ import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../local_history/local_history_controller.dart';
 import '../search/search_session.dart';
 import '../search/welcome_notes_action.dart';
-import 'document_navigation.dart';
+import 'workspace_tab_actions.dart';
 import 'presentation/create_writerside_project_dialog.dart';
 import 'workspace_controller.dart';
 import 'workspace_safety.dart';

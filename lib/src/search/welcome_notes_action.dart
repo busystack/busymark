@@ -8,7 +8,7 @@ import '../app/localization.dart';
 import '../app/command_registry.dart';
 import '../local_history/local_history_controller.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
-import '../workspace/document_navigation.dart';
+import '../workspace/workspace_tab_actions.dart';
 import '../workspace/workspace_controller.dart';
 import 'search_session.dart';
 import '../workspace/workspace_safety.dart';

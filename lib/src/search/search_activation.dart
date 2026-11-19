@@ -14,7 +14,7 @@ import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import '../nextcloud_notes/domain/notes_search.dart';
 import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
-import '../workspace/document_navigation.dart';
+import '../workspace/workspace_tab_actions.dart';
 import '../workspace/outline_navigation.dart';
 import '../workspace/recent_navigation.dart';
 import '../workspace/workspace_controller.dart';

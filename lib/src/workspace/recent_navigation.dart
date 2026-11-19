@@ -13,7 +13,7 @@ import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../search/search_session.dart';
-import 'document_navigation.dart';
+import 'workspace_tab_actions.dart';
 import 'workspace_controller.dart';
 import 'workspace_safety.dart';
 
