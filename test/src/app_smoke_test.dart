@@ -2796,7 +2796,7 @@ void main() {
           await tester.pumpAndSettle();
         }
         await tester.tap(
-          find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
+          find.byTooltip('${l10n.home} (${BusyMarkAppShortcuts.home.label})'),
         );
         await tester.pumpAndSettle();
         expect(find.text(l10n.createMarkdownFile), findsOneWidget);
@@ -21245,6 +21245,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
+    expect(headerButton(l10n.home), findsOneWidget);
     expect(headerButton(l10n.back), findsNothing);
     expect(headerButton(l10n.validate), findsNothing);
     expect(
@@ -21256,7 +21257,8 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     await tester.tap(headerButton(l10n.search));
     await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields);
-    expect(headerButton(l10n.back), findsOneWidget);
+    expect(headerButton(l10n.home), findsOneWidget);
+    expect(headerButton(l10n.back), findsNothing);
     expect(editorFocus.hasFocus, isTrue);
     expect(headerButton(l10n.validate), findsOneWidget);
     expect(
