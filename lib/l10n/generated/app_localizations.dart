@@ -2962,7 +2962,7 @@ abstract class AppLocalizations {
   /// Tooltip for a blocked remote image placeholder.
   ///
   /// In en, this message translates to:
-  /// **'Choose whether BusyMark can load remote images.'**
+  /// **'Remote image blocked. Click for loading options.'**
   String get remoteImageBlockedTooltip;
 
   /// Dialog title for remote image loading permission.

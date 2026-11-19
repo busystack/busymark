@@ -1337,7 +1337,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "انتخاب کنید BusyMark اجازهٔ بارگیری تصاویر راه دور داشته باشد یا نه.",
+  "remoteImageBlockedTooltip": "تصویر راه دور مسدود شد. برای گزینه‌های بارگیری کلیک کنید.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

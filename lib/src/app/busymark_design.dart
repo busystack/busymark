@@ -1091,6 +1091,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.disabledForegroundColor,
     this.backgroundColor,
     this.overlayColor,
+    this.applyHeaderStateColors = false,
     this.borderRadius = BusyMarkRadius.headerButton,
     this.focusBorderRadius = BusyMarkRadius.headerButton,
   });
@@ -1112,6 +1113,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final Color? disabledForegroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final WidgetStateProperty<Color?>? overlayColor;
+  final bool applyHeaderStateColors;
   final double borderRadius;
   final double focusBorderRadius;
 
@@ -1169,21 +1171,36 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
         );
     final foreground =
         style.foregroundColor?.resolve(states) ?? colors.foreground;
-    final button = YaruIconButton(
+    final label = shortcut == null ? tooltip : '$tooltip ($shortcut)';
+    final artwork = BusyMarkGtkHeaderIcon(
+      icon,
+      nativeIcon: nativeIcon,
+      color: foreground,
+    );
+    final yaruButton = YaruIconButton(
       focusNode: focusNode,
       isSelected: selected,
-      tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-      icon: BusyMarkGtkHeaderIcon(
-        icon,
-        nativeIcon: nativeIcon,
-        color: foreground,
-      ),
+      tooltip: label,
+      icon: artwork,
       iconSize: BusyMarkSizes.iconButton,
       padding: EdgeInsets.zero,
       style: style,
       hasFocusBorder: false,
       onPressed: onPressed,
     );
+    // Style.merge keeps the receiver's colors. Native header state layers
+    // take precedence over Yaru's default overlay where requested.
+    final button = applyHeaderStateColors
+        ? IconButton(
+            focusNode: focusNode,
+            isSelected: selected,
+            tooltip: label,
+            icon: artwork,
+            padding: EdgeInsets.zero,
+            style: style.merge(yaruButton.defaultStyleOf(context)),
+            onPressed: onPressed,
+          )
+        : yaruButton;
     final painted = PhysicalShape(
       clipper: ShapeBorderClipper(shape: shape),
       color:
@@ -1204,10 +1221,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     // The Linux accessibility bridge exposes the semantic label as the
     // control's name; IconButton's tooltip alone is not a native name.
     return MergeSemantics(
-      child: Semantics(
-        label: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-        child: content,
-      ),
+      child: Semantics(label: label, child: content),
     );
   }
 }

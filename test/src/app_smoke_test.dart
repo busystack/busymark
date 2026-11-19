@@ -56,6 +56,7 @@ import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/markdown_image_permission_scope.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
@@ -2923,8 +2924,140 @@ void main() {
     expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
   });
 
+  testWidgets('Home and Settings Back have distinct customizable routes', (
+    tester,
+  ) async {
+    final fixture = Directory.systemTemp.createTempSync('busymark-home-');
+    addTearDown(() => fixture.deleteSync(recursive: true));
+    final file = File(p.join(fixture.path, 'original.md'))
+      ..writeAsStringSync('# Original');
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults().copyWith(autoSave: false).toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        startupPathProvider.overrideWithValue(file.path),
+        localSettingsStoreProvider.overrideWithValue(settings),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final router = container.read(appRouterProvider);
+    final controller = container.read(workspaceControllerProvider.notifier);
+    String path() => router.routeInformationProvider.value.uri.path;
+    Finder home() => find.byKey(const ValueKey('workspace-home'));
+    Finder back() => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkLinuxHeaderIconButton &&
+          widget.tooltip == l10n.back,
+    );
+    Future<void> alt(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.pumpAndSettle();
+    }
+
+    await pumpUntil(
+      tester,
+      () => home().evaluate().isNotEmpty,
+      operation: 'open the initial workspace',
+    );
+    expect(
+      tester.widget<BusyMarkHeaderIconButton>(home()).nativeIcon,
+      BusyMarkLinuxHeaderIcon.home,
+    );
+    expect(
+      tester.widget<BusyMarkHeaderIconButton>(home()).icon,
+      BusyMarkGlyphs.home,
+    );
+    expect(find.byTooltip('${l10n.home} (Alt+Home)'), findsOneWidget);
+    final iconButton = tester.widget<IconButton>(
+      find.descendant(of: home(), matching: find.byType(IconButton)),
+    );
+    final foreground = iconButton.style!.foregroundColor!.resolve({})!;
+    expect(
+      iconButton.style!.backgroundColor!.resolve({WidgetState.hovered}),
+      foreground.withValues(
+        alpha: foreground.a * BusyMarkLinuxHeaderStyle.hoverBackgroundStrength,
+      ),
+    );
+    expect(
+      iconButton.style!.backgroundColor!.resolve({WidgetState.pressed}),
+      foreground.withValues(
+        alpha:
+            foreground.a * BusyMarkLinuxHeaderStyle.pressedBackgroundStrength,
+      ),
+    );
+
+    expect(back(), findsNothing);
+    _expectHeaderGeometry(tester);
+    await alt(LogicalKeyboardKey.arrowLeft);
+    expect(path(), '/workspace');
+
+    router.go(settingsLocation(SettingsReturnTarget.workspace));
+    await tester.pumpAndSettle();
+    expect(back(), findsOneWidget);
+    expect(home(), findsNothing);
+    await alt(LogicalKeyboardKey.arrowLeft);
+    expect(path(), '/workspace');
+
+    controller.updateActiveText('# Dirty');
+    await tester.pumpAndSettle();
+    await tester.tap(home());
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+    expect(path(), '/workspace');
+    expect(container.read(workspaceControllerProvider).activeText, '# Dirty');
+
+    router.go(settingsLocation(SettingsReturnTarget.workspace));
+    await tester.pumpAndSettle();
+    await alt(LogicalKeyboardKey.home);
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+    await tester.tap(find.text(l10n.discard));
+    await pumpUntil(
+      tester,
+      () => path() == '/',
+      operation: 'finish Home from Settings after Discard',
+    );
+    expect(home(), findsNothing);
+    expect(back(), findsNothing);
+    expect(file.readAsStringSync(), '# Original');
+
+    final changed = await container
+        .read(keymapControllerProvider.notifier)
+        .update(
+          BusyMarkCommandIds.home,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f6),
+          expected: const {},
+        );
+    expect(changed.status, KeymapUpdateStatus.saved);
+    router.go('/workspace');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('${l10n.home} (F6)'), findsOneWidget);
+    await alt(LogicalKeyboardKey.home);
+    expect(path(), '/workspace');
+    await tester.sendKeyEvent(LogicalKeyboardKey.f6);
+    await tester.pumpAndSettle();
+    expect(path(), '/');
+  });
+
   testWidgets(
-    'restored capture failure stays owned across Back create discard create',
+    'restored capture failure stays owned across Home create discard create',
     (tester) async {
       final root = (await tester.runAsync(
         () => Directory.systemTemp.createTemp('busymark-history-navigation-'),
@@ -3000,14 +3133,14 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('could not capture'), findsOneWidget);
-      Future<void> back() async {
+      Future<void> goHome() async {
         await container
             .read(busyMarkCommandRegistryProvider)
-            .execute(BusyMarkCommandIds.back);
+            .execute(BusyMarkCommandIds.home);
         await tester.pumpAndSettle();
       }
 
-      await back();
+      await goHome();
       expect(find.text(l10n.createMarkdownFile), findsOneWidget);
       await tester.tap(find.text(l10n.createMarkdownFile));
       await _pumpUntilCondition(
@@ -3028,7 +3161,7 @@ void main() {
       expect(firstDraft.id, isNot(originalId));
       expect(history.warningForBuffer(firstDraft.id), isNull);
       expect(find.textContaining('could not capture'), findsNothing);
-      await back();
+      await goHome();
       expect(find.text(l10n.discard), findsOneWidget);
       await tester.tap(find.text(l10n.discard));
       await tester.pumpAndSettle();
@@ -19324,37 +19457,70 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     final source =
         'https://example.com/images/${'featured-article-photograph-' * 12}.png';
     const alt = 'Portrait of W. S. Gilbert';
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: Align(
-            alignment: Alignment.topLeft,
-            child: MarkdownImageView(
-              source: source,
-              alt: alt,
-              activeFilePath: 'doc.md',
-              workspaceRoot: null,
-              writersideRoot: null,
-              imagesDir: 'images',
-              maxHeight: 120,
-              preferredHeight: 96,
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: MarkdownImagePermissionScope(
+                resolve: (_, _, _) => MarkdownImageActions(
+                  allowed: false,
+                  openMenu: (_, _, _) async {},
+                ),
+                child: MarkdownImageView(
+                  source: source,
+                  alt: alt,
+                  activeFilePath: 'doc.md',
+                  workspaceRoot: null,
+                  writersideRoot: null,
+                  imagesDir: 'images',
+                  maxHeight: 120,
+                  preferredHeight: 96,
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    );
-    final image = find.byType(MarkdownImageView);
-    expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
-    expect(find.byIcon(BusyMarkGlyphs.imageBlocked), findsOneWidget);
-    expect(find.byIcon(BusyMarkGlyphs.imageMissing), findsNothing);
-    expect(find.byType(Image), findsNothing);
-    expect(find.byType(Scrollable), findsNothing);
-    expect(find.textContaining(source), findsNothing);
-    expect(tester.getSize(image).height, lessThan(60));
-    expect(find.byTooltip('$alt\n$source'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      );
+      final image = find.byType(MarkdownImageView);
+      expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
+      expect(find.byIcon(BusyMarkGlyphs.imageBlocked), findsOneWidget);
+      expect(find.byIcon(BusyMarkGlyphs.imageMissing), findsNothing);
+      expect(find.byType(Image), findsNothing);
+      expect(find.byType(Scrollable), findsNothing);
+      expect(find.textContaining(source), findsNothing);
+      expect(tester.getSize(image).height, lessThan(60));
+      expect(find.byIcon(BusyMarkGlyphs.downArrow), findsNothing);
+      expect(find.byTooltip(l10n.remoteImageBlockedTooltip), findsOneWidget);
+      expect(
+        tester
+            .getSemantics(find.bySemanticsLabel(l10n.remoteImageBlocked))
+            .getSemanticsData()
+            .hint,
+        '$alt\n$source',
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: tester.getCenter(image));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<Text>(find.text(l10n.remoteImageBlocked))
+            .style
+            ?.decoration,
+        TextDecoration.underline,
+      );
+      expect(find.text(l10n.remoteImageBlockedTooltip), findsOneWidget);
+      expect(find.textContaining(source), findsNothing);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets(

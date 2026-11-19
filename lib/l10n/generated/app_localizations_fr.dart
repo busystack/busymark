@@ -1602,7 +1602,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choisissez si BusyMark peut charger des images distantes.';
+      'Image distante bloquée. Cliquez pour voir les options de chargement.';
 
   @override
   String get remoteImagesBlockedTitle => 'Les images distantes sont bloquées';

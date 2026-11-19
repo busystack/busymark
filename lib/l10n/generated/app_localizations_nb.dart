@@ -1584,7 +1584,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Velg om BusyMark kan laste inn eksterne bilder.';
+      'Eksternt bilde blokkert. Klikk for innlastingsvalg.';
 
   @override
   String get remoteImagesBlockedTitle => 'Eksterne bilder er blokkert';

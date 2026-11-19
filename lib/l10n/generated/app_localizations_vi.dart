@@ -1575,7 +1575,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Chọn xem BusyMark có thể tải hình ảnh từ xa hay không.';
+      'Hình ảnh từ xa bị chặn. Nhấp để xem tùy chọn tải.';
 
   @override
   String get remoteImagesBlockedTitle => 'Hình ảnh từ xa bị chặn';

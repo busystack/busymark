@@ -1578,7 +1578,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Vali, kas BusyMark võib välispilte laadida.';
+      'Välispilt on blokeeritud. Laadimisvalikute nägemiseks klõpsa.';
 
   @override
   String get remoteImagesBlockedTitle => 'Välispildid on blokeeritud';

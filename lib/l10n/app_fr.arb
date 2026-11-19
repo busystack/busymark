@@ -1332,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Choisissez si BusyMark peut charger des images distantes.",
+  "remoteImageBlockedTooltip": "Image distante bloquée. Cliquez pour voir les options de chargement.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

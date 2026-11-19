@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/core/linux_file_identity.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
@@ -1635,10 +1636,14 @@ code
   for (final dirty in [false, true]) {
     for (final outcome in [
       'valid',
+      'valid existing directory',
       'nonempty',
       'read failure',
+      'read failure in existing directory',
       'cancelled',
       'superseded',
+      'destination replaced',
+      'published entry replaced',
     ]) {
       test(
         'Writerside creation from a ${dirty ? 'dirty' : 'clean'} workspace: $outcome',
@@ -1650,15 +1655,22 @@ code
           final source = File(p.join(root.path, 'original.md'))
             ..writeAsStringSync('# Original');
           final existing = Directory(p.join(root.path, 'destination'));
-          if (outcome == 'nonempty') {
+          if (outcome.contains('existing directory') || outcome == 'nonempty') {
             existing.createSync();
+          }
+          final existingIdentity = existing.existsSync()
+              ? LinuxFileIdentity.read(existing.path)
+              : null;
+          if (outcome == 'nonempty') {
             File(
               p.join(existing.path, 'keep.txt'),
             ).writeAsStringSync('Keep this');
           }
           final service = _WritersideCreationService(
-            failRead: outcome == 'read failure',
-            pause: outcome == 'superseded',
+            failRead: outcome.startsWith('read failure'),
+            pause:
+                outcome == 'superseded' ||
+                outcome == 'published entry replaced',
           );
           final harness = await _createControllerHarness(service: service);
           final controller = harness._container.read(
@@ -1696,7 +1708,22 @@ code
               expect(state().workspace?.id, before.workspace?.id);
               expect(state().workspace?.openedAt, before.workspace?.openedAt);
               expect(state().activeBuffer, same(before.activeBuffer));
+              expect(
+                root.listSync().any(
+                  (entry) => p
+                      .basename(entry.path)
+                      .startsWith('.busymark-writerside-'),
+                ),
+                isFalse,
+              );
+              expect(existing.existsSync(), existingIdentity != null);
               authorized = true;
+              if (outcome == 'destination replaced') {
+                existing.createSync();
+                File(
+                  p.join(existing.path, 'keep.txt'),
+                ).writeAsStringSync('Concurrent work');
+              }
               return outcome != 'cancelled';
             },
             onError: (message) => error = message,
@@ -1711,13 +1738,24 @@ code
             expect(state().workspace, same(replacement.workspace));
             expect(state().activeBuffer, same(replacement.activeBuffer));
             expect(state().documentBuffers, contains(before.activeBuffer));
-            expect(authorized, isFalse);
+            expect(authorized, isTrue);
             expect(error, isNull);
+            expect(existing.existsSync(), isFalse);
+            expect(root.listSync().map((entry) => entry.path), [source.path]);
             return;
           }
-          expect(await creation, outcome == 'valid');
+          if (outcome == 'published entry replaced') {
+            await service.entered.future;
+            final replacement = File(p.join(root.path, 'replacement.xml'))
+              ..writeAsStringSync('Concurrent configuration');
+            replacement.renameSync(p.join(existing.path, 'writerside.cfg'));
+            service.release.complete();
+          }
+          final succeeded = outcome.startsWith('valid');
+          expect(await creation, succeeded);
           switch (outcome) {
             case 'valid':
+            case 'valid existing directory':
               expect(authorized, isTrue);
               expect(state().workspace?.kind, WorkspaceKind.writersideModule);
               expect(state().documentBuffers, hasLength(1));
@@ -1725,7 +1763,10 @@ code
               expect(source.readAsStringSync(), '# Original');
             case 'nonempty':
             case 'read failure':
-              expect(authorized, isFalse);
+            case 'read failure in existing directory':
+            case 'destination replaced':
+            case 'published entry replaced':
+              expect(authorized, outcome != 'nonempty');
               expect(
                 error?.code,
                 WorkspaceMessageCode.createWritersideProjectFailed,
@@ -1740,7 +1781,42 @@ code
               expect(authorized, isTrue);
               expect(error, isNull);
           }
-          if (outcome != 'valid') {
+          if (existingIdentity != null) {
+            expect(LinuxFileIdentity.read(existing.path), existingIdentity);
+          }
+          if (!succeeded) {
+            if (outcome == 'read failure in existing directory') {
+              expect(existing.listSync(), isEmpty);
+            } else if (outcome == 'destination replaced') {
+              expect(
+                existing.listSync().map((entry) => p.basename(entry.path)),
+                ['keep.txt'],
+              );
+              expect(
+                File(p.join(existing.path, 'keep.txt')).readAsStringSync(),
+                'Concurrent work',
+              );
+            } else if (outcome == 'published entry replaced') {
+              expect(
+                existing.listSync().map((entry) => p.basename(entry.path)),
+                ['writerside.cfg'],
+              );
+              expect(
+                File(
+                  p.join(existing.path, 'writerside.cfg'),
+                ).readAsStringSync(),
+                'Concurrent configuration',
+              );
+            } else if (outcome != 'nonempty') {
+              expect(existing.existsSync(), isFalse);
+            }
+            expect(
+              root.listSync().any(
+                (entry) =>
+                    p.basename(entry.path).startsWith('.busymark-writerside-'),
+              ),
+              isFalse,
+            );
             expect(state().workspace?.id, before.workspace?.id);
             expect(state().workspace?.openedAt, before.workspace?.openedAt);
             expect(state().documentBuffers, same(before.documentBuffers));
@@ -6402,25 +6478,16 @@ class _WritersideCreationService extends WorkspaceService {
   final bool pause;
   final entered = Completer<void>();
   final release = Completer<void>();
-  String? initialTopic;
-
   @override
-  Future<Workspace> createWritersideProject(
-    WritersideProjectCreateRequest request,
-  ) async {
-    final project = await super.createWritersideProject(request);
-    initialTopic = project.activeFilePath;
-    if (pause) {
-      entered.complete();
-      await release.future;
-    }
-    return project;
-  }
-
-  @override
-  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) {
-    if (failRead && path == initialTopic) {
-      throw FileSystemException('Injected initial-topic read failure', path);
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (p.basename(path) == 'getting-started.md') {
+      if (pause) {
+        entered.complete();
+        await release.future;
+      }
+      if (failRead) {
+        throw FileSystemException('Injected initial-topic read failure', path);
+      }
     }
     return super.loadTextWithSnapshot(path);
   }

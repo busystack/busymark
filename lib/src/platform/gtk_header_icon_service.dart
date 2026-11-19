@@ -31,6 +31,7 @@ final class GtkHeaderIconAsset {
 
 enum BusyMarkLinuxHeaderIcon {
   back,
+  home,
   sidebar,
   search,
   searchEntryFind,
@@ -47,6 +48,7 @@ enum BusyMarkLinuxHeaderIcon {
 extension BusyMarkLinuxHeaderIconNames on BusyMarkLinuxHeaderIcon {
   List<String> get gtkNames => switch (this) {
     BusyMarkLinuxHeaderIcon.back => const ['go-previous-symbolic'],
+    BusyMarkLinuxHeaderIcon.home => const ['go-home-symbolic'],
     BusyMarkLinuxHeaderIcon.sidebar => const ['sidebar-show-symbolic'],
     BusyMarkLinuxHeaderIcon.search => const ['system-search-symbolic'],
     BusyMarkLinuxHeaderIcon.searchEntryFind => const ['edit-find-symbolic'],
@@ -66,7 +68,7 @@ extension BusyMarkLinuxHeaderIconNames on BusyMarkLinuxHeaderIcon {
 }
 
 BusyMarkLinuxHeaderIcon? _nativeHeaderIcon(IconData glyph) => switch (glyph) {
-  BusyMarkGlyphs.home => BusyMarkLinuxHeaderIcon.back,
+  BusyMarkGlyphs.home => BusyMarkLinuxHeaderIcon.home,
   BusyMarkGlyphs.sidebar => BusyMarkLinuxHeaderIcon.sidebar,
   BusyMarkGlyphs.search => BusyMarkLinuxHeaderIcon.search,
   BusyMarkGlyphs.clear => BusyMarkLinuxHeaderIcon.searchClear,

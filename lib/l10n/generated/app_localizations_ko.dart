@@ -1520,7 +1520,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'BusyMark가 원격 이미지를 로드할 수 있는지 여부를 선택합니다.';
+      '원격 이미지가 차단되었습니다. 클릭하여 불러오기 옵션을 확인하세요.';
 
   @override
   String get remoteImagesBlockedTitle => '원격 이미지가 차단되었습니다.';

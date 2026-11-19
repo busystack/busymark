@@ -1486,7 +1486,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteImageBlocked => '远程图像已阻止';
 
   @override
-  String get remoteImageBlockedTooltip => '选择是否允许 BusyMark 加载远程图像。';
+  String get remoteImageBlockedTooltip => '远程图像已阻止。点击查看加载选项。';
 
   @override
   String get remoteImagesBlockedTitle => '远程图像已阻止';
@@ -10123,7 +10123,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get remoteImageBlocked => '远程图像已阻止';
 
   @override
-  String get remoteImageBlockedTooltip => '选择是否允许 BusyMark 加载远程图像。';
+  String get remoteImageBlockedTooltip => '远程图像已阻止。点击查看加载选项。';
 
   @override
   String get remoteImagesBlockedTitle => '远程图像已阻止';

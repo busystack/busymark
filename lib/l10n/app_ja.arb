@@ -1498,7 +1498,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "BusyMark にリモート画像の読み込みを許可するか選択",
+  "remoteImageBlockedTooltip": "リモート画像をブロックしました。クリックして読み込みオプションを表示します。",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

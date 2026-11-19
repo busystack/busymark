@@ -1570,7 +1570,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.';
+      'تم حظر الصورة البعيدة. انقر لعرض خيارات التحميل.';
 
   @override
   String get remoteImagesBlockedTitle => 'الصور البعيدة محظورة';

@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('semantic catalog uses the exact native GTK icon names', () {
+    expect(BusyMarkLinuxHeaderIcon.home.gtkNames, const ['go-home-symbolic']);
+    expect(BusyMarkLinuxHeaderIcon.home.directionSensitive, isFalse);
     expect(BusyMarkLinuxHeaderIcon.back.gtkNames, const [
       'go-previous-symbolic',
     ]);

@@ -483,6 +483,7 @@ abstract final class BusyMarkCommandIds {
   static const save = 'file.save';
   static const export = 'file.export';
   static const fullScreen = 'view.fullScreen';
+  static const home = 'navigation.home';
   static const back = 'navigation.back';
   static const search = 'search.find';
   static const searchWorkspace = 'search.workspace';
@@ -900,6 +901,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.save => BusyMarkCommandIds.save,
     BusyMarkAppShortcutAction.export => BusyMarkCommandIds.export,
     BusyMarkAppShortcutAction.fullScreen => BusyMarkCommandIds.fullScreen,
+    BusyMarkAppShortcutAction.home => BusyMarkCommandIds.home,
     BusyMarkAppShortcutAction.back => BusyMarkCommandIds.back,
     BusyMarkAppShortcutAction.search => BusyMarkCommandIds.search,
     BusyMarkAppShortcutAction.quickOpen => BusyMarkCommandIds.quickOpen,
@@ -930,6 +932,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.save => context.l10n.save,
     BusyMarkAppShortcutAction.export => context.l10n.export,
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
+    BusyMarkAppShortcutAction.home => context.l10n.home,
     BusyMarkAppShortcutAction.back => context.l10n.back,
     BusyMarkAppShortcutAction.search => context.l10n.searchInDocument,
     BusyMarkAppShortcutAction.quickOpen => context.l10n.searchDocumentsCommand,

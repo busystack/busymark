@@ -454,7 +454,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       holder = await _DesktopLockHolder.start(root);
       await ref
           .read(busyMarkCommandRegistryProvider)
-          .execute(BusyMarkCommandIds.back);
+          .execute(BusyMarkCommandIds.home);
       await _waitFor(
         () =>
             ref
@@ -464,7 +464,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
                 .uri
                 .path ==
             '/',
-        'Back to welcome',
+        'Home to Welcome',
       );
       await _activateLabel('Create Markdown File');
       await _waitFor(
@@ -494,7 +494,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
 
       await ref
           .read(busyMarkCommandRegistryProvider)
-          .execute(BusyMarkCommandIds.back);
+          .execute(BusyMarkCommandIds.home);
       await _activateLabel('Discard');
       await _waitFor(
         () =>
@@ -505,7 +505,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
                 .uri
                 .path ==
             '/',
-        'Back after pristine discard',
+        'Home after pristine discard',
       );
       await _activateLabel('Create Markdown File');
       await _waitFor(

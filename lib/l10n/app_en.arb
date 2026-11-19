@@ -934,7 +934,7 @@
   "@noImageSource": {"description": "Placeholder shown when an image has no source."},
   "remoteImageBlocked": "Remote image blocked",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "Remote image blocked. Click for loading options.",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
   "remoteImagesBlockedTitle": "Remote images are blocked",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},

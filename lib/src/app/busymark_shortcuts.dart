@@ -33,6 +33,7 @@ enum BusyMarkAppShortcutAction {
   save,
   export,
   fullScreen,
+  home,
   back,
   search,
   keyboardShortcuts,
@@ -57,6 +58,7 @@ abstract final class BusyMarkAppShortcuts {
   static const saveLabel = 'Ctrl+S';
   static const exportLabel = 'Ctrl+Shift+E';
   static const fullScreenLabel = 'F11';
+  static const homeLabel = 'Alt+Home';
   static const backLabel = 'Alt+Left';
   static const searchLabel = 'Ctrl+F';
   static const quickOpenLabel = 'Ctrl+Shift+D';
@@ -142,6 +144,15 @@ abstract final class BusyMarkAppShortcuts {
     ),
     gtkAccelerator: backGtkAccelerator,
   );
+  static const home = BusyMarkShortcutDefinition(
+    label: homeLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.home,
+      alt: true,
+      includeRepeats: false,
+    ),
+    gtkAccelerator: '<Alt>Home',
+  );
   static const search = BusyMarkShortcutDefinition(
     label: searchLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyF, control: true),
@@ -215,6 +226,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.save: save,
         BusyMarkAppShortcutAction.export: export,
         BusyMarkAppShortcutAction.fullScreen: fullScreen,
+        BusyMarkAppShortcutAction.home: home,
         BusyMarkAppShortcutAction.back: back,
         BusyMarkAppShortcutAction.search: search,
         BusyMarkAppShortcutAction.commandPalette: commandPalette,

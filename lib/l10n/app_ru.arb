@@ -1332,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Выберите, может ли BusyMark загружать удалённые изображения.",
+  "remoteImageBlockedTooltip": "Удалённое изображение заблокировано. Нажмите, чтобы выбрать способ загрузки.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

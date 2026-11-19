@@ -1058,6 +1058,7 @@ class _RemoteImageBlockedPlaceholderState
     extends State<_RemoteImageBlockedPlaceholder> {
   final _focus = FocusNode(debugLabel: 'Remote image permissions');
   NativeMenuSession? _menu;
+  bool _hovered = false;
 
   Future<void> _open([Offset? position]) async {
     final openMenu = widget.openMenu;
@@ -1109,11 +1110,8 @@ class _RemoteImageBlockedPlaceholderState
     final colors = BusyMarkSurfaceColors.of(context);
     final l10n = context.l10n;
     final enabled = widget.openMenu != null;
-    final details = [
-      if (widget.alt.trim().isNotEmpty) widget.alt.trim(),
-      widget.source,
-      if (enabled) l10n.remoteImageBlockedTooltip,
-    ].join('\n');
+    final alt = widget.alt.trim();
+    final details = alt.isEmpty ? widget.source : '$alt\n${widget.source}';
     final radius = BorderRadius.circular(BusyMarkRadius.sm);
     return Align(
       alignment: AlignmentDirectional.centerStart,
@@ -1135,14 +1133,23 @@ class _RemoteImageBlockedPlaceholderState
             focused: enabled ? _focus.hasFocus : null,
             onFocus: enabled ? _focus.requestFocus : null,
             label: l10n.remoteImageBlocked,
-            tooltip: details,
+            hint: details,
             onTap: enabled ? () => unawaited(_open()) : null,
             excludeSemantics: true,
             child: Tooltip(
-              message: _menu == null ? details : '',
+              message: enabled && _menu == null
+                  ? l10n.remoteImageBlockedTooltip
+                  : '',
+              constraints: const BoxConstraints(maxWidth: 240),
               excludeFromSemantics: true,
               child: MouseRegion(
                 cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+                onEnter: enabled
+                    ? (_) => setState(() => _hovered = true)
+                    : null,
+                onExit: enabled
+                    ? (_) => setState(() => _hovered = false)
+                    : null,
                 child: RawGestureDetector(
                   behavior: HitTestBehavior.opaque,
                   excludeFromSemantics: true,
@@ -1160,15 +1167,9 @@ class _RemoteImageBlockedPlaceholderState
                   child: Container(
                     width: widget.width,
                     height: widget.height,
-                    constraints: const BoxConstraints(minHeight: 32),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: BusyMarkSpacing.sm,
+                      horizontal: BusyMarkSpacing.xs,
                       vertical: BusyMarkSpacing.xxs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.panel,
-                      border: Border.all(color: colors.border),
-                      borderRadius: radius,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1184,17 +1185,16 @@ class _RemoteImageBlockedPlaceholderState
                             l10n.remoteImageBlocked,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: colors.mutedForeground,
+                                  decoration: enabled && _hovered
+                                      ? TextDecoration.underline
+                                      : null,
+                                  decorationColor: colors.mutedForeground,
+                                ),
                           ),
                         ),
-                        if (enabled) ...[
-                          const SizedBox(width: BusyMarkSpacing.xs),
-                          Icon(
-                            BusyMarkGlyphs.downArrow,
-                            size: BusyMarkSizes.compactIcon,
-                            color: colors.mutedForeground,
-                          ),
-                        ],
                       ],
                     ),
                   ),

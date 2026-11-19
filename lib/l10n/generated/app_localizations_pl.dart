@@ -1594,7 +1594,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Wybierz, czy BusyMark może wczytywać obrazy zdalne.';
+      'Obraz zdalny zablokowany. Kliknij, aby wyświetlić opcje wczytywania.';
 
   @override
   String get remoteImagesBlockedTitle => 'Obrazy zdalne są zablokowane';

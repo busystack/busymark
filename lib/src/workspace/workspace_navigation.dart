@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../app/app_router.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
+import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../search/search_session.dart';
 import 'workspace_controller.dart';
 import 'workspace_safety.dart';
@@ -81,6 +82,25 @@ class WorkspaceNavigation {
           deferDiscard: deferDiscard,
         );
   }
+
+  Future<void> goHome() => run(this, (origin, isCurrent) async {
+    final context = dialogContext;
+    if (origin.path == '/' ||
+        context == null ||
+        (router.routerDelegate.navigatorKey.currentState?.canPop() ?? false)) {
+      return;
+    }
+    if (origin.path == settingsRoutePath &&
+        !await confirmNotesSettingsDeparture(context)) {
+      return;
+    }
+    if (!isCurrent()) return;
+    if (settingsReturnTargetForUri(origin) == SettingsReturnTarget.workspace &&
+        !await confirmDeparture(canContinue: isCurrent)) {
+      return;
+    }
+    if (isCurrent()) router.go('/');
+  });
 
   void reveal({bool focusNewDocument = false}) {
     _ref.read(revealOpenedDocumentProvider)();

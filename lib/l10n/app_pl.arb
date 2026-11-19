@@ -1332,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Wybierz, czy BusyMark może wczytywać obrazy zdalne.",
+  "remoteImageBlockedTooltip": "Obraz zdalny zablokowany. Kliknij, aby wyświetlić opcje wczytywania.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

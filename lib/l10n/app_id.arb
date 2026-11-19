@@ -1496,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Pilih apakah BusyMark dapat memuat gambar jarak jauh.",
+  "remoteImageBlockedTooltip": "Gambar jarak jauh diblokir. Klik untuk opsi pemuatan.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

@@ -1596,7 +1596,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'انتخاب کنید BusyMark اجازهٔ بارگیری تصاویر راه دور داشته باشد یا نه.';
+      'تصویر راه دور مسدود شد. برای گزینه‌های بارگیری کلیک کنید.';
 
   @override
   String get remoteImagesBlockedTitle => 'تصاویر راه دور مسدود شده‌اند';

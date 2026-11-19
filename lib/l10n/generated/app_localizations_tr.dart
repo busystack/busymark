@@ -1582,7 +1582,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'BusyMark\'ın harici görselleri yükleyip yükleyemeyeceğini seçin.';
+      'Uzak görsel engellendi. Yükleme seçenekleri için tıklayın.';
 
   @override
   String get remoteImagesBlockedTitle => 'Harici görseller engellendi';

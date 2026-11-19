@@ -1334,7 +1334,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.",
+  "remoteImageBlockedTooltip": "تم حظر الصورة البعيدة. انقر لعرض خيارات التحميل.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

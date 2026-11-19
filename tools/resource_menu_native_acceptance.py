@@ -71,7 +71,7 @@ def run(binary, output, theme, remapped):
 
         try:
             visible(new_name, open_name)
-            desktop.key('Alt_L', 'Left')
+            desktop.key('Alt_L', 'Home')
             visible('Home', 'Recent', 'New Markdown File', 'Search', new_name, open_name, 'Main menu')
             desktop.capture('welcome-header')
 

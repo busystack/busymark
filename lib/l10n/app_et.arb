@@ -1420,7 +1420,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Vali, kas BusyMark võib välispilte laadida.",
+  "remoteImageBlockedTooltip": "Välispilt on blokeeritud. Laadimisvalikute nägemiseks klõpsa.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

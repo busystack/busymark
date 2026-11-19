@@ -4,7 +4,10 @@ import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
+import '../core/linux_atomic_file_api.dart';
+import '../core/linux_file_identity.dart';
 import '../core/path_utils.dart';
+import '../core/save_destination.dart';
 
 class WritersideProjectCreateRequest {
   const WritersideProjectCreateRequest({
@@ -99,76 +102,227 @@ class WritersideProjectCreator {
 
   Future<WritersideProjectCreateResult> create(
     WritersideProjectCreateRequest request,
-  ) async {
+  ) async => (await createTransaction(
+    request,
+    authorize: () async => true,
+    canPublish: () => true,
+    accept: (project, _) async => project,
+  ))!;
+
+  /// Prepare the generated tree privately, and retain ownership until the
+  /// caller accepts the project at its final paths. A null result rolls back
+  /// publication, for example after a competing navigation or an initial read
+  /// failure. An existing empty destination keeps its original directory.
+  Future<T?> createTransaction<T>(
+    WritersideProjectCreateRequest request, {
+    required Future<bool> Function() authorize,
+    required bool Function() canPublish,
+    required Future<T?> Function(
+      WritersideProjectCreateResult,
+      bool Function() isCurrent,
+    )
+    accept,
+  }) async {
     final validated = _validate(request);
-    final parentAnchor = await _parentAnchor(validated.parentDirectoryPath);
-    final requestedRootPath = p.join(
-      parentAnchor.rootPath,
-      validated.directoryName,
+    final parent = await _parentAnchor(validated.parentDirectoryPath);
+    final resolution = await _projectPath(
+      parent,
+      p.join(parent.rootPath, validated.directoryName),
     );
-    final rootResolution = await _projectPath(parentAnchor, requestedRootPath);
-    final rootPath = rootResolution.path;
-    final rootDirectory = Directory(rootPath);
-    final rootType = rootResolution.type;
-    if (rootType == FileSystemEntityType.directory) {
-      if (!await _isDirectoryEmpty(rootDirectory)) {
-        throw BusyMarkException(
-          'writerside.project.target-directory-not-empty',
-          args: {'path': rootPath},
-        );
-      }
-    } else if (rootType == FileSystemEntityType.notFound) {
-      await rootDirectory.create();
-    } else {
+    final root = Directory(resolution.path);
+    if (resolution.type != FileSystemEntityType.notFound &&
+        resolution.type != FileSystemEntityType.directory) {
       throw BusyMarkException(
         'writerside.project.target-path-not-directory',
-        args: {'path': rootPath},
+        args: {'path': root.path},
       );
     }
-    final rootAnchor = await _projectRootAnchor(parentAnchor, rootPath);
-
-    final treeFileName = '${validated.instanceId}.tree';
-    final configPath = p.join(rootAnchor.rootPath, 'writerside.cfg');
-    final treePath = p.join(rootAnchor.rootPath, treeFileName);
-    final topicPath = p.join(
-      rootAnchor.rootPath,
-      'topics',
-      validated.topicFileName,
+    final destination = SaveDestination.inspect(
+      root.path,
+      kind: SaveDestinationKind.directory,
     );
+    if (destination.replacesExisting && !await _isDirectoryEmpty(root)) {
+      throw BusyMarkException(
+        'writerside.project.target-directory-not-empty',
+        args: {'path': root.path},
+      );
+    }
+    if (!await authorize() || !canPublish()) return null;
 
-    await _createProjectDirectory(rootAnchor, 'topics');
-    await _createProjectDirectory(rootAnchor, 'images');
-    await _createProjectDirectory(rootAnchor, 'cfg');
-
-    await _writeNewFile(
-      rootAnchor,
-      configPath,
-      _writersideConfig(
+    destination.requireCurrent(root.path);
+    final parentId = _identity(parent.rootPath);
+    final staging = await Directory(
+      parent.rootPath,
+    ).createTemp('.busymark-writerside-');
+    final stagingId = _identity(staging.path);
+    final moved = <String>[];
+    final entries = <String, String>{};
+    final tree = '${validated.instanceId}.tree';
+    final topic = p.join('topics', validated.topicFileName);
+    final files = {
+      'writerside.cfg': _writersideConfig(
         moduleName: validated.moduleName,
-        treeFileName: treeFileName,
+        treeFileName: tree,
       ),
-    );
-    await _writeNewFile(
-      rootAnchor,
-      treePath,
-      _writersideTree(
+      tree: _writersideTree(
         instanceId: validated.instanceId,
         instanceName: validated.instanceName,
         topicFileName: validated.topicFileName,
       ),
-    );
-    await _writeNewFile(
-      rootAnchor,
-      topicPath,
-      _startTopic(title: validated.topicTitle),
-    );
+      topic: _startTopic(title: validated.topicTitle),
+    };
+    String? publishedRootId;
+    try {
+      final stage = await _projectRootAnchor(parent, staging.path);
+      if (!_owns(staging.path, stagingId)) {
+        throw FileSystemException(
+          'Project staging directory changed',
+          staging.path,
+        );
+      }
+      const directories = ['topics', 'images', 'cfg'];
+      for (final name in directories) {
+        await _createProjectDirectory(stage, name);
+        entries[name] = _identity(p.join(stage.rootPath, name));
+      }
+      for (final entry in files.entries) {
+        await _writeNewFile(
+          stage,
+          p.join(stage.rootPath, entry.key),
+          entry.value,
+        );
+        entries[entry.key] = _identity(p.join(stage.rootPath, entry.key));
+      }
+      if (!canPublish()) return null;
+      destination.requireCurrent(root.path);
+      if (!_owns(staging.path, stagingId)) {
+        throw FileSystemException(
+          'Project staging directory changed',
+          staging.path,
+        );
+      }
+      if (destination.replacesExisting) {
+        publishedRootId = _identity(root.path);
+        for (final name in [...directories, 'writerside.cfg', tree]) {
+          _publish(
+            p.join(stage.rootPath, name),
+            p.join(root.path, name),
+            directory: directories.contains(name),
+          );
+          moved.add(name);
+        }
+      } else {
+        _publish(stage.rootPath, root.path, directory: true);
+        publishedRootId = stagingId;
+        moved.addAll(entries.keys);
+      }
+      final rootId = publishedRootId;
+      bool isCurrent() {
+        if (!canPublish()) return false;
+        if (!_owns(parent.rootPath, parentId) ||
+            !_owns(root.path, rootId) ||
+            !entries.entries.every(
+              (entry) => _owns(p.join(root.path, entry.key), entry.value),
+            )) {
+          throw FileSystemException(
+            'Generated project changed during creation',
+            root.path,
+          );
+        }
+        return true;
+      }
 
-    return WritersideProjectCreateResult(
-      rootPath: rootAnchor.rootPath,
-      configPath: configPath,
-      treePath: treePath,
-      startTopicPath: topicPath,
+      if (!isCurrent()) return null;
+      final result = await accept(
+        WritersideProjectCreateResult(
+          rootPath: root.path,
+          configPath: p.join(root.path, 'writerside.cfg'),
+          treePath: p.join(root.path, tree),
+          startTopicPath: p.join(root.path, topic),
+        ),
+        isCurrent,
+      );
+      if (result != null) publishedRootId = null;
+      return result;
+    } finally {
+      final sameParent = _owns(parent.rootPath, parentId);
+      if (sameParent &&
+          publishedRootId != null &&
+          _owns(root.path, publishedRootId)) {
+        // Delete only generated entries we actually moved. Checking the
+        // directory and file identities protects replacements, and removing
+        // directories without recursion preserves any concurrent additions.
+        for (final path in files.keys) {
+          final top = p.split(path).first;
+          if (!moved.contains(top)) continue;
+          if (top != path && !_owns(p.join(root.path, top), entries[top]!)) {
+            continue;
+          }
+          final file = File(p.join(root.path, path));
+          try {
+            if (_owns(file.path, entries[path]!) &&
+                file.readAsStringSync() == files[path] &&
+                _owns(file.path, entries[path]!)) {
+              file.deleteSync();
+            }
+          } on FileSystemException {
+            // A concurrent writer can make a generated entry unsafe to remove.
+          } on FormatException {
+            // A generated file with changed bytes now belongs to the writer.
+          }
+        }
+        for (final path in moved.where((path) => !files.containsKey(path))) {
+          _removeOwnedDirectory(p.join(root.path, path), entries[path]!);
+        }
+        if (!destination.replacesExisting) {
+          _removeOwnedDirectory(root.path, publishedRootId);
+        }
+      }
+      if (sameParent && _owns(staging.path, stagingId)) {
+        // createTemp allocated this private tree for this transaction.
+        try {
+          staging.deleteSync(recursive: true);
+        } on FileSystemException {
+          // A filesystem failure must not discard an accepted project.
+        }
+      }
+    }
+  }
+
+  String _identity(String path) =>
+      LinuxFileIdentity.read(path) ??
+      (throw FileSystemException('Cannot establish project ownership', path));
+
+  bool _owns(String path, String identity) {
+    try {
+      return LinuxFileIdentity.read(path) == identity;
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  void _removeOwnedDirectory(String path, String identity) {
+    if (!_owns(path, identity)) return;
+    try {
+      Directory(path).deleteSync();
+    } on FileSystemException {
+      // A nonempty directory contains data outside this transaction.
+    }
+  }
+
+  void _publish(String stage, String target, {required bool directory}) {
+    final error = LinuxAtomicFileApi.instance.publishNoReplace(
+      stage,
+      target,
+      directory: directory,
     );
+    if (error != null) {
+      throw FileSystemException(
+        'Could not publish the Writerside project',
+        target,
+        OSError('No-replace publication failed', error),
+      );
+    }
   }
 
   Future<CanonicalPathAnchor> _parentAnchor(String path) async {

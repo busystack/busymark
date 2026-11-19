@@ -1582,7 +1582,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Pilih apakah BusyMark dapat memuat gambar jarak jauh.';
+      'Gambar jarak jauh diblokir. Klik untuk opsi pemuatan.';
 
   @override
   String get remoteImagesBlockedTitle => 'Gambar jarak jauh diblokir';

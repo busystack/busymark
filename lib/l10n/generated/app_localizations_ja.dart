@@ -1519,7 +1519,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteImageBlocked => 'リモート画像がブロックされています';
 
   @override
-  String get remoteImageBlockedTooltip => 'BusyMark にリモート画像の読み込みを許可するか選択';
+  String get remoteImageBlockedTooltip =>
+      'リモート画像をブロックしました。クリックして読み込みオプションを表示します。';
 
   @override
   String get remoteImagesBlockedTitle => 'リモート画像がブロックされています';

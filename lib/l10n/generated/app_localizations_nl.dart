@@ -1586,7 +1586,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Kies of BusyMark externe afbeeldingen kan laden.';
+      'Externe afbeelding geblokkeerd. Klik voor laadopties.';
 
   @override
   String get remoteImagesBlockedTitle =>

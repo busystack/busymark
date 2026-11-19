@@ -228,13 +228,30 @@ class WorkspaceService {
 
   Future<Workspace> createWritersideProject(
     WritersideProjectCreateRequest request,
-  ) async {
-    final result = await writersideProjectCreator.create(request);
-    return _openWriterside(
-      result.rootPath,
-      activeFilePath: result.startTopicPath,
-    );
-  }
+  ) async => (await publishWritersideProject(
+    request,
+    authorize: () async => true,
+    canPublish: () => true,
+    accept: (workspace, _) async => workspace,
+  ))!;
+
+  Future<T?> publishWritersideProject<T>(
+    WritersideProjectCreateRequest request, {
+    required Future<bool> Function() authorize,
+    required bool Function() canPublish,
+    required Future<T?> Function(Workspace, bool Function() isCurrent) accept,
+  }) => writersideProjectCreator.createTransaction(
+    request,
+    authorize: authorize,
+    canPublish: canPublish,
+    accept: (project, isCurrent) async {
+      final workspace = await _openWriterside(
+        project.rootPath,
+        activeFilePath: project.startTopicPath,
+      );
+      return isCurrent() ? accept(workspace, isCurrent) : null;
+    },
+  );
 
   Future<WritersideTopicCreateResult> createWritersideTopic(
     Workspace workspace,

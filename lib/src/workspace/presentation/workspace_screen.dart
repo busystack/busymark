@@ -790,23 +790,19 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                                   );
                                 },
                         ),
-                        if (!searchState.active)
-                          BusyMarkLinuxHeaderIconButton(
-                            tooltip: context.l10n.back,
-                            icon: BusyMarkGlyphs.headerBackFor(
-                              Directionality.of(context),
-                            ),
-                            nativeIcon: BusyMarkLinuxHeaderIcon.back,
-                            shortcut: commandRegistry[BusyMarkCommandIds.back]
-                                ?.shortcut
-                                ?.label,
-                            onPressed: () async {
-                              if (await confirmSafeToContinue(context, ref) &&
-                                  context.mounted) {
-                                context.go('/');
-                              }
-                            },
-                          ),
+                        BusyMarkHeaderIconButton(
+                          key: const ValueKey('workspace-home'),
+                          tooltip: context.l10n.home,
+                          icon: BusyMarkGlyphs.home,
+                          nativeIcon: BusyMarkLinuxHeaderIcon.home,
+                          applyHeaderStateColors: true,
+                          focusBorderRadius: BusyMarkRadius.pill,
+                          shortcut: commandRegistry[BusyMarkCommandIds.home]
+                              ?.shortcut
+                              ?.label,
+                          onPressed: () =>
+                              commandRegistry.execute(BusyMarkCommandIds.home),
+                        ),
                       ],
                     ),
                     title: BusyMarkRetainedCrossfade(

@@ -1496,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "选择是否允许 BusyMark 加载远程图像。",
+  "remoteImageBlockedTooltip": "远程图像已阻止。点击查看加载选项。",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },

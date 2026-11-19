@@ -29,6 +29,7 @@ import '../platform/gtk_header_icon_service.dart';
 import '../local_history/local_history_controller.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
+import '../workspace/workspace_navigation.dart';
 import '../workspace/workspace_safety.dart';
 import '../workspace/workspace_tabs.dart';
 import '../workspace/workspace_tab_actions.dart';
@@ -66,7 +67,6 @@ final _busyMarkDefaultCommandRegistryProvider =
         BusyMarkCommandIds.save: const _SaveActiveIntent(),
         BusyMarkCommandIds.export: const _ExportIntent(),
         BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
-        BusyMarkCommandIds.back: const _BackIntent(),
         BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
         BusyMarkCommandIds.syntaxReference: const _SyntaxReferenceIntent(),
         BusyMarkCommandIds.settings: const _SettingsIntent(),
@@ -117,6 +117,17 @@ final _busyMarkDefaultCommandRegistryProvider =
               final search = ref.read(searchSessionProvider.notifier);
               search.openCategory(entry.value);
             },
+          BusyMarkCommandIds.home: () {
+            unawaited(ref.read(workspaceNavigationProvider).goHome());
+          },
+          BusyMarkCommandIds.back: () {
+            final router = ref.read(appRouterProvider);
+            final uri = router.routeInformationProvider.value.uri;
+            if (uri.path == settingsRoutePath &&
+                !(rootNavigatorKey.currentState?.canPop() ?? false)) {
+              router.go(SettingsReturnTarget.fromSettingsUri(uri).location);
+            }
+          },
           BusyMarkCommandIds.elementProperties: () => ref
               .read(workspaceControllerProvider.notifier)
               .toggleElementProperties
@@ -132,6 +143,22 @@ final _busyMarkDefaultCommandRegistryProvider =
             },
         },
         enabled: {
+          BusyMarkCommandIds.home: () =>
+              ref
+                  .read(appRouterProvider)
+                  .routeInformationProvider
+                  .value
+                  .uri
+                  .path !=
+              '/',
+          BusyMarkCommandIds.back: () =>
+              ref
+                  .read(appRouterProvider)
+                  .routeInformationProvider
+                  .value
+                  .uri
+                  .path ==
+              settingsRoutePath,
           for (final (id, mode) in [
             (BusyMarkCommandIds.viewEditor, DocumentViewModePreference.editor),
             (BusyMarkCommandIds.viewSource, DocumentViewModePreference.source),
@@ -424,12 +451,6 @@ class BusyMarkApp extends ConsumerWidget {
                         return null;
                       },
                     ),
-                _BackIntent: CallbackAction<_BackIntent>(
-                  onInvoke: (intent) {
-                    unawaited(_navigateBack(ref, router));
-                    return null;
-                  },
-                ),
                 _KeyboardShortcutsIntent:
                     CallbackAction<_KeyboardShortcutsIntent>(
                       onInvoke: (intent) {
@@ -578,24 +599,6 @@ class BusyMarkApp extends ConsumerWidget {
       },
       routerConfig: router,
     );
-  }
-
-  Future<void> _navigateBack(WidgetRef ref, GoRouter router) async {
-    final uri = router.routeInformationProvider.value.uri;
-    if (uri.path == settingsRoutePath) {
-      router.go(SettingsReturnTarget.fromSettingsUri(uri).location);
-      return;
-    }
-    if (uri.path != '/workspace') {
-      return;
-    }
-    final navigatorContext = rootNavigatorKey.currentContext;
-    if (navigatorContext == null ||
-        !await confirmSafeToContinue(navigatorContext, ref) ||
-        !navigatorContext.mounted) {
-      return;
-    }
-    router.go('/');
   }
 
   Future<void> _activateOpenFileTab(
@@ -1090,10 +1093,6 @@ class _ExportIntent extends Intent {
 
 class _ToggleFullScreenIntent extends Intent {
   const _ToggleFullScreenIntent();
-}
-
-class _BackIntent extends Intent {
-  const _BackIntent();
 }
 
 class _KeyboardShortcutsIntent extends Intent {
