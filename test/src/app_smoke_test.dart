@@ -18233,7 +18233,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         DocumentBuffer buffer() =>
             container.read(workspaceControllerProvider).activeBuffer!;
         await tabOperation(tester, controller.createMarkdownFile);
-        const url = 'https://example.com/lifetime.png';
+        const url = 'HTTPS://example.com/lifetime.png';
         const markup = '![Same]($url)';
         const source = 'Introduction\n\n$markup\n\n$markup\n';
         controller.updateActiveText(source);
