@@ -6314,11 +6314,25 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 includeTitleHeading: true,
               ),
             );
-            return _PreviewPane(
-              preview: preview,
-              workspace: null,
-              controller: previewScroll,
-              documentLayout: BusyMarkDocumentLayoutSpec.splitPreview,
+            return Consumer(
+              builder: (context, ref, child) {
+                final settings = ref.watch(appSettingsControllerProvider);
+                final allowed =
+                    settings.allowRemoteImages ||
+                    settings.remoteImageAllowedWorkspaceIds.contains(
+                      remoteImageWorkspaceId(widget.workspace),
+                    );
+                return MarkdownImagePermissionScope(
+                  resolve: (_, _, _) => MarkdownImageActions(allowed: allowed),
+                  child: child!,
+                );
+              },
+              child: _PreviewPane(
+                preview: preview,
+                workspace: null,
+                controller: previewScroll,
+                documentLayout: BusyMarkDocumentLayoutSpec.splitPreview,
+              ),
             );
           },
           onCreate: (template, title, filename) async {
