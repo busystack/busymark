@@ -902,9 +902,9 @@ void main() {
     },
   );
 
-  for (final schema in [2, 3, 4, 5, 6]) {
+  for (final schema in [2, 3, 4, 5, 6, 7]) {
     test(
-      'v$schema migration retains exact pending notes and bytes, drops mirror transactionally; v8 rejected',
+      'v$schema migration retains exact pending notes and bytes, drops mirror transactionally; v9 rejected',
       () async {
         final r = await open(MockClient((_) async => http.Response('[]', 200)));
         final draft = await r.create(testAccount().id, content: 'retained');
@@ -948,6 +948,14 @@ void main() {
           isEmpty,
         );
         expect(db.select('SELECT data FROM notes').single['data'], pending);
+        db.execute('PRAGMA user_version=9');
+        db.close();
+        await expectLater(
+          NotesStore.open(path: '${directory.path}/notes.sqlite3'),
+          throwsStateError,
+        );
+        db = sqlite3.open('${directory.path}/notes.sqlite3');
+        expect(db.select('PRAGMA user_version').single.values.single, 9);
         db.execute(
           'CREATE TABLE outbox (note_id TEXT PRIMARY KEY, data TEXT NOT NULL)',
         );
@@ -978,12 +986,7 @@ void main() {
           isEmpty,
         );
         expect(db.select('SELECT data FROM outbox').single['data'], pending);
-        db.execute('PRAGMA user_version=8');
         db.close();
-        await expectLater(
-          NotesStore.open(path: '${directory.path}/notes.sqlite3'),
-          throwsStateError,
-        );
       },
     );
   }
