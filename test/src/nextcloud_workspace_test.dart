@@ -11,6 +11,7 @@ import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -141,83 +142,268 @@ void main() {
   }
 
   for (final dirty in [false, true]) {
-    test(
-      'remote history restore navigates accounts safely from local workspace '
-      '(dirty=$dirty)',
-      () async {
-        final service = _GatedLocalOpenService();
-        final h = await _Harness.create(workspaceService: service);
-        addTearDown(h.dispose);
-        expect(await h.controller.openNextcloudWorkspace(_accountId), isTrue);
-        final buffer = h.state.activeBuffer!;
-        final store = h.container.read(localHistoryStoreProvider);
-        final captured = await store.capture(
-          LocalHistoryCaptureRequest(
-            remoteNote: buffer.remoteNote,
-            displayName: buffer.displayName,
-            source: 'retained remote source\n',
-            format: buffer.format,
-            capturedAt: DateTime.now().toUtc(),
-            reason: LocalHistoryCaptureReason.saved,
+    test('remote history restore navigates accounts safely from local workspace '
+        '(dirty=$dirty)', () async {
+      final service = _GatedLocalOpenService();
+      final (:h, :server, :openingSync) = await _openNotesWithHeldSync(service);
+      final buffer = h.state.activeBuffer!;
+      final openedBase = buffer.remoteEditBase!;
+      expect(openedBase.state, isNotNull);
+      final store = h.container.read(localHistoryStoreProvider);
+      final captured = await store.capture(
+        LocalHistoryCaptureRequest(
+          remoteNote: buffer.remoteNote,
+          displayName: buffer.displayName,
+          source: 'retained remote source\n',
+          format: buffer.format,
+          capturedAt: DateTime.now().toUtc(),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        const LocalHistoryPolicy(),
+      );
+      final revision = (await store.readRevision(captured.revision!.id))!;
+      final local = File(p.join(h.root.path, 'local.md'));
+      await local.writeAsString('local source');
+
+      final opening = h.controller.openPath(local.path);
+      try {
+        await service.started.future;
+        final before = h.state.activeBuffer!;
+        final base = before.remoteEditBase!;
+        final note = h.repository.noteById(before.remoteNote!.localId)!;
+        expect(base.state, same(openedBase.state));
+        expect(base.generation, openedBase.generation);
+        expect(base.state, same(note.base));
+
+        // Opening Sync remains blocked at the collection read. Updating
+        // account metadata emits a real Notes change without touching the note.
+        const refreshedVersion = '6.1.1';
+        final after = await _observeBufferChange(
+          h,
+          () =>
+              h.repository.accountById(_accountId)?.appVersion ==
+              refreshedVersion,
+          () => h.repository.upsertAccount(
+            h.repository
+                .accountById(_accountId)!
+                .copyWith(appVersion: refreshedVersion),
           ),
-          const LocalHistoryPolicy(),
         );
-        final revision = (await store.readRevision(captured.revision!.id))!;
-        final localPath = p.join(h.root.path, 'local.md');
-        await File(localPath).writeAsString('local source');
-        await h.container
-            .read(appSettingsControllerProvider.notifier)
-            .setAutoSave(false);
-        final opening = h.controller.openPath(localPath);
-        try {
-          await service.started.future;
-          final beforeSync = h.state.activeBuffer!;
-          await h.repository.synchronize(_accountId, allowWrites: false);
-          expect(h.state.activeBuffer, isNot(same(beforeSync)));
-          expect(h.state.activeText, beforeSync.text);
-          expect(h.state.activeBuffer!.revision, beforeSync.revision);
-        } finally {
-          service.release.complete();
-          await opening;
-        }
-        expect(h.state.activeBuffer?.filePath, localPath);
-        expect(h.state.activeText, 'local source');
-        expect(h.state.isLoading, isFalse);
-        if (dirty) {
-          h.controller.updateActiveText('unsaved local source');
-        }
-        final current = await h.controller.localHistoryCurrentSource(
-          captured.document,
-          revision,
-        );
-        expect(current.canRestore, isTrue);
+        expect(h.repository.isSynchronizing(_accountId), isTrue);
+        expect(h.repository.noteById(note.localId), same(note));
+        expect(after, isNot(same(before)));
+        expect(after.remoteEditBase, isNot(same(base)));
+        expect(after.remoteEditBase!.state, same(base.state));
+        expect(after.remoteEditBase!.generation, base.generation);
+        expect(after.id, before.id);
+        expect(after.remoteNote, before.remoteNote);
+        expect(after.text, before.text);
+        expect(after.revision, before.revision);
+        expect(after.readonly, before.readonly);
+        expect(after.isDirty, isFalse);
+        expect(h.state.workspace!.nextcloudAccountId, _accountId);
+        expect(h.state.isLoading, isTrue);
+      } finally {
+        service.release.complete();
+        await opening;
+        server.release();
+        await openingSync;
+      }
+      expect(h.state.activeBuffer?.filePath, local.path);
+      expect(h.state.activeText, 'local source');
+      expect(h.state.isLoading, isFalse);
+
+      Future<bool> restore() => h.controller.restoreLocalHistoryRevision(
+        document: captured.document,
+        revision: revision,
+      );
+
+      if (dirty) {
+        h.controller.updateActiveText('unsaved local source');
+        await h.controller.flushPersistence();
+      }
+      final current = await h.controller.localHistoryCurrentSource(
+        captured.document,
+        revision,
+      );
+      expect(current.canRestore, isTrue);
+      if (dirty) {
+        expect(await restore(), isFalse);
+        expect(h.state.activeBuffer!.filePath, local.path);
+        expect(h.state.activeText, 'unsaved local source');
+        expect(h.state.isDirty, isTrue);
+        expect(h.recovery.value.entries.single.text, 'unsaved local source');
         expect(
-          await h.controller.restoreLocalHistoryRevision(
-            document: captured.document,
-            revision: revision,
-          ),
-          !dirty,
+          h.repository.noteById(buffer.remoteNote!.localId)!.content,
+          buffer.text,
         );
-        if (dirty) {
-          expect(h.state.activeBuffer!.filePath, localPath);
-          expect(h.state.activeText, 'unsaved local source');
-          expect(h.state.isDirty, isTrue);
+        expect(await local.readAsString(), 'local source');
+        expect(await h.controller.saveActive(), isTrue);
+      }
+      expect(await restore(), isTrue);
+      expect(h.state.workspace!.nextcloudAccountId, _accountId);
+      expect(h.state.activeBuffer!.remoteNote, buffer.remoteNote);
+      expect(h.state.activeText, revision.source);
+      expect(
+        h.repository.noteById(buffer.remoteNote!.localId)!.content,
+        revision.source,
+      );
+      expect(
+        (await store.readRevision(revision.summary.id))!.source,
+        revision.source,
+      );
+      await h.controller.flushPersistence();
+      expect(h.recovery.value.entries, isEmpty);
+      expect(
+        await local.readAsString(),
+        dirty ? 'unsaved local source' : 'local source',
+      );
+    });
+  }
+
+  for (final (change, remotePatch) in [
+    ('server snapshot', {'favorite': true}),
+    ('server generation', {'etag': 'new-server-version'}),
+    ('permission', {'error': true}),
+  ]) {
+    test('pending local open rejects a changed Notes $change', () async {
+      final service = _GatedLocalOpenService();
+      final (:h, :server, :openingSync) = await _openNotesWithHeldSync(service);
+      final local = File(p.join(h.root.path, 'local.md'));
+      await local.writeAsString('local source');
+      var published = false;
+      final opening = h.controller.openPath(
+        local.path,
+        acceptNavigation: () => true,
+        onOpened: () => published = true,
+      );
+      final DocumentBuffer updated;
+      try {
+        await service.started.future;
+        final original = h.state.activeBuffer!;
+        final base = original.remoteEditBase!;
+        updated = await _observeBufferChange(
+          h,
+          () {
+            final note = h.repository.noteById(original.remoteNote!.localId)!;
+            return switch (change) {
+              'server snapshot' => note.favorite,
+              'server generation' => note.etag == 'new-server-version',
+              _ => note.readonly,
+            };
+          },
+          () async {
+            server.note.addAll(remotePatch);
+            server.release();
+            await openingSync;
+          },
+        );
+        expect(updated.id, original.id);
+        expect(updated.text, original.text);
+        expect(updated.revision, original.revision);
+        expect(updated.isDirty, isFalse);
+        expect(updated.readonly, change == 'permission');
+        expect(
+          updated.remoteEditBase!.state,
+          change == 'permission' ? same(base.state) : isNot(same(base.state)),
+        );
+        expect(
+          updated.remoteEditBase!.generation,
+          base.generation + (change == 'server generation' ? 1 : 0),
+        );
+      } finally {
+        service.release.complete();
+        await opening;
+      }
+      expect(published, isFalse);
+      expect(h.state.activeBuffer!.remoteNote, updated.remoteNote);
+      expect(h.state.activeText, updated.text);
+      expect(h.state.activeBuffer!.readonly, updated.readonly);
+      expect(h.state.isLoading, isFalse);
+      expect(await local.readAsString(), 'local source');
+    });
+  }
+
+  for (final change in [
+    'dirty edit',
+    'revision',
+    'note',
+    'new open',
+    'disposal',
+  ]) {
+    test('pending local open rejects Notes $change', () async {
+      final service = _GatedLocalOpenService();
+      final (:h, :server, :openingSync) = await _openNotesWithHeldSync(service);
+      final controller = h.controller;
+      final local = File(p.join(h.root.path, 'local.md'));
+      await local.writeAsString('local source');
+      final before = h.state.activeBuffer!;
+      var published = false;
+      final opening = controller.openPath(
+        local.path,
+        onOpened: () => published = true,
+      );
+      int? readsBeforeRelease;
+      DocumentBuffer? kept;
+      try {
+        await service.started.future;
+        switch (change) {
+          case 'dirty edit':
+            controller.updateActiveText('Keep this draft');
+            expect(h.state.isDirty, isTrue);
+          case 'revision':
+            controller.updateActiveText(
+              'Edit before returning to saved source',
+            );
+            expect(controller.undoActiveBuffer(), isTrue);
+            expect(h.state.isDirty, isFalse);
+            expect(h.state.activeText, before.text);
+            expect(
+              h.state.activeBuffer!.revision,
+              greaterThan(before.revision),
+            );
+          case 'note':
+            final other = h.repository.notes.singleWhere(
+              (note) => note.serverId == 2,
+            );
+            expect(await controller.openNextcloudNote(other.localId), isTrue);
+            expect(h.state.activeBuffer!.remoteNote!.localId, other.localId);
+          case 'new open':
+            final newer = File(p.join(h.root.path, 'newer.md'));
+            await newer.writeAsString('New destination');
+            await controller.openPath(newer.path);
+            expect(h.state.activeBuffer!.filePath, newer.path);
+          case 'disposal':
+            server.release();
+            await openingSync;
+            await h.dispose();
+        }
+        readsBeforeRelease = service.reads;
+        if (change != 'disposal') kept = h.state.activeBuffer!;
+      } finally {
+        service.release.complete();
+        await opening;
+      }
+      expect(published, isFalse);
+      if (change == 'disposal' || change == 'new open') {
+        expect(service.reads, readsBeforeRelease);
+      }
+      if (kept != null) {
+        expect(await local.readAsString(), 'local source');
+        expect(h.state.activeBuffer!.id, kept.id);
+        expect(h.state.activeText, kept.text);
+        expect(h.state.isLoading, isFalse);
+        if (change == 'dirty edit') {
+          expect(h.state.activeText, 'Keep this draft');
+          expect(h.state.activeBuffer!.id, before.id);
+          await controller.flushPersistence();
           expect(
-            h.repository.noteById(buffer.remoteNote!.localId)!.content,
-            buffer.text,
-          );
-        } else {
-          expect(h.state.workspace!.nextcloudAccountId, _accountId);
-          expect(h.state.activeBuffer!.remoteNote, buffer.remoteNote);
-          expect(h.state.activeText, revision.source);
-          expect(
-            h.repository.noteById(buffer.remoteNote!.localId)!.content,
-            revision.source,
+            h.repository.noteById(before.remoteNote!.localId)!.content,
+            'Keep this draft',
           );
         }
-        expect(await File(localPath).readAsString(), 'local source');
-      },
-    );
+      }
+    });
   }
 
   test(
@@ -862,7 +1048,11 @@ class _Harness {
     );
   }
 
-  Future<void> dispose() async {
+  Future<void>? _disposal;
+
+  Future<void> dispose() => _disposal ??= _dispose();
+
+  Future<void> _dispose() async {
     await controller.flushPersistence();
     await controller.refreshNextcloudNotes();
     container.dispose();
@@ -872,15 +1062,104 @@ class _Harness {
   }
 }
 
+Future<({_Harness h, _GatedNotesCollection server, Future<void> openingSync})>
+_openNotesWithHeldSync(_GatedLocalOpenService service) async {
+  final server = _GatedNotesCollection();
+  final h = await _Harness.create(
+    seedLocal: false,
+    deferPersistence: true,
+    client: MockClient(server.respond),
+    workspaceService: service,
+  );
+  addTearDown(h.dispose);
+  addTearDown(server.release);
+  await h.container
+      .read(appSettingsControllerProvider.notifier)
+      .setAutoSave(false);
+  await h.repository.synchronize(_accountId, allowWrites: false);
+  server.holdNextRead = true;
+  expect(await h.controller.openNextcloudWorkspace(_accountId), isTrue);
+  await server.started.future;
+  expect(h.repository.isSynchronizing(_accountId), isTrue);
+  final openingSync = h.repository.synchronize(_accountId);
+  return (h: h, server: server, openingSync: openingSync);
+}
+
+Future<DocumentBuffer> _observeBufferChange(
+  _Harness h,
+  bool Function() expectedNotification,
+  Future<void> Function() causeChange,
+) async {
+  final observed = Completer<DocumentBuffer>();
+  final subscription = h.container.listen(workspaceControllerProvider, (
+    _,
+    next,
+  ) {
+    if (!observed.isCompleted && expectedNotification()) {
+      observed.complete(next.activeBuffer!);
+    }
+  });
+  try {
+    await causeChange();
+    return await observed.future;
+  } finally {
+    subscription.close();
+  }
+}
+
+class _GatedNotesCollection {
+  final note = serverNote(1, content: 'current server source', etag: 'base');
+  final _otherNote = serverNote(2, content: 'Other source');
+  final started = Completer<void>();
+  final _released = Completer<void>();
+  var holdNextRead = false;
+
+  void release() {
+    if (!_released.isCompleted) _released.complete();
+  }
+
+  Future<http.Response> respond(http.Request request) async {
+    if (request.method == 'PUT') {
+      note['content'] = (jsonDecode(request.body) as Map)['content'];
+      note['etag'] = 'acknowledged';
+      return http.Response(jsonEncode(note), 200);
+    }
+    expect(request.method, 'GET');
+    if (request.url.path.endsWith('/notes')) {
+      if (holdNextRead) {
+        holdNextRead = false;
+        started.complete();
+        await _released.future;
+      }
+      return http.Response(jsonEncode([note, _otherNote]), 200);
+    }
+    expect(request.url.path, matches(RegExp(r'/notes/[12]$')));
+    return http.Response(
+      jsonEncode(request.url.path.endsWith('/1') ? note : _otherNote),
+      200,
+    );
+  }
+}
+
 class _GatedLocalOpenService extends WorkspaceService {
   final started = Completer<void>();
   final release = Completer<void>();
+  var reads = 0;
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) {
+    reads++;
+    return super.loadTextWithSnapshot(path);
+  }
 
   @override
   Future<Workspace> openPath(String path) async {
-    started.complete();
-    await release.future;
-    return super.openPath(path);
+    final loaded = await super.openPath(path);
+    if (!started.isCompleted) {
+      started.complete();
+      await release.future;
+    }
+    return loaded;
   }
 }
 
