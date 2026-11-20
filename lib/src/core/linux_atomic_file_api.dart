@@ -69,6 +69,11 @@ final class LinuxAtomicFileApi {
   static const _atCurrentWorkingDirectory = -100;
   static const _renameNoReplace = 1;
   static const _renameExchange = 2;
+  // The ARM Linux UAPI keeps different values for these two open(2) flags.
+  static final _armOpenFlags =
+      Abi.current() == Abi.linuxArm || Abi.current() == Abi.linuxArm64;
+  static final _openDirectoryFlag = _armOpenFlags ? 0x4000 : 0x10000;
+  static final _noFollowFlag = _armOpenFlags ? 0x8000 : 0x20000;
   static final instance = LinuxAtomicFileApi._();
 
   _RenameAt2Dart? _renameAt2;
@@ -130,11 +135,11 @@ final class LinuxAtomicFileApi {
   int? moveNoReplace(String oldPath, String newPath) =>
       publishNoReplace(oldPath, newPath, renameOnly: true);
 
-  int openDirectory(String path) => _openEntry(path, 0x10000);
+  int openDirectory(String path) => _openEntry(path, _openDirectoryFlag);
 
   // O_PATH | O_NOFOLLOW keeps the directory entry's inode alive across rename,
   // including on filesystems that assign inode numbers in memory.
-  int pinEntry(String path) => _openEntry(path, 0x220000);
+  int pinEntry(String path) => _openEntry(path, 0x200000 | _noFollowFlag);
 
   int _openEntry(String path, int flags) {
     final native = path.toNativeUtf8();
