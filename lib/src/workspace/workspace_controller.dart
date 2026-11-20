@@ -4214,6 +4214,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final priorRevision = _activeDocumentRevision;
     final request = ++_pathOpenRequest;
+    bool currentRequest() =>
+        ref.mounted &&
+        request == _pathOpenRequest &&
+        acceptNavigation?.call() != false;
     final closingBuffers = prior.documentBuffers;
     int? operationRevision;
     // Keep the existing workspace mounted while validating a prospective
@@ -4222,6 +4226,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = prior.copyWith(isLoading: true, clearMessage: true);
     try {
       final workspace = await _service.openPath(path);
+      if (!currentRequest()) return;
       if (documentPath != null &&
           ((workspace.writersideProject == null &&
                   workspace.writersideModule == null) ||
@@ -4237,6 +4242,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final load = active == null
           ? null
           : await _service.loadTextWithSnapshot(active);
+      if (!currentRequest()) return;
       var loadedWorkspace = documentPath == null
           ? workspace
           : workspace.copyWith(
@@ -4267,6 +4273,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           {active!: buffer.text},
         );
       }
+      if (!currentRequest()) return;
       final preview = buffer == null
           ? null
           : _safePreview(loadedWorkspace, buffer);
@@ -6342,7 +6349,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       identical(before.format, live.format) &&
       before.remoteNote == live.remoteNote &&
       before.remoteTitle == live.remoteTitle &&
-      identical(before.remoteEditBase, live.remoteEditBase) &&
+      // Notes notifications can rebuild the wrapper around the same captured
+      // server state. Only a change to the provenance invalidates the close.
+      identical(before.remoteEditBase?.state, live.remoteEditBase?.state) &&
+      before.remoteEditBase?.generation == live.remoteEditBase?.generation &&
       before.readonly == live.readonly &&
       before.recovered == live.recovered;
 

@@ -16,6 +16,7 @@ import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -144,9 +145,10 @@ void main() {
       'remote history restore navigates accounts safely from local workspace '
       '(dirty=$dirty)',
       () async {
-        final h = await _Harness.create();
+        final service = _GatedLocalOpenService();
+        final h = await _Harness.create(workspaceService: service);
         addTearDown(h.dispose);
-        await h.controller.openNextcloudWorkspace(_accountId);
+        expect(await h.controller.openNextcloudWorkspace(_accountId), isTrue);
         final buffer = h.state.activeBuffer!;
         final store = h.container.read(localHistoryStoreProvider);
         final captured = await store.capture(
@@ -163,11 +165,25 @@ void main() {
         final revision = (await store.readRevision(captured.revision!.id))!;
         final localPath = p.join(h.root.path, 'local.md');
         await File(localPath).writeAsString('local source');
-        await h.controller.openPath(localPath);
+        await h.container
+            .read(appSettingsControllerProvider.notifier)
+            .setAutoSave(false);
+        final opening = h.controller.openPath(localPath);
+        try {
+          await service.started.future;
+          final beforeSync = h.state.activeBuffer!;
+          await h.repository.synchronize(_accountId, allowWrites: false);
+          expect(h.state.activeBuffer, isNot(same(beforeSync)));
+          expect(h.state.activeText, beforeSync.text);
+          expect(h.state.activeBuffer!.revision, beforeSync.revision);
+        } finally {
+          service.release.complete();
+          await opening;
+        }
+        expect(h.state.activeBuffer?.filePath, localPath);
+        expect(h.state.activeText, 'local source');
+        expect(h.state.isLoading, isFalse);
         if (dirty) {
-          await h.container
-              .read(appSettingsControllerProvider.notifier)
-              .setAutoSave(false);
           h.controller.updateActiveText('unsaved local source');
         }
         final current = await h.controller.localHistoryCurrentSource(
@@ -185,6 +201,11 @@ void main() {
         if (dirty) {
           expect(h.state.activeBuffer!.filePath, localPath);
           expect(h.state.activeText, 'unsaved local source');
+          expect(h.state.isDirty, isTrue);
+          expect(
+            h.repository.noteById(buffer.remoteNote!.localId)!.content,
+            buffer.text,
+          );
         } else {
           expect(h.state.workspace!.nextcloudAccountId, _accountId);
           expect(h.state.activeBuffer!.remoteNote, buffer.remoteNote);
@@ -766,6 +787,7 @@ class _Harness {
     bool deferPersistence = false,
     Duration? persistenceDelay,
     LocalHistoryStore? historyStore,
+    WorkspaceService? workspaceService,
   }) async {
     final directory =
         root ??
@@ -819,6 +841,8 @@ class _Harness {
         nextcloudNotesRepositoryProvider.overrideWith(
           (ref) async => repository,
         ),
+        if (workspaceService != null)
+          workspaceServiceProvider.overrideWithValue(workspaceService),
         workspaceFileMonitorProvider.overrideWithValue(monitor),
         documentSessionStoreProvider.overrideWithValue(sessionStore),
         documentRecoveryStoreProvider.overrideWithValue(recoveryStore),
@@ -845,6 +869,18 @@ class _Harness {
     await repository.dispose();
     await monitor.dispose();
     if (ownsRoot) await root.delete(recursive: true);
+  }
+}
+
+class _GatedLocalOpenService extends WorkspaceService {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    started.complete();
+    await release.future;
+    return super.openPath(path);
   }
 }
 

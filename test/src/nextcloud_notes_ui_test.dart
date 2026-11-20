@@ -23,7 +23,9 @@ import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_settings_controller.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:busymark/src/local_history/local_history_comparison_view.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
@@ -33,8 +35,10 @@ import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_sidebar.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
+import 'package:busymark/src/workspace/document_origin.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_message.dart';
@@ -997,22 +1001,52 @@ void main() {
       expect(state().activeText, 'Keep my remote edits');
       expect(router.routeInformationProvider.value.uri.path, '/workspace');
 
-      await tester.tap(find.text('Writerside recent topic'));
-      await settleStorage(tester);
-      await tester.tap(find.text('Discard'));
-      await pumpUntil(
-        tester,
-        () =>
-            state().workspace?.kind == WorkspaceKind.writersideModule &&
-            !state().isLoading,
-        operation: 'open the recorded Writerside document after discard',
-        diagnostics: () =>
-            '${state().workspace?.kind}, dirty=${state().isDirty}, '
-            'loading=${state().isLoading}, message=${state().message?.error}',
-      );
-      await settleStorage(tester);
-      expect(state().workspace?.kind, WorkspaceKind.writersideModule);
-      expect(state().activeBuffer?.filePath, topic);
+      Future<void> openWriterside({String? choice}) async {
+        final settled = Completer<void>.sync();
+        final subscription = container.listen(workspaceControllerProvider, (
+          before,
+          after,
+        ) {
+          if (before?.isLoading == true &&
+              !after.isLoading &&
+              !settled.isCompleted) {
+            settled.complete();
+          }
+        });
+        try {
+          await tester.runAsync(
+            () => tester.tap(find.text('Writerside recent topic')),
+          );
+          if (choice != null) {
+            final action = find.text(choice).hitTestable();
+            await pumpUntil(
+              tester,
+              () => action.evaluate().isNotEmpty,
+              operation: 'confirm departure from the dirty note',
+            );
+            await tester.runAsync(() => tester.tap(action));
+          }
+          await pumpUntil(
+            tester,
+            () => state().isLoading || settled.isCompleted,
+            operation: 'start opening the recorded Writerside document',
+          );
+          // The opening uses real file scans and model workers. The published
+          // state signals completion, even if the ancillary Recent write is
+          // still waiting on a widget-clock callback.
+          await tester.runAsync(() => settled.future);
+        } finally {
+          subscription.close();
+        }
+        await tester.pumpAndSettle();
+        expect(state().isLoading, isFalse);
+        expect(state().workspace?.kind, WorkspaceKind.writersideModule);
+        expect(state().activeBuffer?.filePath, topic);
+        expect(find.text('Discard'), findsNothing);
+      }
+
+      await openWriterside(choice: 'Discard');
+      expect(repository.noteById(localId)?.content, 'private search text');
       await showRecent('Files');
       final sameWorkspace = state().workspace!.id;
       final sameBuffer = state().activeBuffer!.id;
@@ -1031,16 +1065,40 @@ void main() {
       expect(state().workspace!.id, sameWorkspace, reason: topicRecent);
       expect(state().documentBuffers.single.id, sameBuffer);
 
-      final noteRecord = container
-          .read(appSettingsControllerProvider)
-          .recentWorkspaces
-          .firstWhere((resource) => resource.localId == localId);
-      await tester.tap(
-        find.byKey(ValueKey(RecentSearchResult(noteRecord).identity)),
+      Future<void> returnToNote() async {
+        final noteRecord = container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .firstWhere((resource) => resource.localId == localId);
+        await tester.tap(
+          find.byKey(ValueKey(RecentSearchResult(noteRecord).identity)),
+        );
+        await pumpUntil(
+          tester,
+          () =>
+              state().workspace?.nextcloudAccountId == accountId &&
+              state().activeBuffer?.remoteNote?.localId == localId &&
+              !state().isLoading,
+          operation: 'reopen the recorded Nextcloud note',
+        );
+        expect(state().isDirty, isFalse);
+      }
+
+      await returnToNote();
+      await showRecent('Nextcloud Notes');
+      await openWriterside();
+      await showRecent('Files');
+      await returnToNote();
+      await showRecent('Nextcloud Notes');
+      controller.updateActiveText('Save this note before leaving');
+      await tester.pump();
+      await openWriterside(choice: 'Save');
+      expect(
+        (await tester.runAsync(
+          repository.store.notes,
+        ))!.singleWhere((note) => note.localId == localId).content,
+        'Save this note before leaving',
       );
-      await settleStorage(tester);
-      expect(state().workspace?.nextcloudAccountId, accountId);
-      expect(state().activeBuffer?.remoteNote?.localId, localId);
       expect(tester.takeException(), isNull);
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
@@ -1048,6 +1106,146 @@ void main() {
       await closeFixture(tester);
     }
   });
+
+  for (final choice in ['Cancel', 'Discard', 'Save']) {
+    testWidgets(
+      'retained Notes history reviews a dirty local document: $choice',
+      (tester) async {
+        const localId = '223e4567-e89b-42d3-a456-426614174000';
+        const reference = NextcloudNoteReference(
+          accountId: accountId,
+          localId: localId,
+        );
+        const retainedSource = 'Retained Notes revision';
+        const localDraft = 'Unsaved local draft';
+        final localRoot = Directory(p.join(root.path, 'authoring'))
+          ..createSync();
+        final local = File(p.join(localRoot.path, 'local.md'))
+          ..writeAsStringSync('Local disk source');
+        final settings = _RecentReopenSettings(
+          failSave: false,
+          value: AppSettings.defaults()
+              .copyWith(autoSave: false, automaticSpelling: false)
+              .toJson(),
+        );
+        final container = await pumpWelcome(
+          tester,
+          settings: settings,
+          persistenceDelay: const Duration(hours: 1),
+        );
+        try {
+          final controller = container.read(
+            workspaceControllerProvider.notifier,
+          );
+          WorkspaceState state() => container.read(workspaceControllerProvider);
+          final store = container.read(localHistoryStoreProvider);
+          final history = container.read(
+            localHistoryControllerProvider.notifier,
+          );
+          final recovery =
+              container.read(documentRecoveryStoreProvider)
+                  as MemoryDocumentRecoveryStore;
+          await tester.runAsync(() => controller.openPath(local.path));
+          expect(state().activeBuffer?.filePath, local.path);
+          container.read(appRouterProvider).go('/workspace');
+          await tester.pumpAndSettle();
+          controller.updateActiveText(localDraft);
+          await controller.flushPersistence();
+          expect(recovery.value.entries.single.text, localDraft);
+          final captured = await store.capture(
+            LocalHistoryCaptureRequest(
+              remoteNote: reference,
+              displayName: 'Personal note',
+              source: retainedSource,
+              format: TextFormatMetadata.utf8Lf,
+              capturedAt: DateTime.now().toUtc(),
+              reason: LocalHistoryCaptureReason.saved,
+            ),
+            const LocalHistoryPolicy(),
+          );
+          await history.refresh();
+          history.inspectRetainedDocument(captured.document.id);
+          await history.selectRevision(captured.revision!.id);
+          await tester.pump();
+          final comparison = find.byType(LocalHistoryComparisonView);
+          expect(comparison, findsOneWidget);
+          final l10n = AppLocalizations.of(tester.element(comparison));
+          final restore = find.byWidgetPredicate(
+            (widget) =>
+                widget is IconButton &&
+                widget.tooltip == l10n.localHistoryRestoreRevision &&
+                widget.onPressed != null,
+          );
+          await pumpUntil(
+            tester,
+            () => restore.evaluate().isNotEmpty,
+            operation: 'show the retained note restore action',
+          );
+          final confirm = find.text(switch (choice) {
+            'Cancel' => l10n.cancel,
+            'Discard' => l10n.discard,
+            _ => l10n.save,
+          }).hitTestable();
+          await tester.tap(restore);
+          await pumpUntil(
+            tester,
+            () => confirm.evaluate().isNotEmpty,
+            operation: 'review the dirty local document before restoring',
+          );
+          await tester.tap(confirm);
+          if (choice == 'Cancel') {
+            await pumpUntil(
+              tester,
+              () => restore.evaluate().isNotEmpty,
+              operation: 'finish cancelling the retained restore',
+            );
+            expect(state().activeBuffer?.filePath, local.path);
+            expect(state().activeText, localDraft);
+            expect(state().isDirty, isTrue);
+            expect(
+              repository.noteById(localId)?.content,
+              'private search text',
+            );
+            expect(recovery.value.entries.single.text, localDraft);
+          } else {
+            await pumpUntil(
+              tester,
+              () =>
+                  repository.noteById(localId)?.content == retainedSource &&
+                  state().activeBuffer?.remoteNote == reference &&
+                  !state().isDirty,
+              operation: 'durably restore the selected Notes revision',
+            );
+            expect(state().activeText, retainedSource);
+            await controller.flushPersistence();
+            expect(recovery.value.entries, isEmpty);
+            final snapshot = await store.load();
+            final sources = await Future.wait([
+              for (final revision in snapshot.revisions)
+                store.readRevision(revision.id),
+            ]);
+            expect(
+              sources.map((revision) => revision?.source),
+              containsAll([localDraft, 'private search text', retainedSource]),
+            );
+          }
+          expect(
+            local.readAsStringSync(),
+            choice == 'Save' ? localDraft : 'Local disk source',
+          );
+          expect(
+            (await store.readRevision(captured.revision!.id))?.source,
+            retainedSource,
+          );
+          expect(tester.takeException(), isNull);
+        } finally {
+          await tester.pumpWidget(const SizedBox.shrink());
+          container.dispose();
+          await closeFixture(tester);
+        }
+      },
+    );
+  }
 
   testWidgets(
     'Welcome retains a remote revocation warning without a phantom connected account',
