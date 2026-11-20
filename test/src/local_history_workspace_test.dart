@@ -899,7 +899,11 @@ void main() {
     test(
       'pre-traversal recovery survives branch and reopen (autosave=$autoSave)',
       () async {
-        final path = p.join(root.path, 'traversal.md');
+        // The History store is app data, outside the watched document folder.
+        final documents = await Directory(
+          p.join(root.path, 'documents'),
+        ).create();
+        final path = p.join(documents.path, 'traversal.md');
         await File(path).writeAsString('baseline');
         final store = FileLocalHistoryStore(
           rootDirectory: () async => Directory(p.join(root.path, 'history')),
@@ -924,22 +928,25 @@ void main() {
         h.controller.updateActiveText('new branch');
         expect(h.controller.redoActiveBuffer(), isFalse);
         if (autoSave) {
-          await _waitFor(
-            () => !h.state.activeBuffer!.isDirty,
-            operation: 'autosave after branch',
-            diagnostics: () => jsonEncode({
-              'autoSave': h.container
-                  .read(appSettingsControllerProvider)
-                  .autoSave,
-              'filePath': h.state.activeBuffer?.filePath,
-              'source': h.state.activeBuffer?.text,
-              'saved': h.state.activeBuffer?.lastSavedText,
-              'diskState': h.state.activeBuffer?.diskState.name,
-              'message': h.state.message?.code.name,
-              'error': h.state.message?.error.toString(),
-              'disk': File(path).readAsStringSync(),
-            }),
-          );
+          final saved = Completer<void>();
+          final subscription = h.container.listen(workspaceControllerProvider, (
+            _,
+            next,
+          ) {
+            final buffer = next.bufferForPath(path);
+            if (buffer != null &&
+                !buffer.isDirty &&
+                buffer.lastSavedText == 'new branch' &&
+                !saved.isCompleted) {
+              saved.complete();
+            }
+          }, fireImmediately: true);
+          try {
+            await saved.future;
+          } finally {
+            subscription.close();
+          }
+          expect(await File(path).readAsString(), 'new branch');
         }
         expect(await history.flushAll(h.state.documentBuffers), isTrue);
         expect(
