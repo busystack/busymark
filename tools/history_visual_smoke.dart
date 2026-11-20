@@ -10,7 +10,10 @@ import 'dart:ui' as ui;
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
@@ -64,6 +67,9 @@ Future<void> main(List<String> arguments) async {
   final historyRoot = Directory(p.join(output.path, 'store'));
   await historyRoot.create(recursive: true);
   var contentions = 0;
+  const restoredBufferId = 'restored-desktop';
+  late final ProviderContainer container;
+  Future<_DesktopLockHolder>? startupHolder;
   final historyStore = repairMode
       // This disposable desktop verification target uses the internal seam.
       // ignore: invalid_use_of_visible_for_testing_member
@@ -71,6 +77,14 @@ Future<void> main(List<String> arguments) async {
           rootDirectory: () async => historyRoot,
           lockBudget: const Duration(milliseconds: 400),
           acquireLock: (handle) async {
+            // Session restoration needs an authoritative history read first.
+            // Hold the lock when the published tab starts its baseline capture.
+            if (startupHolder == null &&
+                container.exists(workspaceControllerProvider) &&
+                container.read(workspaceControllerProvider).activeBuffer?.id ==
+                    restoredBufferId) {
+              await (startupHolder = _DesktopLockHolder.start(historyRoot));
+            }
             try {
               await handle.lock(FileLock.exclusive);
             } on FileSystemException {
@@ -80,22 +94,19 @@ Future<void> main(List<String> arguments) async {
           },
         )
       : FileLocalHistoryStore(rootDirectory: () async => historyRoot);
-  final holder = repairMode
-      ? await _DesktopLockHolder.start(historyRoot)
-      : null;
   final sessions = MemoryDocumentSessionStore();
   if (repairMode) {
     sessions.value = WorkspaceSessionSnapshot(
       workspacePath: workspacePath,
       tabs: [
         DocumentSessionEntry(
-          id: 'restored-desktop',
+          id: restoredBufferId,
           filePath: primaryPath,
           untitledName: null,
           editorState: const DocumentEditorState(),
         ),
       ],
-      activeBufferId: 'restored-desktop',
+      activeBufferId: restoredBufferId,
     );
   }
 
@@ -113,32 +124,33 @@ Future<void> main(List<String> arguments) async {
     confirmCloseWithUnsavedChanges: false,
   );
   final boundaryKey = GlobalKey();
+  container = ProviderContainer(
+    overrides: [
+      startupPathProvider.overrideWithValue(repairMode ? null : workspacePath),
+      initialSystemAccentColorProvider.overrideWithValue(
+        busyMarkDefaultAccentColor,
+      ),
+      gitRepositoryGatewayProvider.overrideWithValue(const GitCliGateway()),
+      localSettingsStoreProvider.overrideWithValue(
+        _MemorySettingsStore(settings.toJson()),
+      ),
+      documentSessionStoreProvider.overrideWithValue(sessions),
+      documentRecoveryStoreProvider.overrideWithValue(
+        MemoryDocumentRecoveryStore(),
+      ),
+      richClipboardServiceProvider.overrideWithValue(
+        _RuntimeExternalClipboardService(),
+      ),
+      localHistoryStoreProvider.overrideWithValue(historyStore),
+      if (!realPolicyTimer && !repairMode)
+        localHistoryTimerFactoryProvider.overrideWithValue(
+          (_, callback) => Timer(const Duration(seconds: 2), callback),
+        ),
+    ],
+  );
   runApp(
-    ProviderScope(
-      overrides: [
-        startupPathProvider.overrideWithValue(
-          repairMode ? null : workspacePath,
-        ),
-        initialSystemAccentColorProvider.overrideWithValue(
-          busyMarkDefaultAccentColor,
-        ),
-        gitRepositoryGatewayProvider.overrideWithValue(const GitCliGateway()),
-        localSettingsStoreProvider.overrideWithValue(
-          _MemorySettingsStore(settings.toJson()),
-        ),
-        documentSessionStoreProvider.overrideWithValue(sessions),
-        documentRecoveryStoreProvider.overrideWithValue(
-          MemoryDocumentRecoveryStore(),
-        ),
-        richClipboardServiceProvider.overrideWithValue(
-          _RuntimeExternalClipboardService(),
-        ),
-        localHistoryStoreProvider.overrideWithValue(historyStore),
-        if (!realPolicyTimer && !repairMode)
-          localHistoryTimerFactoryProvider.overrideWithValue(
-            (_, callback) => Timer(const Duration(seconds: 2), callback),
-          ),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: _HistoryVisualHarness(
         mode: mode,
         primaryPath: primaryPath,
@@ -146,7 +158,7 @@ Future<void> main(List<String> arguments) async {
         output: output,
         boundaryKey: boundaryKey,
         realPolicyTimer: realPolicyTimer,
-        initialHolder: holder,
+        initialHolder: repairMode ? () => startupHolder : null,
         contentions: () => contentions,
         repairStore: historyStore,
       ),
@@ -180,7 +192,7 @@ class _HistoryVisualHarness extends ConsumerStatefulWidget {
   final Directory output;
   final GlobalKey boundaryKey;
   final bool realPolicyTimer;
-  final _DesktopLockHolder? initialHolder;
+  final Future<_DesktopLockHolder>? Function()? initialHolder;
   final int Function()? contentions;
   final FileLocalHistoryStore? repairStore;
 
@@ -421,13 +433,22 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     final history = ref.read(localHistoryControllerProvider.notifier);
     final store = widget.repairStore!;
     final root = Directory(p.join(widget.output.path, 'store'));
-    _DesktopLockHolder? holder = widget.initialHolder;
+    _DesktopLockHolder? holder;
     bool draftStillPresent(DocumentBuffer expected) {
       final current = ref.read(workspaceControllerProvider).activeBuffer;
       return current?.id == expected.id &&
           current?.revision == expected.revision &&
           current?.text == expected.text &&
           current?.isDirty == expected.isDirty;
+    }
+
+    bool newDraftIsActive(String previousId) {
+      final active = ref.read(workspaceControllerProvider).activeBuffer;
+      return active != null &&
+          active.id != previousId &&
+          active.isUntitled &&
+          ref.read(appRouterProvider).routeInformationProvider.value.uri.path ==
+              '/workspace';
     }
 
     try {
@@ -442,7 +463,8 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         widget.contentions!() > 0,
         'startup encountered actual cross-process contention',
       );
-      await holder!.release();
+      holder = await widget.initialHolder!()!;
+      await holder.release();
       holder = null;
       await history.refresh();
       _check(
@@ -452,9 +474,12 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       );
 
       holder = await _DesktopLockHolder.start(root);
-      await ref
-          .read(busyMarkCommandRegistryProvider)
-          .execute(BusyMarkCommandIds.home);
+      _check(
+        await ref
+            .read(busyMarkCommandRegistryProvider)
+            .execute(BusyMarkCommandIds.home),
+        'Home command before pristine discard',
+      );
       await _waitFor(
         () =>
             ref
@@ -466,20 +491,8 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
             '/',
         'Home to Welcome',
       );
-      await _activateLabel('Create Markdown File');
-      await _waitFor(
-        () =>
-            ref.read(workspaceControllerProvider).activeBuffer?.id !=
-                original.id &&
-            ref
-                    .read(appRouterProvider)
-                    .routeInformationProvider
-                    .value
-                    .uri
-                    .path ==
-                '/workspace',
-        'first new draft',
-      );
+      await _activateLabel((strings) => strings.createMarkdownFile);
+      await _waitFor(() => newDraftIsActive(original.id), 'first new draft');
       var draft = ref.read(workspaceControllerProvider).activeBuffer!;
       _check(
         history.warningForBuffer(draft.id) == null,
@@ -492,10 +505,13 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       );
       await _capture('repair-new-draft.png');
 
-      await ref
-          .read(busyMarkCommandRegistryProvider)
-          .execute(BusyMarkCommandIds.home);
-      await _activateLabel('Discard');
+      _check(
+        await ref
+            .read(busyMarkCommandRegistryProvider)
+            .execute(BusyMarkCommandIds.home),
+        'Home command opens pristine discard confirmation',
+      );
+      await _activateLabel((strings) => strings.discard);
       await _waitFor(
         () =>
             ref
@@ -507,27 +523,24 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
             '/',
         'Home after pristine discard',
       );
-      await _activateLabel('Create Markdown File');
-      await _waitFor(
-        () =>
-            ref.read(workspaceControllerProvider).activeBuffer?.id !=
-                draft.id &&
-            ref
-                    .read(appRouterProvider)
-                    .routeInformationProvider
-                    .value
-                    .uri
-                    .path ==
-                '/workspace',
-        'second new draft',
-      );
+      await _activateLabel((strings) => strings.createMarkdownFile);
+      await _waitFor(() => newDraftIsActive(draft.id), 'second new draft');
       draft = ref.read(workspaceControllerProvider).activeBuffer!;
+      final warning = history.warningForBuffer(draft.id);
       _check(
-        draft.text.isEmpty && history.warningForBuffer(draft.id) == null,
-        'reported sequence ends with a clean new editor',
+        draft.text.isEmpty &&
+            (warning == null ||
+                (warning.kind == LocalHistoryWarningKind.unavailable &&
+                    warning.ownerBufferId == null)),
+        'second draft stays empty without a document warning during the outage',
       );
       await holder.release();
       holder = null;
+      _check(await history.refresh(), 'history store recovers after discard');
+      _check(
+        draftStillPresent(draft) && history.warningForBuffer(draft.id) == null,
+        'reported sequence ends with a clean new editor',
+      );
       _check(
         await history.flushAll(
           ref.read(workspaceControllerProvider).documentBuffers,
@@ -630,30 +643,39 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     }
   }
 
-  Future<void> _activateLabel(String label) async {
+  Future<void> _activateLabel(
+    String Function(AppLocalizations) labelFor,
+  ) async {
     VoidCallback? callback;
     await _waitFor(() {
       void visit(Element element) {
-        if (element.widget case Text(:final data) when data == label) {
-          element.visitAncestorElements((ancestor) {
-            final widget = ancestor.widget;
-            if (widget is ButtonStyleButton && widget.onPressed != null) {
-              callback = widget.onPressed;
-              return false;
-            }
-            if (widget is InkWell && widget.onTap != null) {
-              callback = widget.onTap;
-              return false;
-            }
-            return true;
-          });
+        final (label, activate) = switch (element.widget) {
+          BusyMarkActionRow(:final title, :final onTap, enabled: true) => (
+            title,
+            onTap,
+          ),
+          BusyMarkAlertResponse(:final label, :final onPressed) => (
+            label,
+            onPressed,
+          ),
+          _ => (null, null),
+        };
+        if (activate != null) {
+          final strings = Localizations.of<AppLocalizations>(
+            element,
+            AppLocalizations,
+          );
+          if (strings != null && label == labelFor(strings)) {
+            callback = activate;
+            return;
+          }
         }
         element.visitChildren(visit);
       }
 
       WidgetsBinding.instance.rootElement?.visitChildren(visit);
       return callback != null;
-    }, 'visible $label action');
+    }, 'visible localized action');
     callback!();
   }
 

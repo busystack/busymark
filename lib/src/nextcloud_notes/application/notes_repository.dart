@@ -54,7 +54,7 @@ class NotesRepository {
   final _publishedReferences = <String, Map<String, String>>{};
   final _accountErrors = <String, NotesException>{};
   final _syncs = <String, Future<void>>{};
-  final _removing = <String>{};
+  final _removing = <String, Future<void>>{};
   final _creationResolutions = <String>{};
   final _bindingCandidates = <String>{};
   final _creationBindingGuards = <bool Function(String, Set<String>)>{};
@@ -103,7 +103,7 @@ class NotesRepository {
   NextcloudNote? availableRecentNote(String accountId, String localId) {
     final note = noteById(localId);
     if (note == null ||
-        accountById(accountId) == null ||
+        accountById(accountId)?.disconnectPending != false ||
         note.accountId != accountId ||
         isNotesRecovery(note) ||
         note.syncState == NoteSyncState.unavailable ||
@@ -151,11 +151,13 @@ class NotesRepository {
   bool isSynchronizing(String accountId) => _syncs.containsKey(accountId);
   bool _currentAccount(String id, int generation) =>
       !_disposed &&
-      !_removing.contains(id) &&
-      _accounts.containsKey(id) &&
+      !_removing.containsKey(id) &&
+      _accounts[id]?.disconnectPending == false &&
       (_accountGenerations[id] ?? 0) == generation;
   void _assertMutableAccount(String id) {
-    if (_disposed || _removing.contains(id) || !_accounts.containsKey(id)) {
+    if (_disposed ||
+        _removing.containsKey(id) ||
+        _accounts[id]?.disconnectPending != false) {
       throw const NotesException(
         NotesFailureCode.missing,
         'The Nextcloud account is no longer available.',
@@ -692,7 +694,7 @@ class NotesRepository {
     if (fetchCapabilities == null ||
         account == null ||
         _disposed ||
-        _removing.contains(id)) {
+        _removing.containsKey(id)) {
       return Future.value();
     }
     if (!force &&
@@ -773,7 +775,7 @@ class NotesRepository {
   Future<NotesSettings> getSettings(String id) async {
     final generation = accountGeneration(id);
     final account = _accounts[id];
-    if (account == null) {
+    if (account == null || account.disconnectPending) {
       throw const NotesException(
         NotesFailureCode.missing,
         'The account was removed.',
@@ -965,7 +967,7 @@ class NotesRepository {
         final account = _accounts[id];
         if (account == null ||
             _disposed ||
-            _removing.contains(id) ||
+            _removing.containsKey(id) ||
             error.retryNotBefore == null) {
           return;
         }
@@ -1015,7 +1017,7 @@ class NotesRepository {
   Future<void> refreshDisplayedMedia({bool force = false}) async {
     for (final id in _activeMediaNotes.toList()) {
       final note = _notes[id];
-      if (note == null || _disposed || _removing.contains(note.accountId)) {
+      if (note == null || _disposed || _removing.containsKey(note.accountId)) {
         continue;
       }
       final used = (await scanNotesAttachmentReferences(note.content))
@@ -1124,6 +1126,24 @@ class NotesRepository {
     if (!_disposed) _changes.add(null);
   }
 
+  Future<T> withCredentialUpdate<T>(
+    String accountId,
+    Future<T> Function() update,
+  ) async {
+    await _syncs[accountId];
+    final generation = accountGeneration(accountId);
+    return store.withRequestOwnership(accountId, () async {
+      if (!_currentAccount(accountId, generation)) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'The account changed before reconnecting.',
+          scope: NotesRequestScope.account,
+        );
+      }
+      return update();
+    });
+  }
+
   NextcloudNote _require(String localId) =>
       _notes[localId] ??
       (throw const NotesException(
@@ -1207,7 +1227,7 @@ class NotesRepository {
     String content = '',
   }) async {
     await initialize();
-    if (!_accounts.containsKey(accountId) || _removing.contains(accountId)) {
+    if (!_accounts.containsKey(accountId) || _removing.containsKey(accountId)) {
       throw const NotesException(
         NotesFailureCode.authentication,
         'Connect a Nextcloud account first.',
@@ -1342,22 +1362,28 @@ class NotesRepository {
     bool refreshCapabilities = false,
     bool onlyFreshWrites = false,
   }) {
-    if (_disposed || _removing.contains(accountId)) return Future.value();
+    if (_disposed || _removing.containsKey(accountId)) return Future.value();
     final existing = _syncs[accountId];
     if (existing != null) return existing;
-    final future = initialize().then(
-      (_) => !_accounts.containsKey(accountId)
-          ? Future<void>.value()
-          : store.withRequestOwnership(
-              accountId,
-              () => _synchronize(
-                accountId,
-                allowWrites: allowWrites,
-                refreshCapabilities: refreshCapabilities,
-                onlyFreshWrites: onlyFreshWrites,
-              ),
-            ),
-    );
+    final future = () async {
+      try {
+        await initialize();
+        if (_disposed || _accounts[accountId]?.disconnectPending != false) {
+          return;
+        }
+        await store.withRequestOwnership(
+          accountId,
+          () => _synchronize(
+            accountId,
+            allowWrites: allowWrites,
+            refreshCapabilities: refreshCapabilities,
+            onlyFreshWrites: onlyFreshWrites,
+          ),
+        );
+      } on NotesException catch (error) {
+        await reportSynchronizationFailure(accountId, error);
+      }
+    }();
     _syncs[accountId] = future;
     _notify();
     future.then<void>(
@@ -1379,10 +1405,12 @@ class NotesRepository {
     required bool refreshCapabilities,
     required bool onlyFreshWrites,
   }) async {
-    await initialize();
     var account = _accounts[accountId];
-    if (account == null || _settingsTransitions.contains(accountId)) return;
     final generation = _accountGenerations[accountId] ?? 0;
+    if (!_currentAccount(accountId, generation) ||
+        _settingsTransitions.contains(accountId)) {
+      return;
+    }
     final deadline =
         _accounts[accountId]?.throttleNotBefore ??
         _accountErrors[accountId]?.retryNotBefore;
@@ -1436,7 +1464,7 @@ class NotesRepository {
         _notify();
       });
     } on NotesException catch (error) {
-      await _markAccountError(accountId, error);
+      await reportSynchronizationFailure(accountId, error);
       return;
     }
     if (!allowWrites ||
@@ -1511,7 +1539,7 @@ class NotesRepository {
       } on NotesException catch (error) {
         await _recordError(id, error, client: client);
         if (error.code == NotesFailureCode.authentication) {
-          await _markAccountError(accountId, error);
+          await reportSynchronizationFailure(accountId, error);
           return;
         }
       }
@@ -1549,7 +1577,8 @@ class NotesRepository {
     NextcloudAccount account,
     NotesListResult list,
   ) => _mutate(() async {
-    if (_removing.contains(account.id) || !_accounts.containsKey(account.id)) {
+    if (_removing.containsKey(account.id) ||
+        !_accounts.containsKey(account.id)) {
       return;
     }
     final updated = <NextcloudNote>[];
@@ -1978,7 +2007,7 @@ class NotesRepository {
     NoteState remote,
   ) => _mutate(() async {
     final current = _require(sent.localId);
-    if (_removing.contains(current.accountId) ||
+    if (_removing.containsKey(current.accountId) ||
         !_accounts.containsKey(current.accountId) ||
         (sent.serverId == null &&
             (current.serverId != null ||
@@ -2122,7 +2151,7 @@ class NotesRepository {
       final current = _notes[id];
       if (current == null ||
           _disposed ||
-          _removing.contains(current.accountId)) {
+          _removing.containsKey(current.accountId)) {
         return;
       }
       final updated = current.copyWith(
@@ -2153,9 +2182,12 @@ class NotesRepository {
     });
   }
 
-  Future<void> _markAccountError(String accountId, NotesException error) async {
+  Future<void> reportSynchronizationFailure(
+    String accountId,
+    NotesException error,
+  ) async {
     if (_disposed ||
-        _removing.contains(accountId) ||
+        _removing.containsKey(accountId) ||
         !_accounts.containsKey(accountId)) {
       return;
     }
@@ -2282,7 +2314,7 @@ class NotesRepository {
     );
     return _mutate(() async {
       final current = _require(originalLocalId);
-      if (_removing.contains(original.accountId) ||
+      if (_removing.containsKey(original.accountId) ||
           !_accounts.containsKey(original.accountId) ||
           current.revision != original.revision ||
           current.creationAttempt?.id != original.creationAttempt?.id ||
@@ -2759,7 +2791,7 @@ class NotesRepository {
       void validate() {
         final current = _require(original.localId);
         if (account == null ||
-            _removing.contains(original.accountId) ||
+            _removing.containsKey(original.accountId) ||
             _accounts[original.accountId]?.server != account.server ||
             _accounts[original.accountId]?.loginName != account.loginName ||
             current.serverId != null ||
@@ -3140,7 +3172,7 @@ class NotesRepository {
     if (note == null ||
         note.accountId != accountId ||
         _disposed ||
-        _removing.contains(accountId)) {
+        _removing.containsKey(accountId)) {
       return null;
     }
     final accountGeneration = this.accountGeneration(accountId);
@@ -3585,24 +3617,51 @@ class NotesRepository {
   Future<void> removeAccount(
     String accountId, {
     Future<void> Function()? beforeRemove,
-  }) async {
+  }) {
+    if (_disposed || _removing.containsKey(accountId)) {
+      return Future.error(
+        const NotesException(
+          NotesFailureCode.conflict,
+          'Nextcloud account removal is already in progress or unavailable.',
+          scope: NotesRequestScope.account,
+        ),
+      );
+    }
+    final removal = _removeAccount(accountId, beforeRemove).whenComplete(() {
+      _removing.remove(accountId);
+    });
+    _removing[accountId] = removal;
+    return removal;
+  }
+
+  Future<void> _removeAccount(
+    String accountId,
+    Future<void> Function()? beforeRemove,
+  ) async {
     _validateId(accountId);
-    _removing.add(accountId);
     _accountGenerations[accountId] = (_accountGenerations[accountId] ?? 0) + 1;
     for (final entry in _downloads.entries.where(
       (e) => e.key.startsWith('$accountId:'),
     )) {
       entry.value.cancel();
     }
-    try {
-      await _syncs[accountId];
-      await _mutate(() async {
+    await _syncs[accountId];
+    await initialize();
+    await _mutate(
+      () => store.withRequestOwnership(accountId, () async {
+        final account = _accounts[accountId]!;
+        if (beforeRemove != null && !account.disconnectPending) {
+          await store.markDisconnectPending(account);
+          _accounts[accountId] = account.copyWith(disconnectPending: true);
+          _notify();
+        }
         await beforeRemove?.call();
         await store.removeAccount(accountId);
         _accounts.remove(accountId);
         _accountErrors.remove(accountId);
         _notes.removeWhere((_, n) => n.accountId == accountId);
         _publishedReferences.removeWhere((id, _) => !_notes.containsKey(id));
+        _notify();
         final directory = Directory(
           p.join(p.dirname(store.path), 'media', accountId),
         );
@@ -3610,11 +3669,8 @@ class NotesRepository {
             !await FileSystemEntity.isLink(directory.path)) {
           await directory.delete(recursive: true);
         }
-        _notify();
-      });
-    } finally {
-      _removing.remove(accountId);
-    }
+      }, removing: beforeRemove != null),
+    );
   }
 
   Future<void> dispose() => _disposing ??= _dispose();
@@ -3624,15 +3680,17 @@ class NotesRepository {
     for (final cancellation in _downloads.values) {
       cancellation.cancel();
     }
-    await Future.wait([
-      ..._syncs.values,
-      ..._capabilityRequests.values,
-      ..._mediaResolutions.values.map(
-        (f) => f.then<void>((_) {}, onError: (Object _, StackTrace _) {}),
-      ),
-    ]);
-    await _mutations;
-    await _changes.close();
-    await store.close();
+    try {
+      await Future.wait([
+        if (_initialization case final initialization?) initialization,
+        ..._syncs.values,
+        ..._removing.values,
+        ..._capabilityRequests.values,
+        ..._mediaResolutions.values,
+      ]);
+    } finally {
+      await _mutations;
+      await Future.wait([_changes.close(), store.close()]);
+    }
   }
 }

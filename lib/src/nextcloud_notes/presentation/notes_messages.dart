@@ -99,6 +99,8 @@ String localizeNotesConnectionFailure(
   NotesException(
     code: NotesFailureCode.authentication,
   ) => context.l10n.notesAccountAuthorizeAgain,
+  NotesException(code: NotesFailureCode.conflict) =>
+    context.l10n.notesRecoveryRequired,
   NextcloudCapabilityException(code: NextcloudCapabilityFailure.forbidden) ||
   NotesException(
     code: NotesFailureCode.forbidden,

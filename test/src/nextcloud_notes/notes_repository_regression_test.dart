@@ -942,7 +942,7 @@ void main() {
         expect(await migrated.store.attachmentBytes(attachment.id), [1, 2]);
         await restart(migrated);
         db = sqlite3.open('${directory.path}/notes.sqlite3');
-        expect(db.select('PRAGMA user_version').single.values.single, 7);
+        expect(db.select('PRAGMA user_version').single.values.single, 8);
         expect(
           db.select("SELECT name FROM sqlite_master WHERE name='outbox'"),
           isEmpty,

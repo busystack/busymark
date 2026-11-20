@@ -1,4 +1,5 @@
 import '../../app/app_settings.dart';
+import '../../core/debug_log.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -106,7 +107,11 @@ final nextcloudNotesRepositoryProvider = FutureProvider<NotesRepository>((
     rethrow;
   }
   ref.onDispose(() {
-    unawaited(repository.dispose());
+    unawaited(
+      repository.dispose().catchError((Object error, StackTrace stack) {
+        busyMarkDebugLogError('Nextcloud shutdown failed', error, stack);
+      }),
+    );
   });
   return repository;
 });
@@ -119,6 +124,7 @@ enum NextcloudConnectionPhase {
   verifying,
   connected,
   removing,
+  disconnectPending,
 }
 
 class NextcloudConnectionState {
@@ -181,9 +187,11 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
       final account = repository.accounts.firstOrNull;
       state = NextcloudConnectionState(
         account: account,
-        phase: account == null
-            ? NextcloudConnectionPhase.idle
-            : NextcloudConnectionPhase.connected,
+        phase: _accountPhase(account),
+        removalFailed: account?.disconnectPending == true,
+        error: account?.disconnectPending == true
+            ? 'Finish disconnecting this Nextcloud account.'
+            : null,
       );
     } on Object {
       if (_disposed || generation != _generation) return;
@@ -197,9 +205,17 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
 
   Future<bool> reconnect() async {
     final account = state.account;
-    if (account == null) return false;
+    if (account == null || account.disconnectPending) return false;
     return _connect(account.server.toString(), previous: account);
   }
+
+  NextcloudConnectionPhase _accountPhase(NextcloudAccount? account) =>
+      switch (account) {
+        null => NextcloudConnectionPhase.idle,
+        NextcloudAccount(disconnectPending: true) =>
+          NextcloudConnectionPhase.disconnectPending,
+        _ => NextcloudConnectionPhase.connected,
+      };
 
   Future<bool> _connect(String serverUrl, {NextcloudAccount? previous}) async {
     if (state.busy ||
@@ -215,9 +231,7 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
       phase: NextcloudConnectionPhase.starting,
     );
     NextcloudLoginCredentials? credentials;
-    String? accountId;
     String? previousPassword;
-    var secretWritten = false;
     var committed = false;
     final secrets = ref.read(nextcloudSecretStoreProvider);
     final client = ref.read(nextcloudHttpClientProvider);
@@ -233,9 +247,6 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
           'Remove the connected Nextcloud account before connecting another account.',
           code: NextcloudCredentialFailure.alreadyConnected,
         );
-      }
-      if (previous != null) {
-        previousPassword = await secrets.read(previous.id);
       }
       cancellation.throwIfCancelled();
       credentials = await loginFlow.authenticate(
@@ -265,78 +276,70 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         account: previous,
         phase: NextcloudConnectionPhase.verifying,
       );
-      accountId = previous?.id ?? const Uuid().v4();
-      await secrets.write(accountId, credentials.appPassword);
-      secretWritten = true;
-      final capabilities = await fetchNotesCapabilities(
-        client: client,
-        server: credentials.server,
-        loginName: credentials.loginName,
-        appPassword: credentials.appPassword,
-      );
-      cancellation.throwIfCancelled();
-      final account = NextcloudAccount(
-        id: accountId,
-        server: credentials.server,
-        loginName: credentials.loginName,
-        appVersion: capabilities.appVersion,
-        apiVersion: capabilities.apiVersion,
-        listEtag: previous?.listEtag,
-        lastModified: previous?.lastModified,
-      );
-      await repository.upsertAccount(account, reconnect: previous != null);
-      committed = true;
+      final accountId = previous?.id ?? const Uuid().v4();
+      final appPassword = credentials.appPassword;
+      final login = credentials;
+      Future<NextcloudAccount> publishCredential() async {
+        if (previous != null) previousPassword = await secrets.read(accountId);
+        cancellation.throwIfCancelled();
+        await secrets.write(accountId, appPassword);
+        try {
+          final capabilities = await fetchNotesCapabilities(
+            client: client,
+            server: login.server,
+            loginName: login.loginName,
+            appPassword: appPassword,
+          );
+          cancellation.throwIfCancelled();
+          final account = NextcloudAccount(
+            id: accountId,
+            server: login.server,
+            loginName: login.loginName,
+            appVersion: capabilities.appVersion,
+            apiVersion: capabilities.apiVersion,
+            listEtag: previous?.listEtag,
+            lastModified: previous?.lastModified,
+          );
+          await repository.upsertAccount(account, reconnect: previous != null);
+          committed = true;
+          return account;
+        } on Object {
+          try {
+            if (previousPassword case final password?) {
+              await secrets.write(accountId, password);
+            } else {
+              await secrets.delete(accountId);
+            }
+          } on Object {
+            throw const NextcloudCredentialException(
+              'Nextcloud setup failed and BusyMark could not clean up the desktop keyring. Unlock the keyring and reconnect.',
+            );
+          }
+          rethrow;
+        }
+      }
+
+      final account = previous == null
+          ? await publishCredential()
+          : await repository.withCredentialUpdate(accountId, publishCredential);
       if (_disposed) return true;
       state = NextcloudConnectionState(
         account: account,
         phase: NextcloudConnectionPhase.connected,
       );
-      if (previousPassword != null &&
-          previousPassword != credentials.appPassword) {
+      final oldPassword = previousPassword;
+      if (oldPassword != null && oldPassword != appPassword) {
         unawaited(
           revokeNextcloudAppPassword(
             client: client,
             server: account.server,
             loginName: account.loginName,
-            appPassword: previousPassword,
+            appPassword: oldPassword,
           ),
         );
       }
       return true;
     } on Object catch (error) {
-      if (!committed && secretWritten && accountId != null) {
-        try {
-          if (previousPassword != null) {
-            await secrets.write(accountId, previousPassword);
-          } else {
-            await secrets.delete(accountId);
-          }
-        } on Object {
-          if (credentials != null) {
-            await revokeNextcloudAppPassword(
-              client: client,
-              server: credentials.server,
-              loginName: credentials.loginName,
-              appPassword: credentials.appPassword,
-            );
-          }
-          // Report keyring cleanup failure without falling back to plaintext.
-          if (!_disposed && generation == _generation) {
-            state = NextcloudConnectionState(
-              account: retainedAccount,
-              phase: retainedAccount == null
-                  ? NextcloudConnectionPhase.idle
-                  : NextcloudConnectionPhase.connected,
-              failure: const NextcloudCredentialException(
-                'Desktop keyring cleanup failed.',
-              ),
-              error:
-                  'Nextcloud setup failed and BusyMark could not clean up the desktop keyring. Unlock the keyring and reconnect.',
-            );
-          }
-          return false;
-        }
-      }
       if (!committed && credentials != null) {
         await revokeNextcloudAppPassword(
           client: client,
@@ -348,9 +351,7 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
       if (_disposed || generation != _generation) return false;
       state = NextcloudConnectionState(
         account: retainedAccount,
-        phase: retainedAccount == null
-            ? NextcloudConnectionPhase.idle
-            : NextcloudConnectionPhase.connected,
+        phase: _accountPhase(retainedAccount),
         failure: error,
         error: switch (error) {
           NextcloudLoginException(code: NextcloudLoginFailure.cancelled) =>
@@ -391,25 +392,31 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
       account: account,
       phase: NextcloudConnectionPhase.removing,
     );
+    NotesRepository? repository;
+    var revoked = false;
     try {
-      final repository = await ref.read(
+      final activeRepository = await ref.read(
         nextcloudNotesRepositoryProvider.future,
       );
+      repository = activeRepository;
       final secrets = ref.read(nextcloudSecretStoreProvider);
-      final password = await secrets.read(account.id);
-      var revoked = false;
-      if (password != null) {
-        revoked = await revokeNextcloudAppPassword(
-          client: ref.read(nextcloudHttpClientProvider),
-          server: account.server,
-          loginName: account.loginName,
-          appPassword: password,
-        );
-      }
-      await repository.removeAccount(
+      final client = ref.read(nextcloudHttpClientProvider);
+      await activeRepository.removeAccount(
         account.id,
-        beforeRemove: () => secrets.delete(account.id),
+        beforeRemove: () async {
+          final password = await secrets.read(account.id);
+          if (password != null) {
+            revoked = await revokeNextcloudAppPassword(
+              client: client,
+              server: account.server,
+              loginName: account.loginName,
+              appPassword: password,
+            );
+          }
+          await secrets.delete(account.id);
+        },
       );
+      if (_disposed) return true;
       ref.invalidate(notesNavigationProvider(account.id));
       await ref
           .read(appSettingsControllerProvider.notifier)
@@ -424,18 +431,38 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
       }
       return true;
     } on Object catch (error) {
+      var remaining = repository == null
+          ? account
+          : repository.accountById(account.id);
+      final removedLocally = remaining == null;
+      if (error is NotesException &&
+          error.code == NotesFailureCode.conflict &&
+          repository != null) {
+        try {
+          remaining = (await repository.store.accounts())
+              .where((current) => current.id == account.id)
+              .firstOrNull;
+        } on Object catch (readError, stack) {
+          busyMarkDebugLogError(
+            'Could not inspect the Notes account',
+            readError,
+            stack,
+          );
+        }
+      }
       if (!_disposed) {
         state = NextcloudConnectionState(
-          account: account,
-          phase: NextcloudConnectionPhase.connected,
+          account: remaining,
+          phase: _accountPhase(remaining),
           failure: error,
           removalFailed: true,
+          removedWithWarning: removedLocally && !revoked,
           error: error is NextcloudCredentialException
               ? error.message
               : 'BusyMark could not remove the local Nextcloud account data. Try again.',
         );
       }
-      return false;
+      return removedLocally;
     }
   }
 }

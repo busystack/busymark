@@ -26,6 +26,7 @@ class NotesStore {
               ? const NotesException(
                   NotesFailureCode.conflict,
                   'Another BusyMark window changed this Notes state or owns a request. Your editor changes are retained. Use Save As to preserve them before reopening this window.',
+                  scope: NotesRequestScope.account,
                 )
               : StateError(result[2] as String),
         );
@@ -74,7 +75,9 @@ class NotesStore {
   }
 
   Future<dynamic> _call(String action, [Object? argument]) {
-    if (_closed) return Future.error(StateError('The Notes store is closed.'));
+    if (_closed && action != 'close') {
+      return Future.error(StateError('The Notes store is closed.'));
+    }
     final id = ++_serial;
     final completer = Completer<dynamic>();
     _pending[id] = completer;
@@ -121,6 +124,13 @@ class NotesStore {
 
   Future<void> removeAccount(String id) async {
     await _call('removeAccount', id);
+  }
+
+  Future<void> markDisconnectPending(NextcloudAccount account) async {
+    await _call('markDisconnectPending', [
+      account.id,
+      jsonEncode(account.copyWith(disconnectPending: true).toJson()),
+    ]);
   }
 
   Future<void> saveAttachment(
@@ -300,7 +310,18 @@ class NotesStore {
   /// Nested operations in this repository share the claim, foreign stores cannot.
   Future<T> withRequestOwnership<T>(
     String accountId,
+    Future<T> Function() action, {
+    bool removing = false,
+  }) => _withRequestOwnership(
+    accountId,
+    action,
+    removing ? 'beginRemoval' : 'beginRequest',
+  );
+
+  Future<T> _withRequestOwnership<T>(
+    String accountId,
     Future<T> Function() action,
+    String begin,
   ) async {
     if (_closing != null && !_requestDepth.containsKey(accountId)) {
       throw StateError('The Notes store is closing.');
@@ -309,7 +330,7 @@ class NotesStore {
     _requests.add(finished);
     _requestDepth[accountId] = (_requestDepth[accountId] ?? 0) + 1;
     try {
-      await _call('beginRequest', accountId);
+      await _call(begin, accountId);
       try {
         return await action();
       } finally {
@@ -334,11 +355,14 @@ class NotesStore {
     while (_requests.isNotEmpty) {
       await Future.wait(_requests.map((request) => request.future));
     }
-    await _call('close');
     _closed = true;
-    await _subscription.cancel();
-    _replies.close();
-    _isolate.kill(priority: Isolate.immediate);
+    try {
+      await _call('close');
+    } finally {
+      await _subscription.cancel();
+      _replies.close();
+      _isolate.kill(priority: Isolate.immediate);
+    }
   }
 }
 
@@ -532,6 +556,8 @@ class _NotesStoreSession {
               attachment(a['id'] as String, write: true);
             }
           }
+        case 'markDisconnectPending':
+          account((argument as List)[0] as String, write: true);
         case 'createWithAttachments':
           final a = argument as List;
           noteJson(a[0] as Map);
@@ -571,7 +597,7 @@ class _NotesStoreSession {
           );
           checked.add(key);
           changed.add(key);
-        case 'beginRequest':
+        case 'beginRequest' || 'beginRemoval':
           account(argument as String);
           // Include cached identities deleted by another process, not just
           // rows still present. A stale cache must not send a remote DELETE.
@@ -603,16 +629,40 @@ class _NotesStoreSession {
       }
       for (final value in accounts) {
         final owners = db.select(
-          'SELECT session FROM request_owners WHERE account_id=?',
+          'SELECT session,depth FROM request_owners WHERE account_id=?',
           [value],
         );
-        if (owners.isNotEmpty && owners.single['session'] != id) {
+        final owner = owners.singleOrNull;
+        // A removal claim is exclusive even within this store. Positive depths
+        // count ordinary reentrant operations. A negative depth denotes removal.
+        final removalClaim = (owner?['depth'] as int? ?? 0) < 0;
+        if (owner != null &&
+            (owner['session'] != id ||
+                action == 'beginRemoval' ||
+                (removalClaim &&
+                    action != 'markDisconnectPending' &&
+                    action != 'removeAccount'))) {
+          throw _NotesStoreConflict();
+        }
+        final rows = db.select(
+          "SELECT json_extract(data, '\$.disconnectPending') AS pending FROM accounts WHERE id=?",
+          [value],
+        );
+        if (((action == 'beginRequest' || action == 'beginRemoval') &&
+                rows.isEmpty) ||
+            (action == 'markDisconnectPending' && !removalClaim) ||
+            (rows.isNotEmpty &&
+                rows.single['pending'] == 1 &&
+                action != 'beginRemoval' &&
+                action != 'removeAccount')) {
           throw _NotesStoreConflict();
         }
       }
       Object? result;
       if (action == 'validateNote') {
         // Validation uses the same persisted generation as writes.
+      } else if (action == 'beginRemoval') {
+        db.execute('INSERT INTO request_owners VALUES(?,?,-1)', [argument, id]);
       } else if (action == 'beginRequest') {
         db.execute(
           'INSERT INTO request_owners VALUES(?,?,1) ON CONFLICT(account_id) DO UPDATE SET depth=depth+1',
@@ -624,7 +674,7 @@ class _NotesStoreSession {
           [argument, id],
         );
         db.execute(
-          'DELETE FROM request_owners WHERE account_id=? AND session=? AND depth=0',
+          'DELETE FROM request_owners WHERE account_id=? AND session=? AND depth<=0',
           [argument, id],
         );
       } else {
@@ -666,7 +716,7 @@ void _worker(List<dynamic> arguments) {
     db.execute('PRAGMA synchronous = FULL');
     db.execute('BEGIN IMMEDIATE');
     final version = db.select('PRAGMA user_version').first.values.first as int;
-    if (version > 7) {
+    if (version > 8) {
       throw StateError(
         'The Notes database was created by a newer BusyMark version.',
       );
@@ -712,7 +762,8 @@ void _worker(List<dynamic> arguments) {
         }
       }
       session.capture(db);
-      if (version < 7) db.execute('PRAGMA user_version = 7');
+      // Older clients must never authenticate a pending disconnect.
+      if (version < 8) db.execute('PRAGMA user_version = 8');
       db.execute('COMMIT');
     } catch (_) {
       db.execute('ROLLBACK');
@@ -959,6 +1010,10 @@ Object? _execute(Database db, String action, dynamic argument) {
       return null;
     case 'removeAccount':
       db.execute('DELETE FROM accounts WHERE id=?', [argument]);
+      return null;
+    case 'markDisconnectPending':
+      final a = argument as List;
+      db.execute('UPDATE accounts SET data=? WHERE id=?', [a[1], a[0]]);
       return null;
     case 'saveAttachmentFile':
       final a = argument as List;

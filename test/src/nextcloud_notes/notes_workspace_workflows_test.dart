@@ -1020,7 +1020,7 @@ void main() {
         6,
       ]);
       db = sqlite3.open(f.repository.store.path);
-      expect(db.select('PRAGMA user_version').single.values.single, 7);
+      expect(db.select('PRAGMA user_version').single.values.single, 8);
       for (final entry in before.entries) {
         expect(
           db

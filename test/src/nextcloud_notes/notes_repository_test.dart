@@ -765,7 +765,7 @@ void main() {
       );
       expect((await store.notes()).single.content, 'body');
       final db = sqlite3.open(path);
-      expect(db.select('PRAGMA user_version').single.values.single, 7);
+      expect(db.select('PRAGMA user_version').single.values.single, 8);
       expect(
         db.select("SELECT name FROM sqlite_master WHERE name='outbox'"),
         isEmpty,

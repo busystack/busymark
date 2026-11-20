@@ -153,6 +153,7 @@ class NextcloudAccount {
     this.settingsAttempt,
     this.throttleNotBefore,
     this.notesWebPrettyUrls,
+    this.disconnectPending = false,
   });
 
   final String id;
@@ -167,6 +168,7 @@ class NextcloudAccount {
   final bool apiSupported;
   final NotesSettingsAttempt? settingsAttempt;
   final DateTime? throttleNotBefore;
+  final bool disconnectPending;
 
   /// Optional, backward-compatible observation of the installation's web router.
   final bool? notesWebPrettyUrls;
@@ -195,6 +197,7 @@ class NextcloudAccount {
     Object? settingsAttempt = _unchanged,
     Object? throttleNotBefore = _unchanged,
     Object? notesWebPrettyUrls = _unchanged,
+    bool? disconnectPending,
   }) => NextcloudAccount(
     id: id,
     server: server,
@@ -210,6 +213,7 @@ class NextcloudAccount {
         : lastModified as String?,
     lastServerCheck: lastServerCheck ?? this.lastServerCheck,
     capabilitiesCheckedAt: capabilitiesCheckedAt ?? this.capabilitiesCheckedAt,
+    disconnectPending: disconnectPending ?? this.disconnectPending,
     settingsAttempt: identical(settingsAttempt, _unchanged)
         ? this.settingsAttempt
         : settingsAttempt as NotesSettingsAttempt?,
@@ -237,6 +241,7 @@ class NextcloudAccount {
     'settingsAttempt': settingsAttempt?.toJson(),
     'throttleNotBefore': throttleNotBefore?.toIso8601String(),
     if (notesWebPrettyUrls != null) 'notesWebPrettyUrls': notesWebPrettyUrls,
+    if (disconnectPending) 'disconnectPending': true,
   };
 
   factory NextcloudAccount.fromJson(Map<String, dynamic> json) =>
@@ -256,6 +261,7 @@ class NextcloudAccount {
         ),
         apiSupported: json['apiSupported'] as bool? ?? true,
         notesWebPrettyUrls: json['notesWebPrettyUrls'] as bool?,
+        disconnectPending: json['disconnectPending'] == true,
         settingsAttempt: json['settingsAttempt'] == null
             ? null
             : NotesSettingsAttempt.fromJson(

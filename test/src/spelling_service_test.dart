@@ -5936,6 +5936,7 @@ final class _DelayedAtomicFileWriter extends AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     await super.writeBytes(
@@ -5965,6 +5966,7 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     writeCount++;
@@ -5987,6 +5989,7 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced,
     );
   }
@@ -6010,6 +6013,7 @@ final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     if (_hold) {
@@ -6022,6 +6026,7 @@ final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced,
     );
   }
@@ -6042,6 +6047,7 @@ final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     await super.writeBytes(
@@ -6049,6 +6055,7 @@ final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced == null
           ? null
           : (replacedPath) async {
@@ -6086,6 +6093,7 @@ final class _RejectedExchangeAtomicFileWriter extends AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     await super.writeBytes(

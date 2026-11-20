@@ -517,6 +517,7 @@ class _FailHtmlWrite extends AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     if (targetPath.endsWith('.html')) {
@@ -527,6 +528,7 @@ class _FailHtmlWrite extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced,
     );
   }

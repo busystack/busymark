@@ -190,6 +190,7 @@ class MarkdownPdfExportService {
           overwrite: request.overwrite,
           authorization: request.authorization,
           beforePublish: token.throwIfCancelled,
+          checkBeforeCommit: token.throwIfCancelled,
         );
       } on AtomicFileAlreadyExistsException catch (error) {
         throw MarkdownPdfExportException(

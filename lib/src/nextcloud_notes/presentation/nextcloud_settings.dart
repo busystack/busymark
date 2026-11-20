@@ -12,6 +12,7 @@ import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_safety.dart';
 import '../application/nextcloud_connection.dart';
 import '../application/notes_settings_controller.dart';
+import '../domain/notes_models.dart';
 import 'notes_sidebar.dart' show nextcloudNotesChangesProvider;
 import 'notes_messages.dart';
 
@@ -94,7 +95,7 @@ class _NextcloudNotesSettingsState
     final signInEnabled = actionsEnabled && !throttled;
     final account = connection.account == null
         ? null
-        : repository == null
+        : repository == null || connection.account!.disconnectPending
         ? connection.account
         : repository.accountById(connection.account!.id);
     return Column(
@@ -134,24 +135,26 @@ class _NextcloudNotesSettingsState
                 tooltip:
                     '${context.l10n.nextcloudNotes} ${account.appVersion} · ${account.apiVersion}',
               ),
-              BusyMarkActionRow(
-                title: context.l10n.open,
-                enabled: actionsEnabled,
-                onTap: !actionsEnabled
-                    ? null
-                    : () => unawaited(_openAccount(account.id)),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.nextcloudReconnect,
-                enabled: signInEnabled,
-                onTap: !signInEnabled
-                    ? null
-                    : () async {
-                        if (await confirmNotesSettingsDeparture(context)) {
-                          await controller.reconnect();
-                        }
-                      },
-              ),
+              if (!account.disconnectPending) ...[
+                BusyMarkActionRow(
+                  title: context.l10n.open,
+                  enabled: actionsEnabled,
+                  onTap: !actionsEnabled
+                      ? null
+                      : () => unawaited(_openAccount(account.id)),
+                ),
+                BusyMarkActionRow(
+                  title: context.l10n.nextcloudReconnect,
+                  enabled: signInEnabled,
+                  onTap: !signInEnabled
+                      ? null
+                      : () async {
+                          if (await confirmNotesSettingsDeparture(context)) {
+                            await controller.reconnect();
+                          }
+                        },
+                ),
+              ],
               BusyMarkActionRow(
                 title: context.l10n.nextcloudDisconnect,
                 destructive: true,
@@ -214,7 +217,7 @@ class _NextcloudNotesSettingsState
                   },
           ),
         ],
-        if (account != null) ...[
+        if (account != null && !account.disconnectPending) ...[
           _ServerNotesSettings(accountId: account.id),
           if (repository?.accountError(account.id) case final error?)
             BusyMarkStatusBox(
@@ -233,7 +236,8 @@ class _NextcloudNotesSettingsState
           BusyMarkStatusBox(
             message: connection.removedWithWarning
                 ? context.l10n.notesRemovedWarning
-                : connection.removalFailed
+                : connection.removalFailed &&
+                      connection.failure is! NotesException
                 ? context.l10n.notesLocalRemovalFailed
                 : localizeNotesConnectionFailure(context, connection.failure),
             kind: connection.removedWithWarning

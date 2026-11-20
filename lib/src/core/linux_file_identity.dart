@@ -53,8 +53,10 @@ final class LinuxFileIdentity {
         data.getInt64(offset, Endian.host),
         data.getUint32(offset + 8, Endian.host),
       );
+      final inodeIdentity = '$major:$minor:$inode';
       return (
-        identity: '$major:$minor:$inode$birth',
+        identity: '$inodeIdentity$birth',
+        inodeIdentity: inodeIdentity,
         mode: data.getUint16(0x1c, Endian.host),
         size: data.getUint64(0x28, Endian.host),
         modified: timestamp(0x70),
@@ -69,6 +71,7 @@ final class LinuxFileIdentity {
 
 typedef LinuxFileVersion = ({
   String identity,
+  String inodeIdentity,
   int mode,
   int size,
   (int, int) modified,

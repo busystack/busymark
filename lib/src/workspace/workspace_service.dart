@@ -11,6 +11,7 @@ import '../core/busymark_exception.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/linux_atomic_file_api.dart';
+import '../core/recoverable_file_replacement.dart';
 import '../core/path_utils.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
@@ -1297,6 +1298,13 @@ class WorkspaceService {
       final expectedLinkResolvedPath = targetType == FileSystemEntityType.link
           ? await Link(path).resolveSymbolicLinks()
           : null;
+      final reviewed =
+          authorization ??
+          (expectedSnapshot != null &&
+                  Platform.isLinux &&
+                  targetType == FileSystemEntityType.file
+              ? SaveDestination.inspect(path)
+              : null);
       if (targetType == FileSystemEntityType.file) {
         await _copyFileMode(await File(path).stat(), staged.file);
       }
@@ -1307,7 +1315,7 @@ class WorkspaceService {
       authorization?.requireCurrent(path);
       if (expectedSnapshot != null) {
         final atomicApi = LinuxAtomicFileApi.instance;
-        if (!Platform.isLinux || !atomicApi.isAvailable) {
+        if (!Platform.isLinux) {
           throw UnsupportedError(
             'Conflict-safe replacement requires Linux renameat2.',
           );
@@ -1317,6 +1325,34 @@ class WorkspaceService {
           target.absolute.path,
         );
         if (exchangeError != null) {
+          if (exchangeError == LinuxAtomicFileApi.fileMissingError) {
+            throw AtomicFileChangedException(path);
+          }
+          if (reviewed != null &&
+              atomicApi.exchangeUnsupported(
+                exchangeError,
+                p.dirname(target.path),
+              )) {
+            await replaceFileWithoutExchange(
+              staged: staged.file,
+              destination: reviewed,
+              acceptDisplaced: (displaced) => _displacedEntryMatchesExpected(
+                displaced,
+                targetPath: target.path,
+                expectedType: targetType,
+                expectedLinkTarget: expectedLinkTarget,
+                expectedLinkResolvedPath: expectedLinkResolvedPath,
+                expectedSnapshot: expectedSnapshot,
+              ),
+              checkBeforeCommit: () {
+                if (stillCurrent?.call() == false) {
+                  throw AtomicFileChangedException(path);
+                }
+              },
+            );
+            await onPublished?.call();
+            return _snapshotFromBytes(await target.stat(), bytes);
+          }
           throw FileSystemException(
             'Could not commit conditional file replacement',
             path,
@@ -1978,7 +2014,9 @@ class WorkspaceService {
     if (Platform.isWindows) {
       return;
     }
-    final mode = (sourceStat.mode & 0xfff).toRadixString(8);
+    final permissions = sourceStat.mode & 0xfff;
+    if (((await target.stat()).mode & 0xfff) == permissions) return;
+    final mode = permissions.toRadixString(8);
     final result = await Process.run('chmod', [mode, target.path]);
     if (result.exitCode != 0) {
       throw FileSystemException(

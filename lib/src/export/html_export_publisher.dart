@@ -92,6 +92,7 @@ class HtmlExportPublisher {
       overwrite: overwrite,
       authorization: authorization,
       beforePublish: token.check,
+      checkBeforeCommit: token.check,
     );
   }
 
@@ -136,6 +137,11 @@ class HtmlExportPublisher {
     token.check();
     final error = api.exchange(stage.path, destination);
     if (error != null) {
+      if (api.exchangeUnsupported(error, p.dirname(destination))) {
+        throw const HtmlExportException(
+          'This filesystem cannot atomically replace an HTML site. Choose a new destination.',
+        );
+      }
       throw HtmlExportException(
         'Could not atomically replace the HTML export (system error $error).',
       );

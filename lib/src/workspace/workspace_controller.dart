@@ -701,7 +701,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final priorRevision = _activeDocumentRevision;
     try {
       final repository = await _ensureNotesRepository();
-      if (repository.accountById(accountId) == null ||
+      if (repository.accountById(accountId)?.disconnectPending != false ||
           (noteLocalId != null &&
               repository.availableRecentNote(accountId, noteLocalId) == null)) {
         return false;
@@ -712,7 +712,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           : repository.availableRecentNote(accountId, noteLocalId);
       if (!_canReplaceWorkspace(prior, priorRevision, acceptNavigation) ||
           state.hasUnsavedChanges ||
-          repository.accountById(accountId) == null ||
+          repository.accountById(accountId)?.disconnectPending != false ||
           (noteLocalId != null && requestedNote == null)) {
         return false;
       }
@@ -1097,9 +1097,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> refreshNextcloudNotes() async {
     if (state.workspace?.nextcloudAccountId == null) return;
-    await _ensureNotesRepository();
-    _updateNotesCoordinator();
-    await _notesCoordinator?.request(NotesSyncTrigger.manual);
+    try {
+      await _ensureNotesRepository();
+      _updateNotesCoordinator();
+      await _notesCoordinator?.request(NotesSyncTrigger.manual);
+    } on Object catch (error, stack) {
+      _reportNextcloudFailure(error);
+      busyMarkDebugLogError('Unexpected Nextcloud Sync failure', error, stack);
+    }
   }
 
   Future<void> retryRejectedNextcloudNote(String localId) async {

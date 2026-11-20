@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'linux_atomic_file_api.dart';
 
 import 'atomic_file_exceptions.dart';
+import 'recoverable_file_replacement.dart';
 import 'save_destination.dart';
 
 export 'atomic_file_exceptions.dart';
@@ -20,6 +21,7 @@ class AtomicFileWriter {
     required bool overwrite,
     SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     if (!Platform.isLinux) {
@@ -79,19 +81,29 @@ class AtomicFileWriter {
             );
           }
           final atomicApi = LinuxAtomicFileApi.instance;
-          if (!atomicApi.isAvailable) {
-            throw FileSystemException(
-              'Conflict-safe replacement requires Linux renameat2',
-              absoluteTarget,
-            );
-          }
           authorization?.requireCurrent(absoluteTarget);
           final exchangeError = atomicApi.exchange(
             stagedFile.absolute.path,
             absoluteTarget,
           );
           if (exchangeError != null) {
-            throw AtomicFileChangedException(absoluteTarget);
+            if (exchangeError == LinuxAtomicFileApi.fileMissingError) {
+              throw AtomicFileChangedException(absoluteTarget);
+            }
+            if (authorization != null &&
+                atomicApi.exchangeUnsupported(exchangeError, parent.path)) {
+              await replaceFileWithoutExchange(
+                staged: stagedFile,
+                destination: authorization,
+                checkBeforeCommit: checkBeforeCommit,
+              );
+              return;
+            }
+            throw FileSystemException(
+              'Could not exchange the existing file',
+              absoluteTarget,
+              OSError('atomic exchange failed', exchangeError),
+            );
           }
           Object? callbackError;
           var accepted = false;

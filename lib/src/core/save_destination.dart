@@ -25,6 +25,7 @@ final class SaveDestination {
   final LinuxFileVersion? _referent;
 
   bool get replacesExisting => _entry != null;
+  bool get replacesRegularFile => (_entry?.mode ?? 0) & 0xf000 == 0x8000;
 
   static String withSuffix(
     String path,
@@ -123,15 +124,28 @@ final class SaveDestination {
   bool acceptsDisplaced(String stagedPath) =>
       replacesExisting && _matches(stagedPath, displaced: true);
 
+  /// The recoverable replacement protocol verifies the parent independently
+  /// using an open directory descriptor.
+  bool acceptsDisplacedFile(String stagedPath) =>
+      replacesRegularFile && _matchesEntry(stagedPath, displaced: true);
+
+  bool acceptsParent(String directory) =>
+      LinuxFileIdentity.version(directory, followLinks: true)?.identity ==
+      _parent;
+
   bool _matches(String candidate, {required bool displaced}) {
     try {
-      if (LinuxFileIdentity.version(
-            p.dirname(path),
-            followLinks: true,
-          )?.identity !=
-          _parent) {
+      if (!acceptsParent(p.dirname(path))) {
         return false;
       }
+      return _matchesEntry(candidate, displaced: displaced);
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  bool _matchesEntry(String candidate, {required bool displaced}) {
+    try {
       if (_entry == null) {
         return FileSystemEntity.typeSync(candidate, followLinks: false) ==
             FileSystemEntityType.notFound;
