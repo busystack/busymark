@@ -1,3 +1,4 @@
+import '../core/save_destination.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
@@ -9,7 +10,15 @@ import 'html_export_models.dart';
 const htmlExportManifest = '.busymark-html-export.json';
 
 class HtmlExportPublisher {
-  const HtmlExportPublisher({this.fileWriter = const AtomicFileWriter()});
+  const HtmlExportPublisher({
+    this.fileWriter = const AtomicFileWriter(),
+    this.beforeSiteExchange,
+    this.afterSiteExchange,
+  });
+  final Future<void> Function(String destination, String stage)?
+  beforeSiteExchange;
+  final Future<void> Function(String destination, String stage)?
+  afterSiteExchange;
   final AtomicFileWriter fileWriter;
 
   Future<Directory> staging(String destination) async {
@@ -28,9 +37,11 @@ class HtmlExportPublisher {
     required String html,
     required String assetsName,
     required bool overwrite,
+    SaveDestination? authorization,
     required HtmlExportCancellationToken token,
   }) async {
     token.check();
+    authorization?.requireCurrent(destination);
     final type = await FileSystemEntity.type(destination, followLinks: false);
     if (type != FileSystemEntityType.notFound && !overwrite) {
       throw const HtmlExportException(
@@ -79,17 +90,26 @@ class HtmlExportPublisher {
       destination,
       utf8.encode(html),
       overwrite: overwrite,
+      authorization: authorization,
+      beforePublish: token.check,
+      checkBeforeCommit: token.check,
     );
   }
+
+  Future<String> siteOwnership(String path) =>
+      _verifyOwned(Directory(path), 'site');
 
   Future<void> publishSite({
     required Directory stage,
     required String destination,
     required bool overwrite,
+    SaveDestination? authorization,
+    String? expectedOwnership,
     required HtmlExportCancellationToken token,
   }) async {
     await _manifest(stage, 'site');
     token.check();
+    authorization?.requireCurrent(destination);
     final type = await FileSystemEntity.type(destination, followLinks: false);
     if (type == FileSystemEntityType.notFound) {
       _publishDirectory(stage.path, destination);
@@ -102,6 +122,9 @@ class HtmlExportPublisher {
     }
     final previous = Directory(destination);
     final identity = await _verifyOwned(previous, 'site');
+    if (authorization != null && identity != expectedOwnership) {
+      throw const HtmlExportException('The destination changed during export.');
+    }
     token.check();
     final api = LinuxAtomicFileApi.instance;
     if (!api.isAvailable) {
@@ -109,25 +132,33 @@ class HtmlExportPublisher {
         'Atomic directory replacement is unavailable on this system. Choose a new destination.',
       );
     }
+    await beforeSiteExchange?.call(destination, stage.path);
+    authorization?.requireCurrent(destination);
+    token.check();
     final error = api.exchange(stage.path, destination);
     if (error != null) {
+      if (api.exchangeUnsupported(error, p.dirname(destination))) {
+        throw const HtmlExportException(
+          'This filesystem cannot atomically replace an HTML site. Choose a new destination.',
+        );
+      }
       throw HtmlExportException(
         'Could not atomically replace the HTML export (system error $error).',
       );
     }
     // Verify the exchanged directory too, protecting a concurrently changed target.
     try {
-      if (await _verifyOwned(stage, 'site') != identity) {
+      await afterSiteExchange?.call(destination, stage.path);
+      if (authorization?.acceptsDisplaced(stage.path) == false ||
+          await _verifyOwned(stage, 'site') != identity) {
         throw const HtmlExportException(
           'The destination changed during export.',
         );
       }
     } on Object {
-      final rollback = api.exchange(stage.path, destination);
-      if (rollback != null) {
-        throw HtmlExportRecoveryException(stage.path);
-      }
-      rethrow;
+      // The destination may have changed again during verification. A second
+      // exchange could move that newer work into recursive stage cleanup.
+      throw HtmlExportRecoveryException(stage.path);
     }
   }
 
@@ -245,10 +276,10 @@ class HtmlExportPublisher {
   }
 }
 
-/// Cleanup must retain the displaced directory if even rollback is unavailable.
+/// Displaced output must survive cleanup when publication is uncertain.
 class HtmlExportRecoveryException extends HtmlExportException {
   HtmlExportRecoveryException(String stagePath)
     : super(
-        'Directory replacement could not be rolled back. The previous output is retained at $stagePath.',
+        'The destination may contain published or newer output. The displaced output is retained at $stagePath; review both locations before recovery.',
       );
 }

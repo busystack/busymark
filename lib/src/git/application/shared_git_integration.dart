@@ -72,7 +72,7 @@ class _BusyMarkGitWorkspaceScopeState
   final _sessions = <String, Future<shared.GitSession>>{};
   final _owned = <shared.GitSession>[];
   final _eligibleRepositories = <String>{};
-  final _legacyListeners = <shared.GitSession, VoidCallback>{};
+  final _statusListeners = <shared.GitSession, VoidCallback>{};
   var _discoveryCancellation = shared.GitCancellation();
   var _generation = 0;
   Future<shared.RepositoryId?>? _discovery;
@@ -177,7 +177,7 @@ class _BusyMarkGitWorkspaceScopeState
         ref.read(sharedGitReviewProvider)[workspace.id] ??
             const shared.GitReviewTabs(),
       );
-      _bindLegacyStatus(workspace, target, session);
+      _bindStatus(workspace, target, session);
       await session.start();
       if (!mounted || generation != _generation) {
         throw const shared.GitException(shared.GitErrorCode.cancelled);
@@ -210,43 +210,29 @@ class _BusyMarkGitWorkspaceScopeState
     }
   }
 
-  void _bindLegacyStatus(
+  void _bindStatus(
     Workspace workspace,
     shared.RepositoryId repository,
     shared.GitSession session,
   ) {
-    final engine = client;
-    if (engine is! shared.GitWorkflowClient) return;
     final generation = _generation;
     shared.GitSnapshot? projected;
-    Future<GitStatusSnapshot?>? projection;
-    Future<GitStatusSnapshot?> current() {
+    GitStatusSnapshot? projection;
+    Future<GitStatusSnapshot?> current() async {
       final snapshot = session.snapshot;
-      if (snapshot == null) return Future.value(null);
-      if (identical(projected, snapshot) && projection != null) {
-        return projection!;
+      if (snapshot == null) return null;
+      if (!identical(projected, snapshot)) {
+        projected = snapshot;
+        projection = GitCliGateway.projectSharedStatus(snapshot);
       }
-      projected = snapshot;
-      return projection = () async {
-        final metadata = await (engine as shared.GitWorkflowClient).inspect(
-          repository,
-          const shared.GitInspection(shared.GitInspectionKind.remotes),
-        );
-        if (!mounted || generation != _generation) {
-          throw const shared.GitException(shared.GitErrorCode.cancelled);
-        }
-        final remotes = metadata['remotes'] as List;
-        return GitCliGateway.projectSharedStatus(
-          snapshot,
-          hasRemote: remotes.isNotEmpty,
-        );
-      }();
+      return projection;
     }
 
     final controller = ref.read(gitControllerProvider.notifier);
     if (!controller.bindSharedStatusSource(
       workspace,
       repository,
+      owner: session,
       current: current,
       stage: (paths, unstage) async {
         if (!mounted || generation != _generation || session.isDisposed) return;
@@ -274,10 +260,10 @@ class _BusyMarkGitWorkspaceScopeState
     )) {
       return;
     }
+    _statusReleases.add(() => controller.releaseSharedStatusSource(session));
     shared.GitSnapshot? observed;
     void changed() {
       if (!mounted || generation != _generation) return;
-      controller.projectSharedOperation(workspace, repository, session.running);
       if (session.snapshot == null || identical(observed, session.snapshot)) {
         return;
       }
@@ -285,17 +271,23 @@ class _BusyMarkGitWorkspaceScopeState
       unawaited(controller.refreshFromSharedSnapshot());
     }
 
-    _legacyListeners[session] = changed;
+    _statusListeners[session] = changed;
     session.addListener(changed);
   }
+
+  final _statusReleases = <void Function()>[];
 
   void _releaseAttachments() {
     _generation++;
     _discoveryCancellation.cancel();
-    for (final entry in _legacyListeners.entries) {
+    for (final entry in _statusListeners.entries) {
       entry.key.removeListener(entry.value);
     }
-    _legacyListeners.clear();
+    _statusListeners.clear();
+    for (final release in _statusReleases) {
+      release();
+    }
+    _statusReleases.clear();
     for (final session in _owned) {
       session.dispose();
     }

@@ -84,13 +84,16 @@ List<AuthoredReference> markdownReferences({
   required String identity,
   required String source,
   MarkdownMode mode = MarkdownMode.commonMark,
+  ParsedMarkdownDocument? parsedDocument,
 }) {
-  final parsed = const MarkdownParser().parse(
-    filePath: identity,
-    source: source,
-    mode: mode,
-    validateLocalReferences: false,
-  );
+  final parsed =
+      parsedDocument ??
+      const MarkdownParser().parse(
+        filePath: identity,
+        source: source,
+        mode: mode,
+        validateLocalReferences: false,
+      );
   final context = const MarkdownSourceMapper().createInlineParserContext(
     documentSource: source,
     mode: mode,

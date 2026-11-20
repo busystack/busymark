@@ -11,6 +11,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals, visibleForTesting;
 import 'package:flutter/material.dart';
+
+import '../../app/busymark_deferred_editor_focus.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -81,6 +83,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     required this.language,
     required this.filePath,
     this.documentId,
+    this.creationFocus,
     required this.diagnostics,
     required this.editorFontSize,
     required this.wordWrap,
@@ -132,6 +135,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final SourceSyntaxLanguage language;
   final String? filePath;
   final String? documentId;
+  final BusyMarkDeferredEditorFocus? creationFocus;
   final Iterable<Diagnostic> diagnostics;
   final double editorFontSize;
   final bool wordWrap;
@@ -373,6 +377,23 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _lastObservedEditingValue = _fullEditingValue();
     _controller.addListener(_handleControllerActivity);
     _scrollController.addListener(_scheduleSessionPublication);
+    _scheduleCreationFocus();
+  }
+
+  void _scheduleCreationFocus() {
+    final request = widget.creationFocus;
+    if (request == null) return;
+    final node = _focusNode;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          identical(widget.creationFocus, request) &&
+          identical(_focusNode, node) &&
+          node.context != null &&
+          request.consume(context) &&
+          node.canRequestFocus) {
+        node.requestFocus();
+      }
+    });
   }
 
   @override
@@ -460,6 +481,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
             oldWidget.searchSnapshot?.searching) {
       _syncSearchOptions();
     }
+    if (oldWidget.creationFocus != widget.creationFocus) {
+      oldWidget.creationFocus?.cancel();
+      _scheduleCreationFocus();
+    }
     if (widget.wordWrap && !oldWidget.wordWrap) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_horizontalScrollController.hasClients) {
@@ -471,6 +496,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   @override
   void dispose() {
+    widget.creationFocus?.cancel();
     widget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
     _searchDebounce?.cancel();
     _foldRefreshDebounce?.cancel();

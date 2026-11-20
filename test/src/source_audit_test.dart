@@ -414,6 +414,9 @@ void main() {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
+    final sharedSidebar = File(
+      'lib/src/workspace/presentation/workspace_sidebar.dart',
+    ).readAsStringSync();
     final sidebarSurface = RegExp(
       r'class BusyMarkSidebarSurface[\s\S]*?class BusyMarkGroupedList',
     ).firstMatch(design)!.group(0)!;
@@ -422,8 +425,9 @@ void main() {
     expect(sidebarSurface, contains('BorderDirectional('));
     expect(sidebarSurface, contains('end: BorderSide('));
     expect(sidebarSurface, contains('color: colors.sidebarBorder'));
-    expect(workspace, contains('return BusyMarkSidebarSurface('));
-    expect(welcome, contains('BusyMarkSidebarSurface('));
+    expect(workspace, contains('WorkspaceSidebar<_SidebarTab>'));
+    expect(welcome, contains('WorkspaceSidebar<bool>'));
+    expect(sharedSidebar, contains('return BusyMarkSidebarSurface('));
     expect(
       workspace,
       isNot(contains('decoration: BoxDecoration(color: colors.sidebar)')),
@@ -482,37 +486,42 @@ void main() {
     },
   );
 
-  test('native search action toggles workspace search UI', () {
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
+  test(
+    'workspace search uses the mounted command and shared search controls',
+    () {
+      final workspace = File(
+        'lib/src/workspace/presentation/workspace_screen.dart',
+      ).readAsStringSync();
 
-    expect(
-      workspace,
-      contains('case HeaderBarAction.search:\n        _toggleSearch(ref);'),
-    );
-    expect(workspace, contains('backVisible: !searchState.active'));
-    final sidebar = File(
-      'lib/src/search/search_sidebar.dart',
-    ).readAsStringSync();
-    final session = File(
-      'lib/src/search/search_session.dart',
-    ).readAsStringSync();
-    final matcher = File(
-      'lib/src/search/workspace_text_search.dart',
-    ).readAsStringSync();
-    expect(workspace, contains('searchSessionProvider'));
-    expect(sidebar, contains('class SearchHeaderField'));
-    expect(sidebar, contains('child: BusyMarkSearchField('));
-    expect(sidebar, isNot(contains('TextField(')));
-    expect(sidebar, isNot(contains('OutlineInputBorder(')));
-    expect(sidebar, contains('onEscape: controller.close'));
-    expect(sidebar, contains('class SearchSidebar'));
-    expect(session, contains('loadWorkspaceTextMatches'));
-    expect(matcher, contains('await loadText(file.absolutePath)'));
-    expect(workspace, isNot(contains('readAsStringSync()')));
-    expect(workspace, contains('_searchNavigationTargetProvider'));
-  });
+      expect(workspace, contains('const SearchHeaderField()'));
+      expect(workspace, contains("ValueKey('workspace-home')"));
+      final sidebar = File(
+        'lib/src/search/search_sidebar.dart',
+      ).readAsStringSync();
+      final session = File(
+        'lib/src/search/search_session.dart',
+      ).readAsStringSync();
+      final matcher = File(
+        'lib/src/search/workspace_text_search.dart',
+      ).readAsStringSync();
+      expect(workspace, contains('searchSessionProvider'));
+      expect(
+        session,
+        contains('BusyMarkCommandIds.search: SearchCategory.file'),
+      );
+      expect(sidebar, contains('searchCommandForCategory('));
+      expect(sidebar, contains('class SearchHeaderField'));
+      expect(sidebar, contains('child: BusyMarkSearchField('));
+      expect(sidebar, isNot(contains('TextField(')));
+      expect(sidebar, isNot(contains('OutlineInputBorder(')));
+      expect(sidebar, contains('onEscape: controller.close'));
+      expect(sidebar, contains('class SearchSidebar'));
+      expect(session, contains('loadWorkspaceTextMatches'));
+      expect(matcher, contains('await loadText(file.absolutePath)'));
+      expect(workspace, isNot(contains('readAsStringSync()')));
+      expect(workspace, contains('_searchNavigationTargetProvider'));
+    },
+  );
 
   test('preview links are actionable instead of styled-only text', () {
     final workspace = File(
@@ -752,14 +761,10 @@ void main() {
       singleMarkdownClause.indexOf('_SidebarTab.localHistory'),
       lessThan(singleMarkdownClause.indexOf('_SidebarTab.clipboard')),
     );
-    expect(workspace, contains('showTabMenu: tabs.length > 1'));
-    expect(
-      workspace,
-      contains(RegExp(r'if \(!widget\.searchState\.active\)\s+_SidebarHeader')),
-    );
-    expect(workspace, contains('_preferredSidebarTabIndex'));
-    expect(workspace, contains('_shouldShowOutlineForOpenFile'));
-    expect(workspace, contains('tabs.indexOf(_SidebarTab.outline)'));
+    expect(workspace, contains('WorkspaceSidebar<_SidebarTab>'));
+    expect(workspace, contains('late _SidebarTab _tab'));
+    expect(workspace, contains('_initialSidebarTab'));
+    expect(singleMarkdownClause, contains('_SidebarTab.recent'));
     expect(
       workspace,
       contains('widget.workspace.activeFilePath != _activeFilePath'),
@@ -772,10 +777,7 @@ void main() {
       activeFileUpdateClause,
       contains('_activeFilePath = widget.workspace.activeFilePath;'),
     );
-    expect(
-      activeFileUpdateClause,
-      isNot(contains('_tab = _preferredSidebarTabIndex')),
-    );
+    expect(activeFileUpdateClause, isNot(contains('_tab =')));
     expect(folderClause, contains('_SidebarTab.files'));
     expect(folderClause, contains('_SidebarTab.outline'));
     expect(folderClause, contains('_SidebarTab.git'));
@@ -838,7 +840,11 @@ void main() {
       settings,
       contains('BusyMarkPopupSelector<EditorToolbarDirection>('),
     );
-    expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    final sidebar = File(
+      'lib/src/workspace/presentation/workspace_sidebar.dart',
+    ).readAsStringSync();
+    expect(workspace, contains('WorkspaceSidebar<_SidebarTab>'));
+    expect(sidebar, contains('BusyMarkHeaderPopupMenuButton<T>.native'));
     expect(workspace, isNot(contains('class _SidebarSegmentLabel')));
     expect(workspace, contains('softWrap: false'));
     expect(
@@ -868,18 +874,22 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
 
-    expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    final sidebar = File(
+      'lib/src/workspace/presentation/workspace_sidebar.dart',
+    ).readAsStringSync();
+    expect(workspace, contains('WorkspaceSidebar<_SidebarTab>'));
+    expect(sidebar, contains('BusyMarkHeaderPopupMenuButton<T>.native'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
-    expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: BusyMarkGlyphs.sidebarViews'));
+    expect(sidebar, contains('tooltip: context.l10n.sidebarViewMenu'));
+    expect(sidebar, contains('icon: BusyMarkGlyphs.sidebarViews'));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
       contains('sidebarViews = YaruIcons.display_layout'),
     );
     expect(workspace, isNot(contains('icon: selectedTabMenuItem.icon')));
-    expect(workspace, contains('transparent: true'));
+    expect(sidebar, contains('transparent: true'));
     expect(
-      workspace,
+      sidebar,
       contains('borderRadius: BusyMarkRadius.nativeHeaderButton'),
     );
     expect(
@@ -916,7 +926,7 @@ void main() {
         '_SidebarTab.localHistory => BusyMarkGlyphs.sidebarLocalHistory',
       ),
     );
-    expect(workspace, contains('itemBuilder: (context) => tabMenuItems'));
+    expect(sidebar, contains('itemBuilder: (_) => items'));
     expect(workspace, isNot(contains('_SidebarTab.gitFileHistory')));
     expect(workspace, isNot(contains('_SidebarTab.gitProjectHistory')));
     expect(workspace, contains('checked: tab == selectedTab'));
@@ -972,7 +982,8 @@ void main() {
       r'class BusyMarkHeaderIconButton[\s\S]*?class '
       r'BusyMarkCompactIconButton',
     ).firstMatch(design)!.group(0)!;
-    expect(headerIcon, contains('final button = YaruIconButton('));
+    expect(headerIcon, contains('extends YaruIconButton'));
+    expect(headerIcon, contains('style!.merge(super.defaultStyleOf(context))'));
     expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));
@@ -1012,11 +1023,15 @@ void main() {
     ).firstMatch(workspace)!.group(0)!;
     final outlineHeader = RegExp(
       r'class _SidebarHeader extends ConsumerWidget[\s\S]*?'
-      r'class _SidebarHeaderRow',
+      r'typedef _SidebarHeaderSecondaryTapHandler',
     ).firstMatch(workspace)!.group(0)!;
     final outlineActions = '$outlineMenu\n$outlineHeader';
 
-    expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    final sidebar = File(
+      'lib/src/workspace/presentation/workspace_sidebar.dart',
+    ).readAsStringSync();
+    expect(workspace, contains('WorkspaceSidebar<_SidebarTab>'));
+    expect(sidebar, contains('BusyMarkHeaderPopupMenuButton<T>.native'));
     for (final retired in [
       'BusyMarkHeaderPopupMenuButton<_GitMenuAction>',
       '_loadWorkspaceGitMenuItems',
@@ -1047,9 +1062,9 @@ void main() {
     expect(workspace, isNot(contains('_showSidebarBranchMenu')));
     expect(workspace, isNot(contains('_sidebarMenuLeft')));
     expect(workspace, isNot(contains('_BoldDownArrowIcon')));
-    expect(workspace, contains("ValueKey('workspace-sidebar-primary-row')"));
-    expect(workspace, contains('class _SidebarHeaderRow'));
-    expect(workspace, contains('minHeight: BusyMarkSizes.iconButton'));
+    expect(sidebar, contains("ValueKey('workspace-sidebar-primary-row')"));
+    expect(sidebar, contains('class WorkspaceSidebarHeaderRow'));
+    expect(sidebar, contains('minHeight: BusyMarkSizes.iconButton'));
     expect(
       RegExp(
         r"ValueKey\('workspace-sidebar-first-content'\)",
@@ -1321,8 +1336,11 @@ void main() {
 
   test('data-entry dialogs use native grouped modal editors', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
+    final operations = File(
+      'lib/src/workspace/workspace_resource_actions.dart',
+    ).readAsStringSync();
+    final projectDialog = File(
+      'lib/src/workspace/presentation/create_writerside_project_dialog.dart',
     ).readAsStringSync();
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -1352,18 +1370,21 @@ void main() {
     expect(entries, isNot(contains('MouseRegion(')));
     expect(entries, isNot(contains('GestureDetector(')));
     expect(entries, isNot(contains('busyMarkSurfaceDecoration(')));
-    expect(welcome, contains('showBusyMarkModalEditorDialog<bool>('));
-    expect(welcome, contains('BusyMarkModalEditorScaffold('));
-    expect(RegExp(r'BusyMarkGroupedTextEntry\(').allMatches(welcome).length, 5);
+    expect(operations, contains('showBusyMarkModalEditorDialog<String>('));
+    expect(projectDialog, contains('BusyMarkModalEditorScaffold('));
+    expect(
+      RegExp(r'BusyMarkGroupedTextEntry\(').allMatches(projectDialog).length,
+      5,
+    );
     expect(workspace, contains('showBusyMarkModalEditorDialog<String>('));
     expect(workspace, contains('showBusyMarkModalDialog<void>('));
     expect(editor, contains('showBusyMarkModalEditorDialog<T>('));
-    expect(welcome, isNot(contains('BusyMarkFloatingTextEntry')));
+    expect(projectDialog, isNot(contains('BusyMarkFloatingTextEntry')));
     expect(workspace, isNot(contains('BusyMarkFloatingTextEntry')));
     expect(editor, isNot(contains('BusyMarkFloatingTextEntry')));
-    expect(welcome, isNot(contains('autofocus: true')));
+    expect(projectDialog, isNot(contains('autofocus: true')));
     expect(
-      welcome,
+      projectDialog,
       isNot(contains('hintText: context.l10n.defaultProjectName')),
     );
   });
@@ -1526,7 +1547,7 @@ void main() {
     ).readAsStringSync();
     final stagingAdapter = gitController.substring(
       gitController.indexOf('Future<void> stageFiles('),
-      gitController.indexOf('Future<void> rollbackFiles('),
+      gitController.indexOf('Future<GitStagedDiffSnapshot?> stagedDiffForAi('),
     );
     expect(
       stagingAdapter,
@@ -1631,8 +1652,8 @@ void main() {
   });
 
   test('recent workspaces expose one native menu action model', () {
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
+    final recentPanel = File(
+      'lib/src/workspace/presentation/workspace_sidebar.dart',
     ).readAsStringSync();
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File('lib/src/app/app_settings.dart').readAsStringSync();
@@ -1640,7 +1661,7 @@ void main() {
     final sidebar = File(
       'lib/src/search/search_sidebar.dart',
     ).readAsStringSync();
-    expect(welcome, contains('SearchResultList('));
+    expect(recentPanel, contains('SearchResultList('));
     final navigation = File(
       'lib/src/workspace/recent_navigation.dart',
     ).readAsStringSync();
@@ -1893,7 +1914,7 @@ void main() {
     );
     expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
     expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
-    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(3));
+    expect(toolbar, isNot(contains('elevated: true')));
     expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.hardEdge'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
@@ -1906,7 +1927,7 @@ void main() {
     final floatingToolbar = RegExp(
       r'class _FloatingWysiwygToolbar[\s\S]*?class _EditorToolbarMenuAction',
     ).firstMatch(editor)!.group(0)!;
-    expect(floatingToolbar, contains('elevated: true'));
+    expect(floatingToolbar, isNot(contains('elevated: true')));
     expect(floatingToolbar, contains('accented: true'));
     expect(
       floatingToolbar,
@@ -1974,9 +1995,12 @@ void main() {
       dotAll: true,
     ).firstMatch(editor)!.group(0)!;
 
-    expect(imageView, isNot(contains('color: colors.panel')));
+    final imageRendering = imageView
+        .split('class _RemoteImageBlockedPlaceholder')
+        .first;
+    expect(imageRendering, isNot(contains('color: colors.panel')));
     expect(
-      imageView,
+      imageRendering,
       isNot(contains('Border.all(color: colors.subtleBorder)')),
     );
     expect(prefix, isNot(contains('BusyBlockKind.image => Icon')));

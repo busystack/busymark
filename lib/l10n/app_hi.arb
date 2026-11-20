@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "नया",
   "open": "खोलें",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "बनाएँ",
+  "home": "होम",
+  "openMenu": "खोलें मेनू",
+  "newNextcloudNote": "नया Nextcloud नोट",
+  "shortcutNewDocument": "नया मेनू",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Markdown फ़ाइल या Writerside प्रोजेक्ट बनाएँ",
+  "shortcutNewDocumentDescription": "संसाधन बनाने का मेनू दिखाएँ",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें",
+  "shortcutOpenDescription": "संसाधन खोलने का मेनू दिखाएँ",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "दूरस्थ छवि अनुमतियाँ साफ़ करें",
+  "clearRemoteImagePermissions": "कार्यस्थानों की छवि अनुमतियाँ हटाएँ",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।",
+  "clearRemoteImagePermissionsDescription": "कार्यस्थानों की सभी दूरस्थ छवि अनुमतियाँ भूलें।",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "चुनें कि BusyMark दूरस्थ छवियाँ लोड कर सकता है या नहीं।",
+  "remoteImageBlockedTooltip": "दूरस्थ छवि अवरुद्ध है। लोड करने के विकल्पों के लिए क्लिक करें।",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "इस कार्यस्थान के लिए लोड करें",
+  "loadThisRemoteImage": "यह छवि लोड करें",
+  "remoteImageMoreOptions": "और विकल्प…",
+  "remoteImageMoreOptionsTitle": "दूरस्थ छवियों की अनुमतियाँ",
+  "loadRemoteImagesInDocument": "इस दस्तावेज़ की छवियाँ लोड करें",
+  "remoteImageUntilClose": "इस दस्तावेज़ के बंद होने तक।",
+  "remoteImageWorkspacePermissionDetail": "गोपनीयता सेटिंग में कार्यस्थान की अनुमतियाँ हटाने तक {workspace} में दूरस्थ छवियों की अनुमति देता है।",
+  "remoteImageGlobalPermissionDetail": "गोपनीयता सेटिंग में यह विकल्प बंद करने तक पूरे BusyMark में दूरस्थ छवियों की अनुमति देता है।",
+  "remoteImageGlobalSettingsDetail": "पूरे BusyMark में दूरस्थ छवियों की अनुमति दें। कार्यस्थानों की अनुमतियाँ अलग से प्रबंधित होती हैं।",
+  "loadRemoteImagesForWorkspace": "इस कार्यस्थान में हमेशा अनुमति दें",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3627,7 +3639,7 @@
   "searchTopicsCategory": "विषय",
   "searchCurrentDocument": "वर्तमान दस्तावेज़",
   "searchCurrentWorkspace": "वर्तमान कार्यक्षेत्र",
-  "browseNotes": "नोट ब्राउज़ करें",
+  "browseNotes": "Nextcloud नोट ब्राउज़ करें",
   "searchActionsCommand": "क्रियाएँ खोजें",
   "searchDocumentsCommand": "दस्तावेज़ खोजें",
   "searchTopicsCommand": "विषय खोजें",

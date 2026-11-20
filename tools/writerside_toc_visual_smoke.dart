@@ -12,7 +12,6 @@ import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -47,7 +46,6 @@ Future<void> main(List<String> arguments) async {
     p.absolute(arguments[1]),
   ).create(recursive: true);
   await windowManager.ensureInitialized();
-  await LinuxHeaderBarService.instance.initialize();
   final settings = AppSettings.defaults().copyWith(
     localeTag: 'en',
     documentViewMode: DocumentViewModePreference.source,

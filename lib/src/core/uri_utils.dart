@@ -19,3 +19,8 @@ bool isLaunchableExternalUri(Uri uri) {
 bool isRemoteResourceUriScheme(String scheme) {
   return _remoteResourceUriSchemes.contains(scheme.toLowerCase());
 }
+
+bool isRemoteImageSource(String? source) {
+  final scheme = source == null ? null : Uri.tryParse(source.trim())?.scheme;
+  return scheme == 'http' || scheme == 'https';
+}

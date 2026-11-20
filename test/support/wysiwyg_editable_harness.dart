@@ -1,3 +1,5 @@
+import 'document_history_harness.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -15,14 +17,14 @@ class WysiwygEditableHarness extends StatefulWidget {
     required this.source,
     required this.clipboard,
     this.session = const WysiwygEditorSessionState(),
-    this.externalHistory = false,
+    required this.history,
     this.insertionRegistry,
   });
 
   final String source;
   final RichClipboardService clipboard;
   final WysiwygEditorSessionState session;
-  final bool externalHistory;
+  final DocumentHistoryHarness history;
   final BusyMarkClipboardInsertionRegistry? insertionRegistry;
 
   @override
@@ -33,8 +35,15 @@ class WysiwygEditableHarnessState extends State<WysiwygEditableHarness> {
   static const parser = MarkdownParser();
   var editorKey = GlobalKey<BusyMarkWysiwygEditorState>();
   final changes = <String>[];
-  final undoSources = <String>[];
-  final redoSources = <String>[];
+  List<String> get undoSources => widget
+      .history
+      .buffer
+      .editorState
+      .undoState
+      .undo
+      .map((entry) => entry.text)
+      .toList();
+  DocumentHistoryHarness get history => widget.history;
   late String source;
   late BusyDocument document;
   late WysiwygEditorSessionState session;
@@ -60,13 +69,10 @@ class WysiwygEditableHarnessState extends State<WysiwygEditableHarness> {
   }
 
   void _accept(String next) {
-    if (widget.externalHistory) {
-      undoSources.add(source);
-      redoSources.clear();
-    }
+    widget.history.controller.updateActiveWysiwygText(next, document: document);
     changes.add(next);
     setState(() {
-      source = next;
+      source = widget.history.buffer.text;
       _parse();
     });
   }
@@ -77,6 +83,15 @@ class WysiwygEditableHarnessState extends State<WysiwygEditableHarness> {
     WysiwygEditorSessionState? restoredSession,
   }) {
     setState(() {
+      widget.history.controller.updateActiveText(next);
+      final buffer = widget.history.buffer;
+      widget.history.controller.updateDocumentEditorState(
+        buffer.id,
+        buffer.editorState.copyWith(
+          undoState: const DocumentUndoState(),
+          wysiwygState: restoredSession ?? session,
+        ),
+      );
       documentId = id ?? documentId;
       if (restoredSession != null) session = restoredSession;
       source = next;
@@ -93,16 +108,22 @@ class WysiwygEditableHarnessState extends State<WysiwygEditableHarness> {
 
   void _undo() {
     undoCalls++;
-    if (undoSources.isEmpty) return;
-    redoSources.add(source);
-    replaceSource(undoSources.removeLast());
+    widget.history.controller.undoActiveBuffer();
+    setState(() {
+      source = widget.history.buffer.text;
+      session = widget.history.buffer.editorState.wysiwygState;
+      _parse();
+    });
   }
 
   void _redo() {
     redoCalls++;
-    if (redoSources.isEmpty) return;
-    undoSources.add(source);
-    replaceSource(redoSources.removeLast());
+    widget.history.controller.redoActiveBuffer();
+    setState(() {
+      source = widget.history.buffer.text;
+      session = widget.history.buffer.editorState.wysiwygState;
+      _parse();
+    });
   }
 
   @override
@@ -117,12 +138,20 @@ class WysiwygEditableHarnessState extends State<WysiwygEditableHarness> {
         clipboardService: widget.clipboard,
         clipboardInsertionRegistry: widget.insertionRegistry,
         initialSessionState: session,
-        useExternalUndoHistory: widget.externalHistory,
+        readEditBase: widget.history.readBase,
+        readSessionState: () => widget.history.buffer.editorState.wysiwygState,
+        onDocumentChanged: (value) => document = value,
         onUndo: _undo,
         onRedo: _redo,
         onSessionChanged: (id, value) {
           sessions[id] = value;
-          if (id == documentId) session = value;
+          if (id == documentId) {
+            session = value;
+            widget.history.controller.updateDocumentEditorState(
+              widget.history.buffer.id,
+              widget.history.buffer.editorState.copyWith(wysiwygState: value),
+            );
+          }
         },
         onSourceChanged: (_, value) => _accept(value),
       ),

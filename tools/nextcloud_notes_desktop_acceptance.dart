@@ -30,7 +30,6 @@ import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/references/reference_controller.dart';
 import 'package:busymark/src/references/reference_ui.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
@@ -139,7 +138,6 @@ Future<void> main(List<String> args) async {
     );
   }
   await windowManager.ensureInitialized();
-  await LinuxHeaderBarService.instance.initialize();
   final settings = AppSettings.defaults().copyWith(
     localeTag: 'en',
     automaticSpelling: false,

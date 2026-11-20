@@ -447,6 +447,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Uus",
   "open": "Ava",
   "@open": {
     "description": "Open action label."
@@ -684,15 +685,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Loo",
+  "home": "Avaleht",
+  "openMenu": "Avamismenüü",
+  "newNextcloudNote": "Uus Nextcloudi märge",
+  "shortcutNewDocument": "Uue ressursi menüü",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Loo Markdowni fail või Writerside’i projekt",
+  "shortcutNewDocumentDescription": "Kuva ressursside loomise menüü",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Ava Markdowni fail, kaust või Writerside’i projekt",
+  "shortcutOpenDescription": "Kuva ressursside avamise menüü",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1042,11 +1046,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Eemalda välispiltide laadimise load",
+  "clearRemoteImagePermissions": "Kustuta tööruumide pildiõigused",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Unusta tööruumid, millel oli lubatud välispilte laadida.",
+  "clearRemoteImagePermissionsDescription": "Unusta kõik tööruumide kaugpiltide õigused.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1416,7 +1420,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Vali, kas BusyMark võib välispilte laadida.",
+  "remoteImageBlockedTooltip": "Välispilt on blokeeritud. Laadimisvalikute nägemiseks klõpsa.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1428,7 +1432,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Laadi selles tööruumis",
+  "loadThisRemoteImage": "Laadi see pilt",
+  "remoteImageMoreOptions": "Rohkem valikuid…",
+  "remoteImageMoreOptionsTitle": "Kaugpiltide õigused",
+  "loadRemoteImagesInDocument": "Laadi selle dokumendi pildid",
+  "remoteImageUntilClose": "Kuni selle dokumendi sulgemiseni.",
+  "remoteImageWorkspacePermissionDetail": "Lubab kaugpildid tööruumis {workspace}, kuni kustutad tööruumide õigused privaatsusseadetes.",
+  "remoteImageGlobalPermissionDetail": "Lubab kaugpildid kogu BusyMarkis, kuni lülitad selle privaatsusseadetes välja.",
+  "remoteImageGlobalSettingsDetail": "Luba kaugpildid kogu BusyMarkis. Tööruumide õigusi hallatakse eraldi.",
+  "loadRemoteImagesForWorkspace": "Luba selles tööruumis alati",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -4087,7 +4099,7 @@
   "searchTopicsCategory": "Teemad",
   "searchCurrentDocument": "Praegune dokument",
   "searchCurrentWorkspace": "Praegune tööruum",
-  "browseNotes": "Sirvi märkmeid",
+  "browseNotes": "Sirvi Nextcloudi märkmeid",
   "searchActionsCommand": "Otsi toiminguid",
   "searchDocumentsCommand": "Otsi dokumente",
   "searchTopicsCommand": "Otsi teemasid",

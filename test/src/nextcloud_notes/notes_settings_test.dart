@@ -298,7 +298,9 @@ void main() {
         container
             .read(appRouterProvider)
             .go('/settings?returnTo=welcome&page=nextcloudNotes');
-        await tester.pumpAndSettle();
+        // Build the route once, then let real repository initialization make
+        // progress before waiting for a visually idle page.
+        await tester.pump();
         await tester.runAsync(() async {
           await container.read(nextcloudNotesRepositoryProvider.future);
           await container.read(nextcloudConnectionProvider.notifier).reload();
@@ -611,12 +613,19 @@ void main() {
       await tester.runAsync(() async {
         await container.read(nextcloudConnectionProvider.notifier).reload();
       });
-      await tester.pumpAndSettle();
-      await tester.runAsync(() async {
-        await container
-            .read(notesSettingsProvider.notifier)
-            .load(testAccount().id);
-      });
+      // The page loads settings automatically. Allow its real SQLite replies
+      // to complete before advancing the fake clock to visual quiescence.
+      for (
+        var i = 0;
+        i < 100 && container.read(notesSettingsProvider).original == null;
+        i++
+      ) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(container.read(notesSettingsProvider).original, isNotNull);
       await tester.pumpAndSettle();
       expect(find.text('Server Notes settings'), findsOneWidget);
       final suffix = find.descendant(

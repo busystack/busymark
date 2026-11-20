@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../app/localization.dart';
 import '../core/busymark_exception.dart';
+import '../core/atomic_file_writer.dart';
 
 enum WorkspaceMessageCode {
   openFailed,
@@ -44,7 +45,10 @@ String localizeWorkspaceMessage(
     WorkspaceMessageCode.chooseWhereToSaveMarkdown =>
       l10n.workspaceErrorChooseWhereToSaveMarkdown,
     WorkspaceMessageCode.saveBlockedFileChangedOnDisk =>
-      l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      message.error is AtomicFileChangedException &&
+              (message.error as AtomicFileChangedException).recoveryPath != null
+          ? '${l10n.workspaceErrorSaveBlockedFileChangedOnDisk}\n$error'
+          : l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
     WorkspaceMessageCode.saveFailed => l10n.workspaceErrorSaveFailed(error),
     WorkspaceMessageCode.fileOperationFailed =>
       l10n.workspaceErrorFileOperationFailed(error),

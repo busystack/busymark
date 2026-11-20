@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Создать",
   "open": "Открыть",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Создать",
+  "home": "Главная",
+  "openMenu": "Меню «Открыть»",
+  "newNextcloudNote": "Новая заметка Nextcloud",
+  "shortcutNewDocument": "Меню «Создать»",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Создать файл Markdown или проект Writerside",
+  "shortcutNewDocumentDescription": "Показать меню создания ресурсов",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Открыть файл Markdown, папку или проект Writerside",
+  "shortcutOpenDescription": "Показать меню открытия ресурсов",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Сбросить разрешения на удалённые изображения",
+  "clearRemoteImagePermissions": "Очистить разрешения для изображений в рабочих пространствах",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Забыть рабочие области, которым было разрешено загружать удалённые изображения.",
+  "clearRemoteImagePermissionsDescription": "Забыть все разрешения рабочих пространств на загрузку удалённых изображений.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Выберите, может ли BusyMark загружать удалённые изображения.",
+  "remoteImageBlockedTooltip": "Удалённое изображение заблокировано. Нажмите, чтобы выбрать способ загрузки.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Загрузить для этой рабочей области",
+  "loadThisRemoteImage": "Загрузить это изображение",
+  "remoteImageMoreOptions": "Другие варианты…",
+  "remoteImageMoreOptionsTitle": "Разрешения для удалённых изображений",
+  "loadRemoteImagesInDocument": "Загрузить изображения в этом документе",
+  "remoteImageUntilClose": "До закрытия этого документа.",
+  "remoteImageWorkspacePermissionDetail": "Разрешает удалённые изображения в {workspace}, пока вы не очистите разрешения для рабочих пространств в настройках конфиденциальности.",
+  "remoteImageGlobalPermissionDetail": "Разрешает удалённые изображения во всём BusyMark, пока вы не отключите эту настройку в разделе конфиденциальности.",
+  "remoteImageGlobalSettingsDetail": "Разрешает удалённые изображения во всём BusyMark. Разрешения рабочих пространств настраиваются отдельно.",
+  "loadRemoteImagesForWorkspace": "Всегда разрешать в этом рабочем пространстве",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3653,7 +3665,7 @@
   "searchTopicsCategory": "Темы",
   "searchCurrentDocument": "Текущий документ",
   "searchCurrentWorkspace": "Текущая рабочая область",
-  "browseNotes": "Обзор заметок",
+  "browseNotes": "Просмотр заметок Nextcloud",
   "searchActionsCommand": "Поиск действий",
   "searchDocumentsCommand": "Поиск документов",
   "searchTopicsCommand": "Поиск тем",

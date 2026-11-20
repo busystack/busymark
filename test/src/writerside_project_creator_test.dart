@@ -41,6 +41,11 @@ void main() {
       );
 
       expect(Directory(result.rootPath).existsSync(), isTrue);
+      final ordinary = Directory(p.join(parent.path, 'ordinary'))..createSync();
+      expect(
+        Directory(result.rootPath).statSync().mode & 0x1ff,
+        ordinary.statSync().mode & 0x1ff,
+      );
       expect(result.configPath, p.join(result.rootPath, 'writerside.cfg'));
       expect(result.treePath, p.join(result.rootPath, 'user-guide.tree'));
       expect(File(result.configPath).existsSync(), isTrue);

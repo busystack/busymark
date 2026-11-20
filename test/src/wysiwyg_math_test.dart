@@ -1,3 +1,4 @@
+import '../support/document_history_harness.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/source/source_paste_engine.dart';
@@ -754,6 +755,8 @@ void main() {
           .parse(filePath: 'math.md', source: original)
           .busyDocument;
       var markdown = original;
+      final history = await DocumentHistoryHarness.create(source: original);
+      addTearDown(history.dispose);
 
       await tester.pumpWidget(
         ProviderScope(
@@ -769,7 +772,28 @@ void main() {
                 height: 600,
                 child: BusyMarkWysiwygEditor(
                   document: document,
-                  onSourceChanged: (_, source) => markdown = source,
+                  readEditBase: history.readBase,
+                  readSessionState: () =>
+                      history.buffer.editorState.wysiwygState,
+                  onUndo: () {
+                    history.controller.undoActiveBuffer();
+                    markdown = history.buffer.text;
+                  },
+                  onRedo: () {
+                    history.controller.redoActiveBuffer();
+                    markdown = history.buffer.text;
+                  },
+                  onSessionChanged: (_, value) =>
+                      history.controller.updateDocumentEditorState(
+                        history.buffer.id,
+                        history.buffer.editorState.copyWith(
+                          wysiwygState: value,
+                        ),
+                      ),
+                  onSourceChanged: (_, value) {
+                    history.controller.updateActiveText(value);
+                    markdown = value;
+                  },
                 ),
               ),
             ),

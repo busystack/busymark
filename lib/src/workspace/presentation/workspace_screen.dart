@@ -1,3 +1,4 @@
+import '../../app/busymark_resource_menu.dart';
 import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../../core/debug_log.dart';
 import '../../app/document_view_availability.dart';
@@ -84,6 +85,7 @@ import '../../editor/document_text_direction.dart';
 import '../../editor/document_thematic_break.dart';
 import '../../editor/editor_text_context_menu.dart';
 import '../../editor/markdown_image_view.dart';
+import '../../editor/markdown_image_permission_scope.dart';
 import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_autocomplete.dart';
 import '../../editor/source/source_document.dart';
@@ -110,7 +112,6 @@ import '../../local_history/local_history_comparison_view.dart';
 import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_panel.dart';
 import '../../platform/gtk_header_icon_service.dart';
-import '../../platform/linux_header_bar_service.dart';
 import '../../platform/native_writerside_dialog_service.dart';
 import '../../search/search_replace_service.dart';
 import '../../search/workspace_search_scope.dart';
@@ -137,11 +138,13 @@ import 'document_status_bar.dart';
 import '../text_format_metadata.dart';
 import '../workspace_glyphs.dart';
 import '../workspace_model.dart';
+import '../remote_image_permissions.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
 import '../workspace_tab_actions.dart';
 import 'welcome_screen.dart';
+import 'workspace_sidebar.dart';
 import 'writerside_instance_dialog.dart';
 import 'writerside_markdown_import_dialog.dart';
 import 'writerside_toc_dialogs.dart';
@@ -182,15 +185,15 @@ final _searchNavigationTargetProvider =
     >(_SearchNavigationTargetController.new);
 // Only Commit grows the existing sidebar allocation for its full native labels.
 final _sidebarAllocationProvider =
-    NotifierProvider<_SidebarAllocation, (String, DateTime, _SidebarTab)?>(
+    NotifierProvider<_SidebarAllocation, (String, _SidebarTab)?>(
       _SidebarAllocation.new,
     );
 
-class _SidebarAllocation extends Notifier<(String, DateTime, _SidebarTab)?> {
+class _SidebarAllocation extends Notifier<(String, _SidebarTab)?> {
   @override
-  (String, DateTime, _SidebarTab)? build() => null;
+  (String, _SidebarTab)? build() => null;
   void select(Workspace workspace, _SidebarTab tab) =>
-      state = (workspace.id, workspace.openedAt, tab);
+      state = (workspace.id, tab);
 }
 
 final _sidebarShortcutRequestProvider =
@@ -339,25 +342,6 @@ Future<void> _publishWritersideTitleDialog(
   }
 }
 
-final _sidebarSelectorRevealProvider =
-    NotifierProvider<_SidebarSelectorReveal, String?>(
-      _SidebarSelectorReveal.new,
-    );
-
-class _SidebarSelectorReveal extends Notifier<String?> {
-  @override
-  String? build() => null;
-  void reveal(String workspaceId) => state = workspaceId;
-}
-
-final _sidebarViewMenuControllerProvider =
-    Provider<BusyMarkHeaderMenuController>((ref) {
-      final controller = BusyMarkHeaderMenuController(
-        debugLabel: BusyMarkCommandIds.sidebarViewSelector,
-      );
-      ref.onDispose(controller.dispose);
-      return controller;
-    });
 final _contentViewMenuControllerProvider =
     Provider<BusyMarkHeaderMenuController>((ref) {
       final controller = BusyMarkHeaderMenuController(
@@ -400,7 +384,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
         .firstOrNull;
     final history = ref.read(localHistoryControllerProvider);
     final entries = workspaceTabEntries(
-      workspace: state.workspace!,
       gitTabs:
           ref.watch(sharedGitReviewProvider)[state.workspace!.id] ??
           const SharedGitTabs(),
@@ -537,6 +520,11 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       return const WelcomeScreen();
     }
     final searchState = ref.watch(searchSessionProvider);
+    final sidebarRevealed = watchSidebarSelectorReveal(
+      context,
+      ref,
+      workspaceId: workspace.id,
+    );
     final preferredViewMode =
         state.activeBuffer?.editorState.mode ?? settings.documentViewMode;
     final documentViewMode =
@@ -572,7 +560,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     final localHistoryState = ref.watch(localHistoryControllerProvider);
 
     final colors = BusyMarkSurfaceColors.of(context);
-    final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     final sidebarVisible =
         searchState.active ||
@@ -585,12 +572,11 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     final gitVisible =
         request == _SidebarTab.git ||
         request == _SidebarTab.gitLog ||
-        allocation == (workspace.id, workspace.openedAt, _SidebarTab.git) ||
-        allocation == (workspace.id, workspace.openedAt, _SidebarTab.gitLog);
+        allocation == (workspace.id, _SidebarTab.git) ||
+        allocation == (workspace.id, _SidebarTab.gitLog);
     final referencesVisible =
         request == _SidebarTab.references ||
-        allocation ==
-            (workspace.id, workspace.openedAt, _SidebarTab.references);
+        allocation == (workspace.id, _SidebarTab.references);
     final sidebarWidth = gitVisible && !searchState.active
         ? busyMarkGitSidebarMinimumWidth(context)
         : referencesVisible && !searchState.active
@@ -657,11 +643,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
         ),
       ],
     );
-    ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((event) {
-        _handleHeaderBarAction(context, ref, event.action);
-      });
-    });
     ref.listen(workspaceNavigationCommandProvider, (_, request) {
       if (request == null) return;
       if (isBusyMarkViewSelectorCommand(request.$1)) {
@@ -669,41 +650,12 @@ class _WorkspaceScreenContents extends ConsumerWidget {
           'command': request.$1,
         });
       }
-      if (request.$1 == BusyMarkCommandIds.sidebarViewSelector) {
-        final menu = ref.read(_sidebarViewMenuControllerProvider);
-        final wasHidden = !ref
-            .read(appSettingsControllerProvider)
-            .sidebarVisible;
-        ref.read(_sidebarSelectorRevealProvider.notifier).reveal(workspace.id);
-        ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-        unawaited(() async {
-          await settingsController.setSidebarVisible(true);
-          await WidgetsBinding.instance.endOfFrame;
-          if (wasHidden) await Future<void>.delayed(BusyMarkMotion.sidebar);
-          if (context.mounted) {
-            menu.open(
-              shortcuts:
-                  (BusyMarkCommandRegistryScope.read(context) ??
-                          BusyMarkCommandCatalog.metadata)
-                      .activators(request.$1),
-            );
-          }
-        }());
-        return;
-      }
       if (request.$1 == BusyMarkCommandIds.contentViewSelector) {
         final menu = ref.read(_contentViewMenuControllerProvider);
         ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
         unawaited(() async {
           await WidgetsBinding.instance.endOfFrame;
-          if (context.mounted) {
-            menu.open(
-              shortcuts:
-                  (BusyMarkCommandRegistryScope.read(context) ??
-                          BusyMarkCommandCatalog.metadata)
-                      .activators(request.$1),
-            );
-          }
+          if (context.mounted) menu.open();
         }());
         return;
       }
@@ -758,137 +710,114 @@ class _WorkspaceScreenContents extends ConsumerWidget {
         : state.isDirty
         ? '*${_activeFileName(context, workspace, state.activeBuffer)}'
         : _activeFileName(context, workspace, state.activeBuffer);
-    final hasSidebar = _hasWorkspaceSidebar(workspace);
-    final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
-        .copyWith(
-          title: busyMarkBidiIsolateFor(context, title),
-          viewMode: _headerBarViewMode(documentViewMode),
-          searchQuery: searchState.query,
-          canRefresh: true,
-          canExportPdf: canExportPdf,
-          canExportHtml: canExportHtml,
-          documentControlsVisible: comparison == null,
-          searchActive: searchState.active,
-          searchVisible: true,
-          sidebarVisible: sidebarVisible,
-          sidebarToggleVisible: hasSidebar,
-          backVisible: !searchState.active,
-        );
     final commandRegistry =
         BusyMarkCommandRegistryScope.maybeOf(context) ??
         BusyMarkCommandCatalog.metadata;
 
-    return HeaderBarConfigurationPublisher(
-      synchronizer: headerBar.configurationSynchronizer,
-      configuration: headerConfiguration,
-      enabled: headerBar.isAvailable,
-      child: Shortcuts(
-        shortcuts: {
-          for (final entry in const <String, _SidebarTab>{
-            BusyMarkCommandIds.sidebarFiles: _SidebarTab.files,
-            BusyMarkCommandIds.sidebarToc: _SidebarTab.toc,
-            BusyMarkCommandIds.sidebarGit: _SidebarTab.git,
-            BusyMarkCommandIds.localHistory: _SidebarTab.localHistory,
-            BusyMarkCommandIds.clipboardHistory: _SidebarTab.clipboard,
-          }.entries)
-            ...commandRegistry.bindingIntents(
-              entry.key,
-              _SelectSidebarTabIntent(entry.value),
-            ),
+    return Shortcuts(
+      shortcuts: {
+        for (final entry in const <String, _SidebarTab>{
+          BusyMarkCommandIds.sidebarFiles: _SidebarTab.files,
+          BusyMarkCommandIds.sidebarToc: _SidebarTab.toc,
+          BusyMarkCommandIds.sidebarGit: _SidebarTab.git,
+          BusyMarkCommandIds.localHistory: _SidebarTab.localHistory,
+          BusyMarkCommandIds.clipboardHistory: _SidebarTab.clipboard,
+        }.entries)
+          ...commandRegistry.bindingIntents(
+            entry.key,
+            _SelectSidebarTabIntent(entry.value),
+          ),
+      },
+      child: Actions(
+        actions: {
+          _SelectSidebarTabIntent: CallbackAction<_SelectSidebarTabIntent>(
+            onInvoke: (intent) {
+              _selectSidebarShortcut(ref, intent.tab);
+              return null;
+            },
+          ),
         },
-        child: Actions(
-          actions: {
-            _SelectSidebarTabIntent: CallbackAction<_SelectSidebarTabIntent>(
-              onInvoke: (intent) {
-                _selectSidebarShortcut(ref, intent.tab);
-                return null;
-              },
-            ),
-          },
-          child: FocusScope(
-            autofocus: true,
-            child: Scaffold(
-              backgroundColor: colors.window,
-              body: LayoutBuilder(
-                builder: (context, constraints) {
-                  final sidebarAvailable =
-                      constraints.maxWidth >=
-                          BusyMarkSizes.workspaceSidebarBreakpoint ||
-                      ref.watch(_sidebarSelectorRevealProvider) == workspace.id;
-                  return LinuxPageFrame(
-                    key: const ValueKey('workspace-page-frame'),
-                    sidebarWidth: sidebarWidth,
-                    sidebarHeader: const BusyMarkLinuxBrandHeader(),
-                    sidebarBody: sidebar,
-                    sidebarAvailable:
-                        sidebarAvailable || gitVisible || searchState.active,
-                    sidebarOverlay: searchState.active && !sidebarAvailable,
-                    sidebarExpanded: sidebarVisible,
-                    sidebarTransitionGeneration: ref.watch(
-                      sidebarTransitionGenerationProvider,
-                    ),
-                    header: BusyMarkLinuxHeaderLayout(
-                      centerAllocation: searchState.active
-                          ? BusyMarkLinuxHeaderCenterAllocation
-                                .fillBetweenControls
-                          : BusyMarkLinuxHeaderCenterAllocation
-                                .centeredBetweenControls,
-                      leading: BusyMarkLinuxHeaderControlGroup(
-                        children: [
-                          BusyMarkLinuxHeaderIconButton(
-                            tooltip: sidebarAvailable && settings.sidebarVisible
-                                ? context.l10n.hideSidebar
-                                : context.l10n.showSidebar,
-                            icon: BusyMarkGlyphs.sidebar,
-                            nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
-                            selected:
-                                sidebarAvailable && settings.sidebarVisible,
-                            shortcut:
-                                commandRegistry[BusyMarkCommandIds
-                                        .toggleSidebar]
-                                    ?.shortcut
-                                    ?.label,
-                            onPressed: !sidebarAvailable
-                                ? null
-                                : () {
-                                    final visible = !settings.sidebarVisible;
-                                    unawaited(
-                                      settingsController.setSidebarVisible(
-                                        visible,
-                                      ),
-                                    );
-                                  },
-                          ),
-                          if (!searchState.active)
-                            BusyMarkLinuxHeaderIconButton(
-                              tooltip: context.l10n.back,
-                              icon: BusyMarkGlyphs.headerBackFor(
-                                Directionality.of(context),
-                              ),
-                              nativeIcon: BusyMarkLinuxHeaderIcon.back,
-                              shortcut: commandRegistry[BusyMarkCommandIds.back]
+        child: FocusScope(
+          autofocus: true,
+          child: Scaffold(
+            backgroundColor: colors.window,
+            body: LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow =
+                    constraints.maxWidth <
+                    BusyMarkSizes.workspaceSidebarBreakpoint;
+                final sidebarAvailable = !narrow || sidebarRevealed;
+                return LinuxPageFrame(
+                  key: const ValueKey('workspace-page-frame'),
+                  sidebarWidth: sidebarWidth,
+                  sidebarHeader: const BusyMarkLinuxBrandHeader(),
+                  sidebarBody: sidebar,
+                  sidebarAvailable:
+                      sidebarAvailable || gitVisible || searchState.active,
+                  sidebarOverlay:
+                      narrow && (searchState.active || sidebarRevealed),
+                  sidebarExpanded: sidebarVisible,
+                  sidebarTransitionGeneration: ref.watch(
+                    sidebarTransitionGenerationProvider,
+                  ),
+                  header: BusyMarkLinuxHeaderLayout(
+                    centerAllocation: searchState.active
+                        ? BusyMarkLinuxHeaderCenterAllocation
+                              .fillBetweenControls
+                        : BusyMarkLinuxHeaderCenterAllocation
+                              .centeredBetweenControls,
+                    leading: BusyMarkLinuxHeaderControlGroup(
+                      children: [
+                        BusyMarkLinuxHeaderIconButton(
+                          tooltip: sidebarAvailable && settings.sidebarVisible
+                              ? context.l10n.hideSidebar
+                              : context.l10n.showSidebar,
+                          icon: BusyMarkGlyphs.sidebar,
+                          nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
+                          selected: sidebarAvailable && settings.sidebarVisible,
+                          shortcut:
+                              commandRegistry[BusyMarkCommandIds.toggleSidebar]
                                   ?.shortcut
                                   ?.label,
-                              onPressed: () async {
-                                if (await confirmSafeToContinue(context, ref) &&
-                                    context.mounted) {
-                                  context.go('/');
-                                }
-                              },
-                            ),
-                        ],
-                      ),
-                      title: BusyMarkRetainedCrossfade(
-                        index: searchState.active ? 1 : 0,
-                        duration: BusyMarkMotion.search,
-                        children: [
-                          BusyMarkLinuxHeaderTitle(title),
-                          const SearchHeaderField(),
-                        ],
-                      ),
-                      trailing: BusyMarkLinuxHeaderControlGroup(
-                        children: [
-                          if (!searchState.active && comparison == null) ...[
+                          onPressed: !sidebarAvailable
+                              ? null
+                              : () {
+                                  final visible = !settings.sidebarVisible;
+                                  unawaited(
+                                    settingsController.setSidebarVisible(
+                                      visible,
+                                    ),
+                                  );
+                                },
+                        ),
+                        BusyMarkHeaderIconButton(
+                          key: const ValueKey('workspace-home'),
+                          tooltip: context.l10n.home,
+                          icon: BusyMarkGlyphs.home,
+                          nativeIcon: BusyMarkLinuxHeaderIcon.home,
+                          applyHeaderStateColors: true,
+                          focusBorderRadius: BusyMarkRadius.pill,
+                          shortcut: commandRegistry[BusyMarkCommandIds.home]
+                              ?.shortcut
+                              ?.label,
+                          onPressed: () =>
+                              commandRegistry.execute(BusyMarkCommandIds.home),
+                        ),
+                      ],
+                    ),
+                    title: BusyMarkRetainedCrossfade(
+                      index: searchState.active ? 1 : 0,
+                      duration: BusyMarkMotion.search,
+                      children: [
+                        BusyMarkLinuxHeaderTitle(title),
+                        const SearchHeaderField(),
+                      ],
+                    ),
+                    trailing: BusyMarkLinuxHeaderControlGroup(
+                      children: [
+                        if (!searchState.active && comparison == null) ...[
+                          if (state.activeBuffer != null &&
+                              localHistoryState.selectedRevision == null)
                             BusyMarkHeaderPopupMenuButton<
                               DocumentViewModePreference
                             >(
@@ -948,62 +877,60 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                                 );
                               },
                             ),
-                            BusyMarkHeaderIconButton(
-                              tooltip: context.l10n.validate,
-                              icon: BusyMarkGlyphs.diagnostics,
-                              onPressed: () => unawaited(
-                                _validateActiveAndShowProblems(context, ref),
-                              ),
-                            ),
-                          ],
                           BusyMarkHeaderIconButton(
-                            tooltip: context.l10n.search,
-                            icon: BusyMarkGlyphs.search,
-                            selected: searchState.active,
-                            onPressed: () => _toggleSearch(ref),
-                          ),
-                          BusyMarkMainMenuButton(
-                            canExport: canExportPdf || canExportHtml,
-                            onSelected: (action) =>
-                                _handleMainMenuAction(context, ref, action),
+                            tooltip: context.l10n.validate,
+                            icon: BusyMarkGlyphs.diagnostics,
+                            onPressed: () => unawaited(
+                              _validateActiveAndShowProblems(context, ref),
+                            ),
                           ),
                         ],
-                      ),
-                    ),
-                    body: Column(
-                      children: [
-                        // The recovered document already has a review banner with
-                        // actions. Keep other messages, including recovery damage.
-                        if (state.message != null &&
-                            !(state.message!.code ==
-                                    WorkspaceMessageCode.recoveryRestored &&
-                                state.activeBuffer?.recovered == true))
-                          BusyMarkStatusBox(
-                            message: localizeWorkspaceMessage(
-                              context,
-                              state.message!,
-                            ),
-                            kind: busyMarkWorkspaceMessageStatusKind(
-                              state.message!.code,
-                            ),
-                          ),
-                        if (ref
-                                .read(localHistoryControllerProvider.notifier)
-                                .warningForBuffer(state.activeBuffer?.id)
-                            case final historyWarning?)
-                          BusyMarkStatusBox(
-                            message: localizeLocalHistoryWarning(
-                              context,
-                              historyWarning,
-                            ),
-                            kind: BusyMarkStatusKind.warning,
-                          ),
-                        Expanded(child: workspaceContent),
+                        BusyMarkHeaderIconButton(
+                          tooltip: context.l10n.search,
+                          icon: BusyMarkGlyphs.search,
+                          selected: searchState.active,
+                          onPressed: () => _toggleSearch(ref),
+                        ),
+                        ...BusyMarkResourceMenuButton.buttons,
+                        BusyMarkMainMenuButton(
+                          canExport: canExportPdf || canExportHtml,
+                          onSelected: (action) =>
+                              _handleMainMenuAction(context, ref, action),
+                        ),
                       ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                  body: Column(
+                    children: [
+                      if (state.message != null &&
+                          !(state.message!.code ==
+                                  WorkspaceMessageCode.recoveryRestored &&
+                              state.activeBuffer?.recovered == true))
+                        BusyMarkStatusBox(
+                          message: localizeWorkspaceMessage(
+                            context,
+                            state.message!,
+                          ),
+                          kind: busyMarkWorkspaceMessageStatusKind(
+                            state.message!.code,
+                          ),
+                        ),
+                      if (ref
+                              .read(localHistoryControllerProvider.notifier)
+                              .warningForBuffer(state.activeBuffer?.id)
+                          case final historyWarning?)
+                        BusyMarkStatusBox(
+                          message: localizeLocalHistoryWarning(
+                            context,
+                            historyWarning,
+                          ),
+                          kind: BusyMarkStatusKind.warning,
+                        ),
+                      Expanded(child: workspaceContent),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -1030,67 +957,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     ref.read(_sidebarShortcutRequestProvider.notifier).select(tab);
   }
 
-  void _handleHeaderBarAction(
-    BuildContext context,
-    WidgetRef ref,
-    HeaderBarAction action,
-  ) {
-    final commands =
-        BusyMarkCommandRegistryScope.read(context) ??
-        BusyMarkCommandCatalog.metadata;
-    void execute(String id) => unawaited(commands.execute(id));
-    switch (action) {
-      case HeaderBarAction.back:
-        execute(BusyMarkCommandIds.back);
-      case HeaderBarAction.sidebarToggle:
-        execute(BusyMarkCommandIds.toggleSidebar);
-      case HeaderBarAction.refresh:
-        unawaited(_validateActiveAndShowProblems(context, ref));
-      case HeaderBarAction.save:
-        execute(BusyMarkCommandIds.save);
-      case HeaderBarAction.export:
-        execute(BusyMarkCommandIds.export);
-      case HeaderBarAction.fullScreen:
-        execute(BusyMarkCommandIds.fullScreen);
-      case HeaderBarAction.settings:
-        execute(BusyMarkCommandIds.settings);
-      case HeaderBarAction.syntaxReference:
-        execute(BusyMarkCommandIds.syntaxReference);
-      case HeaderBarAction.reportIssue:
-        final headerBar = ref.read(linuxHeaderBarServiceProvider);
-        showBusyMarkFeedbackDialog(
-          context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
-        );
-      case HeaderBarAction.aboutBusyMark:
-        showBusyMarkAboutDialog(context);
-      case HeaderBarAction.viewModeEditor:
-        execute(BusyMarkCommandIds.viewEditor);
-      case HeaderBarAction.viewModeSource:
-        execute(BusyMarkCommandIds.viewSource);
-      case HeaderBarAction.viewModePreview:
-        execute(BusyMarkCommandIds.viewReading);
-      case HeaderBarAction.viewModeSplit:
-        execute(BusyMarkCommandIds.viewSplit);
-      case HeaderBarAction.sidebarFiles:
-        _selectSidebarShortcut(ref, _SidebarTab.files);
-      case HeaderBarAction.sidebarToc:
-        _selectSidebarShortcut(ref, _SidebarTab.toc);
-      case HeaderBarAction.sidebarOutline:
-        _selectSidebarShortcut(ref, _SidebarTab.outline);
-      case HeaderBarAction.sidebarGit:
-        _selectSidebarShortcut(ref, _SidebarTab.git);
-      case HeaderBarAction.sidebarLocalHistory:
-        _selectSidebarShortcut(ref, _SidebarTab.localHistory);
-      case HeaderBarAction.sidebarClipboardHistory:
-        _selectSidebarShortcut(ref, _SidebarTab.clipboard);
-      case HeaderBarAction.search:
-        _toggleSearch(ref);
-      case HeaderBarAction.menu:
-        break;
-    }
-  }
-
   void _handleMainMenuAction(
     BuildContext context,
     WidgetRef ref,
@@ -1106,11 +972,7 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
-        final headerBar = ref.read(linuxHeaderBarServiceProvider);
-        showBusyMarkFeedbackDialog(
-          context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
-        );
+        showBusyMarkFeedbackDialog(context);
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }
@@ -1129,15 +991,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
           : context.l10n.untitledMarkdownFileName;
     }
     return p.basename(path);
-  }
-
-  AppViewMode _headerBarViewMode(DocumentViewModePreference mode) {
-    return switch (mode) {
-      DocumentViewModePreference.editor => AppViewMode.editor,
-      DocumentViewModePreference.source => AppViewMode.source,
-      DocumentViewModePreference.preview => AppViewMode.preview,
-      DocumentViewModePreference.split => AppViewMode.split,
-    };
   }
 
   IconData _documentViewModeIcon(DocumentViewModePreference mode) {
@@ -1170,10 +1023,8 @@ class _WorkspaceScreenContents extends ConsumerWidget {
   }
 
   Future<void> _showProblemsDialog(BuildContext context, WidgetRef ref) async {
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     await showBusyMarkModalDialog<void>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => Consumer(
         builder: (context, ref, _) {
           final workspace = ref.watch(workspaceControllerProvider).workspace;
@@ -1220,17 +1071,6 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     } finally {
       presentation.finish();
     }
-  }
-}
-
-void _clearGitDetailSelection(WidgetRef ref) {
-  final gitState = ref.read(gitControllerProvider);
-  if (gitState.selectedDiff != null ||
-      gitState.selectedFilePath != null ||
-      gitState.selectedCommitHash != null ||
-      gitState.selectedCommitFilePath != null ||
-      gitState.openDiffFilePaths.isNotEmpty) {
-    ref.read(gitControllerProvider.notifier).clearSelection();
   }
 }
 
@@ -1392,7 +1232,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   final _outlineKey = GlobalKey<_OutlineTabState>();
   final _notesKey = GlobalKey<NextcloudNotesSidebarState>();
   late final WorkspaceController _topicActionController;
-  late int _tab;
+  late _SidebarTab _tab;
   late String _workspaceId;
   String? _activeFilePath;
   _WritersideTopicUsageReview? _topicUsageReview;
@@ -1416,9 +1256,12 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     _topicActionController.renameInspectedTopic = _renameInspectedTopic;
     _workspaceId = widget.workspace.id;
     _activeFilePath = widget.workspace.activeFilePath;
-    _tab = _initialSidebarTabIndex(widget.workspace);
+    _tab = _initialSidebarTab(widget.workspace);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        ref
+            .read(_sidebarAllocationProvider.notifier)
+            .select(widget.workspace, _tab);
         ref.read(_sidebarShortcutRequestProvider.notifier).clear();
       }
     });
@@ -1432,7 +1275,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _activeFilePath = widget.workspace.activeFilePath;
       _topicUsageReview = null;
       _topicRenameReview = null;
-      _tab = _initialSidebarTabIndex(widget.workspace);
+      _tab = _initialSidebarTab(widget.workspace);
       return;
     }
     if (widget.workspace.activeFilePath != _activeFilePath) {
@@ -1466,158 +1309,174 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _selectTab(next, tabs);
       ref.read(_sidebarShortcutRequestProvider.notifier).clear();
     });
-    final selectedIndex = tabs.isEmpty
-        ? 0
-        : _tab.clamp(0, tabs.length - 1).toInt();
-    final selectedTab = tabs.isEmpty ? null : tabs[selectedIndex];
-    return BusyMarkSidebarSurface(
-      showEndBorder: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    final selectedTab = tabs.contains(_tab)
+        ? _tab
+        : _initialSidebarTab(widget.workspace);
+    final renameReview = selectedTab == _SidebarTab.recent
+        ? null
+        : _topicRenameReview;
+    final usageReview = selectedTab == _SidebarTab.recent
+        ? null
+        : _topicUsageReview;
+    final colors = BusyMarkSurfaceColors.of(context);
+    final direction = Directionality.of(context);
+    final workspace = widget.workspace;
+    final path = _workspacePath(workspace);
+    return WorkspaceSidebar<_SidebarTab>(
+      contextLabel: _SidebarHeaderLine(
+        key: const ValueKey('workspace-sidebar-primary-label'),
+        icon: WorkspaceGlyphs.forKind(workspace.kind),
+        text: _workspaceDisplayName(context, workspace),
+        tooltip:
+            selectedTab == _SidebarTab.git || selectedTab == _SidebarTab.gitLog
+            ? busyMarkLtrIsolateFor(context, path)
+            : null,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+      ),
+      items: [
+        for (final tab in tabs)
+          BusyMarkPopupMenuItem(
+            value: tab,
+            label: _sidebarTabLabel(context, tab),
+            mnemonic: _sidebarTabMnemonic(tab),
+            enabled: _sidebarTabAvailable(ref, tab),
+            icon: _sidebarTabIcon(tab, direction),
+            iconColor: tab == _SidebarTab.git ? colors.foreground : null,
+            shortcut: _sidebarTabMnemonic(tab),
+            gtkAccelerator: _sidebarTabMnemonic(tab).toLowerCase(),
+            checked: tab == selectedTab,
+            trailingCheck: true,
+          ),
+      ],
+      onSelected: (tab) {
+        if (_sidebarTabAvailable(ref, tab)) _selectTab(tab, tabs);
+      },
+      viewHeader: _SidebarHeader(
+        workspace: workspace,
+        selectedTab: selectedTab,
+        onRefineActiveDocument: () =>
+            unawaited(_refineActiveDocumentWithAi(context)),
+      ),
+      onReviewReplacement: _reviewWorkspaceReplacement,
+      content: Stack(
+        fit: StackFit.expand,
         children: [
-          if (!widget.searchState.active)
-            _SidebarHeader(
-              workspace: widget.workspace,
-              tabs: tabs,
-              selectedTab: selectedTab,
-              showTabMenu: tabs.length > 1,
-              onSelectTab: (tab) => _selectTab(tab, tabs),
-              onRefineActiveDocument: () =>
-                  unawaited(_refineActiveDocumentWithAi(context)),
+          Offstage(
+            offstage:
+                widget.searchState.active || selectedTab != _SidebarTab.outline,
+            child: ExcludeFocus(
+              excluding:
+                  widget.searchState.active ||
+                  selectedTab != _SidebarTab.outline,
+              child: TickerMode(
+                enabled:
+                    !widget.searchState.active &&
+                    selectedTab == _SidebarTab.outline,
+                child: _OutlineTab(
+                  key: _outlineKey,
+                  workspace: widget.workspace,
+                  bufferId: ref
+                      .watch(workspaceControllerProvider)
+                      .activeBufferId,
+                  headings: widget.outline,
+                ),
+              ),
             ),
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Offstage(
-                  offstage:
-                      widget.searchState.active ||
-                      selectedTab != _SidebarTab.outline,
-                  child: ExcludeFocus(
-                    excluding:
-                        widget.searchState.active ||
-                        selectedTab != _SidebarTab.outline,
-                    child: TickerMode(
-                      enabled:
-                          !widget.searchState.active &&
-                          selectedTab == _SidebarTab.outline,
-                      child: _OutlineTab(
-                        key: _outlineKey,
-                        workspace: widget.workspace,
-                        bufferId: ref
-                            .watch(workspaceControllerProvider)
-                            .activeBufferId,
-                        headings: widget.outline,
-                      ),
-                    ),
-                  ),
+          ),
+          Offstage(
+            offstage:
+                widget.searchState.active ||
+                (selectedTab != _SidebarTab.git &&
+                    selectedTab != _SidebarTab.gitLog),
+            child: ExcludeFocus(
+              excluding:
+                  widget.searchState.active ||
+                  (selectedTab != _SidebarTab.git &&
+                      selectedTab != _SidebarTab.gitLog),
+              child: BusyMarkSharedGitSidebar(
+                onSelectView: (view) => _selectTab(
+                  view == shared.GitSidebarView.log
+                      ? _SidebarTab.gitLog
+                      : _SidebarTab.git,
+                  tabs,
                 ),
-                Offstage(
-                  offstage:
-                      widget.searchState.active ||
-                      (selectedTab != _SidebarTab.git &&
-                          selectedTab != _SidebarTab.gitLog),
-                  child: ExcludeFocus(
-                    excluding:
-                        widget.searchState.active ||
-                        (selectedTab != _SidebarTab.git &&
-                            selectedTab != _SidebarTab.gitLog),
-                    child: BusyMarkSharedGitSidebar(
-                      onSelectView: (view) => _selectTab(
-                        view == shared.GitSidebarView.log
-                            ? _SidebarTab.gitLog
-                            : _SidebarTab.git,
-                        tabs,
-                      ),
-                      workspace: widget.workspace,
-                      log: selectedTab == _SidebarTab.gitLog,
-                      active:
-                          !widget.searchState.active &&
-                          (selectedTab == _SidebarTab.git ||
-                              selectedTab == _SidebarTab.gitLog),
-                    ),
-                  ),
-                ),
-                Offstage(
-                  offstage:
-                      !widget.searchState.active &&
-                      (selectedTab == _SidebarTab.outline ||
-                          selectedTab == _SidebarTab.git ||
-                          selectedTab == _SidebarTab.gitLog),
-                  child: ExcludeFocus(
-                    excluding:
-                        !widget.searchState.active &&
-                        (selectedTab == _SidebarTab.outline ||
-                            selectedTab == _SidebarTab.git ||
-                            selectedTab == _SidebarTab.gitLog),
-                    child: BusyMarkKeyedCrossfade(
-                      transitionKey: widget.searchState.active
-                          ? 'search'
-                          : _topicRenameReview != null
-                          ? 'rename'
-                          : _topicUsageReview != null
-                          ? 'usages'
-                          : selectedTab ?? 'empty',
-                      child: widget.searchState.active
-                          ? SearchSidebar(
-                              onReviewReplacement: _reviewWorkspaceReplacement,
-                            )
-                          : _topicRenameReview != null
-                          ? _WritersideTopicRenameSidebar(
-                              plan: _topicRenameReview!,
-                              onBack: () =>
-                                  setState(() => _topicRenameReview = null),
-                              onDoRefactor: () =>
-                                  _applyReviewedTopicRename(context),
-                            )
-                          : _topicUsageReview != null
-                          ? _WritersideTopicUsagesSidebar(
-                              review: _topicUsageReview!,
-                              onBack: _closeTopicUsageReview,
-                              onOpenUsage: (usage) =>
-                                  _openWritersideTopicUsage(context, usage),
-                              onDoRefactor: () =>
-                                  _resumeWritersideTopicRemoval(context),
-                            )
-                          : switch (selectedTab) {
-                              _SidebarTab.notes => NextcloudNotesSidebar(
-                                key: _notesKey,
-                                accountId: widget.workspace.nextcloudAccountId!,
-                              ),
-                              _SidebarTab.files => _FilesTab(
-                                workspace: widget.workspace,
-                                onShowFileHistory: _showFileHistory,
-                                onRenameTopic: (path) =>
-                                    _startWritersideTopicRename(context, path),
-                                onRequestTopicRemoval: (target) =>
-                                    _runWritersideTopicRemoval(context, target),
-                              ),
-                              _SidebarTab.toc => _TocTab(
-                                workspace: widget.workspace,
-                                onShowFileHistory: _showFileHistory,
-                                onRenameTopic: (path) =>
-                                    _startWritersideTopicRename(context, path),
-                                onRequestTopicRemoval: (target) =>
-                                    _runWritersideTopicRemoval(context, target),
-                              ),
-                              _SidebarTab.outline => const SizedBox.shrink(),
-                              _SidebarTab.git ||
-                              _SidebarTab.gitLog => const SizedBox.shrink(),
-                              _SidebarTab.clipboard => ClipboardHistoryPanel(
-                                onEscape: () => ref
-                                    .read(clipboardInsertionRegistryProvider)
-                                    .target
-                                    ?.requestEditorFocus(),
-                              ),
-                              _SidebarTab.references => const ReferencesPanel(),
-                              _SidebarTab.localHistory =>
-                                const LocalHistoryPanel(),
-                              null => const SizedBox.shrink(),
-                            },
-                    ),
-                  ),
-                ),
-              ],
+                workspace: widget.workspace,
+                log: selectedTab == _SidebarTab.gitLog,
+                active:
+                    !widget.searchState.active &&
+                    (selectedTab == _SidebarTab.git ||
+                        selectedTab == _SidebarTab.gitLog),
+              ),
+            ),
+          ),
+          Offstage(
+            offstage:
+                (selectedTab == _SidebarTab.outline ||
+                selectedTab == _SidebarTab.git ||
+                selectedTab == _SidebarTab.gitLog),
+            child: ExcludeFocus(
+              excluding:
+                  (selectedTab == _SidebarTab.outline ||
+                  selectedTab == _SidebarTab.git ||
+                  selectedTab == _SidebarTab.gitLog),
+              child: BusyMarkKeyedCrossfade(
+                transitionKey: renameReview != null
+                    ? 'rename'
+                    : usageReview != null
+                    ? 'usages'
+                    : selectedTab,
+                child: renameReview != null
+                    ? _WritersideTopicRenameSidebar(
+                        plan: renameReview,
+                        onBack: () => setState(() => _topicRenameReview = null),
+                        onDoRefactor: () => _applyReviewedTopicRename(context),
+                      )
+                    : usageReview != null
+                    ? _WritersideTopicUsagesSidebar(
+                        review: usageReview,
+                        onBack: _closeTopicUsageReview,
+                        onOpenUsage: (usage) =>
+                            _openWritersideTopicUsage(context, usage),
+                        onDoRefactor: () =>
+                            _resumeWritersideTopicRemoval(context),
+                      )
+                    : switch (selectedTab) {
+                        _SidebarTab.notes => NextcloudNotesSidebar(
+                          key: _notesKey,
+                          accountId: widget.workspace.nextcloudAccountId!,
+                        ),
+                        _SidebarTab.files => _FilesTab(
+                          workspace: widget.workspace,
+                          onShowFileHistory: _showFileHistory,
+                          onRenameTopic: (path) =>
+                              _startWritersideTopicRename(context, path),
+                          onRequestTopicRemoval: (target) =>
+                              _runWritersideTopicRemoval(context, target),
+                        ),
+                        _SidebarTab.toc => _TocTab(
+                          workspace: widget.workspace,
+                          onShowFileHistory: _showFileHistory,
+                          onRenameTopic: (path) =>
+                              _startWritersideTopicRename(context, path),
+                          onRequestTopicRemoval: (target) =>
+                              _runWritersideTopicRemoval(context, target),
+                        ),
+                        _SidebarTab.outline => const SizedBox.shrink(),
+                        _SidebarTab.git ||
+                        _SidebarTab.gitLog => const SizedBox.shrink(),
+                        _SidebarTab.clipboard => ClipboardHistoryPanel(
+                          onEscape: () => ref
+                              .read(clipboardInsertionRegistryProvider)
+                              .target
+                              ?.requestEditorFocus(),
+                        ),
+                        _SidebarTab.references => const ReferencesPanel(),
+                        _SidebarTab.localHistory => const LocalHistoryPanel(),
+                        _SidebarTab.recent => const RecentSidebarPanel(),
+                      },
+              ),
             ),
           ),
         ],
@@ -1631,13 +1490,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     bool showGitChanges = true,
   }) {
     ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-    final index = tabs.indexOf(tab);
-    if (index < 0) {
-      return;
-    }
-    setState(() {
-      _tab = index;
-    });
+    if (!tabs.contains(tab)) return;
+    setState(() => _tab = tab);
     ref.read(_sidebarAllocationProvider.notifier).select(widget.workspace, tab);
     if (tab == _SidebarTab.outline || tab == _SidebarTab.notes) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1761,7 +1615,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (!mounted || !context.mounted) return;
     if (applied) {
       setState(() => _topicRenameReview = null);
-      _clearGitDetailSelection(ref);
     } else {
       _showLatestWorkspaceMessage(this.context);
     }
@@ -1807,11 +1660,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         redirectTarget: initialRedirect,
       );
     } else {
-      final headerBar = ref.read(linuxHeaderBarServiceProvider);
       final selected =
           await showBusyMarkModalDialog<_WritersideTopicRemovalDialogResult>(
             context,
-            headerBarService: headerBar.isAvailable ? headerBar : null,
             barrierDismissible: false,
             builder: (dialogContext) => _WritersideTopicRemovalDialog(
               analysis: analysis,
@@ -1871,7 +1722,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       return null;
     }
     setState(() => _topicUsageReview = null);
-    _clearGitDetailSelection(ref);
     if (target.mode == WritersideTopicRemovalMode.removeFromInstance &&
         result.orphaned &&
         !result.deletedFile) {
@@ -1895,7 +1745,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
 
   void _closeTopicUsageReview() {
     setState(() => _topicUsageReview = null);
-    _clearGitDetailSelection(ref);
   }
 
   Future<void> _resumeWritersideTopicRemoval(BuildContext context) async {
@@ -1978,7 +1827,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       return;
     }
     setState(() => _topicUsageReview = null);
-    _clearGitDetailSelection(ref);
     if (review.target.mode == WritersideTopicRemovalMode.removeFromInstance &&
         result.orphaned &&
         !result.deletedFile) {
@@ -2018,7 +1866,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
             sourceOffset: usage.span?.startOffset,
           ),
         );
-    _clearGitDetailSelection(ref);
   }
 
   void _showLatestWorkspaceMessage(BuildContext context) {
@@ -2058,10 +1905,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
 
     if (!currentRequest() || widget.workspace.isRemote) return;
     var replacement = '';
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final requested = await showBusyMarkModalEditorDialog<String>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       maxWidth: BusyMarkSizes.dialogCompact,
       builder: (dialogContext) => BusyMarkModalEditorScaffold(
         title: context.l10n.workspaceReplace,
@@ -2102,7 +1947,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     final preview =
         await showBusyMarkModalEditorDialog<WorkspaceReplacementPreview>(
           context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
           maxWidth: BusyMarkSizes.dialogCompact,
           builder: (dialogContext) => _WorkspaceReplacementProgress(
             future: previewFuture,
@@ -2127,7 +1971,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     }
     final selected = await showBusyMarkModalEditorDialog<Set<String>>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       maxWidth: BusyMarkSizes.dialogWide,
       maxHeight: 800,
       builder: (dialogContext) =>
@@ -2179,7 +2022,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (result.issues.isNotEmpty) {
       await showBusyMarkModalDialog<void>(
         context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
         builder: (dialogContext) => BusyMarkDialogShell(
           title: context.l10n.workspaceReplace,
           maxWidth: BusyMarkSizes.dialogWide,
@@ -2239,15 +2081,17 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     );
   }
 
-  int _initialSidebarTabIndex(Workspace workspace) {
+  _SidebarTab _initialSidebarTab(Workspace workspace) {
     final tabs = _sidebarTabsFor(workspace.kind);
     final request = ref.read(_sidebarShortcutRequestProvider);
-    final requestedIndex = request == null ? -1 : tabs.indexOf(request);
-    return requestedIndex >= 0
-        ? requestedIndex
-        : (tabs.contains(_SidebarTab.files)
-              ? tabs.indexOf(_SidebarTab.files)
-              : _preferredSidebarTabIndex(workspace));
+    if (request != null && tabs.contains(request)) return request;
+    return switch (workspace.kind) {
+      WorkspaceKind.nextcloudNotes => _SidebarTab.notes,
+      WorkspaceKind.markdownFolder ||
+      WorkspaceKind.writersideModule => _SidebarTab.files,
+      WorkspaceKind.singleMarkdown ||
+      WorkspaceKind.untitledMarkdown => _SidebarTab.outline,
+    };
   }
 }
 
@@ -2261,21 +2105,7 @@ enum _SidebarTab {
   localHistory,
   clipboard,
   references,
-}
-
-int _preferredSidebarTabIndex(Workspace workspace) {
-  final tabs = _sidebarTabsFor(workspace.kind);
-  if (_shouldShowOutlineForOpenFile(workspace)) {
-    final outlineIndex = tabs.indexOf(_SidebarTab.outline);
-    if (outlineIndex >= 0) {
-      return outlineIndex;
-    }
-  }
-  return 0;
-}
-
-bool _shouldShowOutlineForOpenFile(Workspace workspace) {
-  return workspace.activeFilePath != null && workspace.markdown != null;
+  recent,
 }
 
 bool _hasWorkspaceSidebar(Workspace workspace) {
@@ -2290,18 +2120,21 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
       _SidebarTab.references,
+      _SidebarTab.recent,
     ],
     WorkspaceKind.untitledMarkdown => const [
       _SidebarTab.outline,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
       _SidebarTab.references,
+      _SidebarTab.recent,
     ],
     WorkspaceKind.singleMarkdown => const [
       _SidebarTab.outline,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
       _SidebarTab.references,
+      _SidebarTab.recent,
     ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
@@ -2311,6 +2144,7 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
       _SidebarTab.references,
+      _SidebarTab.recent,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
@@ -2321,6 +2155,7 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
       _SidebarTab.references,
+      _SidebarTab.recent,
     ],
   };
 }
@@ -2336,6 +2171,7 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.localHistory => context.l10n.localHistory,
     _SidebarTab.clipboard => context.l10n.clipboardHistory,
     _SidebarTab.references => context.l10n.references,
+    _SidebarTab.recent => context.l10n.recent,
   };
 }
 
@@ -2350,6 +2186,7 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.localHistory => BusyMarkGlyphs.sidebarLocalHistory,
     _SidebarTab.clipboard => BusyMarkGlyphs.copy,
     _SidebarTab.references => BusyMarkGlyphs.link,
+    _SidebarTab.recent => BusyMarkGlyphs.history,
   };
 }
 
@@ -2370,23 +2207,18 @@ String _sidebarTabMnemonic(_SidebarTab tab) => switch (tab) {
   _SidebarTab.localHistory => 'L',
   _SidebarTab.clipboard => 'B',
   _SidebarTab.references => 'R',
+  _SidebarTab.recent => 'E',
 };
 
 class _SidebarHeader extends ConsumerWidget {
   const _SidebarHeader({
     required this.workspace,
-    required this.tabs,
     required this.selectedTab,
-    required this.showTabMenu,
-    required this.onSelectTab,
     required this.onRefineActiveDocument,
   });
 
   final Workspace workspace;
-  final List<_SidebarTab> tabs;
-  final _SidebarTab? selectedTab;
-  final bool showTabMenu;
-  final ValueChanged<_SidebarTab> onSelectTab;
+  final _SidebarTab selectedTab;
   final VoidCallback onRefineActiveDocument;
 
   @override
@@ -2407,76 +2239,9 @@ class _SidebarHeader extends ConsumerWidget {
       context,
     ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
     final direction = Directionality.of(context);
-    final tabMenuItems = <BusyMarkPopupMenuItem<_SidebarTab>>[
-      for (final tab in tabs)
-        BusyMarkPopupMenuItem(
-          value: tab,
-          label: _sidebarTabLabel(context, tab),
-          mnemonic: _sidebarTabMnemonic(tab),
-          enabled: _sidebarTabAvailable(ref, tab),
-          icon: _sidebarTabIcon(tab, direction),
-          iconColor: tab == _SidebarTab.git ? colors.foreground : null,
-          shortcut: _sidebarTabMnemonic(tab),
-          gtkAccelerator: _sidebarTabMnemonic(tab).toLowerCase(),
-          checked: tab == selectedTab,
-          trailingCheck: true,
-        ),
-    ];
-    final buildTabMenu = BusyMarkHeaderPopupMenuButton<_SidebarTab>.native;
-    final selectedTabMenuItem = selectedTab == null
-        ? null
-        : tabMenuItems.firstWhere((item) => item.menuValue == selectedTab);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: BusyMarkInsets.sidebarHeader,
-          child: _SidebarHeaderRow(
-            key: const ValueKey('workspace-sidebar-primary-row'),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SidebarHeaderLine(
-                    key: const ValueKey('workspace-sidebar-primary-label'),
-                    icon: WorkspaceGlyphs.forKind(workspace.kind),
-                    text: _workspaceDisplayName(context, workspace),
-                    tooltip:
-                        selectedTab == _SidebarTab.git ||
-                            selectedTab == _SidebarTab.gitLog
-                        ? busyMarkLtrIsolateFor(context, path)
-                        : null,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
-                  ),
-                ),
-                if (showTabMenu && selectedTabMenuItem != null) ...[
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                  buildTabMenu(
-                    key: const ValueKey('workspace-sidebar-view-menu'),
-                    controller: ref.watch(_sidebarViewMenuControllerProvider),
-                    tooltip: context.l10n.sidebarViewMenu,
-                    shortcut:
-                        (BusyMarkCommandRegistryScope.read(context) ??
-                                BusyMarkCommandCatalog
-                                    .metadata)[BusyMarkCommandIds
-                                .sidebarViewSelector]
-                            ?.shortcut
-                            ?.label,
-                    icon: BusyMarkGlyphs.sidebarViews,
-                    transparent: true,
-                    borderRadius: BusyMarkRadius.nativeHeaderButton,
-                    highlightWhenOpen: false,
-                    itemBuilder: (context) => tabMenuItems,
-                    onSelected: (tab) {
-                      if (_sidebarTabAvailable(ref, tab)) onSelectTab(tab);
-                    },
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
         if (selectedTab == _SidebarTab.files)
           BusyMarkSidebarHeader(
             key: const ValueKey('workspace-sidebar-first-content'),
@@ -2584,61 +2349,47 @@ class _SidebarHeader extends ConsumerWidget {
       ],
     );
   }
+}
 
-  String _workspaceName(BuildContext context, Workspace workspace) {
-    if (workspace.isRemote) return context.l10n.nextcloudNotes;
-    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
-      final filePath = workspace.markdown?.filePath;
-      return filePath == null || filePath.isEmpty
-          ? context.l10n.untitledMarkdownFileName
-          : filePath;
-    }
-    if (workspace.kind == WorkspaceKind.writersideModule) {
-      final moduleName = workspace.writersideModule?.config.moduleName?.trim();
-      if (moduleName != null && moduleName.isNotEmpty) {
-        return moduleName;
-      }
-    }
-    final path = _workspacePath(workspace);
-    final segments = path.split('/').where((segment) => segment.isNotEmpty);
-    return segments.isEmpty ? path : segments.last;
-  }
-
-  String _workspaceDisplayName(BuildContext context, Workspace workspace) {
-    final name = _workspaceName(context, workspace);
+String _workspaceName(BuildContext context, Workspace workspace) {
+  if (workspace.isRemote) return context.l10n.nextcloudNotes;
+  if (workspace.kind == WorkspaceKind.untitledMarkdown) {
     final filePath = workspace.markdown?.filePath;
-    final localizedUntitled =
-        workspace.kind == WorkspaceKind.untitledMarkdown &&
-        (filePath == null || filePath.isEmpty);
-    return localizedUntitled ? name : busyMarkLtrIsolateFor(context, name);
+    return filePath == null || filePath.isEmpty
+        ? context.l10n.untitledMarkdownFileName
+        : filePath;
   }
-
-  String _workspacePath(Workspace workspace) {
-    if (workspace.kind == WorkspaceKind.singleMarkdown) {
-      return workspace.activeFilePath ??
-          workspace.markdown?.filePath ??
-          (workspace.filesystemRootPath ?? '');
+  if (workspace.kind == WorkspaceKind.writersideModule) {
+    final moduleName = workspace.writersideModule?.config.moduleName?.trim();
+    if (moduleName != null && moduleName.isNotEmpty) {
+      return moduleName;
     }
-    return (workspace.filesystemRootPath ?? '');
   }
+  final path = _workspacePath(workspace);
+  final segments = path.split('/').where((segment) => segment.isNotEmpty);
+  return segments.isEmpty ? path : segments.last;
+}
+
+String _workspaceDisplayName(BuildContext context, Workspace workspace) {
+  final name = _workspaceName(context, workspace);
+  final filePath = workspace.markdown?.filePath;
+  final localizedUntitled =
+      workspace.kind == WorkspaceKind.untitledMarkdown &&
+      (filePath == null || filePath.isEmpty);
+  return localizedUntitled ? name : busyMarkLtrIsolateFor(context, name);
+}
+
+String _workspacePath(Workspace workspace) {
+  if (workspace.kind == WorkspaceKind.singleMarkdown) {
+    return workspace.activeFilePath ??
+        workspace.markdown?.filePath ??
+        (workspace.filesystemRootPath ?? '');
+  }
+  return (workspace.filesystemRootPath ?? '');
 }
 
 typedef _SidebarHeaderSecondaryTapHandler =
     Future<void> Function(BuildContext context, TapUpDetails details);
-
-class _SidebarHeaderRow extends StatelessWidget {
-  const _SidebarHeaderRow({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: BusyMarkSizes.iconButton),
-      child: child,
-    );
-  }
-}
 
 class _SidebarHeaderLine extends StatelessWidget {
   const _SidebarHeaderLine({
@@ -3656,9 +3407,6 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                         await ref
                             .read(workspaceControllerProvider.notifier)
                             .openActiveFile(file.absolutePath);
-                        if (mounted) {
-                          _clearGitDetailSelection(ref);
-                        }
                       }
                     : null,
                 onMenuRequested: showMenu,
@@ -3717,10 +3465,9 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         }
         final created = await ref
             .read(workspaceControllerProvider.notifier)
-            .createWorkspaceFile(directory, fileName);
+            .createWorkspaceFile(directory, fileName, focusSource: true);
         if (created) {
           _expandedPaths.addAll(_directoryAncestorPaths(directory));
-          _clearGitDetailSelection(ref);
         }
       case _FileTreeAction.rename:
         final renamed = isTopic
@@ -3755,7 +3502,6 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
               }());
         if (renamed) {
           setState(() => _cutEntry = null);
-          _clearGitDetailSelection(ref);
         }
       case _FileTreeAction.cut:
         setState(() {
@@ -3786,7 +3532,6 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         if (moved) {
           setState(() => _cutEntry = null);
           _expandedPaths.addAll(_directoryAncestorPaths(directory));
-          _clearGitDetailSelection(ref);
         }
       case _FileTreeAction.delete:
         final matchingEntry = _fileTreeEntryForPath(path);
@@ -3923,7 +3668,6 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
     } else if (_sameOptionalPath(_selectedPath, path)) {
       setState(() => _selectedPath = null);
     }
-    _clearGitDetailSelection(ref);
   }
 
   Iterable<String> _directoryAncestorPaths(String absoluteDirectory) {
@@ -4242,10 +3986,8 @@ Future<bool> _confirmDeleteFileTreeEntry(
   required String name,
   required bool isFolder,
 }) async {
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final confirmed = await showBusyMarkModalDialog<bool>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: isFolder
           ? context.l10n.confirmDeleteFolderTitle
@@ -5063,9 +4805,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
                             await ref
                                 .read(workspaceControllerProvider.notifier)
                                 .openActiveFile(topicPath);
-                            if (mounted) {
-                              _clearGitDetailSelection(ref);
-                            }
                           }
                         : hasChildren
                         ? () {
@@ -5251,7 +4990,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
         _selectedNodePathKeys = {};
         _selectionAnchorPathKey = null;
       });
-      _clearGitDetailSelection(ref);
       return;
     }
 
@@ -5284,7 +5022,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
       _selectedNodePathKeys = {};
       _selectionAnchorPathKey = null;
     });
-    _clearGitDetailSelection(ref);
   }
 
   Future<void> _removeTocEntries(
@@ -5349,7 +5086,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
       _selectedNodePathKeys = {};
       _selectionAnchorPathKey = null;
     });
-    _clearGitDetailSelection(ref);
   }
 
   Future<void> _copyTocEntries(List<_TocTreeEntry> entries) async {
@@ -5847,7 +5583,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
         }
         if (renamed) {
           setState(() => _cutEntries = []);
-          _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.cut:
         if (!canEditSelection) {
@@ -5940,7 +5675,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
             _selectedNodePathKeys = {};
             _selectionAnchorPathKey = null;
           });
-          _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.removeFromToc:
         if (!canEditStructure) {
@@ -5980,13 +5714,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
     if (!canContinue || !mounted || !context.mounted) {
       return;
     }
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final dialogResult =
         await showBusyMarkModalEditorDialog<
           BusyMarkWritersideInstanceDialogResult
         >(
           context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
           maxWidth: BusyMarkSizes.dialogWide,
           builder: (dialogContext) => BusyMarkWritersideInstanceDialog(
             workspace: widget.workspace,
@@ -6157,10 +5889,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final referenceIdentity = rawReference == null
         ? null
         : WritersideTocNodeIdentity.fromNode(rawReference);
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     await showBusyMarkModalEditorDialog<void>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       maxWidth: 680,
       builder: (dialogContext) => _CreateWritersideTopicDialog(
         workspace: widget.workspace,
@@ -6479,11 +6209,25 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 includeTitleHeading: true,
               ),
             );
-            return _PreviewPane(
-              preview: preview,
-              workspace: null,
-              controller: previewScroll,
-              documentLayout: BusyMarkDocumentLayoutSpec.splitPreview,
+            return Consumer(
+              builder: (context, ref, child) {
+                final settings = ref.watch(appSettingsControllerProvider);
+                final allowed =
+                    settings.allowRemoteImages ||
+                    settings.remoteImageAllowedWorkspaceIds.contains(
+                      remoteImageWorkspaceId(widget.workspace),
+                    );
+                return MarkdownImagePermissionScope(
+                  resolve: (_, _, _) => MarkdownImageActions(allowed: allowed),
+                  child: child!,
+                );
+              },
+              child: _PreviewPane(
+                preview: preview,
+                workspace: null,
+                controller: previewScroll,
+                documentLayout: BusyMarkDocumentLayoutSpec.splitPreview,
+              ),
             );
           },
           onCreate: (template, title, filename) async {
@@ -7208,10 +6952,8 @@ Future<bool> _confirmRemoveTocEntry(
   WidgetRef ref, {
   int count = 1,
 }) async {
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final confirmed = await showBusyMarkModalDialog<bool>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: count == 1
           ? context.l10n.removeTocElement
@@ -7399,7 +7141,7 @@ class _TocHeader extends StatelessWidget {
               padding: const EdgeInsetsDirectional.only(
                 start: BusyMarkSpacing.sm,
               ),
-              child: _SidebarHeaderRow(
+              child: WorkspaceSidebarHeaderRow(
                 child: Row(
                   children: [
                     Expanded(
@@ -8804,10 +8546,8 @@ Future<bool> _confirmDeleteOutlineSection(
   WidgetRef ref,
   String heading,
 ) async {
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final confirmed = await showBusyMarkModalDialog<bool>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: context.l10n.confirmDeleteSectionTitle,
       maxWidth: BusyMarkSizes.dialog,
@@ -9090,7 +8830,6 @@ class _EditorTabStrip extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final entries = workspaceTabEntries(
-      workspace: workspace,
       gitTabs:
           ref.watch(sharedGitReviewProvider)[workspace.id] ??
           const SharedGitTabs(),
@@ -9192,7 +8931,6 @@ class _EditorTabStrip extends ConsumerWidget {
     Workspace workspace,
     WorkspaceTabEntry entry,
   ) async {
-    final gitController = ref.read(gitControllerProvider.notifier);
     switch (entry.kind) {
       case WorkspaceTabKind.file:
         ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
@@ -9206,7 +8944,6 @@ class _EditorTabStrip extends ConsumerWidget {
                   .selectDocumentForBuffer(buffer),
             );
           }
-          gitController.deactivateDiffFile();
           return;
         }
         final activated = await ref
@@ -9222,14 +8959,12 @@ class _EditorTabStrip extends ConsumerWidget {
             );
           }
         }
-        gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
         ref
             .read(sharedGitReviewProvider.notifier)
             .activate(workspace.id, entry.comparisonId!);
       case WorkspaceTabKind.localHistory:
         ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
-        gitController.deactivateDiffFile();
     }
   }
 }
@@ -9595,8 +9330,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       // between Undo and Redo. Editor selection restoration remains independent.
       _pendingInspectorHistoryRestore = null;
       _trackInspectedHistory(previousBuffer, nextBuffer);
-      final document = _wysiwygDocument();
-      _refreshInspectedElement(document);
+      _refreshInspectedElement();
     }
     _spelling.synchronizeOpenBuffers(
       widget.state.documentBuffers.map((buffer) => buffer.id),
@@ -9744,10 +9478,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     final colors = BusyMarkSurfaceColors.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
-    final headerBar = ref.watch(linuxHeaderBarServiceProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(widget.state.workspace),
-    );
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
     final wysiwygDocument =
         editorVisible && _canUseWysiwyg(widget.state.workspace)
@@ -9761,6 +9491,20 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         widget.viewMode != DocumentViewModePreference.preview &&
         !wysiwygVisible;
     final activeBuffer = widget.state.activeBuffer;
+    final creationFocus = ref
+        .read(workspaceControllerProvider.notifier)
+        .sourceCreationFocus(activeBuffer?.id);
+    if (wysiwygVisible && creationFocus?.isPending == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final editor = _wysiwygEditorKey.currentState;
+        if (mounted &&
+            editor != null &&
+            widget.state.activeBufferId == activeBuffer?.id &&
+            creationFocus!.consume(editor.context)) {
+          editor.focusNewDocument();
+        }
+      });
+    }
     final remoteRef = activeBuffer?.remoteNote;
     final repository = remoteRef == null
         ? null
@@ -9981,7 +9725,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                   .retain,
                               initialSessionState:
                                   activeBuffer.editorState.wysiwygState,
-                              useExternalUndoHistory: true,
                               onSessionChanged: (documentId, session) {
                                 final latest = ref
                                     .read(workspaceControllerProvider)
@@ -10004,7 +9747,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                       ),
                                     );
                               },
-                              headerBarService: headerBar,
                               workspaceRoot: _imageWorkspaceRoot(
                                 widget.state.workspace,
                               ),
@@ -10039,10 +9781,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                             .unavailable,
                               onAssetSaveRequired: () => unawaited(
                                 saveActiveToNewLocation(context, ref),
-                              ),
-                              allowRemoteImages: allowRemoteImages,
-                              onRemoteImageBlocked: () => unawaited(
-                                _showRemoteImagesPrompt(context, ref),
                               ),
                               onDocumentChanged: (document) =>
                                   _cacheWysiwygDocument(
@@ -10153,6 +9891,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               ),
                               filePath: activeEditorPath,
                               documentId: activeBuffer?.id,
+                              creationFocus: creationFocus,
                               clipboardInsertionRegistry: ref.read(
                                 clipboardInsertionRegistryProvider,
                               ),
@@ -10430,13 +10169,91 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         ),
       ),
     );
-    return DocumentMediaScope(
+    final workspace = widget.state.workspace;
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final workspaceId = remoteImageWorkspaceId(workspace);
+    final parserPath = activeBuffer == null || workspace == null
+        ? null
+        : resolveWorkspaceDocumentContext(workspace, activeBuffer).parserPath;
+    final mediaScope = DocumentMediaScope(
       media: remoteRef == null
           ? null
           : media?.context ?? DocumentMediaContext.unavailable,
       child: DocumentReadOnlyScope(
         readOnly: activeBuffer?.readonly ?? false,
         child: _withProperties(editor),
+      ),
+    );
+    return ListenableBuilder(
+      listenable: controller.remoteImages,
+      child: mediaScope,
+      builder: (context, child) => MarkdownImagePermissionScope(
+        resolve: (source, span, renderedSource) {
+          final ownedSpan = span?.filePath == parserPath ? span : null;
+          final allowed =
+              allowsWorkspaceRemoteImages(settings, workspace) ||
+              (activeBuffer != null &&
+                  controller.remoteImages.allows(
+                    activeBuffer,
+                    renderedSource,
+                    ownedSpan,
+                    source,
+                  ));
+          if (allowed ||
+              activeBuffer == null ||
+              activeBuffer.text != renderedSource) {
+            return MarkdownImageActions(allowed: allowed);
+          }
+          return MarkdownImageActions(
+            allowed: false,
+            documentOpening: activeBuffer.opening,
+            openMenu: (anchor, position, session) async {
+              final target = controller.captureRemoteImagePermission(
+                activeBuffer,
+                renderedSource,
+                ownedSpan,
+                source,
+                workspaceId,
+              );
+              if (target == null) return;
+              try {
+                final l10n = anchor.l10n;
+                final action = await showBusyMarkNativeContextMenu(
+                  anchor,
+                  position,
+                  session: session,
+                  items: <PopupMenuEntry<RemoteImagePermission>>[
+                    BusyMarkPopupMenuItem(
+                      value: RemoteImagePermission.image,
+                      label: l10n.loadThisRemoteImage,
+                      enabled: target.hasOccurrence,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: RemoteImagePermission.document,
+                      label: l10n.loadRemoteImagesInDocument,
+                    ),
+                    if (target.workspaceId != null)
+                      BusyMarkPopupMenuItem(
+                        value: RemoteImagePermission.workspace,
+                        label: l10n.loadRemoteImagesForWorkspace,
+                      ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: RemoteImagePermission.global,
+                      label: l10n.alwaysLoadRemoteImages,
+                    ),
+                  ],
+                );
+                if (action != null) {
+                  await controller.grantRemoteImagePermission(target, action);
+                }
+              } finally {
+                controller.remoteImages.release(target);
+              }
+            },
+          );
+        },
+        child: child!,
       ),
     );
   }
@@ -10477,12 +10294,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           _inspected = restored;
         }
       });
-      final document = _wysiwygDocument();
-      _refreshInspectedElement(document);
+      _refreshInspectedElement();
     });
   }
 
-  void _refreshInspectedElement(BusyDocument? document) {
+  void _refreshInspectedElement([BusyDocument? document]) {
     final live = ref.read(workspaceControllerProvider).activeBuffer;
     final captured = _inspected;
     if (live == null ||
@@ -10492,6 +10308,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         captured.matches(live.id, live.revision, live.text)) {
       return;
     }
+    document ??= _wysiwygDocument();
     final refreshed = document == null
         ? null
         : captured.refreshUnchangedElement(
@@ -10682,6 +10499,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   Widget _withProperties(Widget editor) {
     final settings = ref.watch(appSettingsControllerProvider);
+    if (!settings.elementPropertiesVisible) return editor;
+    final kind = _activeDocumentKind(widget.state.workspace);
+    if (kind != DocumentKind.writersideXmlTopic &&
+        kind != DocumentKind.writersideMarkdownTopic) {
+      return editor;
+    }
     final document = _wysiwygDocument();
     final writerside =
         document?.isWriterside == true ||
@@ -13301,23 +13124,30 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.nothingToRead,
       );
     }
-    return WritersidePreviewScope(
-      key: ValueKey(workspace?.activeFilePath),
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: colors.view),
-        child: SelectionArea(
-          child: ScrollablePositionedList.builder(
-            key: const ValueKey('preview-document-scroll'),
-            itemScrollController: controller,
-            itemPositionsListener: itemPositionsListener,
-            padding: documentLayout.scrollPadding,
-            itemCount: document.blocks.length,
-            itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
-              layout: documentLayout,
-              contentKey: index == 0
-                  ? const ValueKey('preview-document-content')
-                  : null,
-              child: _keyedPreviewBlock(context, index, document.blocks[index]),
+    return MarkdownImageProjection(
+      source: document.source,
+      child: WritersidePreviewScope(
+        key: ValueKey(workspace?.activeFilePath),
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: colors.view),
+          child: SelectionArea(
+            child: ScrollablePositionedList.builder(
+              key: const ValueKey('preview-document-scroll'),
+              itemScrollController: controller,
+              itemPositionsListener: itemPositionsListener,
+              padding: documentLayout.scrollPadding,
+              itemCount: document.blocks.length,
+              itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
+                layout: documentLayout,
+                contentKey: index == 0
+                    ? const ValueKey('preview-document-content')
+                    : null,
+                child: _keyedPreviewBlock(
+                  context,
+                  index,
+                  document.blocks[index],
+                ),
+              ),
             ),
           ),
         ),
@@ -14107,10 +13937,6 @@ class _PreviewInlineText extends ConsumerWidget {
     final baseStyle = style ?? busyMarkDocumentBodyTextStyle(context);
     final searchState = ref.watch(searchSessionProvider);
     final workspace = ref.watch(workspaceControllerProvider).workspace;
-    final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(workspace),
-    );
     final highlightQuery = searchState.textActive ? searchState.query : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
@@ -14141,9 +13967,6 @@ class _PreviewInlineText extends ConsumerWidget {
                 inline,
                 workspace: workspace,
                 highlightQuery: highlightQuery,
-                allowRemoteImages: allowRemoteImages,
-                onRemoteImageBlocked: () =>
-                    unawaited(_showRemoteImagesPrompt(context, ref)),
                 onLinkTap: (destination) =>
                     _openPreviewLink(context, ref, destination),
                 editRevision: editRevision,
@@ -14499,10 +14322,6 @@ class _PreviewImageBlock extends ConsumerWidget {
         : () => unawaited(_openPreviewLink(context, ref, linkDestination));
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(workspace),
-    );
     return Padding(
       padding: padding,
       child: ConstrainedBox(
@@ -14511,24 +14330,22 @@ class _PreviewImageBlock extends ConsumerWidget {
         ),
         child: Align(
           alignment: AlignmentDirectional.centerStart,
-          child: _previewLinkedImage(
-            destination: linkDestination,
-            onTap: followLink,
-            child: MarkdownImageView(
-              source: source,
-              alt: block.text,
-              activeFilePath: activeFilePath ?? '',
-              workspaceRoot: _imageWorkspaceRoot(workspace),
-              writersideRoot: workspace?.writersideModule?.rootPath,
-              imagesDir:
-                  workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-              allowRemoteImages: allowRemoteImages,
-              onRemoteImageBlocked:
-                  followLink ??
-                  () => unawaited(_showRemoteImagesPrompt(context, ref)),
-              width: width,
-              maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+          child: MarkdownImageView(
+            source: source,
+            alt: block.text,
+            sourceSpan: _previewImageSpan(block.inlines),
+            activeFilePath: activeFilePath ?? '',
+            workspaceRoot: _imageWorkspaceRoot(workspace),
+            writersideRoot: workspace?.writersideModule?.rootPath,
+            imagesDir:
+                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+            wrapAvailableImage: (child) => _previewLinkedImage(
+              child: child,
+              destination: linkDestination,
+              onTap: followLink,
             ),
+            width: width,
+            maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
           ),
         ),
       ),
@@ -14546,10 +14363,6 @@ class _PreviewVideoBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath ?? '';
-    final settings = ref.watch(appSettingsControllerProvider);
-    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
-      _remoteImageWorkspacePath(workspace),
-    );
     final source = block.attributes['src'] ?? block.text;
     return Padding(
       padding: BusyMarkInsets.documentImageBlock,
@@ -14558,14 +14371,12 @@ class _PreviewVideoBlock extends ConsumerWidget {
         child: BusyMarkWritersideVideoView(
           source: source,
           previewSource: block.attributes['preview-src'],
+          posterSpan: block.posterSpan,
           activeFilePath: activeFilePath,
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir:
               workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-          allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: () =>
-              unawaited(_showRemoteImagesPrompt(context, ref)),
           onOpenFailed: () => _showPreviewLinkMessage(
             context,
             context.l10n.couldNotOpenTarget(source),
@@ -14596,6 +14407,14 @@ String? _imageWorkspaceRoot(Workspace? workspace) {
       .where((topic) => topic.filePath == activeFilePath)
       .map((topic) => topic.topicRoot)
       .firstOrNull;
+}
+
+SourceSpan? _previewImageSpan(List<PreviewInline> inlines) {
+  for (final inline in inlines) {
+    if (inline.kind == PreviewInlineKind.image) return inline.imageSpan;
+    if (_previewImageSpan(inline.children) case final span?) return span;
+  }
+  return null;
 }
 
 String _previewImageSource(PreviewBlock block) {
@@ -14668,15 +14487,21 @@ Widget _previewLinkedImage({
     return child;
   }
   return Semantics(
+    container: true,
     link: true,
     onTap: onTap,
-    child: MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
+    child: BusyMarkFocusIndicator(
+      child: InkWell(
         key: ValueKey('preview-linked-image-$destination'),
-        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
         onTap: onTap,
-        child: child,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: BusyMarkSizes.iconButton,
+            minHeight: BusyMarkSizes.iconButton,
+          ),
+          child: Align(widthFactor: 1, heightFactor: 1, child: child),
+        ),
       ),
     ),
   );
@@ -14687,8 +14512,6 @@ InlineSpan _previewInlineSpan(
   PreviewInline inline, {
   required Workspace? workspace,
   required String highlightQuery,
-  required bool allowRemoteImages,
-  required VoidCallback? onRemoteImageBlocked,
   required Future<void> Function(String destination) onLinkTap,
   required int editRevision,
   required void Function(String expressionId, String? code) onMathDiagnostic,
@@ -14792,8 +14615,6 @@ InlineSpan _previewInlineSpan(
       child,
       workspace: workspace,
       highlightQuery: highlightQuery,
-      allowRemoteImages: allowRemoteImages,
-      onRemoteImageBlocked: onRemoteImageBlocked,
       onLinkTap: onLinkTap,
       editRevision: editRevision,
       onMathDiagnostic: onMathDiagnostic,
@@ -14919,8 +14740,6 @@ InlineSpan _previewInlineSpan(
       context,
       inline,
       workspace,
-      allowRemoteImages: allowRemoteImages,
-      onRemoteImageBlocked: onRemoteImageBlocked,
       linkDestination: linkDestination,
       onLinkTap: onLinkTap,
       style: mergeStyle(
@@ -14980,8 +14799,6 @@ InlineSpan _previewInlineImageSpan(
   BuildContext context,
   PreviewInline inline,
   Workspace? workspace, {
-  required bool allowRemoteImages,
-  required VoidCallback? onRemoteImageBlocked,
   required String? linkDestination,
   required Future<void> Function(String destination) onLinkTap,
   required TextStyle? style,
@@ -15002,23 +14819,23 @@ InlineSpan _previewInlineImageSpan(
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: DefaultTextStyle.merge(
         style: style,
-        child: _previewLinkedImage(
-          destination: destination,
-          onTap: followLink,
-          child: MarkdownImageView(
-            source: inline.destination ?? '',
-            alt: inline.text,
-            activeFilePath: activeFilePath ?? '',
-            workspaceRoot: _imageWorkspaceRoot(workspace),
-            writersideRoot: workspace?.writersideModule?.rootPath,
-            imagesDir:
-                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: followLink ?? onRemoteImageBlocked,
-            maxWidth: BusyMarkSizes.previewMinWidth,
-            maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-            height: BusyMarkSizes.previewInlineImageHeight,
+        child: MarkdownImageView(
+          source: inline.destination ?? '',
+          sourceSpan: inline.imageSpan,
+          alt: inline.text,
+          activeFilePath: activeFilePath ?? '',
+          workspaceRoot: _imageWorkspaceRoot(workspace),
+          writersideRoot: workspace?.writersideModule?.rootPath,
+          imagesDir:
+              workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+          wrapAvailableImage: (child) => _previewLinkedImage(
+            child: child,
+            destination: destination,
+            onTap: followLink,
           ),
+          maxWidth: BusyMarkSizes.previewMinWidth,
+          maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+          preferredHeight: BusyMarkSizes.previewInlineImageHeight,
         ),
       ),
     ),
@@ -15255,7 +15072,6 @@ Future<void> _openPreviewLink(
     if (!opened) {
       return;
     }
-    _clearGitDetailSelection(ref);
   }
   if (!context.mounted) {
     return;
@@ -15368,76 +15184,6 @@ void _showPreviewLinkMessage(BuildContext context, String message) {
     message: message,
     priority: BusyMarkToastPriority.high,
   );
-}
-
-enum _RemoteImagesPromptAction { cancel, allowWorkspace, allowAlways }
-
-Future<void> _showRemoteImagesPrompt(
-  BuildContext context,
-  WidgetRef ref,
-) async {
-  final workspacePath = _remoteImageWorkspacePath(
-    ref.read(workspaceControllerProvider).workspace,
-  );
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final action = await showBusyMarkModalDialog<_RemoteImagesPromptAction>(
-    context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
-      title: context.l10n.remoteImagesBlockedTitle,
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          icon: BusyMarkGlyphs.clear,
-          onPressed: () =>
-              Navigator.pop(context, _RemoteImagesPromptAction.cancel),
-        ),
-        if (workspacePath != null)
-          BusyMarkDialogButton(
-            label: context.l10n.loadRemoteImagesForWorkspace,
-            icon: BusyMarkGlyphs.folder,
-            onPressed: () => Navigator.pop(
-              context,
-              _RemoteImagesPromptAction.allowWorkspace,
-            ),
-          ),
-        BusyMarkDialogButton(
-          label: context.l10n.alwaysLoadRemoteImages,
-          icon: BusyMarkGlyphs.image,
-          suggested: true,
-          onPressed: () =>
-              Navigator.pop(context, _RemoteImagesPromptAction.allowAlways),
-        ),
-      ],
-      children: [Text(context.l10n.remoteImagesBlockedMessage)],
-    ),
-  );
-  if (action == _RemoteImagesPromptAction.allowWorkspace &&
-      workspacePath != null) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .allowRemoteImagesForWorkspace(workspacePath);
-    return;
-  }
-  if (action == _RemoteImagesPromptAction.allowAlways) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .setAllowRemoteImages(true);
-  }
-}
-
-String? _remoteImageWorkspacePath(Workspace? workspace) {
-  if (workspace == null) {
-    return null;
-  }
-  final root = (workspace.filesystemRootPath ?? '').trim();
-  if (root.isNotEmpty) {
-    return root;
-  }
-  final fallback = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  final trimmed = fallback?.trim();
-  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 String _decodePreviewAnchor(String value) {
@@ -16432,7 +16178,6 @@ class _DiagnosticRow extends ConsumerWidget {
                 .read(appSettingsControllerProvider.notifier)
                 .setDocumentViewMode(DocumentViewModePreference.source),
           );
-          _clearGitDetailSelection(ref);
           ref
               .read(_sourceNavigationTargetProvider.notifier)
               .set(

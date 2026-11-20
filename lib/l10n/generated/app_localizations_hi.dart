@@ -728,6 +728,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'नया';
+
+  @override
   String get open => 'खोलें';
 
   @override
@@ -911,15 +914,22 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutGroupGeneral => 'सामान्य';
 
   @override
-  String get shortcutNewDocument => 'बनाएँ';
+  String get home => 'होम';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Markdown फ़ाइल या Writerside प्रोजेक्ट बनाएँ';
+  String get openMenu => 'खोलें मेनू';
 
   @override
-  String get shortcutOpenDescription =>
-      'Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें';
+  String get newNextcloudNote => 'नया Nextcloud नोट';
+
+  @override
+  String get shortcutNewDocument => 'नया मेनू';
+
+  @override
+  String get shortcutNewDocumentDescription => 'संसाधन बनाने का मेनू दिखाएँ';
+
+  @override
+  String get shortcutOpenDescription => 'संसाधन खोलने का मेनू दिखाएँ';
 
   @override
   String get shortcutSaveDescription => 'मौजूदा दस्तावेज़ सहेजें';
@@ -1208,11 +1218,12 @@ class AppLocalizationsHi extends AppLocalizations {
       'Markdown पूर्वावलोकन और संपादक की छवियों को http और https URL से लोड होने दें।';
 
   @override
-  String get clearRemoteImagePermissions => 'दूरस्थ छवि अनुमतियाँ साफ़ करें';
+  String get clearRemoteImagePermissions =>
+      'कार्यस्थानों की छवि अनुमतियाँ हटाएँ';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।';
+      'कार्यस्थानों की सभी दूरस्थ छवि अनुमतियाँ भूलें।';
 
   @override
   String get clearGitWorkspaceTrust => 'विश्वसनीय Git कार्यस्थान साफ़ करें';
@@ -1567,7 +1578,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'चुनें कि BusyMark दूरस्थ छवियाँ लोड कर सकता है या नहीं।';
+      'दूरस्थ छवि अवरुद्ध है। लोड करने के विकल्पों के लिए क्लिक करें।';
 
   @override
   String get remoteImagesBlockedTitle => 'दूरस्थ छवियाँ अवरुद्ध हैं';
@@ -1577,7 +1588,36 @@ class AppLocalizationsHi extends AppLocalizations {
       'यह दस्तावेज़ इंटरनेट की छवियों का संदर्भ देता है। उन्हें लोड करने पर छवि होस्ट को नेटवर्क की जानकारी मिल सकती है।';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'इस कार्यस्थान के लिए लोड करें';
+  String get loadThisRemoteImage => 'यह छवि लोड करें';
+
+  @override
+  String get remoteImageMoreOptions => 'और विकल्प…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'दूरस्थ छवियों की अनुमतियाँ';
+
+  @override
+  String get loadRemoteImagesInDocument => 'इस दस्तावेज़ की छवियाँ लोड करें';
+
+  @override
+  String get remoteImageUntilClose => 'इस दस्तावेज़ के बंद होने तक।';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'गोपनीयता सेटिंग में कार्यस्थान की अनुमतियाँ हटाने तक $workspace में दूरस्थ छवियों की अनुमति देता है।';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'गोपनीयता सेटिंग में यह विकल्प बंद करने तक पूरे BusyMark में दूरस्थ छवियों की अनुमति देता है।';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'पूरे BusyMark में दूरस्थ छवियों की अनुमति दें। कार्यस्थानों की अनुमतियाँ अलग से प्रबंधित होती हैं।';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'इस कार्यस्थान में हमेशा अनुमति दें';
 
   @override
   String get alwaysLoadRemoteImages => 'दूरस्थ छवियाँ हमेशा लोड करें';
@@ -5503,7 +5543,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get searchCurrentWorkspace => 'वर्तमान कार्यक्षेत्र';
 
   @override
-  String get browseNotes => 'नोट ब्राउज़ करें';
+  String get browseNotes => 'Nextcloud नोट ब्राउज़ करें';
 
   @override
   String get searchActionsCommand => 'क्रियाएँ खोजें';

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
+import 'busymark_native_controls.dart';
 
 /// Controls how a toast is ordered when another toast is already visible.
 enum BusyMarkToastPriority { normal, high }
@@ -33,6 +34,7 @@ class BusyMarkToastOverlay extends StatefulWidget {
       message: message,
       actionLabel: actionLabel,
       onAction: onAction,
+      actionScope: onAction == null ? null : FocusScope.of(context),
       duration: duration,
       priority: priority,
     );
@@ -56,6 +58,7 @@ class BusyMarkToastOverlay extends StatefulWidget {
       message: message,
       actionLabel: actionLabel,
       onAction: onAction,
+      actionScope: onAction == null ? null : FocusScope.of(context),
       duration: duration,
       priority: priority,
     );
@@ -86,6 +89,7 @@ class _BusyMarkToastOverlayState extends State<BusyMarkToastOverlay> {
     required String message,
     required String? actionLabel,
     required VoidCallback? onAction,
+    required FocusScopeNode? actionScope,
     required Duration duration,
     required BusyMarkToastPriority priority,
   }) {
@@ -98,6 +102,7 @@ class _BusyMarkToastOverlayState extends State<BusyMarkToastOverlay> {
       message: normalizedMessage,
       actionLabel: actionLabel?.trim(),
       onAction: onAction,
+      actionScope: actionScope,
       duration: duration,
       priority: priority,
     );
@@ -150,8 +155,9 @@ class _BusyMarkToastOverlayState extends State<BusyMarkToastOverlay> {
   }
 
   void _invokeAction(_BusyMarkToast toast) {
-    toast.onAction?.call();
+    if (_active?.id != toast.id) return;
     _dismiss(toast.id);
+    toast.onAction?.call();
   }
 
   @override
@@ -229,6 +235,7 @@ class _BusyMarkToast {
     required this.message,
     required this.actionLabel,
     required this.onAction,
+    required this.actionScope,
     required this.duration,
     required this.priority,
   });
@@ -237,6 +244,7 @@ class _BusyMarkToast {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final FocusScopeNode? actionScope;
   final Duration duration;
   final BusyMarkToastPriority priority;
 
@@ -261,54 +269,68 @@ class _BusyMarkToastSurface extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
     final actionLabel = toast.actionLabel;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Material(
-          color: BusyMarkLinuxPalette.transparent,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.popover,
-              borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
-              border: Border.all(color: colors.floatingBorder),
-              boxShadow: BusyMarkShadow.nativeCardShadowsFor(context),
-            ),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                BusyMarkSpacing.lg,
-                BusyMarkSpacing.sm,
-                BusyMarkSpacing.sm,
-                BusyMarkSpacing.sm,
+    final scope = toast.actionScope;
+    return Focus(
+      parentNode: scope?.context?.mounted == true ? scope : null,
+      canRequestFocus: false,
+      skipTraversal: true,
+      includeSemantics: false,
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Material(
+            color: BusyMarkLinuxPalette.transparent,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.popover,
+                borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
+                border: Border.all(color: colors.floatingBorder),
+                boxShadow: BusyMarkShadow.nativeCardShadowsFor(context),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      toast.message,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colors.foreground,
-                        fontWeight: FontWeight.w600,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  BusyMarkSpacing.lg,
+                  BusyMarkSpacing.sm,
+                  BusyMarkSpacing.sm,
+                  BusyMarkSpacing.sm,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        toast.message,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  if (actionLabel != null && actionLabel.isNotEmpty) ...[
-                    const SizedBox(width: BusyMarkSpacing.sm),
-                    TextButton(onPressed: onAction, child: Text(actionLabel)),
+                    if (actionLabel != null && actionLabel.isNotEmpty) ...[
+                      const SizedBox(width: BusyMarkSpacing.sm),
+                      Flexible(
+                        child: BusyMarkNativeActionButton(
+                          role: BusyMarkNativeActionRole.standard,
+                          presentation: BusyMarkActionPresentation.toast,
+                          onPressed: onAction,
+                          child: Text(actionLabel),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: BusyMarkSpacing.xs),
+                    BusyMarkCompactIconButton(
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).closeButtonTooltip,
+                      icon: BusyMarkGlyphs.windowClose,
+                      onPressed: onDismiss,
+                    ),
                   ],
-                  const SizedBox(width: BusyMarkSpacing.xs),
-                  BusyMarkCompactIconButton(
-                    tooltip: MaterialLocalizations.of(
-                      context,
-                    ).closeButtonTooltip,
-                    icon: BusyMarkGlyphs.windowClose,
-                    onPressed: onDismiss,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

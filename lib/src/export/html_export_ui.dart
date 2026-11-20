@@ -1,8 +1,7 @@
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:file_selector/file_selector.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -13,7 +12,6 @@ import '../app/busymark_dialogs.dart';
 import '../app/localization.dart';
 import '../math/math_providers.dart';
 import '../markdown/markdown_model.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../visualization/visualization_providers.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
@@ -56,7 +54,6 @@ Future<void> exportWorkspaceToHtml(
         ).context;
   if (!context.mounted) return;
 
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final configuration =
       configuredSelection ??
       await showExportOptions(
@@ -82,63 +79,29 @@ Future<void> exportWorkspaceToHtml(
       : path.isEmpty
       ? context.l10n.untitledMarkdownFileName
       : p.basename(path);
-  final location = await getSaveLocation(
-    suggestedName: site
-        ? '${instance!.id}-html'
-        : '${p.basenameWithoutExtension(name)}.html',
-    initialDirectory: (workspace.filesystemRootPath ?? '').isEmpty
-        ? null
-        : (workspace.filesystemRootPath ?? ''),
-    acceptedTypeGroups: site
-        ? const []
-        : [
-            XTypeGroup(
-              label: context.l10n.fileTypeHtml,
-              extensions: const ['html'],
-              mimeTypes: const ['text/html'],
-            ),
-          ],
-    confirmButtonText: context.l10n.export,
-  );
-  if (location == null || !context.mounted) return;
-  final destination =
-      !site && p.extension(location.path).toLowerCase() != '.html'
-      ? '${location.path}.html'
-      : location.path;
-  var overwrite = false;
-  if (await FileSystemEntity.type(destination, followLinks: false) !=
-      FileSystemEntityType.notFound) {
-    if (!context.mounted) return;
-    overwrite =
-        await showBusyMarkModalDialog<bool>(
-          context,
-          headerBarService: headerBar.isAvailable ? headerBar : null,
-          builder: (context) => BusyMarkDialogShell(
-            title: context.l10n.warning,
-            actions: [
-              BusyMarkDialogButton(
-                label: context.l10n.cancel,
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              BusyMarkDialogButton(
-                label: context.l10n.overwrite,
-                destructive: true,
-                onPressed: () => Navigator.pop(context, true),
-              ),
-            ],
-            children: [
-              Text(context.l10n.errorPathAlreadyExists(destination)),
-              if (site) Text(context.l10n.htmlOwnedDirectoryOnly),
-            ],
-          ),
-        ) ??
-        false;
-    if (!overwrite || !context.mounted) return;
-  }
-  if (!context.mounted) return;
-  // Capture text and service before starting the modal operation. Subsequent
-  // workspace notifications cannot replace these inputs.
   final service = ref.read(htmlExportServiceProvider);
+  String? siteOwnership;
+  final authorization = site
+      ? await pickHtmlSiteDestination(
+          context,
+          suggestedName: '${instance!.id}-html',
+          initialDirectory: workspace.filesystemRootPath,
+          validateReplacement: (path) async {
+            siteOwnership = await service.publisher.siteOwnership(path);
+          },
+        )
+      : await pickSaveDestination(
+          context,
+          suggestedName: '${p.basenameWithoutExtension(name)}.html',
+          initialDirectory: workspace.filesystemRootPath,
+          actionLabel: context.l10n.export,
+          suffix: '.html',
+          filterLabel: context.l10n.fileTypeHtml,
+          patterns: const ['*.[hH][tT][mM][lL]'],
+        );
+  if (authorization == null || !context.mounted) return;
+  final destination = authorization.path;
+  final overwrite = authorization.replacesExisting;
   final request = MarkdownHtmlExportRequest(
     source: snapshot.activeText,
     media: media,
@@ -146,6 +109,7 @@ Future<void> exportWorkspaceToHtml(
     workspaceRoot: (workspace.filesystemRootPath ?? ''),
     destinationPath: destination,
     overwrite: overwrite,
+    authorization: authorization,
     options: options,
     mode: workspace.markdown?.mode ?? MarkdownMode.commonMark,
   );
@@ -154,7 +118,6 @@ Future<void> exportWorkspaceToHtml(
   final outcome = await showBusyMarkModalDialog<_Outcome>(
     context,
     barrierDismissible: false,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => _Progress(
       token: token,
       operation: (progress) => site
@@ -164,6 +127,8 @@ Future<void> exportWorkspaceToHtml(
               instanceId: selected!.id,
               destinationPath: destination,
               overwrite: overwrite,
+              authorization: authorization,
+              expectedSiteOwnership: siteOwnership,
               options: options,
               cancellationToken: token,
               onProgress: progress,
@@ -179,7 +144,6 @@ Future<void> exportWorkspaceToHtml(
   final result = outcome.result;
   await showBusyMarkModalDialog<void>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: result == null
           ? context.l10n.htmlExportFailed

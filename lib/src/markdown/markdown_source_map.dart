@@ -1006,6 +1006,7 @@ class BusyMarkInlineParserContext {
     int sourceStart = 0,
     int? sourceEnd,
     bool includeCodeBlocks = true,
+    bool requireUnambiguousPositions = false,
   }) {
     if (source.isEmpty) return const [];
     final boundedStart = sourceStart.clamp(0, source.length).toInt();
@@ -1017,20 +1018,22 @@ class BusyMarkInlineParserContext {
     final nodes = md.BlockParser([
       for (final line in sourceLines) md.Line(line.content),
     ], _mappingDocument).parseLines();
-    final candidates = <String>[];
+    final candidates = <({String text, bool code})>[];
 
     void collect(Iterable<md.Node> values) {
       for (final node in values) {
         if (!includeCodeBlocks && node is md.Element && node.tag == 'pre') {
-          continue;
-        }
-        if (node is md.UnparsedContent) {
-          if (node.textContent.isNotEmpty) candidates.add(node.textContent);
-        } else if (node is md.Text) {
-          // Block HTML is deliberately retained as raw text by package:
-          // markdown. It still contains authored prose and must be routed
-          // through BusyMark's mapped inline/HTML scanner.
-          if (node.textContent.isNotEmpty) candidates.add(node.textContent);
+          // Consume the code's position without parsing any inline syntax.
+          // Otherwise identical prose following it could map onto the code.
+          final text = node.textContent.trimRight();
+          if (requireUnambiguousPositions && text.isNotEmpty) {
+            candidates.add((text: text, code: true));
+          }
+        } else if (node is md.UnparsedContent || node is md.Text) {
+          // Block HTML is retained as raw text by package:markdown.
+          if (node.textContent.isNotEmpty) {
+            candidates.add((text: node.textContent, code: false));
+          }
         } else if (node is md.Element && node.children != null) {
           collect(node.children!);
         }
@@ -1038,21 +1041,59 @@ class BusyMarkInlineParserContext {
     }
 
     collect(nodes);
-    final result = <BusyMarkMappedInlineParse>[];
-    var cursor = boundedStart;
-    for (final candidate in candidates) {
-      final projection = _MappedBlockInlineProjection.tryCreatePositioned(
-        source,
-        sourceLines,
-        candidate,
-        minimumSourceOffset: cursor,
-        maximumSourceOffset: boundedEnd,
+
+    // Compare both monotonic placements when ranges will grant permission.
+    // Text skipped by the grammar (for example, a reference title) can contain
+    // an exact copy of a rendered image. Bind only the physical placement
+    // that remains the same from either end.
+    List<_MappedBlockInlineProjection?> project({required bool fromEnd}) {
+      final projections = List<_MappedBlockInlineProjection?>.filled(
+        candidates.length,
+        null,
       );
-      if (projection == null) continue;
-      result.add(_translateBlockProjection(parseMapped(candidate), projection));
-      cursor = projection.rawEnd;
+      var cursor = fromEnd ? boundedEnd : boundedStart;
+      for (var index = 0; index < candidates.length; index++) {
+        final slot = fromEnd ? candidates.length - 1 - index : index;
+        final projection = _MappedBlockInlineProjection.tryCreatePositioned(
+          source,
+          sourceLines,
+          candidates[slot].text,
+          minimumSourceOffset: fromEnd ? boundedStart : cursor,
+          maximumSourceOffset: fromEnd ? cursor : boundedEnd,
+          fromEnd: fromEnd,
+        );
+        if (projection == null) continue;
+        projections[slot] = projection;
+        cursor = fromEnd ? projection.rawStart : projection.rawEnd;
+      }
+      return projections;
     }
-    return List.unmodifiable(result);
+
+    final starts = project(fromEnd: false);
+    final ends = requireUnambiguousPositions ? project(fromEnd: true) : null;
+    return List.unmodifiable([
+      for (final (index, projection) in starts.indexed)
+        if (projection != null &&
+            !candidates[index].code &&
+            (ends == null || _samePhysicalLines(projection, ends[index])))
+          _translateBlockProjection(
+            parseMapped(candidates[index].text),
+            projection,
+          ),
+    ]);
+  }
+
+  bool _samePhysicalLines(
+    _MappedBlockInlineProjection before,
+    _MappedBlockInlineProjection? after,
+  ) {
+    if (after == null ||
+        before.rawLineStarts.length != after.rawLineStarts.length) {
+      return false;
+    }
+    return before.rawLineStarts.indexed.every(
+      (entry) => entry.$2 == after.rawLineStarts[entry.$1],
+    );
   }
 
   BusyMarkMappedInlineParse _translateBlockProjection(
@@ -1342,48 +1383,60 @@ class _MappedBlockInlineProjection {
     String logicalSource, {
     required int minimumSourceOffset,
     required int maximumSourceOffset,
+    required bool fromEnd,
   }) {
     if (logicalSource.isEmpty || sourceLines.isEmpty) return null;
     final logicalLines = logicalSource.split('\n');
-    for (
-      var firstSourceLine = 0;
-      firstSourceLine + logicalLines.length <= sourceLines.length;
-      firstSourceLine++
-    ) {
+    final first = _sourceLineAt(sourceLines, minimumSourceOffset);
+    final last =
+        _sourceLineAt(sourceLines, maximumSourceOffset) -
+        logicalLines.length +
+        1;
+    for (var slot = first; slot <= last; slot++) {
+      final lineIndex = fromEnd ? last - (slot - first) : slot;
       final positions = <int>[];
-      var valid = true;
       for (var index = 0; index < logicalLines.length; index++) {
-        final sourceLine = sourceLines[firstSourceLine + index];
-        final searchFrom = index == 0
-            ? math.max(0, minimumSourceOffset - sourceLine.contentStart)
-            : 0;
-        if (searchFrom > sourceLine.content.length) {
-          valid = false;
-          break;
-        }
-        final position = sourceLine.content.indexOf(
-          logicalLines[index],
-          searchFrom,
+        final sourceLine = sourceLines[lineIndex + index];
+        final logicalLine = logicalLines[index];
+        final searchFrom = math.max(
+          0,
+          minimumSourceOffset - sourceLine.contentStart,
         );
-        final rawPosition = sourceLine.contentStart + position;
-        if (position < 0 ||
-            rawPosition < minimumSourceOffset ||
-            rawPosition + logicalLines[index].length > maximumSourceOffset) {
-          valid = false;
-          break;
-        }
-        positions.add(rawPosition);
+        final searchTo =
+            math.min(sourceLine.contentEnd, maximumSourceOffset) -
+            sourceLine.contentStart -
+            logicalLine.length;
+        if (searchTo < searchFrom) break;
+        final position = fromEnd
+            ? sourceLine.content.lastIndexOf(logicalLine, searchTo)
+            : sourceLine.content.indexOf(logicalLine, searchFrom);
+        if (position < searchFrom || position > searchTo) break;
+        positions.add(sourceLine.contentStart + position);
       }
-      if (!valid) continue;
+      if (positions.length != logicalLines.length) continue;
       return _fromLinePositions(
         source,
         sourceLines,
         logicalLines,
         positions,
-        firstSourceLine,
+        lineIndex,
       );
     }
     return null;
+  }
+
+  static int _sourceLineAt(List<_MappedSourceLine> lines, int offset) {
+    var first = 0;
+    var end = lines.length - 1;
+    while (first < end) {
+      final middle = (first + end) ~/ 2;
+      if (offset >= lines[middle].end) {
+        first = middle + 1;
+      } else {
+        end = middle;
+      }
+    }
+    return first;
   }
 
   static _MappedBlockInlineProjection? _fromLinePositions(

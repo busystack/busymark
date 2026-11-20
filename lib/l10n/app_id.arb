@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Baru",
   "open": "Buka",
   "@open": {
     "description": "Open action label."
@@ -714,15 +715,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Buat",
+  "home": "Beranda",
+  "openMenu": "Menu Buka",
+  "newNextcloudNote": "Catatan Nextcloud Baru",
+  "shortcutNewDocument": "Menu Baru",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Buat file Markdown atau proyek Writerside",
+  "shortcutNewDocumentDescription": "Tampilkan menu untuk membuat sumber daya",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Buka file Markdown, folder, atau proyek Writerside",
+  "shortcutOpenDescription": "Tampilkan menu untuk membuka sumber daya",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1072,11 +1076,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Hapus izin gambar jarak jauh",
+  "clearRemoteImagePermissions": "Hapus izin gambar ruang kerja",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Lupakan ruang kerja yang diizinkan memuat gambar jarak jauh.",
+  "clearRemoteImagePermissionsDescription": "Lupakan semua izin gambar jarak jauh untuk ruang kerja.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1492,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Pilih apakah BusyMark dapat memuat gambar jarak jauh.",
+  "remoteImageBlockedTooltip": "Gambar jarak jauh diblokir. Klik untuk opsi pemuatan.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1504,7 +1508,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Muat untuk ruang kerja ini",
+  "loadThisRemoteImage": "Muat gambar ini",
+  "remoteImageMoreOptions": "Opsi lainnya…",
+  "remoteImageMoreOptionsTitle": "Izin gambar jarak jauh",
+  "loadRemoteImagesInDocument": "Muat gambar di dokumen ini",
+  "remoteImageUntilClose": "Hingga dokumen ini ditutup.",
+  "remoteImageWorkspacePermissionDetail": "Mengizinkan gambar jarak jauh di {workspace} hingga izin ruang kerja dihapus di pengaturan Privasi.",
+  "remoteImageGlobalPermissionDetail": "Mengizinkan gambar jarak jauh di seluruh BusyMark hingga opsi ini dimatikan di pengaturan Privasi.",
+  "remoteImageGlobalSettingsDetail": "Izinkan gambar jarak jauh di seluruh BusyMark. Izin ruang kerja dikelola secara terpisah.",
+  "loadRemoteImagesForWorkspace": "Selalu izinkan di ruang kerja ini",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -5157,7 +5169,7 @@
   "searchTopicsCategory": "Topik",
   "searchCurrentDocument": "Dokumen saat ini",
   "searchCurrentWorkspace": "Ruang kerja saat ini",
-  "browseNotes": "Jelajahi catatan",
+  "browseNotes": "Jelajahi Catatan Nextcloud",
   "searchActionsCommand": "Cari tindakan",
   "searchDocumentsCommand": "Cari dokumen",
   "searchTopicsCommand": "Cari topik",

@@ -7,6 +7,9 @@ import '../app/busymark_design.dart';
 import '../assets/document_media_context.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
+import '../core/source_span.dart';
+import '../core/uri_utils.dart';
+import 'markdown_image_permission_scope.dart';
 import '../writerside/writerside_video.dart';
 import 'markdown_image_view.dart';
 import 'writerside_video_player_host.dart';
@@ -20,8 +23,8 @@ class BusyMarkWritersideVideoView extends StatefulWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
-    required this.allowRemoteImages,
-    this.onRemoteImageBlocked,
+    this.allowRemoteImages = false,
+    this.posterSpan,
     this.onOpenFailed,
     this.playerHost = const PlatformWritersideVideoPlayerHost(),
     this.width,
@@ -38,7 +41,7 @@ class BusyMarkWritersideVideoView extends StatefulWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
+  final SourceSpan? posterSpan;
   final VoidCallback? onOpenFailed;
   final WritersideVideoPlayerHost playerHost;
   final double? width;
@@ -218,6 +221,40 @@ class _BusyMarkWritersideVideoViewState
     required bool trustedHostedPoster,
   }) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final blocked =
+        !trustedHostedPoster &&
+        isRemoteImageSource(poster) &&
+        !(MarkdownImagePermissionScope.of(
+              context,
+              poster,
+              widget.posterSpan,
+            )?.allowed ??
+            widget.allowRemoteImages);
+    final authoredPoster = MarkdownImageView(
+      source: poster,
+      sourceSpan: widget.posterSpan,
+      alt: context.l10n.videoPreview,
+      activeFilePath: widget.activeFilePath,
+      workspaceRoot: widget.workspaceRoot,
+      writersideRoot: widget.writersideRoot,
+      imagesDir: widget.imagesDir,
+      allowRemoteImages: widget.allowRemoteImages,
+    );
+    if (blocked) {
+      return Material(
+        color: colors.panel,
+        child: Column(
+          children: [
+            Expanded(child: authoredPoster),
+            if (target != null)
+              BusyMarkPushButton.standard(
+                onPressed: () => _startPlayer(target),
+                child: Text(context.l10n.openVideo),
+              ),
+          ],
+        ),
+      );
+    }
     return Material(
       color: colors.panel,
       child: InkWell(
@@ -237,16 +274,7 @@ class _BusyMarkWritersideVideoViewState
                     _posterFallback(colors),
               )
             else if (poster.isNotEmpty)
-              MarkdownImageView(
-                source: poster,
-                alt: context.l10n.videoPreview,
-                activeFilePath: widget.activeFilePath,
-                workspaceRoot: widget.workspaceRoot,
-                writersideRoot: widget.writersideRoot,
-                imagesDir: widget.imagesDir,
-                allowRemoteImages: widget.allowRemoteImages,
-                onRemoteImageBlocked: widget.onRemoteImageBlocked,
-              )
+              authoredPoster
             else
               _posterFallback(colors),
             Center(

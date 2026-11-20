@@ -361,6 +361,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Neu",
   "open": "Öffnen",
   "@open": {
     "description": "Open action label."
@@ -598,15 +599,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Erstellen",
+  "home": "Startseite",
+  "openMenu": "Menü „Öffnen“",
+  "newNextcloudNote": "Neue Nextcloud-Notiz",
+  "shortcutNewDocument": "Menü „Neu“",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Markdown-Datei oder Writerside-Projekt erstellen",
+  "shortcutNewDocumentDescription": "Menü zum Erstellen von Ressourcen öffnen",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Markdown-Datei, Ordner oder Writerside-Projekt öffnen",
+  "shortcutOpenDescription": "Menü zum Öffnen von Ressourcen öffnen",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -956,11 +960,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Berechtigungen für externe Bilder löschen",
+  "clearRemoteImagePermissions": "Bildberechtigungen für Arbeitsbereiche löschen",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Arbeitsbereiche vergessen, denen das Laden externer Bilder erlaubt wurde.",
+  "clearRemoteImagePermissionsDescription": "Alle Arbeitsbereichsberechtigungen für entfernte Bilder löschen.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1330,7 +1334,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Festlegen, ob BusyMark externe Bilder laden darf.",
+  "remoteImageBlockedTooltip": "Externes Bild blockiert. Klicken für Ladeoptionen.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1342,7 +1346,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Für diesen Arbeitsbereich laden",
+  "loadThisRemoteImage": "Dieses Bild laden",
+  "remoteImageMoreOptions": "Weitere Optionen…",
+  "remoteImageMoreOptionsTitle": "Berechtigungen für entfernte Bilder",
+  "loadRemoteImagesInDocument": "Bilder in diesem Dokument laden",
+  "remoteImageUntilClose": "Bis dieses Dokument geschlossen wird.",
+  "remoteImageWorkspacePermissionDetail": "Erlaubt entfernte Bilder in {workspace}, bis Sie die Arbeitsbereichsberechtigungen in den Datenschutzeinstellungen löschen.",
+  "remoteImageGlobalPermissionDetail": "Erlaubt entfernte Bilder in ganz BusyMark, bis Sie dies in den Datenschutzeinstellungen deaktivieren.",
+  "remoteImageGlobalSettingsDetail": "Entfernte Bilder überall in BusyMark erlauben. Arbeitsbereichsberechtigungen werden separat verwaltet.",
+  "loadRemoteImagesForWorkspace": "In diesem Arbeitsbereich immer erlauben",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3639,7 +3651,7 @@
   "searchTopicsCategory": "Themen",
   "searchCurrentDocument": "Aktuelles Dokument",
   "searchCurrentWorkspace": "Aktueller Arbeitsbereich",
-  "browseNotes": "Notizen durchsuchen",
+  "browseNotes": "Nextcloud-Notizen durchsuchen",
   "searchActionsCommand": "Aktionen suchen",
   "searchDocumentsCommand": "Dokumente suchen",
   "searchTopicsCommand": "Themen suchen",

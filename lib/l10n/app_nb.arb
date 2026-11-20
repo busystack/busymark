@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Ny",
   "open": "Åpne",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Opprett",
+  "home": "Hjem",
+  "openMenu": "Åpne-meny",
+  "newNextcloudNote": "Nytt Nextcloud-notat",
+  "shortcutNewDocument": "Ny-meny",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Opprett en Markdown-fil eller et Writerside-prosjekt",
+  "shortcutNewDocumentDescription": "Vis menyen for å opprette ressurser",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt",
+  "shortcutOpenDescription": "Vis menyen for å åpne ressurser",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Tøm tillatelser for eksterne bilder",
+  "clearRemoteImagePermissions": "Slett bildetillatelser for arbeidsområder",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.",
+  "clearRemoteImagePermissionsDescription": "Glem alle tillatelser for eksterne bilder i arbeidsområder.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Velg om BusyMark kan laste inn eksterne bilder.",
+  "remoteImageBlockedTooltip": "Eksternt bilde blokkert. Klikk for innlastingsvalg.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Last inn for dette arbeidsområdet",
+  "loadThisRemoteImage": "Last inn dette bildet",
+  "remoteImageMoreOptions": "Flere valg…",
+  "remoteImageMoreOptionsTitle": "Tillatelser for eksterne bilder",
+  "loadRemoteImagesInDocument": "Last inn bilder i dette dokumentet",
+  "remoteImageUntilClose": "Til dette dokumentet lukkes.",
+  "remoteImageWorkspacePermissionDetail": "Tillater eksterne bilder i {workspace} til du sletter arbeidsområdetillatelsene i personverninnstillingene.",
+  "remoteImageGlobalPermissionDetail": "Tillater eksterne bilder i hele BusyMark til du slår dette av i personverninnstillingene.",
+  "remoteImageGlobalSettingsDetail": "Tillat eksterne bilder i hele BusyMark. Tillatelser for arbeidsområder administreres separat.",
+  "loadRemoteImagesForWorkspace": "Tillat alltid i dette arbeidsområdet",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3627,7 +3639,7 @@
   "searchTopicsCategory": "Emner",
   "searchCurrentDocument": "Gjeldende dokument",
   "searchCurrentWorkspace": "Gjeldende arbeidsområde",
-  "browseNotes": "Bla gjennom notater",
+  "browseNotes": "Bla gjennom Nextcloud-notater",
   "searchActionsCommand": "Søk etter handlinger",
   "searchDocumentsCommand": "Søk etter dokumenter",
   "searchTopicsCommand": "Søk etter emner",

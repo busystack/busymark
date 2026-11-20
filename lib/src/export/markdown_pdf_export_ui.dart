@@ -1,9 +1,8 @@
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
-import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
+import '../app/save_destination_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -13,7 +12,6 @@ import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
-import '../platform/linux_header_bar_service.dart';
 import '../math/math_providers.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_controller.dart';
@@ -113,7 +111,6 @@ Future<void> exportActiveMarkdownToPdf(
         ).context;
   if (!context.mounted) return;
 
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final document =
       documentSnapshot ?? await prepareMarkdownPdfSnapshot(snapshot);
   if (!context.mounted) return;
@@ -134,45 +131,16 @@ Future<void> exportActiveMarkdownToPdf(
       : activePath == null || activePath.isEmpty
       ? context.l10n.untitledMarkdownFileName
       : p.basename(activePath);
-  final location = await getSaveLocation(
-    acceptedTypeGroups: [
-      XTypeGroup(
-        label: context.l10n.fileTypePdf,
-        extensions: const ['pdf'],
-        mimeTypes: const ['application/pdf'],
-      ),
-    ],
+  final destination = await pickSaveDestination(
+    context,
     suggestedName: '${p.basenameWithoutExtension(baseName)}.pdf',
     initialDirectory: _initialDirectory(workspace, activePath),
-    confirmButtonText: context.l10n.export,
+    actionLabel: context.l10n.export,
+    suffix: '.pdf',
+    filterLabel: context.l10n.fileTypePdf,
+    patterns: const ['*.[pP][dD][fF]'],
   );
-  if (location == null || !context.mounted) {
-    return;
-  }
-
-  final destinationPath = _withPdfExtension(location.path);
-  final targetType = await FileSystemEntity.type(
-    destinationPath,
-    followLinks: false,
-  );
-  if (!context.mounted) {
-    return;
-  }
-  var overwrite = false;
-  if (targetType != FileSystemEntityType.notFound) {
-    final confirmed = await _confirmPdfOverwrite(
-      context,
-      headerBar,
-      destinationPath,
-    );
-    if (!confirmed || !context.mounted) {
-      return;
-    }
-    overwrite = true;
-  }
-  if (!context.mounted) {
-    return;
-  }
+  if (destination == null || !context.mounted) return;
 
   final cancellationToken = MarkdownPdfCancellationToken();
   final request = MarkdownPdfExportRequest(
@@ -180,15 +148,15 @@ Future<void> exportActiveMarkdownToPdf(
     media: media,
     filePath: activePath ?? '',
     workspaceRoot: (workspace.filesystemRootPath ?? ''),
-    destinationPath: destinationPath,
+    destinationPath: destination.path,
     options: options,
-    overwrite: overwrite,
+    overwrite: destination.replacesExisting,
+    authorization: destination,
     document: document,
     titlePage: selected.titlePage,
   );
   final outcome = await showBusyMarkModalDialog<_PdfExportOutcome>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     barrierDismissible: false,
     builder: (context) => _MarkdownPdfProgressDialog(
       cancellationToken: cancellationToken,
@@ -203,7 +171,7 @@ Future<void> exportActiveMarkdownToPdf(
   final failure = outcome.failure;
   if (failure != null) {
     if (failure.code != MarkdownPdfFailureCode.cancelled) {
-      await showMarkdownPdfExportError(context, headerBar, failure);
+      await showMarkdownPdfExportError(context, failure);
     }
     return;
   }
@@ -248,44 +216,9 @@ String? _initialDirectory(Workspace workspace, String? activePath) {
       : (workspace.filesystemRootPath ?? '');
 }
 
-String _withPdfExtension(String path) {
-  final normalized = p.normalize(path);
-  return p.extension(normalized).toLowerCase() == '.pdf'
-      ? normalized
-      : '$normalized.pdf';
-}
-
-Future<bool> _confirmPdfOverwrite(
-  BuildContext context,
-  LinuxHeaderBarService headerBar,
-  String path,
-) async {
-  return await showBusyMarkModalDialog<bool>(
-        context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
-        builder: (context) => BusyMarkDialogShell(
-          title: context.l10n.warning,
-          actions: [
-            BusyMarkDialogButton(
-              label: context.l10n.cancel,
-              onPressed: () => Navigator.pop(context, false),
-            ),
-            BusyMarkDialogButton(
-              label: context.l10n.overwrite,
-              destructive: true,
-              onPressed: () => Navigator.pop(context, true),
-            ),
-          ],
-          children: [Text(context.l10n.errorPathAlreadyExists(path))],
-        ),
-      ) ??
-      false;
-}
-
 @visibleForTesting
 Future<void> showMarkdownPdfExportError(
   BuildContext context,
-  LinuxHeaderBarService headerBar,
   MarkdownPdfExportException failure,
 ) {
   final message = switch (failure.code) {
@@ -301,7 +234,6 @@ Future<void> showMarkdownPdfExportError(
   };
   return showBusyMarkModalDialog<void>(
     context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: context.l10n.exportAsPdf,
       actions: [

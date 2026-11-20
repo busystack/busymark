@@ -244,6 +244,8 @@ bool _isBusyMarkTemporaryPath(String path) {
           .split(p.separator)
           .any(
             (part) =>
+                part.startsWith('.busymark-save-') ||
+                part.startsWith('.busymark-recovery-') ||
                 part.startsWith('.busymark-state-') ||
                 part.startsWith('.busymark-settings-') ||
                 part.startsWith('.busymark-export-'),

@@ -41,6 +41,7 @@ class PreviewBlock {
     this.inlines = const [],
     this.children = const [],
     this.attributes = const {},
+    this.posterSpan,
     this.sourceStartLine,
     this.sourceEndLine,
     this.sourceStartOffset,
@@ -55,6 +56,7 @@ class PreviewBlock {
   final List<PreviewInline> inlines;
   final List<PreviewBlock> children;
   final Map<String, String> attributes;
+  final SourceSpan? posterSpan;
   final int? sourceStartLine;
   final int? sourceEndLine;
   final int? sourceStartOffset;
@@ -78,6 +80,7 @@ class PreviewInline {
     required this.kind,
     required this.text,
     this.destination,
+    this.imageSpan,
     this.children = const [],
     this.attributes = const {},
   });
@@ -85,6 +88,7 @@ class PreviewInline {
   final PreviewInlineKind kind;
   final String text;
   final String? destination;
+  final SourceSpan? imageSpan;
   final List<PreviewInline> children;
   final Map<String, String> attributes;
 }
@@ -95,12 +99,14 @@ class PreviewDocument {
     required this.modeLabel,
     required this.compatibility,
     required this.blocks,
+    this.source,
   });
 
   final String title;
   final String modeLabel;
   final String compatibility;
   final List<PreviewBlock> blocks;
+  final String? source;
 }
 
 extension PreviewDocumentOutline on PreviewDocument {
@@ -160,6 +166,7 @@ class MarkdownPreviewBuilder {
       title: document.title ?? '',
       modeLabel: '',
       compatibility: '',
+      source: document.source,
       blocks: const BusyMarkPreviewBuilder().buildBlocks(document.busyDocument),
     );
   }
@@ -173,6 +180,7 @@ class BusyMarkPreviewBuilder {
       title: document.title ?? '',
       modeLabel: '',
       compatibility: '',
+      source: document.source,
       blocks: buildBlocks(document),
     );
   }
@@ -262,14 +270,13 @@ class BusyMarkPreviewBuilder {
       ),
       BusyBlockKind.image => PreviewBlock(
         kind: PreviewBlockKind.image,
-        text: block.inlines.isEmpty
-            ? block.plainText
-            : block.inlines.first.text,
+        text: block.plainText,
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: block.attributes,
       ),
       BusyBlockKind.video => PreviewBlock(
         kind: PreviewBlockKind.video,
+        posterSpan: block.posterSpan,
         text: block.attributes['src'] ?? block.plainText,
         attributes: {...block.attributes, 'editorBlockId': block.id},
       ),
@@ -373,6 +380,7 @@ class BusyMarkPreviewBuilder {
           inlines: block.inlines,
           children: children,
           attributes: block.attributes,
+          posterSpan: block.posterSpan,
           sourceStartLine: block.sourceStartLine,
           sourceEndLine: children.isEmpty
               ? block.sourceEndLine
@@ -475,6 +483,7 @@ class BusyMarkPreviewBuilder {
     inlines: block.inlines,
     children: block.children,
     attributes: attributes,
+    posterSpan: block.posterSpan,
     sourceStartLine: block.sourceStartLine,
     sourceEndLine: block.sourceEndLine,
     sourceStartOffset: block.sourceStartOffset,
@@ -545,6 +554,7 @@ class BusyMarkPreviewBuilder {
       inlines: block.inlines,
       children: block.children,
       attributes: block.attributes,
+      posterSpan: block.posterSpan,
       sourceStartLine: span.startLine,
       sourceEndLine: span.endLine,
       sourceStartOffset: span.startOffset,
@@ -583,6 +593,7 @@ class BusyMarkPreviewBuilder {
       },
       text: inline.kind == BusyInlineKind.softBreak ? ' ' : inline.text,
       destination: inline.destination,
+      imageSpan: inline.imageSpan,
       children: _inlines(inline.children, '$path.i'),
       attributes: {
         ...inline.attributes,

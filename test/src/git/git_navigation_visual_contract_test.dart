@@ -202,8 +202,11 @@ void main() {
       ).readAsStringSync();
       final header = source.substring(
         source.indexOf('class _SidebarHeader extends'),
-        source.indexOf('class _SidebarHeaderRow extends'),
+        source.indexOf('typedef _SidebarHeaderSecondaryTapHandler'),
       );
+      final sidebar = File(
+        'lib/src/workspace/presentation/workspace_sidebar.dart',
+      ).readAsStringSync();
       for (final dependency in [
         'GitRepositoryInfo',
         'GitView',
@@ -212,7 +215,7 @@ void main() {
         'gitControllerProvider',
       ]) {
         expect(
-          header,
+          '$header\n$sidebar',
           isNot(contains(dependency)),
           reason:
               'The ordinary workspace header cannot own Git data or a second workflow selector.',

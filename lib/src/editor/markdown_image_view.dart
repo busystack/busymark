@@ -4,7 +4,9 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
@@ -13,6 +15,10 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../core/local_image_resolver.dart';
+import '../core/source_span.dart';
+import '../core/uri_utils.dart';
+import '../platform/native_menu_service.dart';
+import 'markdown_image_permission_scope.dart';
 import '../assets/document_media_context.dart';
 
 /// Resolves an authored image width using the shared document-view bounds.
@@ -42,10 +48,12 @@ class MarkdownImageView extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
-    required this.allowRemoteImages,
-    this.onRemoteImageBlocked,
+    this.allowRemoteImages = false,
+    this.sourceSpan,
+    this.wrapAvailableImage,
     this.width,
     this.height,
+    this.preferredHeight,
     this.maxWidth = BusyMarkSizes.documentImageMaxWidth,
     this.maxHeight,
   });
@@ -57,17 +65,39 @@ class MarkdownImageView extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
+  final SourceSpan? sourceSpan;
+  final Widget Function(Widget child)? wrapAvailableImage;
   final double? width;
   final double? height;
+  final double? preferredHeight;
+  double? get _imageHeight => height ?? preferredHeight;
   final double maxWidth;
   final double? maxHeight;
 
   @override
   Widget build(BuildContext context) {
     final trimmedSource = source.trim();
-    final image = _imageForSource(context, trimmedSource);
-    return DefaultTextStyle.merge(
+    final remote = isRemoteImageSource(trimmedSource);
+    final actions = remote
+        ? MarkdownImagePermissionScope.of(context, trimmedSource, sourceSpan)
+        : null;
+    final isBlocked = remote && !(actions?.allowed ?? allowRemoteImages);
+    final image = isBlocked
+        ? _RemoteImageBlockedPlaceholder(
+            key: ValueKey((
+              actions?.documentOpening,
+              sourceSpan?.startOffset,
+              sourceSpan?.endOffset,
+              trimmedSource,
+            )),
+            source: trimmedSource,
+            alt: alt,
+            width: width,
+            height: height,
+            openMenu: actions?.openMenu,
+          )
+        : _imageForSource(context, trimmedSource);
+    final content = DefaultTextStyle.merge(
       style: const TextStyle(
         decoration: TextDecoration.none,
         fontStyle: FontStyle.normal,
@@ -86,6 +116,7 @@ class MarkdownImageView extends StatelessWidget {
             ),
       ),
     );
+    return isBlocked ? content : wrapAvailableImage?.call(content) ?? content;
   }
 
   Widget? _imageForSource(BuildContext context, String source) {
@@ -104,7 +135,7 @@ class MarkdownImageView extends StatelessWidget {
               ? _MarkdownImagePlaceholder(
                   source: source,
                   alt: alt,
-                  height: height ?? 120,
+                  height: _imageHeight ?? 120,
                 )
               : _fileImage(File(path), source, _isSvgPath(path));
         },
@@ -125,28 +156,21 @@ class MarkdownImageView extends StatelessWidget {
         return _fileImage(File(resolvedPath), source, _isSvgPath(resolvedPath));
       }
       if (uri.scheme == 'http' || uri.scheme == 'https') {
-        if (!allowRemoteImages) {
-          return _RemoteImageBlockedPlaceholder(
-            source: source,
-            alt: alt,
-            height: height ?? 120,
-            onTap: onRemoteImageBlocked,
-          );
-        }
         if (_isSvgPath(uri.path)) {
           return _networkSvg(source);
         }
         return Image.network(
           source,
+          semanticLabel: alt.trim().isEmpty ? null : alt,
           width: width,
-          height: height,
+          height: _imageHeight,
           fit: BoxFit.contain,
           alignment: Alignment.center,
           errorBuilder: (context, error, stackTrace) =>
               _MarkdownImagePlaceholder(
                 source: source,
                 alt: alt,
-                height: height ?? 120,
+                height: _imageHeight ?? 120,
               ),
         );
       }
@@ -172,26 +196,26 @@ class MarkdownImageView extends StatelessWidget {
         source: source,
         alt: alt,
         width: width,
-        height: height,
+        height: _imageHeight,
       );
     }
     if (!file.existsSync()) {
       return _MarkdownImagePlaceholder(
         source: source,
         alt: alt,
-        height: height ?? 120,
+        height: _imageHeight ?? 120,
       );
     }
     return Image.file(
       file,
       width: width,
-      height: height,
+      height: _imageHeight,
       fit: BoxFit.contain,
       alignment: Alignment.center,
       errorBuilder: (context, error, stackTrace) => _MarkdownImagePlaceholder(
         source: source,
         alt: alt,
-        height: height ?? 120,
+        height: _imageHeight ?? 120,
       ),
     );
   }
@@ -201,7 +225,7 @@ class MarkdownImageView extends StatelessWidget {
       source: source,
       alt: alt,
       width: width,
-      height: height,
+      height: _imageHeight,
     );
   }
 }
@@ -963,10 +987,12 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
         : alt.trim().isEmpty
         ? source
         : '$alt\n$source';
-    return SizedBox(
-      height: height,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: height),
       child: Center(
-        child: Padding(
+        heightFactor: 1,
+        child: SingleChildScrollView(
+          primary: false,
           padding: const EdgeInsets.all(BusyMarkSpacing.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -994,64 +1020,191 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
   }
 }
 
-class _RemoteImageBlockedPlaceholder extends StatelessWidget {
+/// Preview's selection region opens its toolbar on secondary button down.
+/// Claim that button for the image before the selection recognizer's deadline,
+/// while still waiting for the pointer release to present the GTK menu.
+class _RemoteImageMenuTapRecognizer extends TapGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    if (event.buttons == kSecondaryMouseButton) {
+      resolve(GestureDisposition.accepted);
+    }
+  }
+}
+
+class _RemoteImageBlockedPlaceholder extends StatefulWidget {
   const _RemoteImageBlockedPlaceholder({
+    super.key,
     required this.source,
     required this.alt,
+    required this.width,
     required this.height,
-    required this.onTap,
+    required this.openMenu,
   });
 
   final String source;
   final String alt;
-  final double height;
-  final VoidCallback? onTap;
+  final double? width;
+  final double? height;
+  final MarkdownImagePermissionMenu? openMenu;
+
+  @override
+  State<_RemoteImageBlockedPlaceholder> createState() =>
+      _RemoteImageBlockedPlaceholderState();
+}
+
+class _RemoteImageBlockedPlaceholderState
+    extends State<_RemoteImageBlockedPlaceholder> {
+  final _focus = FocusNode(debugLabel: 'Remote image permissions');
+  NativeMenuSession? _menu;
+  bool _hovered = false;
+
+  Future<void> _open([Offset? position]) async {
+    final openMenu = widget.openMenu;
+    if (_menu != null || openMenu == null) return;
+    _focus.requestFocus();
+    // The native service captures the primary focus when opening. Apply the
+    // pointer focus request before it takes that snapshot.
+    FocusManager.instance.applyFocusChangesIfNeeded();
+    final session = NativeMenuSession();
+    setState(() => _menu = session);
+    try {
+      await openMenu(context, position, session);
+    } finally {
+      if (mounted) setState(() => _menu = null);
+    }
+  }
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (isBusyMarkContextMenuKeyEvent(event)) {
+      unawaited(_open());
+      return KeyEventResult.handled;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (event is KeyDownEvent &&
+        !keyboard.isControlPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isShiftPressed &&
+        (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.numpadEnter ||
+            event.logicalKey == LogicalKeyboardKey.space)) {
+      unawaited(_open());
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
+  void dispose() {
+    if (_menu case final session?) {
+      unawaited(const NativeMenuService().dismiss(session));
+    }
+    _focus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final label = alt.trim().isEmpty ? source : '$alt\n$source';
-    final content = SizedBox(
-      height: height,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(BusyMarkSpacing.md),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                BusyMarkGlyphs.imageMissing,
-                size: BusyMarkSizes.iconMd,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(height: BusyMarkSpacing.xs),
-              Text(
-                context.l10n.remoteImageBlocked,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.foreground,
-                  fontWeight: FontWeight.w700,
+    final l10n = context.l10n;
+    final enabled = widget.openMenu != null;
+    final alt = widget.alt.trim();
+    final details = alt.isEmpty ? widget.source : '$alt\n${widget.source}';
+    final radius = BorderRadius.circular(BusyMarkRadius.sm);
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      widthFactor: 1,
+      heightFactor: 1,
+      child: BusyMarkFocusIndicator(
+        borderRadius: radius,
+        enabled: enabled,
+        child: Focus(
+          focusNode: _focus,
+          canRequestFocus: enabled,
+          includeSemantics: false,
+          onFocusChange: (_) => setState(() {}),
+          onKeyEvent: enabled ? _onKey : null,
+          child: Semantics(
+            container: true,
+            button: enabled,
+            focusable: enabled,
+            focused: enabled ? _focus.hasFocus : null,
+            onFocus: enabled ? _focus.requestFocus : null,
+            // Linux exposes the label to assistive technology. The visible
+            // tooltip below remains short regardless of the source length.
+            label: '${l10n.remoteImageBlocked}\n$details',
+            onTap: enabled ? () => unawaited(_open()) : null,
+            excludeSemantics: true,
+            child: Tooltip(
+              message: enabled && _menu == null
+                  ? l10n.remoteImageBlockedTooltip
+                  : '',
+              constraints: const BoxConstraints(maxWidth: 240),
+              excludeFromSemantics: true,
+              child: MouseRegion(
+                cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+                onEnter: enabled
+                    ? (_) => setState(() => _hovered = true)
+                    : null,
+                onExit: enabled
+                    ? (_) => setState(() => _hovered = false)
+                    : null,
+                child: RawGestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  excludeFromSemantics: true,
+                  gestures: {
+                    if (enabled)
+                      _RemoteImageMenuTapRecognizer:
+                          GestureRecognizerFactoryWithHandlers<
+                            _RemoteImageMenuTapRecognizer
+                          >(_RemoteImageMenuTapRecognizer.new, (recognizer) {
+                            recognizer.onTap = () => unawaited(_open());
+                            recognizer.onSecondaryTapUp = (event) =>
+                                unawaited(_open(event.globalPosition));
+                          }),
+                  },
+                  child: Container(
+                    width: widget.width,
+                    height: widget.height,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BusyMarkSpacing.xs,
+                      vertical: BusyMarkSpacing.xxs,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          BusyMarkGlyphs.imageBlocked,
+                          size: BusyMarkSizes.iconSm,
+                          color: colors.mutedForeground,
+                        ),
+                        const SizedBox(width: BusyMarkSpacing.xs),
+                        Flexible(
+                          child: Text(
+                            l10n.remoteImageBlocked,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: colors.mutedForeground,
+                                  decoration: enabled && _hovered
+                                      ? TextDecoration.underline
+                                      : null,
+                                  decorationColor: colors.mutedForeground,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: BusyMarkSpacing.xxs),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    );
-    if (onTap == null) {
-      return content;
-    }
-    return Tooltip(
-      message: context.l10n.remoteImageBlockedTooltip,
-      child: InkWell(onTap: onTap, child: content),
     );
   }
 }

@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "새로 만들기",
   "open": "열기",
   "@open": {
     "description": "Open action label."
@@ -714,15 +715,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "만들기",
+  "home": "홈",
+  "openMenu": "열기 메뉴",
+  "newNextcloudNote": "새 Nextcloud 노트",
+  "shortcutNewDocument": "새로 만들기 메뉴",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Markdown 파일 또는 Writerside 프로젝트 만들기",
+  "shortcutNewDocumentDescription": "리소스를 만드는 메뉴 표시",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Markdown 파일, 폴더 또는 Writerside 프로젝트 열기",
+  "shortcutOpenDescription": "리소스를 여는 메뉴 표시",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1072,11 +1076,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "원격 이미지 권한 초기화",
+  "clearRemoteImagePermissions": "작업 공간의 이미지 권한 지우기",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "원격 이미지 로드 권한이 허용된 작업공간의 저장된 권한을 삭제합니다.",
+  "clearRemoteImagePermissionsDescription": "모든 작업 공간의 원격 이미지 권한을 지웁니다.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1492,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "BusyMark가 원격 이미지를 로드할 수 있는지 여부를 선택합니다.",
+  "remoteImageBlockedTooltip": "원격 이미지가 차단되었습니다. 클릭하여 불러오기 옵션을 확인하세요.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1504,7 +1508,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "이 작업공간에서 로드",
+  "loadThisRemoteImage": "이 이미지 불러오기",
+  "remoteImageMoreOptions": "추가 옵션…",
+  "remoteImageMoreOptionsTitle": "원격 이미지 권한",
+  "loadRemoteImagesInDocument": "이 문서의 이미지 불러오기",
+  "remoteImageUntilClose": "이 문서를 닫을 때까지 적용됩니다.",
+  "remoteImageWorkspacePermissionDetail": "개인정보 보호 설정에서 작업 공간 권한을 지울 때까지 {workspace}의 원격 이미지를 허용합니다.",
+  "remoteImageGlobalPermissionDetail": "개인정보 보호 설정에서 이 옵션을 끌 때까지 BusyMark 전체에서 원격 이미지를 허용합니다.",
+  "remoteImageGlobalSettingsDetail": "BusyMark 전체에서 원격 이미지를 허용합니다. 작업 공간 권한은 별도로 관리됩니다.",
+  "loadRemoteImagesForWorkspace": "이 작업 공간에서 항상 허용",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -5157,7 +5169,7 @@
   "searchTopicsCategory": "주제",
   "searchCurrentDocument": "현재 문서",
   "searchCurrentWorkspace": "현재 작업 공간",
-  "browseNotes": "노트 찾아보기",
+  "browseNotes": "Nextcloud 노트 찾아보기",
   "searchActionsCommand": "작업 검색",
   "searchDocumentsCommand": "문서 검색",
   "searchTopicsCommand": "주제 검색",

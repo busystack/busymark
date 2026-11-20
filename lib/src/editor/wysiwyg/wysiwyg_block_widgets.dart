@@ -150,7 +150,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.writersideRoot,
     this.imagesDir = 'images',
     required this.allowRemoteImages,
-    this.onRemoteImageBlocked,
     this.onMathDiagnostic,
     required this.controller,
     required this.undoController,
@@ -206,7 +205,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
   final BusyMarkWysiwygTextController controller;
   final UndoHistoryController undoController;
@@ -441,12 +439,12 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       return BusyMarkWritersideVideoView(
         source: source,
         previewSource: block.attributes['preview-src'],
+        posterSpan: block.posterSpan,
         activeFilePath: documentFilePath,
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         onOpenFailed: () => BusyMarkToastOverlay.maybeShow(
           context,
           message: context.l10n.couldNotOpenTarget(source),
@@ -480,7 +478,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         onEdit: _editHtmlBlock,
       );
     }
@@ -523,7 +520,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                         writersideRoot: writersideRoot,
                         imagesDir: imagesDir,
                         allowRemoteImages: allowRemoteImages,
-                        onRemoteImageBlocked: onRemoteImageBlocked,
                       )
                     : readOnly
                     ? SelectableText(
@@ -896,7 +892,6 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.onEdit,
   });
 
@@ -906,7 +901,6 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final VoidCallback onEdit;
 
   @override
@@ -958,14 +952,28 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
             ],
           ),
           const SizedBox(height: BusyMarkSpacing.sm),
-          _RenderedHtmlBlocks(
-            blocks: block.children,
-            documentFilePath: documentFilePath,
-            workspaceRoot: workspaceRoot,
-            writersideRoot: writersideRoot,
-            imagesDir: imagesDir,
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
+          _RenderedHtmlMedia(
+            buildImage: (inline) => MarkdownImageView(
+              source: inline.destination ?? '',
+              sourceSpan: inline.imageSpan,
+              alt: inline.text,
+              activeFilePath: documentFilePath,
+              workspaceRoot: workspaceRoot,
+              writersideRoot: writersideRoot,
+              imagesDir: imagesDir,
+              allowRemoteImages: allowRemoteImages,
+              maxWidth: BusyMarkSizes.previewMinWidth,
+              maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+              preferredHeight: BusyMarkSizes.previewInlineImageHeight,
+            ),
+            child: _RenderedHtmlBlocks(
+              blocks: block.children,
+              documentFilePath: documentFilePath,
+              workspaceRoot: workspaceRoot,
+              writersideRoot: writersideRoot,
+              imagesDir: imagesDir,
+              allowRemoteImages: allowRemoteImages,
+            ),
           ),
         ],
       ),
@@ -981,7 +989,6 @@ class _RenderedHtmlBlocks extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
   });
 
   final List<BusyBlock> blocks;
@@ -990,7 +997,6 @@ class _RenderedHtmlBlocks extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -1005,7 +1011,6 @@ class _RenderedHtmlBlocks extends StatelessWidget {
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
             allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
             first: index == 0,
           ),
       ],
@@ -1021,7 +1026,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -1031,7 +1035,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -1073,13 +1076,13 @@ class _RenderedHtmlBlock extends StatelessWidget {
           alignment: AlignmentDirectional.centerStart,
           child: MarkdownImageView(
             source: _imageSource(block),
+            sourceSpan: _imageSpan(block.inlines),
             alt: block.plainText,
             activeFilePath: documentFilePath,
             workspaceRoot: workspaceRoot,
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
             allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
         ),
       ),
@@ -1111,7 +1114,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
                 writersideRoot: writersideRoot,
                 imagesDir: imagesDir,
                 allowRemoteImages: allowRemoteImages,
-                onRemoteImageBlocked: onRemoteImageBlocked,
               ),
       ),
       BusyBlockKind.table => _RenderedHtmlTable(block: block, first: first),
@@ -1124,7 +1126,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         first: first,
       ),
       BusyBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
@@ -1136,7 +1137,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
           writersideRoot: writersideRoot,
           imagesDir: imagesDir,
           allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: onRemoteImageBlocked,
           first: first,
         ),
       BusyBlockKind.htmlBlock => _RenderedHtmlBlocks(
@@ -1146,7 +1146,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
       ),
       _ => Padding(
         padding: EdgeInsets.only(
@@ -1175,7 +1174,6 @@ class _RenderedHtmlFigure extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -1185,7 +1183,6 @@ class _RenderedHtmlFigure extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -1216,7 +1213,6 @@ class _RenderedHtmlFigure extends StatelessWidget {
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
             allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
           if (captionBlocks.isNotEmpty)
             Padding(
@@ -1246,7 +1242,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -1256,7 +1251,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -1295,7 +1289,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
                 writersideRoot: writersideRoot,
                 imagesDir: imagesDir,
                 allowRemoteImages: allowRemoteImages,
-                onRemoteImageBlocked: onRemoteImageBlocked,
               ),
             ),
         ],
@@ -1392,6 +1385,16 @@ class _RenderedHtmlTableCell extends StatelessWidget {
   }
 }
 
+class _RenderedHtmlMedia extends InheritedWidget {
+  const _RenderedHtmlMedia({required this.buildImage, required super.child});
+
+  final Widget Function(BusyInline) buildImage;
+
+  @override
+  bool updateShouldNotify(_RenderedHtmlMedia oldWidget) =>
+      buildImage != oldWidget.buildImage;
+}
+
 class _RenderedHtmlInlineText extends StatelessWidget {
   const _RenderedHtmlInlineText({required this.block, this.style});
 
@@ -1425,27 +1428,16 @@ class _RenderedHtmlInlineText extends StatelessWidget {
     BusyInline inline,
     TextStyle? baseStyle,
   ) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final scheme = Theme.of(context).colorScheme;
     final childBaseStyle = _styleForInline(context, inline, baseStyle);
     if (inline.kind == BusyInlineKind.image) {
-      final alt = inline.text.trim().isEmpty ? context.l10n.image : inline.text;
       return WidgetSpan(
         alignment: PlaceholderAlignment.middle,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                BusyMarkGlyphs.image,
-                size: BusyMarkSizes.iconSm,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: BusyMarkSpacing.xs),
-              Text(alt, style: childBaseStyle),
-            ],
-          ),
+          child: context
+              .dependOnInheritedWidgetOfExactType<_RenderedHtmlMedia>()!
+              .buildImage(inline),
         ),
       );
     }
@@ -2830,7 +2822,6 @@ class _ImageBlockEditor extends StatelessWidget {
     required this.writersideRoot,
     required this.imagesDir,
     required this.allowRemoteImages,
-    required this.onRemoteImageBlocked,
   });
 
   final BusyBlock block;
@@ -2839,7 +2830,6 @@ class _ImageBlockEditor extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final bool allowRemoteImages;
-  final VoidCallback? onRemoteImageBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -2849,13 +2839,13 @@ class _ImageBlockEditor extends StatelessWidget {
       alignment: AlignmentDirectional.centerStart,
       child: MarkdownImageView(
         source: source,
+        sourceSpan: _imageSpan(block.inlines),
         alt: block.plainText,
         activeFilePath: documentFilePath,
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
-        onRemoteImageBlocked: onRemoteImageBlocked,
         width: width,
         maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
       ),
@@ -2888,6 +2878,14 @@ String? _imageSourceFromInline(BusyInline inline) {
     if (source != null) {
       return source;
     }
+  }
+  return null;
+}
+
+SourceSpan? _imageSpan(List<BusyInline> inlines) {
+  for (final inline in inlines) {
+    if (inline.kind == BusyInlineKind.image) return inline.imageSpan;
+    if (_imageSpan(inline.children) case final span?) return span;
   }
   return null;
 }

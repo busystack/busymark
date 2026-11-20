@@ -1,15 +1,12 @@
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/keymap_controller.dart';
 import 'package:busymark/src/app/shortcut_binding.dart';
-import 'dart:async';
 
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,28 +14,7 @@ import '../support/desktop_focus.dart';
 
 void main() {
   _delayedModalFocusRegressions();
-  testWidgets('delayed modal barrier release respects a newer focus owner', (
-    tester,
-  ) async {
-    const channel = MethodChannel('com.busymark.test/focus-modal-barrier');
-    final release = Completer<void>();
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-      call,
-    ) async {
-      if (call.method == 'initialize') return true;
-      if (call.method == 'setModalBarrierDepth' && call.arguments == 0) {
-        await release.future;
-      }
-      return null;
-    });
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      ),
-    );
-    final service = LinuxHeaderBarService(channel: channel);
-    await service.initialize();
+  testWidgets('modal closure respects a newer focus owner', (tester) async {
     final previous = FocusNode();
     final newer = FocusNode();
     addTearDown(previous.dispose);
@@ -65,7 +41,6 @@ void main() {
     await tester.pumpAndSettle();
     final result = showBusyMarkModalDialog<void>(
       host,
-      headerBarService: service,
       builder: (_) => const Text('Modal focus test'),
     );
     await tester.pumpAndSettle();
@@ -74,7 +49,6 @@ void main() {
     newer.requestFocus();
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus, same(newer));
-    release.complete();
     await result;
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus, same(newer));
@@ -152,20 +126,6 @@ void main() {
   );
 
   testWidgets('modal dialogs stop app and editor shortcuts', (tester) async {
-    const channel = MethodChannel('com.busymark.test/modal-shortcuts');
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-      call,
-    ) async {
-      return call.method == 'initialize' ? true : null;
-    });
-    addTearDown(() {
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      );
-    });
-    final headerBar = LinuxHeaderBarService(channel: channel);
-    await headerBar.initialize();
     var appShortcutInvocations = 0;
     var editorShortcutInvocations = 0;
 
@@ -205,7 +165,6 @@ void main() {
                 onPressed: () {
                   showBusyMarkModalDialog<void>(
                     context,
-                    headerBarService: headerBar,
                     builder: (dialogContext) => TextButton(
                       autofocus: true,
                       onPressed: () => Navigator.pop(dialogContext),
@@ -296,195 +255,6 @@ void main() {
     Navigator.of(tester.element(find.byType(Dialog))).pop();
     await tester.pumpAndSettle();
     await result;
-  });
-
-  testWidgets('overlapping dialogs synchronize native modal depth', (
-    tester,
-  ) async {
-    const channel = MethodChannel('com.busymark.test/modal-barrier');
-    final barrierDepths = <int>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-      call,
-    ) async {
-      if (call.method == 'initialize') {
-        return true;
-      }
-      if (call.method == 'setModalBarrierDepth') {
-        barrierDepths.add(call.arguments as int);
-      }
-      return null;
-    });
-    addTearDown(() {
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      );
-    });
-    final headerBar = LinuxHeaderBarService(channel: channel);
-    await headerBar.initialize();
-    late BuildContext hostContext;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) {
-            hostContext = context;
-            return const Scaffold(body: SizedBox.expand());
-          },
-        ),
-      ),
-    );
-
-    final first = showBusyMarkModalDialog<void>(
-      hostContext,
-      headerBarService: headerBar,
-      builder: (_) => const Text('First dialog'),
-    );
-    await tester.pumpAndSettle();
-    final second = showBusyMarkModalDialog<void>(
-      hostContext,
-      headerBarService: headerBar,
-      builder: (_) => const Text('Second dialog'),
-    );
-    await tester.pumpAndSettle();
-
-    expect(barrierDepths, [1, 2]);
-
-    Navigator.of(hostContext, rootNavigator: true).pop();
-    await tester.pumpAndSettle();
-    await second;
-    expect(barrierDepths, [1, 2, 1]);
-
-    Navigator.of(hostContext, rootNavigator: true).pop();
-    await tester.pumpAndSettle();
-    await first;
-    expect(barrierDepths, [1, 2, 1, 0]);
-  });
-
-  testWidgets('serializes rapid manual native barrier transitions', (
-    tester,
-  ) async {
-    const channel = MethodChannel('com.busymark.test/serialized-modal-barrier');
-    final firstUpdate = Completer<void>();
-    final transitions = <int>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-      call,
-    ) async {
-      if (call.method == 'initialize') {
-        return true;
-      }
-      if (call.method == 'setModalBarrierDepth') {
-        transitions.add(call.arguments as int);
-        if (transitions.length == 1) {
-          await firstUpdate.future;
-        }
-      }
-      return null;
-    });
-    addTearDown(() {
-      if (!firstUpdate.isCompleted) {
-        firstUpdate.complete();
-      }
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      );
-    });
-    final headerBar = LinuxHeaderBarService(channel: channel);
-    addTearDown(headerBar.dispose);
-    await headerBar.initialize();
-
-    final acquire = acquireBusyMarkModalBarrier(headerBar);
-    await tester.pump();
-    expect(transitions, [1]);
-
-    final release = releaseBusyMarkModalBarrier(headerBar);
-    await tester.pump();
-    expect(transitions, [
-      1,
-    ], reason: 'the native hide must wait for the in-flight native show');
-
-    firstUpdate.complete();
-    await Future.wait([acquire, release]);
-    expect(transitions, [1, 0]);
-  });
-
-  testWidgets('failed native barrier acquisition rolls back and can retry', (
-    tester,
-  ) async {
-    final headerBar = _FailingModalBarrierService();
-    addTearDown(headerBar.dispose);
-
-    await expectLater(
-      acquireBusyMarkModalBarrier(headerBar),
-      throwsA(isA<StateError>()),
-    );
-    expect(headerBar.transitions, [1, 0]);
-
-    await acquireBusyMarkModalBarrier(headerBar);
-    await releaseBusyMarkModalBarrier(headerBar);
-    expect(headerBar.transitions, [1, 0, 1, 0]);
-  });
-
-  testWidgets('modal coordinator resolves the service from ProviderScope', (
-    tester,
-  ) async {
-    const channel = MethodChannel('com.busymark.test/automatic-modal-barrier');
-    final calls = <MethodCall>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-      call,
-    ) async {
-      calls.add(call);
-      return call.method == 'initialize' ? true : null;
-    });
-    addTearDown(() {
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      );
-    });
-    final headerBar = LinuxHeaderBarService(channel: channel);
-    addTearDown(headerBar.dispose);
-    await headerBar.initialize();
-    late BuildContext hostContext;
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [linuxHeaderBarServiceProvider.overrideWithValue(headerBar)],
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) {
-              hostContext = context;
-              return const Scaffold(body: SizedBox.expand());
-            },
-          ),
-        ),
-      ),
-    );
-
-    final result = showBusyMarkModalDialog<void>(
-      hostContext,
-      builder: (_) => const Text('Automatic barrier dialog'),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      calls
-          .where((call) => call.method == 'setModalBarrierDepth')
-          .map((call) => call.arguments),
-      [1],
-    );
-
-    Navigator.of(hostContext, rootNavigator: true).pop();
-    await tester.pumpAndSettle();
-    await result;
-
-    expect(
-      calls
-          .where((call) => call.method == 'setModalBarrierDepth')
-          .map((call) => call.arguments),
-      [1, 0],
-    );
   });
 
   testWidgets('open modal barrier follows live theme changes', (tester) async {
@@ -603,12 +373,9 @@ void _delayedModalFocusRegressions() {
     'disposed host',
     'ordinary return',
   ]) {
-    testWidgets('deferred modal focus respects $scenario', (tester) async {
+    testWidgets('modal focus respects $scenario', (tester) async {
       enableDesktopFocusLifecycle(tester);
-      final barrier = _GatedFocusBarrierService();
-      addTearDown(barrier.dispose);
       addTearDown(() {
-        if (!barrier.release.isCompleted) barrier.release.complete();
         tester.binding.handleAppLifecycleStateChanged(
           AppLifecycleState.resumed,
         );
@@ -641,7 +408,6 @@ void _delayedModalFocusRegressions() {
       await tester.pumpAndSettle();
       final dialog = showBusyMarkModalDialog<void>(
         host,
-        headerBarService: barrier,
         builder: (_) => const AlertDialog(content: Text('Dismiss focus race')),
       );
       await tester.pumpAndSettle();
@@ -651,7 +417,6 @@ void _delayedModalFocusRegressions() {
         FocusManager.instance.applyFocusChangesIfNeeded();
       }
       await tester.pumpAndSettle();
-      expect(barrier.releaseStarted, isTrue);
       if (scenario.contains('newer')) {
         newer.requestFocus();
         await tester.pumpAndSettle();
@@ -685,7 +450,6 @@ void _delayedModalFocusRegressions() {
         await tester.pumpWidget(const SizedBox());
       }
       final owner = FocusManager.instance.primaryFocus;
-      barrier.release.complete();
       await dialog;
       for (var frame = 0; frame < 30; frame++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -714,35 +478,5 @@ void _delayedModalFocusRegressions() {
       }
       expect(tester.takeException(), isNull);
     }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
-  }
-}
-
-class _GatedFocusBarrierService extends LinuxHeaderBarService {
-  _GatedFocusBarrierService()
-    : super(channel: const MethodChannel('com.busymark.test/deferred-focus'));
-
-  final release = Completer<void>();
-  bool releaseStarted = false;
-
-  @override
-  Future<void> setModalBarrierDepth(int depth) async {
-    if (depth == 0) {
-      releaseStarted = true;
-      await release.future;
-    }
-  }
-}
-
-class _FailingModalBarrierService extends LinuxHeaderBarService {
-  final transitions = <int>[];
-  var _failNextShow = true;
-
-  @override
-  Future<void> setModalBarrierDepth(int value) async {
-    transitions.add(value);
-    if (value > 0 && _failNextShow) {
-      _failNextShow = false;
-      throw StateError('simulated native modal-barrier failure');
-    }
   }
 }

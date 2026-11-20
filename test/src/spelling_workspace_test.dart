@@ -15,7 +15,6 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
@@ -85,17 +84,8 @@ void main() {
       'delayed spelling review return respects newerOwner=$newerOwner',
       (tester) async {
         enableDesktopFocusLifecycle(tester);
-        final barrier = _ReviewFocusBarrier();
-        addTearDown(() {
-          if (!barrier.release.isCompleted) barrier.release.complete();
-          barrier.dispose();
-        });
         const original = 'helo world\n';
-        final harness = await _pumpWorkspace(
-          tester,
-          source: original,
-          headerBarService: barrier,
-        );
+        final harness = await _pumpWorkspace(tester, source: original);
         await _until(
           tester,
           () =>
@@ -125,10 +115,7 @@ void main() {
           find.descendant(of: dialog, matching: find.text(l10n.close)),
           pointer: 1402,
         );
-        await _until(
-          tester,
-          () => barrier.releaseStarted && dialog.evaluate().isEmpty,
-        );
+        await _until(tester, () => dialog.evaluate().isEmpty);
         if (newerOwner) {
           entry = OverlayEntry(
             builder: (_) => Positioned(
@@ -149,7 +136,6 @@ void main() {
           await tester.pumpAndSettle();
           expect(FocusManager.instance.primaryFocus, same(newer));
         }
-        barrier.release.complete();
         for (var frame = 0; frame < 30; frame++) {
           tester.binding.scheduleFrame();
           await tester.pump(const Duration(milliseconds: 16));
@@ -1745,7 +1731,6 @@ Future<_Harness> _pumpWorkspace(
   bool automaticSpelling = true,
   SpellingDictionaryFileDownload? downloadFile,
   SpellingCoordinatorStarter? coordinatorStarter,
-  LinuxHeaderBarService? headerBarService,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1400, 1000));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1799,9 +1784,6 @@ Future<_Harness> _pumpWorkspace(
       ),
       documentRecoveryStoreProvider.overrideWithValue(
         MemoryDocumentRecoveryStore(),
-      ),
-      linuxHeaderBarServiceProvider.overrideWithValue(
-        headerBarService ?? _HeaderBar(),
       ),
       systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
       spellingSessionControllerProvider.overrideWith((ref) => spelling),
@@ -1924,29 +1906,6 @@ class _Settings implements LocalSettingsStore {
       .toJson();
   @override
   Future<void> save(Map<String, Object?> value) async {}
-}
-
-class _HeaderBar extends LinuxHeaderBarService {
-  _HeaderBar() : super(channel: const MethodChannel('test.busymark/spelling'));
-  @override
-  bool get isAvailable => false;
-  @override
-  bool get usesNativeHeaderBar => false;
-  @override
-  Stream<HeaderBarAction> get actions => const Stream.empty();
-}
-
-class _ReviewFocusBarrier extends _HeaderBar {
-  final release = Completer<void>();
-  bool releaseStarted = false;
-
-  @override
-  Future<void> setModalBarrierDepth(int depth) async {
-    if (depth == 0) {
-      releaseStarted = true;
-      await release.future;
-    }
-  }
 }
 
 Future<void> _copyDictionaryDownload({

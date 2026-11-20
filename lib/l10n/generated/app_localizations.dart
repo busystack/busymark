@@ -1411,6 +1411,12 @@ abstract class AppLocalizations {
   /// **'Markdown'**
   String get markdown;
 
+  /// Short tooltip for the header button that opens creation options.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newResource;
+
   /// Open action label.
   ///
   /// In en, this message translates to:
@@ -1771,22 +1777,40 @@ abstract class AppLocalizations {
   /// **'General'**
   String get shortcutGroupGeneral;
 
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @openMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Menu'**
+  String get openMenu;
+
+  /// No description provided for @newNextcloudNote.
+  ///
+  /// In en, this message translates to:
+  /// **'New Nextcloud Note'**
+  String get newNextcloudNote;
+
   /// Keyboard shortcut label for opening the content creation chooser.
   ///
   /// In en, this message translates to:
-  /// **'Create'**
+  /// **'New Menu'**
   String get shortcutNewDocument;
 
   /// Keyboard shortcut description for creating Markdown files or Writerside projects.
   ///
   /// In en, this message translates to:
-  /// **'Create a Markdown file or Writerside project'**
+  /// **'Show the menu for creating resources'**
   String get shortcutNewDocumentDescription;
 
   /// Keyboard shortcut description for opening content.
   ///
   /// In en, this message translates to:
-  /// **'Open a Markdown file, folder, or Writerside project'**
+  /// **'Show the menu for opening resources'**
   String get shortcutOpenDescription;
 
   /// Keyboard shortcut description for saving content.
@@ -2104,7 +2128,7 @@ abstract class AppLocalizations {
   /// Welcome screen action for creating a Markdown file.
   ///
   /// In en, this message translates to:
-  /// **'Create Markdown File'**
+  /// **'New Markdown File'**
   String get createMarkdownFile;
 
   /// Welcome screen subtitle for creating a Markdown file.
@@ -2116,7 +2140,7 @@ abstract class AppLocalizations {
   /// Welcome screen action for creating a Writerside project.
   ///
   /// In en, this message translates to:
-  /// **'Create Writerside Project'**
+  /// **'New Writerside Project'**
   String get createWritersideProject;
 
   /// Welcome screen subtitle for creating a Writerside project.
@@ -2320,13 +2344,13 @@ abstract class AppLocalizations {
   /// Settings action label for clearing per-workspace remote image permissions.
   ///
   /// In en, this message translates to:
-  /// **'Clear remote image permissions'**
+  /// **'Clear workspace image permissions'**
   String get clearRemoteImagePermissions;
 
   /// Settings action description for clearing per-workspace remote image permissions.
   ///
   /// In en, this message translates to:
-  /// **'Forget workspaces that were allowed to load remote images.'**
+  /// **'Forget all workspace permissions for remote images.'**
   String get clearRemoteImagePermissionsDescription;
 
   /// Settings action label for clearing trusted Git workspaces.
@@ -2938,7 +2962,7 @@ abstract class AppLocalizations {
   /// Tooltip for a blocked remote image placeholder.
   ///
   /// In en, this message translates to:
-  /// **'Choose whether BusyMark can load remote images.'**
+  /// **'Remote image blocked. Click for loading options.'**
   String get remoteImageBlockedTooltip;
 
   /// Dialog title for remote image loading permission.
@@ -2953,10 +2977,58 @@ abstract class AppLocalizations {
   /// **'This document references images from the internet. Loading them can reveal network information to the image host.'**
   String get remoteImagesBlockedMessage;
 
+  /// Primary action on a blocked image.
+  ///
+  /// In en, this message translates to:
+  /// **'Load this image'**
+  String get loadThisRemoteImage;
+
+  /// Opens the additional remote image permission choices.
+  ///
+  /// In en, this message translates to:
+  /// **'More options…'**
+  String get remoteImageMoreOptions;
+
+  /// Title of the remote image permission dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote image permissions'**
+  String get remoteImageMoreOptionsTitle;
+
+  /// Temporary permission for all images in a single document.
+  ///
+  /// In en, this message translates to:
+  /// **'Load images in this document'**
+  String get loadRemoteImagesInDocument;
+
+  /// Lifetime of a temporary remote image permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Until this document closes.'**
+  String get remoteImageUntilClose;
+
+  /// Shows the identity of the workspace and explains how to revoke the permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allows remote images in {workspace} until you clear workspace permissions in Privacy settings.'**
+  String remoteImageWorkspacePermissionDetail(String workspace);
+
+  /// Explains how to revoke the app-wide remote image permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allows remote images throughout BusyMark until you turn this off in Privacy settings.'**
+  String get remoteImageGlobalPermissionDetail;
+
+  /// Description for the app-wide Privacy switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow remote images throughout BusyMark. Workspace permissions are managed separately.'**
+  String get remoteImageGlobalSettingsDetail;
+
   /// Dialog button that allows remote images for the current workspace.
   ///
   /// In en, this message translates to:
-  /// **'Load for this workspace'**
+  /// **'Always allow in this workspace'**
   String get loadRemoteImagesForWorkspace;
 
   /// Dialog button that enables remote images globally.
@@ -9423,7 +9495,7 @@ abstract class AppLocalizations {
   /// No description provided for @browseNotes.
   ///
   /// In en, this message translates to:
-  /// **'Browse Notes'**
+  /// **'Browse Nextcloud Notes'**
   String get browseNotes;
 
   /// No description provided for @searchActionsCommand.

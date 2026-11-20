@@ -1,9 +1,10 @@
+import 'dart:async';
+
 import '../app/git_dismissal.dart';
 import '../git/application/shared_git_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../git/application/git_controller.dart';
 import '../local_history/local_history_controller.dart';
 import 'workspace_controller.dart';
 import 'workspace_model.dart';
@@ -19,7 +20,6 @@ List<WorkspaceTabEntry> _tabs(WidgetRef ref, WorkspaceState state) {
   if (workspace == null) return const [];
   final history = ref.read(localHistoryControllerProvider);
   return workspaceTabEntries(
-    workspace: workspace,
     gitTabs:
         ref.read(sharedGitReviewProvider)[workspace.id] ??
         const SharedGitTabs(),
@@ -49,6 +49,22 @@ bool _tabSurvivedFirstSave(
           buffer.filePath != null &&
           buffer.filePath!.isNotEmpty,
     );
+
+/// Reveal a successfully opened document using the same view transition as
+/// selecting its editor tab. Resource validation and opening happen first.
+final revealOpenedDocumentProvider = Provider<VoidCallback>(
+  (ref) => () {
+    final history = ref.read(localHistoryControllerProvider.notifier);
+    history.clearComparison();
+    final state = ref.read(workspaceControllerProvider);
+    final buffer = state.activeBuffer;
+    if (buffer == null) return;
+    if (state.workspace case final workspace?) {
+      ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
+    }
+    unawaited(history.selectDocumentForBuffer(buffer));
+  },
+);
 
 /// Validates a tab captured before an asynchronous menu was presented.
 bool isWorkspaceTabCurrent(
@@ -125,7 +141,6 @@ Future<bool> _closeTabs(
   };
   // Capture controllers before destructive awaits. Callers must supply a ref
   // owned by WorkspaceScreen or the app, never the disappearing tab strip.
-  final git = ref.read(gitControllerProvider.notifier);
   final history = ref.read(localHistoryControllerProvider.notifier);
   var operationWorkspace = initial.workspace!;
   var documentsFinished = false;
@@ -268,7 +283,6 @@ Future<bool> _closeTabs(
           !currentWorkspace()) {
         return false;
       }
-      git.deactivateDiffFile();
     }
     final remaining = _tabs(ref, ref.read(workspaceControllerProvider));
     if (remaining.isNotEmpty &&

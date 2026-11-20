@@ -80,20 +80,23 @@ void main() {
         '</tr></table>',
         mode: MarkdownMode.gfm,
       )!;
-      expect(decoded.documentBlocks.map((block) => block.plainText), [
+      final layout = decoded.documentBlocks.single;
+      final paragraphs = [
+        for (final child in layout.children)
+          child.kind == BusyBlockKind.htmlBlock ? child.children.single : child,
+      ];
+      expect(paragraphs.map((block) => block.plainText), [
         'Caption',
         'First',
         'Second',
       ]);
-      expect(decoded.documentBlocks.map((block) => block.attributes['dir']), [
+      expect(paragraphs.map((block) => block.attributes['dir']), [
         'rtl',
         'rtl',
         'ltr',
       ]);
       expect(
-        decoded.documentBlocks.every(
-          (block) => block.kind == BusyBlockKind.paragraph,
-        ),
+        paragraphs.every((block) => block.kind == BusyBlockKind.paragraph),
         isTrue,
       );
     },
@@ -119,7 +122,9 @@ void main() {
         hasLength(1),
       );
       expect(
-        blocks.where((block) => block.kind == BusyBlockKind.unorderedListItem),
+        blocks
+            .expand((block) => block.children)
+            .where((block) => block.kind == BusyBlockKind.unorderedListItem),
         hasLength(3),
       );
 

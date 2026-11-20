@@ -119,18 +119,6 @@ class WritersideTopicFileRenameResult {
   final bool updatedXmlTopicId;
 }
 
-class WritersideTopicFileDeleteResult {
-  const WritersideTopicFileDeleteResult({
-    required this.deletedTopicPath,
-    required this.updatedTreePaths,
-    required this.removedTocEntries,
-  });
-
-  final String deletedTopicPath;
-  final List<String> updatedTreePaths;
-  final int removedTocEntries;
-}
-
 /// Mutates a resolved Writerside topic file and every semantically resolved
 /// project reference supplied to the rename transaction.
 ///
@@ -414,38 +402,6 @@ class WritersideTopicFileEditor {
           if (_isTreePath(edit.path)) edit.path,
       ]),
       updatedXmlTopicId: plan.updatesXmlTopicId,
-    );
-  }
-
-  Future<WritersideTopicFileDeleteResult> delete({
-    required WritersideModule module,
-    required WritersideTopic topic,
-  }) async {
-    final snapshot = await _currentModuleSnapshot(module, topic);
-    final context = await _mutationContext(snapshot);
-    final treeMutation = await _deleteTreeEdits(context);
-    final appliedTreeEdits = <_TreeEdit>[];
-    try {
-      await _applyTreeEdits(
-        context.anchor,
-        treeMutation.edits,
-        applied: appliedTreeEdits,
-      );
-      await _ensureTreesAtExpectedSources(context, treeMutation.edits);
-      await _ensureConfigurationUnchanged(context);
-      await _ensureTopicSourcesUnchanged(context);
-      await _deleteUnchangedTopicSource(context);
-    } on Object {
-      await _rollbackTreeEdits(context.anchor, appliedTreeEdits);
-      rethrow;
-    }
-
-    return WritersideTopicFileDeleteResult(
-      deletedTopicPath: context.topicPath,
-      updatedTreePaths: List.unmodifiable([
-        for (final edit in treeMutation.edits) edit.path,
-      ]),
-      removedTocEntries: treeMutation.removedTocEntries,
     );
   }
 
@@ -1951,114 +1907,6 @@ class WritersideTopicFileEditor {
     return '$replacement$suffix';
   }
 
-  Future<_DeleteTreeMutation> _deleteTreeEdits(_MutationContext context) async {
-    for (final tree in context.trees) {
-      final startPage = tree.document.rootElement.getAttribute('start-page');
-      if (startPage != null &&
-          _referenceTargetsTopic(context, startPage, tree.path)) {
-        throw BusyMarkException(
-          'writerside.topic-file.is-start-page',
-          args: {'topic': startPage, 'treePath': tree.path},
-        );
-      }
-    }
-
-    final edits = <_TreeEdit>[];
-    var removedTocEntries = 0;
-    for (final tree in context.trees) {
-      final removed = _removeTopicTocElements(
-        context,
-        tree.document.rootElement,
-        tree.path,
-      );
-      if (removed == 0) {
-        continue;
-      }
-      removedTocEntries += removed;
-      edits.add(
-        _TreeEdit(
-          path: tree.path,
-          originalSource: tree.source,
-          updatedSource: _xmlSource(tree.document),
-        ),
-      );
-    }
-    return _DeleteTreeMutation(
-      edits: edits,
-      removedTocEntries: removedTocEntries,
-    );
-  }
-
-  int _removeTopicTocElements(
-    _MutationContext context,
-    XmlElement parent,
-    String treePath,
-  ) {
-    var removed = 0;
-    final children = parent.childElements
-        .where((element) => element.name.local == 'toc-element')
-        .toList();
-    for (final child in children) {
-      removed += _removeTopicTocElements(context, child, treePath);
-      final reference = child.getAttribute('topic');
-      if (reference == null ||
-          !_referenceTargetsTopic(context, reference, treePath)) {
-        continue;
-      }
-      final index = parent.children.indexOf(child);
-      final promoted = child.childElements
-          .where((element) => element.name.local == 'toc-element')
-          .map((element) => element.copy())
-          .toList();
-      parent.children.removeAt(index);
-      parent.children.insertAll(index, promoted);
-      removed += 1;
-    }
-    return removed;
-  }
-
-  bool _referenceTargetsTopic(
-    _MutationContext context,
-    String reference,
-    String treePath,
-  ) {
-    final normalizedReference = _normalizedReference(reference);
-    var matches = context.module.topics
-        .where(
-          (candidate) =>
-              _normalizedReference(candidate.fileName) == normalizedReference,
-        )
-        .toList();
-    if (matches.isEmpty) {
-      if (p.dirname(normalizedReference) != '.') {
-        return false;
-      }
-      matches = context.module.topics
-          .where(
-            (candidate) =>
-                p.basename(_normalizedReference(candidate.fileName)) ==
-                normalizedReference,
-          )
-          .toList();
-    }
-    final targetMatches = matches
-        .where(
-          (candidate) =>
-              p.equals(normalizePath(candidate.filePath), context.topicPath),
-        )
-        .length;
-    if (targetMatches == 0) {
-      return false;
-    }
-    if (matches.length != 1 || targetMatches != 1) {
-      throw BusyMarkException(
-        'writerside.topic-file.ambiguous-reference',
-        args: {'reference': reference, 'treePath': treePath},
-      );
-    }
-    return true;
-  }
-
   _RenamedTopicSource _renamedTopicSource({
     required String path,
     required String source,
@@ -2260,58 +2108,6 @@ class WritersideTopicFileEditor {
       throw FileSystemException(
         'Failed to apply file mode $mode: ${result.stderr}',
         target.path,
-      );
-    }
-  }
-
-  Future<void> _ensureTreesAtExpectedSources(
-    _MutationContext context,
-    List<_TreeEdit> edits,
-  ) async {
-    final updatedSources = {
-      for (final edit in edits) edit.path: edit.updatedSource,
-    };
-    for (final tree in context.trees) {
-      final expectedSource = updatedSources[tree.path] ?? tree.source;
-      final resolution = await _resolvePath(
-        context.anchor,
-        tree.path,
-        allowRoot: false,
-      );
-      if (resolution.type != FileSystemEntityType.file ||
-          await File(resolution.path).readAsString() != expectedSource) {
-        throw BusyMarkException(
-          'writerside.topic-file.tree-changed',
-          args: {'path': resolution.path},
-        );
-      }
-    }
-  }
-
-  Future<void> _ensureConfigurationUnchanged(_MutationContext context) async {
-    final current = await _configurationSources(context.module.rootPath);
-    if (!_sameStringMap(current, context.configurationSources)) {
-      throw BusyMarkException(
-        'writerside.topic-file.tree-changed',
-        args: {'path': context.module.config.filePath},
-      );
-    }
-  }
-
-  Future<void> _ensureTopicSourcesUnchanged(
-    _MutationContext context, {
-    Map<String, String> additionalSources = const {},
-  }) async {
-    final expected = <String, String>{
-      ...context.topicSources,
-      for (final entry in additionalSources.entries)
-        normalizePath(entry.key): entry.value,
-    };
-    final current = await _topicSources(context.anchor, context.module);
-    if (!_sameStringMap(current, expected)) {
-      throw BusyMarkException(
-        'writerside.topic-file.topic-inventory-changed',
-        args: {'path': context.module.rootPath},
       );
     }
   }
@@ -2701,16 +2497,6 @@ class _TreeEdit {
   final String path;
   final String originalSource;
   final String updatedSource;
-}
-
-class _DeleteTreeMutation {
-  const _DeleteTreeMutation({
-    required this.edits,
-    required this.removedTocEntries,
-  });
-
-  final List<_TreeEdit> edits;
-  final int removedTocEntries;
 }
 
 class _RenamedTopicSource {

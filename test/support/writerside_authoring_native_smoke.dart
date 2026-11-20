@@ -17,7 +17,6 @@ import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -213,7 +212,6 @@ Future<void> main(List<String> arguments) async {
       ),
     ).writeAsString(_invalidationSource(xml, malformed, draft));
   }
-  await LinuxHeaderBarService.instance.initialize();
   final settings = AppSettings.defaults().copyWith(
     localeTag: 'en',
     themeModePreference: BusyMarkThemeModePreference.light,

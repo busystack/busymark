@@ -24,12 +24,15 @@ typedef _ErrnoLocationDart = Pointer<Int32> Function();
 typedef _LinkNative =
     Int32 Function(Pointer<Utf8> oldPath, Pointer<Utf8> newPath);
 typedef _LinkDart = int Function(Pointer<Utf8> oldPath, Pointer<Utf8> newPath);
+typedef _OpenNative = Int32 Function(Pointer<Utf8>, Int32);
+typedef _OpenDart = int Function(Pointer<Utf8>, int);
+typedef _DescriptorNative = Int32 Function(Int32);
+typedef _DescriptorDart = int Function(int);
 
 /// Small Linux-only wrapper around atomic `renameat2` file exchanges.
 ///
-/// Exchanging a staged file with its destination lets callers verify the exact
-/// inode that was replaced and exchange it back without overwriting a
-/// concurrent writer.
+/// Exchanging a staged file with its destination retains the exact displaced
+/// inode so callers can verify it before cleanup.
 final class LinuxAtomicFileApi {
   LinuxAtomicFileApi._() {
     if (!Platform.isLinux) {
@@ -49,20 +52,36 @@ final class LinuxAtomicFileApi {
           '__errno_location',
         );
     _link = _library!.lookupFunction<_LinkNative, _LinkDart>('link');
+    _open = library.lookupFunction<_OpenNative, _OpenDart>('open');
+    _close = library.lookupFunction<_DescriptorNative, _DescriptorDart>(
+      'close',
+    );
+    _fsync = library.lookupFunction<_DescriptorNative, _DescriptorDart>(
+      'fsync',
+    );
   }
 
   static const fileExistsError = 17;
+  static const fileMissingError = 2;
+  static const operationNotSupportedError = 95;
   static const _invalidArgumentError = 22;
   static const _functionNotImplementedError = 38;
-  static const _operationNotSupportedError = 95;
   static const _atCurrentWorkingDirectory = -100;
   static const _renameNoReplace = 1;
   static const _renameExchange = 2;
+  // The ARM Linux UAPI keeps different values for these two open(2) flags.
+  static final _armOpenFlags =
+      Abi.current() == Abi.linuxArm || Abi.current() == Abi.linuxArm64;
+  static final _openDirectoryFlag = _armOpenFlags ? 0x4000 : 0x10000;
+  static final _noFollowFlag = _armOpenFlags ? 0x8000 : 0x20000;
   static final instance = LinuxAtomicFileApi._();
 
   _RenameAt2Dart? _renameAt2;
   _ErrnoLocationDart? _errnoLocation;
   _LinkDart? _link;
+  late final _OpenDart _open;
+  late final _DescriptorDart _close;
+  late final _DescriptorDart _fsync;
   DynamicLibrary? _library;
 
   bool get isAvailable => _renameAt2 != null && _errnoLocation != null;
@@ -72,7 +91,7 @@ final class LinuxAtomicFileApi {
     final renameAt2 = _renameAt2;
     final errnoLocation = _errnoLocation;
     if (renameAt2 == null || errnoLocation == null) {
-      return null;
+      return _functionNotImplementedError;
     }
     final nativeFirstPath = firstPath.toNativeUtf8();
     final nativeSecondPath = secondPath.toNativeUtf8();
@@ -91,6 +110,63 @@ final class LinuxAtomicFileApi {
     }
   }
 
+  /// EINVAL also describes invalid operands. Retry only a known-valid pair
+  /// in the staging directory before treating it as a capability failure.
+  bool exchangeUnsupported(int error, String directory) {
+    if (error == _functionNotImplementedError ||
+        error == operationNotSupportedError) {
+      return true;
+    }
+    if (error != _invalidArgumentError) return false;
+    final probe = Directory(directory).createTempSync('.exchange-probe-');
+    try {
+      final first = File('${probe.path}/first')..createSync();
+      final second = File('${probe.path}/second')..createSync();
+      final result = exchange(first.path, second.path);
+      return result == _invalidArgumentError ||
+          result == _functionNotImplementedError ||
+          result == operationNotSupportedError;
+    } finally {
+      probe.deleteSync(recursive: true);
+    }
+  }
+
+  /// Moves the entry itself. A hard link cannot displace a name safely.
+  int? moveNoReplace(String oldPath, String newPath) =>
+      publishNoReplace(oldPath, newPath, renameOnly: true);
+
+  int openDirectory(String path) => _openEntry(path, _openDirectoryFlag);
+
+  // O_PATH | O_NOFOLLOW keeps the directory entry's inode alive across rename,
+  // including on filesystems that assign inode numbers in memory.
+  int pinEntry(String path) => _openEntry(path, 0x200000 | _noFollowFlag);
+
+  int _openEntry(String path, int flags) {
+    final native = path.toNativeUtf8();
+    try {
+      final descriptor = _open(native, flags | 0x80000); // O_CLOEXEC
+      if (descriptor >= 0) return descriptor;
+      throw FileSystemException(
+        'Could not open an entry for safe publication',
+        path,
+        OSError('open failed', _errnoLocation!().value),
+      );
+    } finally {
+      malloc.free(native);
+    }
+  }
+
+  void closeDescriptor(int descriptor) => _close(descriptor);
+
+  void flushDirectory(int descriptor, String path) {
+    if (_fsync(descriptor) == 0) return;
+    throw FileSystemException(
+      'Could not flush publication directory',
+      path,
+      OSError('fsync failed', _errnoLocation!().value),
+    );
+  }
+
   /// Publishes [oldPath] at [newPath] without replacing an existing entity.
   ///
   /// Returns `null` on success, otherwise the Linux errno value.
@@ -98,11 +174,12 @@ final class LinuxAtomicFileApi {
     String oldPath,
     String newPath, {
     bool directory = false,
+    bool renameOnly = false,
   }) {
     final errnoLocation = _errnoLocation;
     final link = _link;
     if (errnoLocation == null || link == null) {
-      return _operationNotSupportedError;
+      return operationNotSupportedError;
     }
     final nativeOldPath = oldPath.toNativeUtf8();
     final nativeNewPath = newPath.toNativeUtf8();
@@ -120,13 +197,14 @@ final class LinuxAtomicFileApi {
           return null;
         }
         final errorNumber = errnoLocation().value;
+        if (renameOnly) return errorNumber;
         if (errorNumber != _invalidArgumentError &&
             errorNumber != _functionNotImplementedError &&
-            errorNumber != _operationNotSupportedError) {
+            errorNumber != operationNotSupportedError) {
           return errorNumber;
         }
       }
-      if (directory) return _operationNotSupportedError;
+      if (directory || renameOnly) return operationNotSupportedError;
       final result = link(nativeOldPath, nativeNewPath);
       return result == 0 ? null : errnoLocation().value;
     } finally {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
+import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -21,6 +22,32 @@ void main() {
         (event) => event.path == path || event.destinationPath == path,
       )
       .timeout(const Duration(seconds: 5));
+
+  test('conditional exchange keeps staging descendants private', () async {
+    final file = await File(p.join(root.path, 'note.md')).writeAsString('old');
+    final events = <WorkspaceFileMonitorEvent>[];
+    final subscription = monitor.events.listen(events.add);
+    addTearDown(subscription.cancel);
+    final service = WorkspaceService(
+      beforeNewFilePublish: (target) =>
+          monitor.start(rootPath: root.path, openFilePaths: [target]),
+    );
+    final published = eventFor(file.path);
+    await service.saveTextIfUnchanged(
+      file.path,
+      'saved',
+      expectedSnapshot: await service.fileSnapshot(file.path),
+    );
+    await published;
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(await file.readAsString(), 'saved');
+    expect(events, isNotEmpty);
+    for (final event in events) {
+      expect(event.path, file.path);
+      expect(event.destinationPath, isNull);
+      expect(event.kind, isNot(WorkspaceFileEventKind.moved));
+    }
+  });
 
   test(
     'nested closed files report edits, deletion and atomic replacement',

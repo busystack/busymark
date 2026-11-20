@@ -211,7 +211,7 @@ void main() {
   );
 
   testWidgets(
-    'native selector waits for its trigger releases with Num Lock pressed',
+    'native selector opens with the triggering keys and Num Lock held',
     (tester) async {
       final probe = NativeMenuProbe(tester);
       final controller = BusyMarkHeaderMenuController();
@@ -250,23 +250,16 @@ void main() {
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.f9);
-      controller.open(
-        shortcuts: const [
-          SingleActivator(LogicalKeyboardKey.f9, control: true, shift: true),
-        ],
-      );
-      await tester.pump();
-      expect(probe.isOpen, isFalse);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.f9);
-      await tester.pump();
-      expect(probe.isOpen, isFalse);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pump();
-      expect(probe.isOpen, isFalse);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      controller.open();
       await tester.pumpAndSettle();
       expect(probe.isOpen, isTrue);
       expect(probe.packets.last['focusFirst'], isTrue);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f9);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      expect(probe.isOpen, isTrue);
+      expect(probe.packets, hasLength(1));
       expect({
         for (final e in probe.entries) e['mnemonic']: e['label'],
       }, _sidebar);
@@ -284,9 +277,7 @@ void main() {
     BusyMarkCommandIds.sidebarViewSelector,
     BusyMarkCommandIds.contentViewSelector,
   ]) {
-    testWidgets('$id release barrier follows the configured binding', (
-      tester,
-    ) async {
+    testWidgets('$id opens with its configured binding held', (tester) async {
       const binding = BusyMarkKeyBinding(
         LogicalKeyboardKey.f8,
         alt: true,
@@ -324,13 +315,13 @@ void main() {
       await tester.sendKeyDownEvent(LogicalKeyboardKey.altRight);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftRight);
       await tester.sendKeyDownEvent(binding.key);
-      controller.open(shortcuts: commands.activators(id));
-      await tester.pump();
-      expect(probe.isOpen, isFalse);
+      controller.open();
+      await tester.pumpAndSettle();
+      expect(probe.isOpen, isTrue);
       await tester.sendKeyUpEvent(binding.key);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.altRight);
       await tester.pump();
-      expect(probe.isOpen, isFalse, reason: 'Right Shift is still held');
+      expect(probe.isOpen, isTrue);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftRight);
       await tester.pumpAndSettle();
       expect(probe.isOpen, isTrue, reason: 'Unrelated keys must not block');
@@ -349,7 +340,6 @@ void main() {
   }
 
   testWidgets('Linux context-menu keys exclude Ctrl+Shift+F10', (tester) async {
-    final keys = BusyMarkContextMenuKeys();
     var opened = 0;
     const event = KeyDownEvent(
       physicalKey: PhysicalKeyboardKey.f10,
@@ -360,7 +350,8 @@ void main() {
       MaterialApp(
         home: Focus(
           autofocus: true,
-          onKeyEvent: (_, event) => keys.handle(event, () => opened++)
+          onKeyEvent: (_, event) =>
+              handleBusyMarkContextMenuKey(event, () => opened++)
               ? KeyEventResult.handled
               : KeyEventResult.ignored,
           child: const SizedBox(),
@@ -371,9 +362,10 @@ void main() {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     expect(isBusyMarkContextMenuKeyEvent(event), isTrue);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
-    expect(opened, 0);
+    expect(opened, 1, reason: 'Shift+F10 opens on keydown');
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.f10);
+    expect(opened, 1, reason: 'Repeats do not reopen a native menu');
     await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
-    expect(opened, 0, reason: 'GTK must wait for Shift release');
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     expect(opened, 1);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);

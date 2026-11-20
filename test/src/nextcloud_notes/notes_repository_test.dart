@@ -765,8 +765,12 @@ void main() {
       );
       expect((await store.notes()).single.content, 'body');
       final db = sqlite3.open(path);
-      expect(db.select('PRAGMA user_version').single.values.single, 6);
-      expect(db.select('SELECT COUNT(*) AS n FROM outbox').single['n'], 1);
+      expect(db.select('PRAGMA user_version').single.values.single, 8);
+      expect(
+        db.select("SELECT name FROM sqlite_master WHERE name='outbox'"),
+        isEmpty,
+      );
+      expect((await store.notes()).single.hasPendingChanges, isTrue);
       db.close();
       if (Platform.isLinux) {
         expect((await File(path).stat()).mode & 0x1ff, 0x180);

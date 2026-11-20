@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Nieuw",
   "open": "Openen",
   "@open": {
     "description": "Open action label."
@@ -714,15 +715,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Maken",
+  "home": "Start",
+  "openMenu": "Menu Openen",
+  "newNextcloudNote": "Nieuwe Nextcloud-notitie",
+  "shortcutNewDocument": "Menu Nieuw",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Maak een Markdown-bestand of Writerside-project",
+  "shortcutNewDocumentDescription": "Toon het menu om bronnen te maken",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Open een Markdown-bestand, map of Writerside-project",
+  "shortcutOpenDescription": "Toon het menu om bronnen te openen",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1072,11 +1076,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Wis machtigingen voor externe afbeeldingen",
+  "clearRemoteImagePermissions": "Afbeeldingsmachtigingen voor werkruimten wissen",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Verwijder de opgeslagen rechten voor werkruimten die externe afbeeldingen mochten laden.",
+  "clearRemoteImagePermissionsDescription": "Vergeet alle machtigingen voor externe afbeeldingen in werkruimten.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1492,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Kies of BusyMark externe afbeeldingen kan laden.",
+  "remoteImageBlockedTooltip": "Externe afbeelding geblokkeerd. Klik voor laadopties.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1504,7 +1508,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Voor deze werkruimte laden",
+  "loadThisRemoteImage": "Deze afbeelding laden",
+  "remoteImageMoreOptions": "Meer opties…",
+  "remoteImageMoreOptionsTitle": "Machtigingen voor externe afbeeldingen",
+  "loadRemoteImagesInDocument": "Afbeeldingen in dit document laden",
+  "remoteImageUntilClose": "Totdat dit document wordt gesloten.",
+  "remoteImageWorkspacePermissionDetail": "Staat externe afbeeldingen in {workspace} toe totdat je de werkruimtemachtigingen wist in de privacyinstellingen.",
+  "remoteImageGlobalPermissionDetail": "Staat externe afbeeldingen in heel BusyMark toe totdat je dit uitschakelt in de privacyinstellingen.",
+  "remoteImageGlobalSettingsDetail": "Sta externe afbeeldingen in heel BusyMark toe. Werkruimtemachtigingen worden apart beheerd.",
+  "loadRemoteImagesForWorkspace": "Altijd toestaan in deze werkruimte",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -5157,7 +5169,7 @@
   "searchTopicsCategory": "Onderwerpen",
   "searchCurrentDocument": "Huidig document",
   "searchCurrentWorkspace": "Huidige werkruimte",
-  "browseNotes": "Notities bekijken",
+  "browseNotes": "Door Nextcloud-notities bladeren",
   "searchActionsCommand": "Acties zoeken",
   "searchDocumentsCommand": "Documenten zoeken",
   "searchTopicsCommand": "Onderwerpen zoeken",

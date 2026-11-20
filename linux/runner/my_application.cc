@@ -15,6 +15,7 @@
 #include "linux_chrome_host.h"
 #include "native_shortcut_metadata.h"
 #include "rich_clipboard_host.h"
+#include "save_chooser_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
 #include "web_render_host.h"
@@ -59,6 +60,7 @@ struct _MyApplication {
   BusyMarkLinuxChromeHost* chrome_host;
   FlMethodChannel* native_menu_channel;
   FlMethodChannel* writerside_dialog_channel;
+  FlMethodChannel* save_chooser_channel;
   FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
   FlMethodChannel* rich_clipboard_channel;
@@ -292,20 +294,179 @@ struct NativeMenuHandlerData {
   GtkWidget* view;
   NativeMenuSession* active;
   GdkEvent* trigger_event;
+  GHashTable* keys;
   gulong event_signal_id;
 };
 
-static gboolean native_menu_capture_trigger_event(GtkWidget*,
-                                                  GdkEvent* event,
-                                                  gpointer user_data) {
+enum class NativeMenuKeyOwner {
+  kNone,
+  kView,
+  kViewBeforeMenu,
+  kMenu,
+  kMenuModifier,
+};
+
+struct NativeMenuKeyState {
+  NativeMenuKeyOwner owner;
+  guint32 press_time;
+  guint32 release_time;
+  bool saw_release;
+};
+
+static NativeMenuKeyState* native_menu_key_state(NativeMenuHandlerData* data,
+                                                GdkEventKey* event) {
+  const auto key = GUINT_TO_POINTER(event->hardware_keycode);
+  auto* state = static_cast<NativeMenuKeyState*>(
+      g_hash_table_lookup(data->keys, key));
+  if (state == nullptr) {
+    state = g_new0(NativeMenuKeyState, 1);
+    g_hash_table_insert(data->keys, key, state);
+  }
+  return state;
+}
+
+// GDK timestamps wrap. FlView may put an unhandled event back in the GTK
+// queue, so a redispatched release can arrive after the next press.
+static bool key_time_before(guint32 first, guint32 second) {
+  return static_cast<gint32>(first - second) < 0;
+}
+
+static bool is_current_key_release(const NativeMenuKeyState* state,
+                                   guint32 time) {
+  return (!state->saw_release || key_time_before(state->release_time, time)) &&
+         (state->owner == NativeMenuKeyOwner::kNone ||
+          !key_time_before(time, state->press_time));
+}
+
+static void record_key_release(NativeMenuKeyState* state, guint32 time) {
+  state->owner = NativeMenuKeyOwner::kNone;
+  state->release_time = time;
+  state->saw_release = true;
+}
+
+static bool is_momentary_modifier(guint keyval) {
+  switch (keyval) {
+    case GDK_KEY_Shift_L:
+    case GDK_KEY_Shift_R:
+    case GDK_KEY_Control_L:
+    case GDK_KEY_Control_R:
+    case GDK_KEY_Alt_L:
+    case GDK_KEY_Alt_R:
+    case GDK_KEY_Meta_L:
+    case GDK_KEY_Meta_R:
+    case GDK_KEY_Super_L:
+    case GDK_KEY_Super_R:
+    case GDK_KEY_ISO_Level3_Shift:
+    case GDK_KEY_Mode_switch:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static void deliver_menu_event_to_view(NativeMenuHandlerData* data,
+                                       GdkEvent* event) {
+  if (data->view != nullptr && gtk_widget_get_realized(data->view)) {
+    gtk_widget_event(data->view, event);
+  }
+}
+
+static gboolean native_menu_view_event(GtkWidget*,
+                                       GdkEvent* event,
+                                       gpointer user_data) {
   auto* data = static_cast<NativeMenuHandlerData*>(user_data);
-  if (event == nullptr ||
-      (event->type != GDK_BUTTON_PRESS && event->type != GDK_KEY_PRESS &&
-       event->type != GDK_TOUCH_BEGIN)) {
+  if (event->type == GDK_KEY_RELEASE) {
+    auto* state = native_menu_key_state(data, &event->key);
+    if (is_current_key_release(state, event->key.time)) {
+      const bool pressed_in_menu = state->owner == NativeMenuKeyOwner::kMenu;
+      record_key_release(state, event->key.time);
+      // An activation or Escape can ungrab the keyboard before the key comes
+      // back up. FlView never saw this press and must not see its release.
+      if (pressed_in_menu) return GDK_EVENT_STOP;
+    }
+    return GDK_EVENT_PROPAGATE;
+  }
+  if (event->type == GDK_FOCUS_CHANGE && !event->focus_change.in &&
+      data->active == nullptr) {
+    g_hash_table_remove_all(data->keys);
+  }
+  if (event->type == GDK_KEY_PRESS) {
+    auto* state = native_menu_key_state(data, &event->key);
+    // A press that crossed the menu boundary can still be repeating when
+    // focus returns to FlView. Wait for a new press before dispatching it.
+    if (state->owner == NativeMenuKeyOwner::kViewBeforeMenu ||
+        state->owner == NativeMenuKeyOwner::kMenu) {
+      return GDK_EVENT_STOP;
+    }
+    if (state->owner == NativeMenuKeyOwner::kView ||
+        state->owner == NativeMenuKeyOwner::kMenuModifier ||
+        (state->saw_release &&
+         !key_time_before(state->release_time, event->key.time))) {
+      return GDK_EVENT_PROPAGATE;
+    }
+    state->owner = NativeMenuKeyOwner::kView;
+    state->press_time = event->key.time;
+  } else if (event->type != GDK_BUTTON_PRESS &&
+             event->type != GDK_TOUCH_BEGIN) {
     return GDK_EVENT_PROPAGATE;
   }
   g_clear_pointer(&data->trigger_event, gdk_event_free);
   data->trigger_event = gdk_event_copy(event);
+  return GDK_EVENT_PROPAGATE;
+}
+
+static gboolean native_menu_route_key_event(GtkWidget*,
+                                            GdkEvent* event,
+                                            gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  if (event->type != GDK_KEY_PRESS && event->type != GDK_KEY_RELEASE) {
+    return GDK_EVENT_PROPAGATE;
+  }
+  auto* state = native_menu_key_state(data, &event->key);
+  if (event->type == GDK_KEY_RELEASE &&
+      !is_current_key_release(state, event->key.time)) {
+    return GDK_EVENT_STOP;
+  }
+  if (state->owner == NativeMenuKeyOwner::kView ||
+      state->owner == NativeMenuKeyOwner::kViewBeforeMenu) {
+    // GtkMenu's grab receives the real release of a press already delivered
+    // to FlView. Deliver that event to FlView's normal key handler so both
+    // the embedder and Dart clear the physical key. Consume held-key repeats
+    // here so they cannot activate a GTK mnemonic or accelerator.
+    if (event->type == GDK_KEY_RELEASE) {
+      deliver_menu_event_to_view(data, event);
+    }
+    return GDK_EVENT_STOP;
+  }
+  if (state->owner == NativeMenuKeyOwner::kMenuModifier) {
+    if (event->type == GDK_KEY_RELEASE) {
+      deliver_menu_event_to_view(data, event);
+      return GDK_EVENT_STOP;
+    }
+    // FlView may redispatch the same modifier press after processing it.
+    return event->key.time == state->press_time ? GDK_EVENT_STOP
+                                                : GDK_EVENT_PROPAGATE;
+  }
+  if (event->type == GDK_KEY_PRESS) {
+    if (state->saw_release &&
+        !key_time_before(state->release_time, event->key.time)) {
+      return GDK_EVENT_STOP;
+    }
+    if (state->owner == NativeMenuKeyOwner::kNone) {
+      state->press_time = event->key.time;
+      if (is_momentary_modifier(event->key.keyval)) {
+        // Forward this pair as well. A subsequent release sent to FlView
+        // carries the current modifier mask, which would otherwise make the
+        // embedder infer a press with no reliable left/right identity.
+        state->owner = NativeMenuKeyOwner::kMenuModifier;
+        deliver_menu_event_to_view(data, event);
+      } else {
+        state->owner = NativeMenuKeyOwner::kMenu;
+      }
+    }
+  } else {
+    record_key_release(state, event->key.time);
+  }
   return GDK_EVENT_PROPAGATE;
 }
 
@@ -829,14 +990,25 @@ static gboolean set_native_submenu_availability(GtkWidget* menu,
   return valid;
 }
 
-static void set_native_menu_direction(GtkWidget* widget, gpointer data) {
-  gtk_widget_set_direction(widget, static_cast<GtkTextDirection>(GPOINTER_TO_INT(data)));
+struct NativeMenuSetup {
+  GtkTextDirection direction;
+  NativeMenuHandlerData* owner;
+};
+
+static void configure_native_menu(GtkWidget* widget, gpointer user_data) {
+  auto* setup = static_cast<NativeMenuSetup*>(user_data);
+  gtk_widget_set_direction(widget, setup->direction);
+  if (GTK_IS_MENU(widget)) {
+    g_signal_connect(widget, "event", G_CALLBACK(native_menu_route_key_event),
+                     setup->owner);
+  }
   if (GTK_IS_MENU_ITEM(widget)) {
     GtkWidget* submenu = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget));
-    if (submenu != nullptr) set_native_menu_direction(submenu, data);
+    if (submenu != nullptr) configure_native_menu(submenu, user_data);
   }
   if (GTK_IS_CONTAINER(widget)) {
-    gtk_container_foreach(GTK_CONTAINER(widget), set_native_menu_direction, data);
+    gtk_container_foreach(GTK_CONTAINER(widget), configure_native_menu,
+                          user_data);
   }
 }
 
@@ -974,7 +1146,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
   g_signal_connect(session->menu, "key-press-event",
                    G_CALLBACK(native_menu_mnemonic_key_cb), session);
   gtk_menu_attach_to_widget(GTK_MENU(session->menu), data->view, nullptr);
-  set_native_menu_direction(session->menu, GINT_TO_POINTER(direction));
+  NativeMenuSetup setup{direction, data};
+  configure_native_menu(session->menu, &setup);
   gtk_widget_show_all(session->menu);
   if (!set_native_submenu_availability(session->menu, entries, TRUE)) {
     fl_method_call_respond_error(method_call, "invalid-menu",
@@ -1007,6 +1180,20 @@ static void show_native_menu(NativeMenuHandlerData* data,
       open_above ? (rtl ? GDK_GRAVITY_SOUTH_EAST : GDK_GRAVITY_SOUTH_WEST)
                  : (rtl ? GDK_GRAVITY_NORTH_EAST : GDK_GRAVITY_NORTH_WEST),
       data->trigger_event);
+  if (gtk_widget_get_mapped(session->menu)) {
+    // Pause repeats from FlView's held presses across the grab. For example,
+    // F9 must not become Toggle Sidebar if the popup is closed with the mouse
+    // after Ctrl and Shift have been released while F9 stays down.
+    g_hash_table_foreach(
+        data->keys,
+        [](gpointer, gpointer value, gpointer) {
+          auto* state = static_cast<NativeMenuKeyState*>(value);
+          if (state->owner == NativeMenuKeyOwner::kView) {
+            state->owner = NativeMenuKeyOwner::kViewBeforeMenu;
+          }
+        },
+        nullptr);
+  }
   if (focus_first) {
     gtk_menu_shell_select_first(GTK_MENU_SHELL(session->menu), TRUE);
   } else {
@@ -1028,6 +1215,7 @@ static void native_menu_handler_data_free(gpointer user_data) {
         reinterpret_cast<gpointer*>(&data->view));
   }
   g_clear_pointer(&data->trigger_event, gdk_event_free);
+  g_hash_table_unref(data->keys);
   g_free(data);
 }
 
@@ -1060,11 +1248,13 @@ static void register_native_menu_channel(MyApplication* self, FlView* view) {
       kNativeMenuChannel, FL_METHOD_CODEC(codec));
   auto* data = g_new0(NativeMenuHandlerData, 1);
   data->view = GTK_WIDGET(view);
+  data->keys =
+      g_hash_table_new_full(g_direct_hash, g_direct_equal, nullptr, g_free);
   g_object_add_weak_pointer(G_OBJECT(data->view),
                             reinterpret_cast<gpointer*>(&data->view));
   data->event_signal_id =
       g_signal_connect(data->view, "event",
-                       G_CALLBACK(native_menu_capture_trigger_event), data);
+                       G_CALLBACK(native_menu_view_event), data);
   fl_method_channel_set_method_call_handler(
       self->native_menu_channel, native_menu_method_call_cb, data,
       native_menu_handler_data_free);
@@ -1224,6 +1414,7 @@ static void my_application_activate(GApplication* application) {
   register_native_menu_channel(self, view);
   self->writerside_dialog_channel =
       busymark_writerside_dialog_channel_new(view, window);
+  self->save_chooser_channel = busymark_save_chooser_channel_new(view, window);
   register_asset_input_channel(self, view);
   self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
@@ -1283,6 +1474,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->native_surface_css_provider);
   g_clear_object(&self->native_menu_channel);
   g_clear_object(&self->writerside_dialog_channel);
+  g_clear_object(&self->save_chooser_channel);
   g_clear_object(&self->asset_input_channel);
   g_clear_object(&self->rich_clipboard_channel);
   g_clear_object(&self->secure_credential_channel);

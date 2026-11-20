@@ -9,7 +9,6 @@ import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project.dart';
 import 'document_buffer.dart';
 import 'workspace_message.dart';
-import 'workspace_file_snapshot.dart';
 
 export 'workspace_file_snapshot.dart';
 
@@ -290,16 +289,12 @@ class Workspace {
     this.directories = const [],
     List<String> openFilePaths = const [],
     this.activeFilePath,
-    DateTime? activeFileModifiedAt,
-    this.activeFileSnapshot,
     this.markdown,
     this.writersideModule,
     this.writersideProject,
     this.nextcloudAccountId,
   }) : filesystemRootPath = rootPath,
-       openFilePaths = _normalizedOpenFilePaths(openFilePaths, activeFilePath),
-       activeFileModifiedAt =
-           activeFileModifiedAt ?? activeFileSnapshot?.modifiedAt;
+       openFilePaths = _normalizedOpenFilePaths(openFilePaths, activeFilePath);
 
   final String id;
   final String? filesystemRootPath;
@@ -323,8 +318,6 @@ class Workspace {
   final WorkspaceKind kind;
   final DateTime openedAt;
   final String? activeFilePath;
-  final DateTime? activeFileModifiedAt;
-  final WorkspaceFileSnapshot? activeFileSnapshot;
   final List<String> openFilePaths;
   final List<DocumentFile> files;
   final List<WorkspaceDirectory> directories;
@@ -341,8 +334,6 @@ class Workspace {
 
   Workspace copyWith({
     Object? activeFilePath = _copyWithUnset,
-    Object? activeFileModifiedAt = _copyWithUnset,
-    Object? activeFileSnapshot = _copyWithUnset,
     List<String>? openFilePaths,
     List<DocumentFile>? files,
     List<WorkspaceDirectory>? directories,
@@ -356,14 +347,6 @@ class Workspace {
     final nextActiveFilePath = identical(activeFilePath, _copyWithUnset)
         ? this.activeFilePath
         : activeFilePath as String?;
-    final nextSnapshot = identical(activeFileSnapshot, _copyWithUnset)
-        ? this.activeFileSnapshot
-        : activeFileSnapshot as WorkspaceFileSnapshot?;
-    final nextModifiedAt = identical(activeFileModifiedAt, _copyWithUnset)
-        ? identical(activeFileSnapshot, _copyWithUnset)
-              ? this.activeFileModifiedAt
-              : nextSnapshot?.modifiedAt
-        : activeFileModifiedAt as DateTime?;
     final nextMarkdown = identical(markdown, _copyWithUnset)
         ? this.markdown
         : markdown as ParsedMarkdownDocument?;
@@ -379,8 +362,6 @@ class Workspace {
       kind: kind,
       openedAt: openedAt,
       activeFilePath: nextActiveFilePath,
-      activeFileModifiedAt: nextModifiedAt,
-      activeFileSnapshot: nextSnapshot,
       openFilePaths: openFilePaths ?? this.openFilePaths,
       files: files ?? this.files,
       directories: directories ?? this.directories,
@@ -439,22 +420,17 @@ List<String> _normalizedOpenFilePaths(
 class WorkspaceState {
   const WorkspaceState({
     this.workspace,
-    String activeText = '',
     this.preview,
     this.liveOutline,
-    bool isDirty = false,
     this.documentBuffers = const [],
     this.activeBufferId,
     this.isLoading = false,
     this.message,
-  }) : _legacyActiveText = activeText,
-       _legacyIsDirty = isDirty;
+  });
 
   final Workspace? workspace;
-  final String _legacyActiveText;
   final PreviewDocument? preview;
   final ActiveDocumentOutline? liveOutline;
-  final bool _legacyIsDirty;
   final List<DocumentBuffer> documentBuffers;
   final String? activeBufferId;
   final bool isLoading;
@@ -473,13 +449,11 @@ class WorkspaceState {
     return null;
   }
 
-  String get activeText => activeBuffer?.text ?? _legacyActiveText;
+  String get activeText => activeBuffer?.text ?? '';
 
-  bool get isDirty => activeBuffer?.isDirty ?? _legacyIsDirty;
+  bool get isDirty => activeBuffer?.isDirty ?? false;
 
-  bool get hasUnsavedChanges => documentBuffers.isEmpty
-      ? _legacyIsDirty
-      : documentBuffers.any((buffer) => buffer.isDirty);
+  bool get hasUnsavedChanges => documentBuffers.any((buffer) => buffer.isDirty);
 
   List<DocumentBuffer> get dirtyBuffers =>
       List.unmodifiable(documentBuffers.where((buffer) => buffer.isDirty));
@@ -495,10 +469,8 @@ class WorkspaceState {
 
   WorkspaceState copyWith({
     Workspace? workspace,
-    String? activeText,
     Object? preview = _copyWithUnset,
     Object? liveOutline = _copyWithUnset,
-    bool? isDirty,
     List<DocumentBuffer>? documentBuffers,
     Object? activeBufferId = _copyWithUnset,
     bool? isLoading,
@@ -516,10 +488,8 @@ class WorkspaceState {
         : this.liveOutline;
     return WorkspaceState(
       workspace: workspace ?? this.workspace,
-      activeText: activeText ?? _legacyActiveText,
       preview: nextPreview,
       liveOutline: nextLiveOutline,
-      isDirty: isDirty ?? _legacyIsDirty,
       documentBuffers: documentBuffers ?? this.documentBuffers,
       activeBufferId: identical(activeBufferId, _copyWithUnset)
           ? this.activeBufferId

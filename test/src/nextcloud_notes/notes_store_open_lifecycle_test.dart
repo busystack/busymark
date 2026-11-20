@@ -5,7 +5,54 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
-  for (final schema in [3, 7]) {
+  test('invalid generation metadata fails open and permits repair', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'notes-generation-open-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final path = '${directory.path}/notes.sqlite3';
+    final store = await NotesStore.open(path: path);
+    await store.close();
+    final fixture = sqlite3.open(path);
+    try {
+      fixture.execute(
+        "INSERT INTO store_versions VALUES ('notes', 'retired', 'invalid')",
+      );
+      fixture.execute('CREATE TABLE outbox (id TEXT PRIMARY KEY, data TEXT)');
+      fixture.execute("INSERT INTO outbox VALUES ('pending', 'retain')");
+      fixture.execute('PRAGMA user_version=6');
+    } finally {
+      fixture.close();
+    }
+    for (var cycle = 0; cycle < 3; cycle++) {
+      await expectLater(
+        NotesStore.open(path: path).timeout(const Duration(seconds: 5)),
+        throwsStateError,
+      );
+      final inspection = sqlite3.open(path);
+      try {
+        expect(
+          inspection.select('PRAGMA user_version').single.values.single,
+          6,
+        );
+        expect(
+          inspection.select('SELECT data FROM outbox').single['data'],
+          'retain',
+        );
+        expect(inspection.select('SELECT * FROM store_sessions'), isEmpty);
+        inspection.execute('BEGIN IMMEDIATE');
+        if (cycle == 2) inspection.execute('DELETE FROM store_versions');
+        inspection.execute('COMMIT');
+      } finally {
+        inspection.close();
+      }
+    }
+    final repaired = await NotesStore.open(path: path);
+    expect(await repaired.notes(), isEmpty);
+    await repaired.close();
+  });
+
+  for (final schema in [3, 8]) {
     test('failed v$schema open releases SQLite before reporting failure', () async {
       final directory = await Directory.systemTemp.createTemp(
         'notes-failed-open-',

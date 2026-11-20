@@ -3,14 +3,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
 import 'busymark_dialog_identity.dart';
+import 'busymark_deferred_editor_focus.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
@@ -171,10 +170,6 @@ class _BusyMarkModalShortcutBoundaryState
   }
 }
 
-final _busyMarkModalDepths = Map<LinuxHeaderBarService, int>.identity();
-final _busyMarkModalBarrierUpdateTails =
-    Map<LinuxHeaderBarService, Future<void>>.identity();
-
 Color busyMarkModalBarrierColor(BuildContext context) {
   return BusyMarkSurfaceColors.of(context).shade;
 }
@@ -182,44 +177,22 @@ Color busyMarkModalBarrierColor(BuildContext context) {
 Future<T?> showBusyMarkModalDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
-  LinuxHeaderBarService? headerBarService,
   Color? barrierColor,
   bool barrierDismissible = true,
 }) async {
-  final effectiveHeaderBarService =
-      headerBarService ?? _busyMarkHeaderBarServiceFrom(context);
-  return _coordinateBusyMarkModal<T>(
-    context,
-    headerBarService: effectiveHeaderBarService,
-    showSurface: () => _showBusyMarkFlutterDialog<T>(
-      context,
-      builder: builder,
-      barrierColor: barrierColor,
-      barrierDismissible: barrierDismissible,
-    ),
-  );
-}
-
-Future<T?> _coordinateBusyMarkModal<T>(
-  BuildContext context, {
-  required LinuxHeaderBarService? headerBarService,
-  required ({Future<T?> result, ModalRoute<T> route}) Function() showSurface,
-}) async {
   final previousFocus = FocusManager.instance.primaryFocus;
-  await acquireBusyMarkModalBarrier(headerBarService);
-  if (!context.mounted) {
-    await releaseBusyMarkModalBarrier(headerBarService);
-    return null;
-  }
-  ModalRoute<T>? closingRoute;
+  if (!context.mounted) return null;
+  final surface = _showBusyMarkFlutterDialog<T>(
+    context,
+    builder: builder,
+    barrierColor: barrierColor,
+    barrierDismissible: barrierDismissible,
+  );
   try {
-    final surface = showSurface();
-    closingRoute = surface.route;
     return await surface.result;
   } finally {
-    final restoration = _ModalFocusRestoration(previousFocus, closingRoute);
+    final restoration = _ModalFocusRestoration(previousFocus, surface.route);
     try {
-      await releaseBusyMarkModalBarrier(headerBarService);
       if (context.mounted && restoration.mayRestore) {
         previousFocus!.requestFocus();
       }
@@ -311,6 +284,7 @@ class _ModalFocusRestoration with WidgetsBindingObserver {
     initialBarrierColor: barrierColor ?? busyMarkModalBarrierColor(context),
     barrierDismissible: barrierDismissible,
   );
+  BusyMarkDeferredEditorFocus.modalOpened();
   return (result: navigator.push<T>(route), route: route);
 }
 
@@ -353,13 +327,11 @@ class _BusyMarkDialogRoute<T> extends DialogRoute<T> {
 Future<T?> showBusyMarkModalEditorDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
-  LinuxHeaderBarService? headerBarService,
   double maxWidth = 700,
   double? maxHeight = 760,
 }) {
   return showBusyMarkModalDialog<T>(
     context,
-    headerBarService: headerBarService,
     barrierDismissible: false,
     builder: (dialogContext) => BusyMarkModalEditorSurface(
       maxWidth: maxWidth,
@@ -368,90 +340,6 @@ Future<T?> showBusyMarkModalEditorDialog<T>(
       child: builder(dialogContext),
     ),
   );
-}
-
-/// Acquires a reference-counted native header-bar modal barrier.
-///
-/// Every call must be paired with [releaseBusyMarkModalBarrier]. Route
-/// dialogs acquire it automatically.
-Future<void> acquireBusyMarkModalBarrier(LinuxHeaderBarService? service) async {
-  if (service == null) {
-    return;
-  }
-  final depth = _busyMarkModalDepths[service] ?? 0;
-  final nextDepth = depth + 1;
-  _busyMarkModalDepths[service] = nextDepth;
-  final depthUpdate = _enqueueBusyMarkModalBarrierUpdate(
-    service,
-    depth: nextDepth,
-  );
-  try {
-    await depthUpdate;
-  } on Object catch (error, stackTrace) {
-    final remainingDepth = (_busyMarkModalDepths[service] ?? 0) - 1;
-    if (remainingDepth > 0) {
-      _busyMarkModalDepths[service] = remainingDepth;
-    } else {
-      _busyMarkModalDepths.remove(service);
-      try {
-        await _enqueueBusyMarkModalBarrierUpdate(service, depth: 0);
-      } on Object {
-        // Preserve the acquisition failure if its best-effort rollback fails.
-      }
-    }
-    Error.throwWithStackTrace(error, stackTrace);
-  }
-}
-
-/// Releases a barrier acquired by [acquireBusyMarkModalBarrier].
-Future<void> releaseBusyMarkModalBarrier(LinuxHeaderBarService? service) async {
-  if (service == null) {
-    return;
-  }
-  final depth = _busyMarkModalDepths[service] ?? 0;
-  if (depth <= 1) {
-    _busyMarkModalDepths.remove(service);
-    await _enqueueBusyMarkModalBarrierUpdate(service, depth: 0);
-    return;
-  }
-  final nextDepth = depth - 1;
-  _busyMarkModalDepths[service] = nextDepth;
-  await _enqueueBusyMarkModalBarrierUpdate(service, depth: nextDepth);
-}
-
-Future<void> _enqueueBusyMarkModalBarrierUpdate(
-  LinuxHeaderBarService service, {
-  required int depth,
-}) {
-  final previous =
-      _busyMarkModalBarrierUpdateTails[service] ?? Future<void>.value();
-  final ready = previous.then<void>(
-    (_) {},
-    onError: (Object _, StackTrace _) {},
-  );
-  late final Future<void> update;
-  update = ready.then((_) => service.setModalBarrierDepth(depth)).whenComplete(
-    () {
-      if (identical(_busyMarkModalBarrierUpdateTails[service], update)) {
-        _busyMarkModalBarrierUpdateTails.remove(service);
-      }
-    },
-  );
-  _busyMarkModalBarrierUpdateTails[service] = update;
-  return update;
-}
-
-LinuxHeaderBarService? _busyMarkHeaderBarServiceFrom(BuildContext context) {
-  try {
-    return ProviderScope.containerOf(
-      context,
-      listen: false,
-    ).read(linuxHeaderBarServiceProvider);
-  } on StateError {
-    // Standalone widget hosts may not install Riverpod. Explicit injection
-    // remains available for those hosts.
-    return null;
-  }
 }
 
 class BusyMarkModalEditorSurface extends StatelessWidget {
@@ -511,11 +399,9 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
 }
 
 void showBusyMarkAboutDialog(BuildContext context) {
-  final headerBar = LinuxHeaderBarService.instance;
   unawaited(
     showBusyMarkModalDialog<void>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => const _BusyMarkAboutDialog(),
     ),
   );
@@ -534,11 +420,9 @@ Future<void> _openApacheLicense() async {
 }
 
 void showBusyMarkSyntaxReferenceDialog(BuildContext context) {
-  final headerBar = LinuxHeaderBarService.instance;
   unawaited(
     showBusyMarkModalDialog<void>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => const _SyntaxReferenceDialog(),
     ),
   );

@@ -1588,7 +1588,7 @@ void main() {
         initial.copyWith(
           documentBuffers: [
             ...initial.documentBuffers,
-            const DocumentBuffer(
+            DocumentBuffer(
               id: 'outside',
               text: 'needle outside',
               lastSavedText: '',

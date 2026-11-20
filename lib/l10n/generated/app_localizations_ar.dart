@@ -718,6 +718,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'جديد';
+
+  @override
   String get open => 'فتح';
 
   @override
@@ -900,15 +903,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutGroupGeneral => 'عام';
 
   @override
-  String get shortcutNewDocument => 'إنشاء';
+  String get home => 'الرئيسية';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'إنشاء ملف Markdown أو مشروع Writerside';
+  String get openMenu => 'قائمة فتح';
 
   @override
-  String get shortcutOpenDescription =>
-      'فتح ملف Markdown أو مجلد أو مشروع Writerside';
+  String get newNextcloudNote => 'ملاحظة Nextcloud جديدة';
+
+  @override
+  String get shortcutNewDocument => 'قائمة جديد';
+
+  @override
+  String get shortcutNewDocumentDescription => 'افتح قائمة إنشاء الموارد';
+
+  @override
+  String get shortcutOpenDescription => 'افتح قائمة فتح الموارد';
 
   @override
   String get shortcutSaveDescription => 'حفظ المستند الحالي';
@@ -1196,11 +1206,11 @@ class AppLocalizationsAr extends AppLocalizations {
       'السماح بتحميل صور معاينة Markdown والمحرر من عناوين URL التي تستخدم http وhttps.';
 
   @override
-  String get clearRemoteImagePermissions => 'مسح أذونات الصور البعيدة';
+  String get clearRemoteImagePermissions => 'مسح أذونات الصور لمساحات العمل';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'نسيان مساحات العمل التي سُمح لها بتحميل الصور البعيدة.';
+      'نسيان جميع أذونات الصور البعيدة لمساحات العمل.';
 
   @override
   String get clearGitWorkspaceTrust => 'مسح مساحات عمل Git الموثوقة';
@@ -1560,7 +1570,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.';
+      'تم حظر الصورة البعيدة. انقر لعرض خيارات التحميل.';
 
   @override
   String get remoteImagesBlockedTitle => 'الصور البعيدة محظورة';
@@ -1570,7 +1580,35 @@ class AppLocalizationsAr extends AppLocalizations {
       'يشير هذا المستند إلى صور من الإنترنت. قد يكشف تحميلها معلومات عن الشبكة لمضيف الصورة.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'تحميل لمساحة العمل هذه';
+  String get loadThisRemoteImage => 'تحميل هذه الصورة';
+
+  @override
+  String get remoteImageMoreOptions => 'خيارات إضافية…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'أذونات الصور البعيدة';
+
+  @override
+  String get loadRemoteImagesInDocument => 'تحميل الصور في هذا المستند';
+
+  @override
+  String get remoteImageUntilClose => 'حتى إغلاق هذا المستند.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'يسمح بالصور البعيدة في ⁨$workspace⁩ حتى تمسح أذونات مساحة العمل في إعدادات الخصوصية.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'يسمح بالصور البعيدة في كل BusyMark حتى توقف هذا الخيار في إعدادات الخصوصية.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'السماح بالصور البعيدة في كل BusyMark. تُدار أذونات مساحات العمل بشكل منفصل.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'السماح دائمًا في مساحة العمل هذه';
 
   @override
   String get alwaysLoadRemoteImages => 'تحميل الصور البعيدة دائمًا';
@@ -5537,7 +5575,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchCurrentWorkspace => 'مساحة العمل الحالية';
 
   @override
-  String get browseNotes => 'تصفح الملاحظات';
+  String get browseNotes => 'تصفح ملاحظات Nextcloud';
 
   @override
   String get searchActionsCommand => 'البحث عن إجراءات';

@@ -594,7 +594,6 @@ Future<void> _exerciseRichEditor({
       document: document,
       documentId: buffer.id,
       contentRevision: buffer.revision,
-      useExternalUndoHistory: true,
       spellingAnnotations: [_annotationFor(occurrence)],
       onDocumentChanged: (value) => publishedDocument = value,
       onSourceChanged: (_, _) {},

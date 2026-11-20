@@ -149,6 +149,16 @@ class NotesSyncCoordinator {
   }
 
   Future<void> _run(String id, int generation) async {
+    try {
+      await _runPasses(id, generation);
+    } on NotesException catch (error) {
+      if (!_disposed && generation == _generation) {
+        await repository.reportSynchronizationFailure(id, error);
+      }
+    }
+  }
+
+  Future<void> _runPasses(String id, int generation) async {
     do {
       _followup = false;
       final manual = _manual;

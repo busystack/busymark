@@ -725,6 +725,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Nowy';
+
+  @override
   String get open => 'Otwórz';
 
   @override
@@ -908,15 +911,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shortcutGroupGeneral => 'Ogólne';
 
   @override
-  String get shortcutNewDocument => 'Utwórz';
+  String get home => 'Strona główna';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Utwórz plik Markdown lub projekt Writerside';
+  String get openMenu => 'Menu Otwórz';
 
   @override
-  String get shortcutOpenDescription =>
-      'Otwórz plik Markdown, folder lub projekt Writerside';
+  String get newNextcloudNote => 'Nowa notatka Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'Menu Nowy';
+
+  @override
+  String get shortcutNewDocumentDescription => 'Pokaż menu tworzenia zasobów';
+
+  @override
+  String get shortcutOpenDescription => 'Pokaż menu otwierania zasobów';
 
   @override
   String get shortcutSaveDescription => 'Zapisz bieżący dokument';
@@ -1220,11 +1230,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Wyczyść uprawnienia do obrazów zdalnych';
+      'Wyczyść uprawnienia do obrazów w obszarach roboczych';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Zapomnij obszary robocze, którym zezwolono na wczytywanie obrazów zdalnych.';
+      'Usuń wszystkie uprawnienia obszarów roboczych do obrazów zdalnych.';
 
   @override
   String get clearGitWorkspaceTrust => 'Wyczyść zaufane obszary robocze Git';
@@ -1584,7 +1594,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Wybierz, czy BusyMark może wczytywać obrazy zdalne.';
+      'Obraz zdalny zablokowany. Kliknij, aby wyświetlić opcje wczytywania.';
 
   @override
   String get remoteImagesBlockedTitle => 'Obrazy zdalne są zablokowane';
@@ -1594,7 +1604,36 @@ class AppLocalizationsPl extends AppLocalizations {
       'Ten dokument odwołuje się do obrazów z internetu. Ich wczytanie może ujawnić informacje o twojej sieci serwerom udostępniającym te obrazy.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Wczytaj w tym obszarze roboczym';
+  String get loadThisRemoteImage => 'Wczytaj ten obraz';
+
+  @override
+  String get remoteImageMoreOptions => 'Więcej opcji…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Uprawnienia do obrazów zdalnych';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Wczytaj obrazy w tym dokumencie';
+
+  @override
+  String get remoteImageUntilClose => 'Do zamknięcia tego dokumentu.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Zezwala na obrazy zdalne w $workspace do czasu wyczyszczenia uprawnień obszarów roboczych w ustawieniach prywatności.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Zezwala na obrazy zdalne w całym BusyMark do czasu wyłączenia tej opcji w ustawieniach prywatności.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Zezwalaj na obrazy zdalne w całym BusyMark. Uprawnienia obszarów roboczych są zarządzane oddzielnie.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Zawsze zezwalaj w tym obszarze roboczym';
 
   @override
   String get alwaysLoadRemoteImages => 'Zawsze wczytuj obrazy zdalne';
@@ -5567,7 +5606,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get searchCurrentWorkspace => 'Bieżący obszar roboczy';
 
   @override
-  String get browseNotes => 'Przeglądaj notatki';
+  String get browseNotes => 'Przeglądaj notatki Nextcloud';
 
   @override
   String get searchActionsCommand => 'Szukaj działań';

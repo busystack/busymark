@@ -476,6 +476,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "新規作成",
   "open": "開く",
   "@open": {
     "description": "Open action label."
@@ -716,15 +717,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "作成",
+  "home": "ホーム",
+  "openMenu": "開くメニュー",
+  "newNextcloudNote": "新しい Nextcloud ノート",
+  "shortcutNewDocument": "新規作成メニュー",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Markdown ファイルまたは Writerside プロジェクトを作成",
+  "shortcutNewDocumentDescription": "リソースを作成するメニューを表示",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Markdown ファイル、フォルダー、または Writerside プロジェクトを開く",
+  "shortcutOpenDescription": "リソースを開くメニューを表示",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1074,11 +1078,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "リモート画像の権限を消去",
+  "clearRemoteImagePermissions": "ワークスペースの画像の許可を消去",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "リモート画像の読み込みを許可したワークスペースの権限を忘れる",
+  "clearRemoteImagePermissionsDescription": "すべてのワークスペースのリモート画像の許可を消去します。",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1494,7 +1498,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "BusyMark にリモート画像の読み込みを許可するか選択",
+  "remoteImageBlockedTooltip": "リモート画像をブロックしました。クリックして読み込みオプションを表示します。",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1506,7 +1510,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "このワークスペースで読み込む",
+  "loadThisRemoteImage": "この画像を読み込む",
+  "remoteImageMoreOptions": "その他のオプション…",
+  "remoteImageMoreOptionsTitle": "リモート画像の許可",
+  "loadRemoteImagesInDocument": "この文書の画像を読み込む",
+  "remoteImageUntilClose": "この文書を閉じるまで有効です。",
+  "remoteImageWorkspacePermissionDetail": "プライバシー設定でワークスペースの許可を消去するまで、{workspace} のリモート画像を許可します。",
+  "remoteImageGlobalPermissionDetail": "プライバシー設定でこのオプションをオフにするまで、BusyMark 全体でリモート画像を許可します。",
+  "remoteImageGlobalSettingsDetail": "BusyMark 全体でリモート画像を許可します。ワークスペースの許可は個別に管理されます。",
+  "loadRemoteImagesForWorkspace": "このワークスペースでは常に許可する",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -5169,7 +5181,7 @@
   "searchTopicsCategory": "トピック",
   "searchCurrentDocument": "現在のドキュメント",
   "searchCurrentWorkspace": "現在のワークスペース",
-  "browseNotes": "ノートを参照",
+  "browseNotes": "Nextcloud ノートを参照",
   "searchActionsCommand": "アクションを検索",
   "searchDocumentsCommand": "ドキュメントを検索",
   "searchTopicsCommand": "トピックを検索",

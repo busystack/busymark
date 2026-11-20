@@ -29,6 +29,48 @@ void main() {
     expect(document.visibleRangeToFullRange(4, 7).range.end, 7);
   });
 
+  test(
+    'unfolded edits share the full index, fold transitions keep distinct coordinates',
+    () {
+      const text = 'one\ntwo\nthree\n';
+      final full = SourceDocument(fullText: text);
+      expect(full.visibleLineIndex, same(full.lineIndex));
+      final folded = SourceDocument(
+        fullText: text,
+        hiddenRanges: SourceHiddenRanges(
+          ranges: [SourceHiddenRange(start: 4, end: 8)],
+          textLength: text.length,
+        ),
+      );
+      expect(folded.visibleLineIndex, isNot(same(folded.lineIndex)));
+      final editedText = folded.applyVisibleEdit('ONE\nthree\n');
+      final edited = SourceDocument.afterVisibleEdit(
+        previous: folded,
+        fullText: editedText,
+        hiddenRanges: SourceHiddenRanges(
+          ranges: const [],
+          textLength: editedText.length,
+        ),
+        edit: folded.describeVisibleEdit('ONE\nthree\n'),
+      );
+      expect(edited.visibleLineIndex, same(edited.lineIndex));
+      expect(edited.visibleLineIndex.lineCount, 4);
+      expect(edited.lineIndex.lineAt(2).startOffset, 4);
+      final nextText = edited.applyVisibleEdit('ONE\nTWO\nthree\n');
+      final next = SourceDocument.afterVisibleEdit(
+        previous: edited,
+        fullText: nextText,
+        hiddenRanges: SourceHiddenRanges(
+          ranges: const [],
+          textLength: nextText.length,
+        ),
+        edit: edited.describeVisibleEdit('ONE\nTWO\nthree\n'),
+      );
+      expect(next.visibleLineIndex, same(next.lineIndex));
+      expect(next.lineIndex.lineAt(3).startOffset, 8);
+    },
+  );
+
   test('single fold projects visible text and maps offsets', () {
     const source = '# Title\nIntro.\nMore.\n# Next\n';
     final region = sourceFoldRegions(

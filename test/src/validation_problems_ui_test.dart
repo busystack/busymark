@@ -8,7 +8,6 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -224,7 +223,6 @@ Future<_Harness> _open(
           _Settings(mode, validateOnEdit: validateOnEdit),
         ),
         workspaceServiceProvider.overrideWithValue(service),
-        linuxHeaderBarServiceProvider.overrideWithValue(_HeaderBar()),
       ],
     );
     harness = _Harness(root, container);
@@ -293,14 +291,6 @@ class _Settings implements LocalSettingsStore {
       .toJson();
   @override
   Future<void> save(Map<String, Object?> json) async {}
-}
-
-class _HeaderBar extends LinuxHeaderBarService {
-  _HeaderBar() : super(channel: const MethodChannel('test.busymark/problems'));
-  @override
-  bool get isAvailable => false;
-  @override
-  bool get usesNativeHeaderBar => false;
 }
 
 class _ControlledValidationService extends WorkspaceService {

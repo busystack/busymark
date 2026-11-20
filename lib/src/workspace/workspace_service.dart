@@ -6,10 +6,12 @@ import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
 import '../core/atomic_file_writer.dart';
+import '../core/save_destination.dart';
 import '../core/busymark_exception.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/linux_atomic_file_api.dart';
+import '../core/recoverable_file_replacement.dart';
 import '../core/path_utils.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
@@ -122,12 +124,16 @@ class WorkspaceService {
     this.writersideDocumentRenderer = const WritersideDocumentRenderer(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
+    this.beforeDisplacedValidation,
     Future<void> Function(String targetPath, int committedCount)?
     afterBatchFileCommit,
   }) : writersideService = writersideService ?? const WritersideModuleService(),
        _useWorkspaceScanOptionsForWriterside = writersideService == null,
        _beforeNewFilePublish = beforeNewFilePublish,
        _afterBatchFileCommit = afterBatchFileCommit;
+
+  final Future<void> Function(String targetPath, String displacedPath)?
+  beforeDisplacedValidation;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
@@ -223,13 +229,30 @@ class WorkspaceService {
 
   Future<Workspace> createWritersideProject(
     WritersideProjectCreateRequest request,
-  ) async {
-    final result = await writersideProjectCreator.create(request);
-    return _openWriterside(
-      result.rootPath,
-      activeFilePath: result.startTopicPath,
-    );
-  }
+  ) async => (await publishWritersideProject(
+    request,
+    authorize: () async => true,
+    canPublish: () => true,
+    accept: (workspace, _) async => workspace,
+  ))!;
+
+  Future<T?> publishWritersideProject<T>(
+    WritersideProjectCreateRequest request, {
+    required Future<bool> Function() authorize,
+    required bool Function() canPublish,
+    required Future<T?> Function(Workspace, bool Function() isCurrent) accept,
+  }) => writersideProjectCreator.createTransaction(
+    request,
+    authorize: authorize,
+    canPublish: canPublish,
+    accept: (project, isCurrent) async {
+      final workspace = await _openWriterside(
+        project.rootPath,
+        activeFilePath: project.startTopicPath,
+      );
+      return isCurrent() ? accept(workspace, isCurrent) : null;
+    },
+  );
 
   Future<WritersideTopicCreateResult> createWritersideTopic(
     Workspace workspace,
@@ -896,62 +919,6 @@ class WorkspaceService {
     );
   }
 
-  Future<List<String>> writersideTopicRenameAffectedPaths(
-    Workspace workspace, {
-    required String topicPath,
-    required String topicModuleRoot,
-  }) async {
-    final project = await _writersideProjectService.load(
-      workspace.rootPath,
-      preferredModuleRoot: topicModuleRoot,
-    );
-    final module = project.modules
-        .where((candidate) => p.equals(candidate.rootPath, topicModuleRoot))
-        .singleOrNull;
-    if (module == null) {
-      throw const BusyMarkException('writerside.topic.module-not-open');
-    }
-    final topic = _writersideTopicForPath(module, topicPath);
-    final paths = <String>{topic.filePath};
-    for (final usage in project.index.references) {
-      final topicPart = usage.value.split('#').first;
-      if (topicPart.isNotEmpty &&
-          project.index
-              .definitions(
-                topicPart,
-                moduleId: usage.moduleId,
-                origin: usage.origin,
-                kind: WritersideSymbolKind.topic,
-                filePath: usage.filePath,
-                referenceOffset: usage.span.startOffset,
-              )
-              .any((symbol) => p.equals(symbol.filePath, topic.filePath))) {
-        paths.add(usage.filePath);
-      }
-    }
-    for (final candidate in project.modules) {
-      final moduleId = project.index.modulesById.entries
-          .where((entry) => p.equals(entry.value.rootPath, candidate.rootPath))
-          .map((entry) => entry.key)
-          .single;
-      for (final instance in candidate.instances) {
-        final startPage = instance.startPage;
-        if (startPage != null &&
-            project.index
-                .definitions(
-                  startPage,
-                  moduleId: moduleId,
-                  kind: WritersideSymbolKind.topic,
-                  filePath: instance.sourceTreePath,
-                )
-                .any((symbol) => p.equals(symbol.filePath, topic.filePath))) {
-          paths.add(instance.sourceTreePath);
-        }
-      }
-    }
-    return paths.toList()..sort();
-  }
-
   Future<void> deleteWritersideTopicFile(
     Workspace workspace,
     String topicPath,
@@ -1064,9 +1031,6 @@ class WorkspaceService {
         (module.topics.isEmpty ? null : module.topics.first.filePath);
     return workspace.copyWith(
       activeFilePath: activeFile,
-      activeFileSnapshot: activeFile == null
-          ? null
-          : await fileSnapshot(activeFile),
       openFilePaths: activeFile == null
           ? workspace.openFilePaths
           : [...workspace.openFilePaths, activeFile],
@@ -1209,10 +1173,6 @@ class WorkspaceService {
     );
   }
 
-  Future<DateTime> fileModifiedAt(String path) async {
-    return (await File(path).stat()).modified;
-  }
-
   Future<WorkspaceFileSnapshot> fileSnapshot(String path) async {
     final file = File(path);
     final bytes = await file.readAsBytes();
@@ -1260,6 +1220,8 @@ class WorkspaceService {
     String text, {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
     Future<void> Function()? onPublished,
   }) async {
     final bytes = _encodeDocumentText(
@@ -1271,6 +1233,11 @@ class WorkspaceService {
     try {
       final stat = await staged.file.stat();
       await _beforeNewFilePublish?.call(path);
+      if (stillCurrent?.call() == false ||
+          authorization?.replacesExisting == true) {
+        throw AtomicFileChangedException(path);
+      }
+      authorization?.requireCurrent(path);
       await _publishNewFileWithoutReplace(staged.file, path);
       await onPublished?.call();
       return _snapshotFromBytes(stat, bytes);
@@ -1308,6 +1275,8 @@ class WorkspaceService {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
     WorkspaceFileSnapshot? expectedSnapshot,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
     Future<void> Function()? onPublished,
   }) async {
     final bytes = _encodeDocumentText(
@@ -1315,6 +1284,10 @@ class WorkspaceService {
       format: format,
       mixedNormalization: mixedNormalization,
     );
+    if (authorization != null &&
+        (!authorization.replacesExisting || expectedSnapshot == null)) {
+      throw ArgumentError('A replacement requires an approved existing entry');
+    }
     final staged = await _stageNewSave(path, bytes);
     var preserveStagedFile = false;
     try {
@@ -1325,15 +1298,24 @@ class WorkspaceService {
       final expectedLinkResolvedPath = targetType == FileSystemEntityType.link
           ? await Link(path).resolveSymbolicLinks()
           : null;
+      final reviewed =
+          authorization ??
+          (expectedSnapshot != null &&
+                  Platform.isLinux &&
+                  targetType == FileSystemEntityType.file
+              ? SaveDestination.inspect(path)
+              : null);
       if (targetType == FileSystemEntityType.file) {
         await _copyFileMode(await File(path).stat(), staged.file);
       }
       await _validateExpectedSnapshot(path, expectedSnapshot);
       final target = File(p.absolute(path));
       await _beforeNewFilePublish?.call(path);
+      if (stillCurrent?.call() == false) throw AtomicFileChangedException(path);
+      authorization?.requireCurrent(path);
       if (expectedSnapshot != null) {
         final atomicApi = LinuxAtomicFileApi.instance;
-        if (!Platform.isLinux || !atomicApi.isAvailable) {
+        if (!Platform.isLinux) {
           throw UnsupportedError(
             'Conflict-safe replacement requires Linux renameat2.',
           );
@@ -1343,19 +1325,51 @@ class WorkspaceService {
           target.absolute.path,
         );
         if (exchangeError != null) {
+          if (exchangeError == LinuxAtomicFileApi.fileMissingError) {
+            throw AtomicFileChangedException(path);
+          }
+          if (reviewed != null &&
+              atomicApi.exchangeUnsupported(
+                exchangeError,
+                p.dirname(target.path),
+              )) {
+            await replaceFileWithoutExchange(
+              staged: staged.file,
+              destination: reviewed,
+              acceptDisplaced: (displaced) => _displacedEntryMatchesExpected(
+                displaced,
+                targetPath: target.path,
+                expectedType: targetType,
+                expectedLinkTarget: expectedLinkTarget,
+                expectedLinkResolvedPath: expectedLinkResolvedPath,
+                expectedSnapshot: expectedSnapshot,
+              ),
+              checkBeforeCommit: () {
+                if (stillCurrent?.call() == false) {
+                  throw AtomicFileChangedException(path);
+                }
+              },
+            );
+            await onPublished?.call();
+            return _snapshotFromBytes(await target.stat(), bytes);
+          }
           throw FileSystemException(
             'Could not commit conditional file replacement',
             path,
             OSError('atomic exchange failed', exchangeError),
           );
         }
-        if (!await _displacedEntryMatchesExpected(
-          staged.file.path,
-          expectedType: targetType,
-          expectedLinkTarget: expectedLinkTarget,
-          expectedLinkResolvedPath: expectedLinkResolvedPath,
-          expectedSnapshot: expectedSnapshot,
-        )) {
+        // Retain displaced state even if an injected or real validation fails.
+        preserveStagedFile = true;
+        if (authorization?.acceptsDisplaced(staged.file.path) == false ||
+            !await _displacedEntryMatchesExpected(
+              staged.file.path,
+              targetPath: target.path,
+              expectedType: targetType,
+              expectedLinkTarget: expectedLinkTarget,
+              expectedLinkResolvedPath: expectedLinkResolvedPath,
+              expectedSnapshot: expectedSnapshot,
+            )) {
           preserveStagedFile = !await _rollbackConditionalReplacement(
             staged: staged.file,
             target: target,
@@ -1369,6 +1383,7 @@ class WorkspaceService {
       } else {
         await staged.file.rename(target.path);
       }
+      preserveStagedFile = false;
       await onPublished?.call();
       return _snapshotFromBytes(await target.stat(), bytes);
     } finally {
@@ -1378,12 +1393,14 @@ class WorkspaceService {
 
   Future<bool> _displacedEntryMatchesExpected(
     String path, {
+    required String targetPath,
     required FileSystemEntityType expectedType,
     required String? expectedLinkTarget,
     required String? expectedLinkResolvedPath,
     required WorkspaceFileSnapshot expectedSnapshot,
   }) async {
     try {
+      await beforeDisplacedValidation?.call(targetPath, path);
       final displacedType = await FileSystemEntity.type(
         path,
         followLinks: false,
@@ -1445,6 +1462,15 @@ class WorkspaceService {
     WorkspaceFileSnapshot? expectedSnapshot,
   }) async {
     final savePath = await _saveTargetPath(path);
+    if (expectedSnapshot != null) {
+      return saveFormattedTextReplacingPath(
+        savePath,
+        text,
+        format: format,
+        mixedNormalization: mixedNormalization,
+        expectedSnapshot: expectedSnapshot,
+      );
+    }
     final target = File(savePath);
     final existingStat = await target.stat();
     final bytes = _encodeDocumentText(
@@ -1563,23 +1589,21 @@ class WorkspaceService {
             OSError('atomic exchange failed', error),
           );
         }
+        // The temporary path owns displaced user data as soon as exchange
+        // succeeds, including when the following read or stat fails.
+        committed.add(write);
+        await beforeDisplacedValidation?.call(
+          write.target.path,
+          write.stagedFile.path,
+        );
         final displacedBytes = await write.stagedFile.readAsBytes();
         final displacedSnapshot = _snapshotFromBytes(
           await write.stagedFile.stat(),
           displacedBytes,
         );
         if (displacedSnapshot.differsFrom(write.expectedSnapshot)) {
-          final conflict = await _rollbackBatchWrite(write);
-          if (conflict != null) {
-            preservedArtifacts.add(conflict.preservedPath);
-            throw WorkspaceBatchPartialApplicationConflict(
-              files: [conflict],
-              cause: WorkspaceBatchWriteConflict(write.requestPath),
-            );
-          }
           throw WorkspaceBatchWriteConflict(write.requestPath);
         }
-        committed.add(write);
         await _afterBatchFileCommit?.call(write.target.path, committed.length);
         validateBeforeCommit?.call();
       }
@@ -1990,7 +2014,9 @@ class WorkspaceService {
     if (Platform.isWindows) {
       return;
     }
-    final mode = (sourceStat.mode & 0xfff).toRadixString(8);
+    final permissions = sourceStat.mode & 0xfff;
+    if (((await target.stat()).mode & 0xfff) == permissions) return;
+    final mode = permissions.toRadixString(8);
     final result = await Process.run('chmod', [mode, target.path]);
     if (result.exitCode != 0) {
       throw FileSystemException(
@@ -2539,7 +2565,6 @@ class WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime.now(),
       activeFilePath: filePath,
-      activeFileSnapshot: load.snapshot,
       openFilePaths: [filePath],
       files: [await _documentFile(filePath, rootPath)],
       diagnostics: markdown.diagnostics,
@@ -2589,9 +2614,6 @@ class WorkspaceService {
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime.now(),
       activeFilePath: firstMarkdown?.filePath,
-      activeFileSnapshot: firstMarkdown == null
-          ? null
-          : await fileSnapshot(firstMarkdown.filePath),
       openFilePaths: firstMarkdown == null
           ? const []
           : [firstMarkdown.filePath],
@@ -2640,9 +2662,6 @@ class WorkspaceService {
       kind: WorkspaceKind.writersideModule,
       openedAt: DateTime.now(),
       activeFilePath: firstTopic,
-      activeFileSnapshot: firstTopic == null
-          ? null
-          : await fileSnapshot(firstTopic),
       openFilePaths: firstTopic == null ? const [] : [firstTopic],
       files: files,
       directories: directories,

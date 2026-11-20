@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -8,7 +9,6 @@ import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_service.dart';
 import 'package:busymark/src/export/html_export_ui.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/material.dart';
@@ -76,13 +76,13 @@ void main() {
       final root = Directory.systemTemp.createTempSync('html-ui-');
       addTearDown(() => root.deleteSync(recursive: true));
       final service = _RecordingExporter();
-      final picker = Completer<String?>();
-      const channel = MethodChannel('plugins.flutter.io/file_selector');
-      String? suggestion;
+      final picker = Completer<Map<String, Object?>?>();
+      const channel = MethodChannel('busymark/save_chooser');
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
         call,
       ) async {
-        suggestion = (call.arguments as Map)['suggestedName'] as String?;
+        expect(call.method, 'save');
+        expect((call.arguments as Map)['suggestedName'], endsWith('.html'));
         return picker.future;
       });
       addTearDown(
@@ -107,11 +107,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('export-options-submit')));
       await tester.pumpAndSettle();
-      expect(suggestion, endsWith('.html'));
       ref
           .read(workspaceControllerProvider.notifier)
           .updateActiveText('# Later edit');
-      picker.complete(p.join(root.path, 'untitled.html'));
+      picker.complete(
+        SaveDestination.inspect('${root.path}/export.html').chooserReview,
+      );
       for (var i = 0; i < 15; i++) {
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 50)),
@@ -213,11 +214,6 @@ Widget _harness(HtmlExportService service, void Function(WidgetRef) ready) =>
       overrides: [
         htmlExportServiceProvider.overrideWithValue(service),
         localSettingsStoreProvider.overrideWithValue(_Settings()),
-        linuxHeaderBarServiceProvider.overrideWithValue(
-          LinuxHeaderBarService(
-            channel: const MethodChannel('html-test-header'),
-          ),
-        ),
       ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -280,6 +276,8 @@ class _RecordingExporter extends HtmlExportService {
     required String instanceId,
     required String destinationPath,
     bool overwrite = false,
+    SaveDestination? authorization,
+    String? expectedSiteOwnership,
     HtmlExportOptions options = const HtmlExportOptions(),
     WritersideProject? capturedProject,
     HtmlExportCancellationToken? cancellationToken,

@@ -361,6 +361,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "جديد",
   "open": "فتح",
   "@open": {
     "description": "Open action label."
@@ -598,15 +599,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "إنشاء",
+  "home": "الرئيسية",
+  "openMenu": "قائمة فتح",
+  "newNextcloudNote": "ملاحظة Nextcloud جديدة",
+  "shortcutNewDocument": "قائمة جديد",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "إنشاء ملف Markdown أو مشروع Writerside",
+  "shortcutNewDocumentDescription": "افتح قائمة إنشاء الموارد",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "فتح ملف Markdown أو مجلد أو مشروع Writerside",
+  "shortcutOpenDescription": "افتح قائمة فتح الموارد",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -956,11 +960,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "مسح أذونات الصور البعيدة",
+  "clearRemoteImagePermissions": "مسح أذونات الصور لمساحات العمل",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "نسيان مساحات العمل التي سُمح لها بتحميل الصور البعيدة.",
+  "clearRemoteImagePermissionsDescription": "نسيان جميع أذونات الصور البعيدة لمساحات العمل.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1330,7 +1334,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.",
+  "remoteImageBlockedTooltip": "تم حظر الصورة البعيدة. انقر لعرض خيارات التحميل.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1342,7 +1346,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "تحميل لمساحة العمل هذه",
+  "loadThisRemoteImage": "تحميل هذه الصورة",
+  "remoteImageMoreOptions": "خيارات إضافية…",
+  "remoteImageMoreOptionsTitle": "أذونات الصور البعيدة",
+  "loadRemoteImagesInDocument": "تحميل الصور في هذا المستند",
+  "remoteImageUntilClose": "حتى إغلاق هذا المستند.",
+  "remoteImageWorkspacePermissionDetail": "يسمح بالصور البعيدة في ⁨{workspace}⁩ حتى تمسح أذونات مساحة العمل في إعدادات الخصوصية.",
+  "remoteImageGlobalPermissionDetail": "يسمح بالصور البعيدة في كل BusyMark حتى توقف هذا الخيار في إعدادات الخصوصية.",
+  "remoteImageGlobalSettingsDetail": "السماح بالصور البعيدة في كل BusyMark. تُدار أذونات مساحات العمل بشكل منفصل.",
+  "loadRemoteImagesForWorkspace": "السماح دائمًا في مساحة العمل هذه",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3639,7 +3651,7 @@
   "searchTopicsCategory": "المواضيع",
   "searchCurrentDocument": "المستند الحالي",
   "searchCurrentWorkspace": "مساحة العمل الحالية",
-  "browseNotes": "تصفح الملاحظات",
+  "browseNotes": "تصفح ملاحظات Nextcloud",
   "searchActionsCommand": "البحث عن إجراءات",
   "searchDocumentsCommand": "البحث عن مستندات",
   "searchTopicsCommand": "البحث عن مواضيع",

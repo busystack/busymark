@@ -29,8 +29,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
 
   Future<void> _selectActive({bool preserveLookup = true}) async {
     final history = ref.read(localHistoryControllerProvider);
-    if (preserveLookup &&
-        (history.browsingDocuments || history.inspectingRetainedDocument)) {
+    if (preserveLookup && history.inspectingRetainedDocument) {
       return;
     }
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
@@ -63,8 +62,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         if (previous == next) return;
         if (next.bufferId == null) {
           final history = ref.read(localHistoryControllerProvider);
-          if (!history.browsingDocuments &&
-              !history.inspectingRetainedDocument) {
+          if (!history.inspectingRetainedDocument) {
             controller.clearDocumentScope();
           }
           return;
@@ -75,8 +73,6 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         }
       },
     );
-    final visibleDocuments = [...state.snapshot.documents]
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     final selected = state.selectedDocument;
     final activeHistoryDocumentId = activeBuffer == null
         ? null
@@ -100,7 +96,6 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
       children: [
         _LocalHistoryHeader(
           selectedDocument: selected,
-          browsingDocuments: state.browsingDocuments,
           inspectingRetainedDocument: state.inspectingRetainedDocument,
           onBack: () => unawaited(_selectActive(preserveLookup: false)),
           actions: BusyMarkHeaderPopupMenuButton<_HistoryAction>.native(
@@ -168,37 +163,10 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
             ),
           ),
         Expanded(
-          child: state.browsingDocuments
-              ? visibleDocuments.isEmpty
-                    ? _HistoryEmpty(text: context.l10n.localHistoryNoDocuments)
-                    : ListView.builder(
-                        key: const ValueKey('local-history-documents'),
-                        padding: BusyMarkInsets.sidebarList,
-                        itemCount: visibleDocuments.length,
-                        itemBuilder: (context, index) {
-                          final document = visibleDocuments[index];
-                          final path =
-                              document.currentPath ??
-                              document.historicalPaths.lastOrNull;
-                          final subtitle = document.deleted
-                              ? path == null
-                                    ? context.l10n.localHistoryDeleted
-                                    : '${context.l10n.localHistoryDeleted} · $path'
-                              : path;
-                          return BusyMarkSidebarRecordRow<void>(
-                            icon: document.deleted
-                                ? BusyMarkGlyphs.delete
-                                : BusyMarkGlyphs.documentHistory,
-                            title: document.displayName,
-                            subtitle: subtitle,
-                            onTap: () =>
-                                controller.inspectRetainedDocument(document.id),
-                          );
-                        },
-                      )
-              : state.loading &&
-                    state.selectedDocumentId == null &&
-                    !state.inspectingRetainedDocument
+          child:
+              state.loading &&
+                  state.selectedDocumentId == null &&
+                  !state.inspectingRetainedDocument
               ? const Center(child: CircularProgressIndicator())
               : activeBuffer == null && !state.inspectingRetainedDocument
               ? _HistoryEmpty(text: context.l10n.localHistoryNoDocuments)
@@ -322,14 +290,12 @@ enum _HistoryAction { refresh, clearDocument, clearAll }
 class _LocalHistoryHeader extends StatelessWidget {
   const _LocalHistoryHeader({
     required this.selectedDocument,
-    required this.browsingDocuments,
     required this.inspectingRetainedDocument,
     required this.onBack,
     required this.actions,
   });
 
   final LocalHistoryDocument? selectedDocument;
-  final bool browsingDocuments;
   final bool inspectingRetainedDocument;
   final VoidCallback onBack;
   final Widget actions;
@@ -339,10 +305,8 @@ class _LocalHistoryHeader extends StatelessWidget {
     final selectedPath =
         selectedDocument?.currentPath ??
         selectedDocument?.historicalPaths.lastOrNull;
-    final contextTitle = browsingDocuments
-        ? context.l10n.searchDocumentsCategory
-        : selectedDocument?.displayName;
-    final retained = browsingDocuments || inspectingRetainedDocument;
+    final contextTitle = selectedDocument?.displayName;
+    final retained = inspectingRetainedDocument;
     return BusyMarkSidebarHeader(
       key: const ValueKey('local-history-panel-header'),
       title: context.l10n.localHistory,

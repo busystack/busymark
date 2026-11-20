@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "新建",
   "open": "打开",
   "@open": {
     "description": "Open action label."
@@ -714,15 +715,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "创建",
+  "home": "主页",
+  "openMenu": "打开菜单",
+  "newNextcloudNote": "新建 Nextcloud 笔记",
+  "shortcutNewDocument": "新建菜单",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "创建 Markdown 文件或 Writerside 项目",
+  "shortcutNewDocumentDescription": "显示用于新建资源的菜单",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "打开 Markdown 文件、文件夹或 Writerside 项目",
+  "shortcutOpenDescription": "显示用于打开资源的菜单",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1072,11 +1076,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "清除远程图像权限",
+  "clearRemoteImagePermissions": "清除工作区图片权限",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "忘记已获准加载远程图像的工作区。",
+  "clearRemoteImagePermissionsDescription": "忘记所有工作区的远程图片权限。",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1492,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "选择是否允许 BusyMark 加载远程图像。",
+  "remoteImageBlockedTooltip": "远程图像已阻止。点击查看加载选项。",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1504,7 +1508,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "为此工作区加载",
+  "loadThisRemoteImage": "加载此图片",
+  "remoteImageMoreOptions": "更多选项…",
+  "remoteImageMoreOptionsTitle": "远程图片权限",
+  "loadRemoteImagesInDocument": "加载此文档中的图片",
+  "remoteImageUntilClose": "在关闭此文档前有效。",
+  "remoteImageWorkspacePermissionDetail": "允许在 {workspace} 中加载远程图片，直至在隐私设置中清除工作区权限。",
+  "remoteImageGlobalPermissionDetail": "允许在整个 BusyMark 中加载远程图片，直至在隐私设置中关闭此选项。",
+  "remoteImageGlobalSettingsDetail": "允许在整个 BusyMark 中加载远程图片。工作区权限单独管理。",
+  "loadRemoteImagesForWorkspace": "在此工作区中始终允许",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -5157,7 +5169,7 @@
   "searchTopicsCategory": "主题",
   "searchCurrentDocument": "当前文档",
   "searchCurrentWorkspace": "当前工作区",
-  "browseNotes": "浏览笔记",
+  "browseNotes": "浏览 Nextcloud 笔记",
   "searchActionsCommand": "搜索操作",
   "searchDocumentsCommand": "搜索文档",
   "searchTopicsCommand": "搜索主题",

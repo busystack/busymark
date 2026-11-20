@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Nowy",
   "open": "Otwórz",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Utwórz",
+  "home": "Strona główna",
+  "openMenu": "Menu Otwórz",
+  "newNextcloudNote": "Nowa notatka Nextcloud",
+  "shortcutNewDocument": "Menu Nowy",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Utwórz plik Markdown lub projekt Writerside",
+  "shortcutNewDocumentDescription": "Pokaż menu tworzenia zasobów",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Otwórz plik Markdown, folder lub projekt Writerside",
+  "shortcutOpenDescription": "Pokaż menu otwierania zasobów",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Wyczyść uprawnienia do obrazów zdalnych",
+  "clearRemoteImagePermissions": "Wyczyść uprawnienia do obrazów w obszarach roboczych",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Zapomnij obszary robocze, którym zezwolono na wczytywanie obrazów zdalnych.",
+  "clearRemoteImagePermissionsDescription": "Usuń wszystkie uprawnienia obszarów roboczych do obrazów zdalnych.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Wybierz, czy BusyMark może wczytywać obrazy zdalne.",
+  "remoteImageBlockedTooltip": "Obraz zdalny zablokowany. Kliknij, aby wyświetlić opcje wczytywania.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Wczytaj w tym obszarze roboczym",
+  "loadThisRemoteImage": "Wczytaj ten obraz",
+  "remoteImageMoreOptions": "Więcej opcji…",
+  "remoteImageMoreOptionsTitle": "Uprawnienia do obrazów zdalnych",
+  "loadRemoteImagesInDocument": "Wczytaj obrazy w tym dokumencie",
+  "remoteImageUntilClose": "Do zamknięcia tego dokumentu.",
+  "remoteImageWorkspacePermissionDetail": "Zezwala na obrazy zdalne w {workspace} do czasu wyczyszczenia uprawnień obszarów roboczych w ustawieniach prywatności.",
+  "remoteImageGlobalPermissionDetail": "Zezwala na obrazy zdalne w całym BusyMark do czasu wyłączenia tej opcji w ustawieniach prywatności.",
+  "remoteImageGlobalSettingsDetail": "Zezwalaj na obrazy zdalne w całym BusyMark. Uprawnienia obszarów roboczych są zarządzane oddzielnie.",
+  "loadRemoteImagesForWorkspace": "Zawsze zezwalaj w tym obszarze roboczym",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3653,7 +3665,7 @@
   "searchTopicsCategory": "Tematy",
   "searchCurrentDocument": "Bieżący dokument",
   "searchCurrentWorkspace": "Bieżący obszar roboczy",
-  "browseNotes": "Przeglądaj notatki",
+  "browseNotes": "Przeglądaj notatki Nextcloud",
   "searchActionsCommand": "Szukaj działań",
   "searchDocumentsCommand": "Szukaj dokumentów",
   "searchTopicsCommand": "Szukaj tematów",

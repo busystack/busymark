@@ -28,6 +28,7 @@ class WysiwygClipboardHtml {
   WysiwygClipboardFragment? decode(
     String source, {
     required MarkdownMode mode,
+    bool external = true,
   }) {
     if (source.length > maxRichClipboardBytes ||
         utf8.encode(source).length > maxRichClipboardBytes) {
@@ -42,12 +43,14 @@ class WysiwygClipboardHtml {
       // Fragment parsing retains leading text that document parsing consumes
       // before an inferred <body>. Full clipboard documents are accepted too.
       final body = html.parseFragment(content);
-      final normalizer = _HtmlNormalizer();
+      final normalizer = _HtmlNormalizer(external: external);
       final clean = dom.Element.tag('div')
         ..nodes.addAll(normalizer.nodes(body.nodes, 0, const {}));
+      if (external) _normalizeBrowserParagraphs(clean);
       var id = 0;
-      final parsed = const RawHtmlAdapter(
+      final parsed = RawHtmlAdapter(
         preserveInlineWhitespace: true,
+        importClipboardLists: external,
       ).parseRawHtmlBlock(clean.outerHtml, () => 'clipboard-html-${id++}');
       if (parsed == null || !parsed.safe || parsed.blocks.isEmpty) return null;
       BusyBlock task(BusyBlock block) {
@@ -334,6 +337,9 @@ class _HtmlWriter {
 }
 
 class _HtmlNormalizer {
+  _HtmlNormalizer({required this.external});
+
+  final bool external;
   var count = 0;
   static const _formattingTags = ['strong', 'em', 'u', 'del'];
   static const _discard = {
@@ -354,8 +360,9 @@ class _HtmlNormalizer {
   List<dom.Node> nodes(
     Iterable<dom.Node> input,
     int depth,
-    Set<String> styles,
-  ) {
+    Set<String> styles, {
+    bool preformatted = false,
+  }) {
     if (depth > maxRawHtmlDepth) {
       throw const FormatException('Clipboard HTML nesting limit');
     }
@@ -367,6 +374,10 @@ class _HtmlNormalizer {
         throw const FormatException('Clipboard HTML node limit');
       }
       if (node is dom.Text) {
+        if (preformatted) {
+          out.add(dom.Text(node.data));
+          continue;
+        }
         bool structural(dom.Node? sibling) =>
             sibling is dom.Element &&
             isSafeBlockHtmlTag(sibling.localName ?? '');
@@ -453,7 +464,13 @@ class _HtmlNormalizer {
           }
         }
       }
-      final children = nodes(node.nodes, depth + 1, inherited);
+      final children = nodes(
+        node.nodes,
+        depth + 1,
+        inherited,
+        preformatted:
+            preformatted || (external && (tag == 'pre' || tag == 'code')),
+      );
       if (_formattingTags.contains(tag)) tag = 'span';
       if (!isSafeHtmlTag(tag)) {
         out.addAll(children);
@@ -465,6 +482,26 @@ class _HtmlNormalizer {
         if (name == 'style' || name.startsWith('on')) continue;
         // IDs from another document must not collide with destination anchors.
         if (name == 'id') continue;
+        if (external && name == 'class') {
+          if (tag == 'pre' || tag == 'code') {
+            final languages = entry.value
+                .split(RegExp(r'\s+'))
+                .where(
+                  (name) =>
+                      name.startsWith('language-') || name.startsWith('lang-'),
+                );
+            if (languages.isNotEmpty) {
+              attrs[name] = languages
+                  .map(
+                    (name) => name.startsWith('lang-')
+                        ? 'language-${name.substring(5)}'
+                        : name,
+                  )
+                  .join(' ');
+            }
+          }
+          continue;
+        }
         if (isSafeHtmlUrlAttribute(tag, name, entry.value)) {
           attrs[name] = entry.value;
         }
@@ -474,7 +511,24 @@ class _HtmlNormalizer {
         children,
         sanitizeHtmlAttributes(tag, attrs) ?? const {},
       );
-      if (tag == 'span' && normalized.attributes.isEmpty) {
+      if (external &&
+          tag == 'a' &&
+          !_hasImportedAnchorContent(normalized) &&
+          node.querySelector('video, audio, picture') != null) {
+        if (normalized.attributes['href'] case final destination?) {
+          final label =
+              node.attributes['aria-label'] ?? node.attributes['title'];
+          normalized.nodes.add(
+            dom.Text(
+              label == null || label.trim().isEmpty ? destination : label,
+            ),
+          );
+        }
+      }
+      if (external && tag == 'a' && !_hasImportedAnchorContent(normalized)) {
+        // Keep its spacing and any breaks for the paragraph boundary pass.
+        out.addAll(normalized.nodes.toList());
+      } else if (tag == 'span' && normalized.attributes.isEmpty) {
         out.addAll(normalized.nodes.toList());
       } else if (tag == 'table' && _isLayoutTable(normalized, node)) {
         // Web pages often use a one-column table to wrap an entire article.
@@ -577,4 +631,164 @@ class _HtmlNormalizer {
     }
     return hasDocumentContent;
   }
+}
+
+// Only line-break runs in paragraph flow are browser spacing. A single break,
+// preformatted content, and breaks between words of a link label stay intact.
+void _normalizeBrowserParagraphs(dom.Element container) {
+  // These are real table cells. Layout tables were already unwrapped into
+  // document containers. Keep the entire cell subtree in its inline form.
+  final tag = container.localName;
+  if (tag == 'td' || tag == 'th') return;
+  const flow = {
+    'p',
+    'div',
+    'article',
+    'aside',
+    'section',
+    'header',
+    'footer',
+    'main',
+    'nav',
+    'details',
+    'blockquote',
+    'li',
+  };
+  for (final child in container.children.toList()) {
+    if (child.localName != 'pre' && child.localName != 'code') {
+      _normalizeBrowserParagraphs(child);
+    }
+  }
+  if (!flow.contains(tag)) return;
+
+  // A stream across wrapper boundaries, retaining the original DOM nodes so
+  // only participating breaks are removed when the wrappers are split.
+  final tokens = <dom.Node>[];
+  void collect(dom.Node node) {
+    if (node is! dom.Element ||
+        node.localName == 'br' ||
+        isSafeBlockHtmlTag(node.localName ?? '') ||
+        const {'img', 'video', 'audio', 'code'}.contains(node.localName)) {
+      tokens.add(node);
+      return;
+    }
+    final start = tokens.length;
+    for (final child in node.nodes) {
+      collect(child);
+    }
+    if (node.localName == 'a') {
+      final label = tokens.sublist(start);
+      final first = label.indexWhere(_hasImportedAnchorContent);
+      final last = label.lastIndexWhere(_hasImportedAnchorContent);
+      if (first >= 0) {
+        tokens.replaceRange(start + first, start + last + 1, [node]);
+      }
+    }
+  }
+
+  for (final node in container.nodes) {
+    collect(node);
+  }
+  final separators = <dom.Node, bool>{};
+  final run = <dom.Node>[];
+  var breaks = 0;
+  void finishRun() {
+    if (breaks >= 2) {
+      for (final (index, node) in run.indexed) {
+        separators[node] = index == 0;
+      }
+    }
+    run.clear();
+    breaks = 0;
+  }
+
+  for (final node in tokens) {
+    if (node is dom.Element && node.localName == 'br') {
+      run.add(node);
+      breaks++;
+    } else if (node is dom.Text && node.data.trim().isEmpty) {
+      if (run.isNotEmpty) run.add(node);
+    } else {
+      finishRun();
+    }
+  }
+  finishRun();
+  if (separators.isEmpty) return;
+
+  final output = <dom.Node>[];
+  var paragraph = <dom.Node>[];
+  void flush() {
+    if (paragraph.any(_hasImportedAnchorContent) ||
+        paragraph.any((node) => node is dom.Element)) {
+      output.add(
+        _element(
+          'p',
+          paragraph,
+          tag == 'p' ? container.attributes.cast<String, String>() : const {},
+        ),
+      );
+    }
+    paragraph = [];
+  }
+
+  final wrapperCopies = <dom.Element, dom.Element>{};
+  void copy(dom.Node node, List<dom.Element> wrappers) {
+    if (separators[node] case final boundary?) {
+      if (boundary) flush();
+      return;
+    }
+    if (node is dom.Element &&
+        !isSafeBlockHtmlTag(node.localName ?? '') &&
+        node.nodes.isNotEmpty &&
+        !const {'code', 'kbd', 'samp'}.contains(node.localName)) {
+      for (final child in node.nodes) {
+        copy(child, [...wrappers, node]);
+      }
+      return;
+    }
+    if (node is dom.Element &&
+        isSafeBlockHtmlTag(node.localName ?? '') &&
+        node.localName != 'img') {
+      flush();
+      output.add(node.clone(true));
+      return;
+    }
+    var destination = paragraph;
+    for (final wrapper in wrappers) {
+      final last = destination.lastOrNull;
+      if (last is dom.Element && identical(last, wrapperCopies[wrapper])) {
+        destination = last.nodes;
+      } else {
+        final clone = wrapper.clone(false);
+        wrapperCopies[wrapper] = clone;
+        destination.add(clone);
+        destination = clone.nodes;
+      }
+    }
+    destination.add(node.clone(true));
+  }
+
+  for (final node in container.nodes) {
+    copy(node, const []);
+  }
+  flush();
+  if (tag == 'p') {
+    final parent = container.parentNode;
+    if (parent != null) {
+      final index = parent.nodes.indexOf(container);
+      parent.nodes.removeAt(index);
+      parent.nodes.insertAll(index, output);
+    }
+  } else {
+    container.nodes
+      ..clear()
+      ..addAll(output);
+  }
+}
+
+bool _hasImportedAnchorContent(dom.Node node) {
+  if (node is dom.Text) return node.data.trim().isNotEmpty;
+  if (node is! dom.Element) return false;
+  return const {'img', 'video', 'audio', 'source'}.contains(node.localName) ||
+      node.nodes.any(_hasImportedAnchorContent);
 }

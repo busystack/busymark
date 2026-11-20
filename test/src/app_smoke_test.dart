@@ -1,3 +1,6 @@
+import '../support/controlled_image_http_client.dart';
+import 'package:busymark/src/core/save_destination.dart';
+import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
 import 'package:busymark/src/references/reference_controller.dart';
 import 'package:busymark/src/git/application/shared_git_presentation.dart';
@@ -53,6 +56,7 @@ import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/markdown_image_permission_scope.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
@@ -76,7 +80,6 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_gtk_accent_service.dart';
 import 'package:busymark/src/platform/gtk_header_icon_service.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
 import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
@@ -111,7 +114,6 @@ import '../support/widget_async.dart';
 import '../support/shared_git_read_fixture.dart';
 
 void main() {
-  late _FallbackHeaderBarService headerBarService;
   final l10n = AppLocalizationsEn();
 
   setUp(() {
@@ -127,7 +129,6 @@ void main() {
       const MethodChannel(nativeWritersideDialogChannelName),
       (_) async => throw MissingPluginException(),
     );
-    headerBarService = _FallbackHeaderBarService();
   });
 
   testWidgets(
@@ -137,7 +138,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Heading\n\nDocument text\n',
       });
       final container = harness.container;
@@ -156,12 +157,25 @@ void main() {
         LogicalKeyboardKey key, {
         bool control = true,
         bool shift = true,
+        bool expectMenu = false,
       }) async {
         if (control) {
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         }
         if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-        await tester.sendKeyEvent(key);
+        await tester.sendKeyDownEvent(key);
+        if (expectMenu) {
+          await pumpUntil(
+            tester,
+            () => menus.isOpen,
+            operation: 'open the selector while the shortcut is held',
+          );
+          final presentations = menus.packets.length;
+          await tester.sendKeyRepeatEvent(key);
+          await tester.pumpAndSettle();
+          expect(menus.packets, hasLength(presentations));
+        }
+        await tester.sendKeyUpEvent(key);
         if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
         if (control) {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -169,12 +183,18 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await chord(LogicalKeyboardKey.f9);
-      await pumpUntil(
-        tester,
-        () => menus.isOpen,
-        operation: 'open Sidebar View with its registered shortcut',
+      await chord(LogicalKeyboardKey.f10, expectMenu: true);
+      expect(menus.isOpen, isTrue);
+      expect(
+        container.read(appSettingsControllerProvider).sidebarVisible,
+        isFalse,
       );
+      expect(menus.contains('Reading'), isTrue);
+      menus.close();
+      await tester.pumpAndSettle();
+
+      await chord(LogicalKeyboardKey.f9, expectMenu: true);
+      expect(menus.isOpen, isTrue);
       expect(
         container.read(appSettingsControllerProvider).sidebarVisible,
         isTrue,
@@ -188,6 +208,7 @@ void main() {
         'Local History': 'L',
         'Clipboard History': 'B',
         'References': 'R',
+        'Recent': 'E',
       };
       expect({
         for (final e in menus.entries) e['label']: e['mnemonic'],
@@ -200,7 +221,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byTooltip('Sidebar view (Ctrl+Shift+F9)'), findsOneWidget);
       expect(find.byTooltip('Hide sidebar (F9)'), findsOneWidget);
-      await chord(LogicalKeyboardKey.f10);
+      await chord(LogicalKeyboardKey.f10, expectMenu: true);
       expect(menus.isOpen, isTrue);
       expect(
         {for (final e in menus.entries) e['label']: e['mnemonic']},
@@ -254,11 +275,21 @@ void main() {
       expect(menus.isOpen, isFalse);
       await chord(LogicalKeyboardKey.f10);
       expect(menus.isOpen, isFalse);
-      await chord(LogicalKeyboardKey.f6, control: false, shift: false);
+      await chord(
+        LogicalKeyboardKey.f6,
+        control: false,
+        shift: false,
+        expectMenu: true,
+      );
       expect(menus.isOpen, isTrue);
       menus.close();
       await tester.pumpAndSettle();
-      await chord(LogicalKeyboardKey.f8, control: false, shift: false);
+      await chord(
+        LogicalKeyboardKey.f8,
+        control: false,
+        shift: false,
+        expectMenu: true,
+      );
       expect(menus.isOpen, isTrue);
       menus.close();
       await tester.pumpAndSettle();
@@ -291,7 +322,7 @@ void main() {
     'configuration content selector preserves letters and rejects unavailable view responses',
     (tester) async {
       const source = '<settings/>\n';
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Document\n',
         'settings.cfg': source,
       });
@@ -358,7 +389,7 @@ void main() {
   testWidgets(
     'focused Source opens its context menu with Shift+F10 and Menu, excluding Ctrl+Shift+F10',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Keyboard context\n',
       });
       final container = harness.container;
@@ -376,15 +407,14 @@ void main() {
       final menus = NativeMenuProbe(tester);
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
-      await tester.pump();
-      expect(menus.isOpen, isFalse, reason: 'wait for Shift release');
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
       await pumpUntil(
         tester,
         () => menus.isOpen,
-        operation: 'open the focused Source context menu',
+        operation: 'open the focused Source context menu on keydown',
       );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       expect(menus.contains(l10n.selectAll), isTrue);
       expect(menus.contains(l10n.source), isFalse);
       menus.close();
@@ -393,9 +423,7 @@ void main() {
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
       await pumpUntil(
         tester,
         () => menus.isOpen,
@@ -407,6 +435,11 @@ void main() {
         'R',
         'D',
       ]);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(menus.isOpen, isTrue);
       expect(menus.packets, hasLength(2));
       menus.close();
       await tester.pumpAndSettle();
@@ -434,7 +467,7 @@ void main() {
   testWidgets(
     'selector Settings show effective opener bindings and preserve unrelated overrides',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Document\n',
       });
       final container = harness.container;
@@ -517,7 +550,6 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(settings),
             workspaceServiceProvider.overrideWithValue(
               _StartupWorkspaceService(),
@@ -644,7 +676,6 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(store),
             localHistoryStoreProvider.overrideWithValue(
               MemoryLocalHistoryStore(),
@@ -831,6 +862,7 @@ void main() {
         );
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
+        container.dispose();
         await tester.pump(const Duration(seconds: 1));
       },
     );
@@ -839,11 +871,9 @@ void main() {
   testWidgets(
     'effective keymap changes Source execution, disables defaults and updates native metadata',
     (tester) async {
-      final (:container, :events) = await _pumpSearchRegression(
-        tester,
-        headerBarService,
-        {'a.md': 'needle other'},
-      );
+      final (:container) = await _pumpSearchRegression(tester, {
+        'a.md': 'needle other',
+      });
       final saveHandler = container
           .read(busyMarkCommandRegistryProvider)['file.save']!
           .execute;
@@ -1114,7 +1144,7 @@ void main() {
   testWidgets(
     'capture releases dispatch even when native key-up skips focus delivery',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'unchanged',
       });
       final owner = Object();
@@ -1153,7 +1183,7 @@ void main() {
   testWidgets(
     'capture suppresses the real workspace search route until key release',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'selected text',
       });
       final container = harness.container;
@@ -1226,7 +1256,7 @@ void main() {
   testWidgets(
     'shortcut Settings respects pending property edits before leaving the workspace',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'Original text',
       });
       final container = harness.container;
@@ -1302,7 +1332,7 @@ void main() {
   testWidgets(
     'Actions keeps its captured target and selected command when a binding changes',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'selected text',
       });
       final container = harness.container;
@@ -1385,9 +1415,7 @@ void main() {
   testWidgets('application reassignment receives a retired editor combination', (
     tester,
   ) async {
-    final harness = await _pumpSearchRegression(tester, headerBarService, {
-      'a.md': 'Text',
-    });
+    final harness = await _pumpSearchRegression(tester, {'a.md': 'Text'});
     final container = harness.container;
     final keymap = container.read(keymapControllerProvider.notifier);
     container.read(searchSessionProvider.notifier).close(restoreFocus: false);
@@ -1488,7 +1516,7 @@ void main() {
   testWidgets(
     'effective keymap replaces sidebar keypad aliases and tree deletion keys',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Heading\nText',
         'b.md': 'Other',
       });
@@ -1621,7 +1649,6 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceServiceProvider.overrideWithValue(
             _StartupWorkspaceService(),
@@ -1711,7 +1738,6 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(
             _MemorySettingsStore()
               ..value = AppSettings.defaults()
@@ -1817,9 +1843,22 @@ void main() {
         expect(parsed.blocks.single.attributes['level'], '2');
         expect(parsed.blocks.single.plainText, 'About the job');
       }
-      bool? saved;
-      unawaited(workspace.saveActive().then((value) => saved = value));
-      await _waitForSearchCondition(tester, () => saved != null);
+      final saving = workspace.saveActive();
+      final saved = await tester.runAsync(() async {
+        // Save crosses real file I/O and callbacks queued on the widget clock.
+        // Drive both until the controller reports the transaction result.
+        var finished = false;
+        final result = saving.whenComplete(() => finished = true);
+        Future<void> flushFramesUntilSaved() async {
+          while (!finished) {
+            await tester.pump();
+            if (!finished) await Future<void>.delayed(Duration.zero);
+          }
+        }
+
+        final (value, _) = await (result, flushFramesUntilSaved()).wait;
+        return value;
+      });
       expect(saved, isTrue);
       await tester.pumpAndSettle();
       expect(file.readAsStringSync(), savedSource);
@@ -1853,6 +1892,8 @@ void main() {
         BusyBlockKind.heading,
       );
       await tester.pumpWidget(const SizedBox.shrink());
+      container.dispose();
+      await tester.pump();
     },
   );
 
@@ -1886,7 +1927,6 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore()
                 ..value = AppSettings.defaults()
@@ -1954,10 +1994,6 @@ void main() {
           field.controller!.selection,
           TextSelection.collapsed(offset: 1 + count),
         );
-        final dynamic editorState = tester.state(
-          find.byType(BusyMarkWysiwygEditor),
-        );
-        expect(editorState.debugUndoSnapshotCount, 0);
         expect(workspace.undoActiveBuffer(), isTrue);
         await tester.pumpAndSettle();
         expect(
@@ -2050,6 +2086,8 @@ void main() {
           expected,
         );
         await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+        await tester.pump();
       },
     );
   }
@@ -2060,7 +2098,6 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
             ..value = AppSettings.defaults()
@@ -2170,7 +2207,6 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue('/tmp/workspace-paste.md'),
@@ -2432,7 +2468,6 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settings),
           workspaceServiceProvider.overrideWithValue(
             const _SearchWorkspaceService(''),
@@ -2519,14 +2554,6 @@ void main() {
         fields.last.controller!.selection,
         const TextSelection.collapsed(offset: 0),
       );
-      expect(
-        tester
-            .state<BusyMarkWysiwygEditorState>(
-              find.byType(BusyMarkWysiwygEditor),
-            )
-            .debugUndoSnapshotCount,
-        0,
-      );
       await shortcut(LogicalKeyboardKey.keyZ);
       expect(source(), beforeEnter);
       check(recognized: false);
@@ -2551,10 +2578,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -2599,10 +2623,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -2614,7 +2635,7 @@ void main() {
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text(l10n.markdownFolderOrWritersideProject), findsOneWidget);
     expect(find.text(l10n.browseNotes), findsOneWidget);
-    expect(find.text(l10n.nextcloudNewNote), findsOneWidget);
+    expect(find.text(l10n.newNextcloudNote), findsOneWidget);
     expect(
       tester.getTopLeft(find.text(l10n.markdownFolderOrWritersideProject)).dy,
       lessThan(tester.getTopLeft(find.text(l10n.browseNotes)).dy),
@@ -2687,7 +2708,6 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
             ),
@@ -2760,7 +2780,6 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
             ),
@@ -2790,7 +2809,7 @@ void main() {
           await tester.pumpAndSettle();
         }
         await tester.tap(
-          find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
+          find.byTooltip('${l10n.home} (${BusyMarkAppShortcuts.home.label})'),
         );
         await tester.pumpAndSettle();
         expect(find.text(l10n.createMarkdownFile), findsOneWidget);
@@ -2819,7 +2838,6 @@ void main() {
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         ],
         child: const BusyMarkApp(),
@@ -2885,10 +2903,7 @@ void main() {
   testWidgets('Alt+Left activates the header Back command', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -2922,8 +2937,140 @@ void main() {
     expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
   });
 
+  testWidgets('Home and Settings Back have distinct customizable routes', (
+    tester,
+  ) async {
+    final fixture = Directory.systemTemp.createTempSync('busymark-home-');
+    addTearDown(() => fixture.deleteSync(recursive: true));
+    final file = File(p.join(fixture.path, 'original.md'))
+      ..writeAsStringSync('# Original');
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults().copyWith(autoSave: false).toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        startupPathProvider.overrideWithValue(file.path),
+        localSettingsStoreProvider.overrideWithValue(settings),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final router = container.read(appRouterProvider);
+    final controller = container.read(workspaceControllerProvider.notifier);
+    String path() => router.routeInformationProvider.value.uri.path;
+    Finder home() => find.byKey(const ValueKey('workspace-home'));
+    Finder back() => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkLinuxHeaderIconButton &&
+          widget.tooltip == l10n.back,
+    );
+    Future<void> alt(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.pumpAndSettle();
+    }
+
+    await pumpUntil(
+      tester,
+      () => home().evaluate().isNotEmpty,
+      operation: 'open the initial workspace',
+    );
+    expect(
+      tester.widget<BusyMarkHeaderIconButton>(home()).nativeIcon,
+      BusyMarkLinuxHeaderIcon.home,
+    );
+    expect(
+      tester.widget<BusyMarkHeaderIconButton>(home()).icon,
+      BusyMarkGlyphs.home,
+    );
+    expect(find.byTooltip('${l10n.home} (Alt+Home)'), findsOneWidget);
+    final iconButton = tester.widget<IconButton>(
+      find.descendant(of: home(), matching: find.byType(IconButton)),
+    );
+    final foreground = iconButton.style!.foregroundColor!.resolve({})!;
+    expect(
+      iconButton.style!.backgroundColor!.resolve({WidgetState.hovered}),
+      foreground.withValues(
+        alpha: foreground.a * BusyMarkLinuxHeaderStyle.hoverBackgroundStrength,
+      ),
+    );
+    expect(
+      iconButton.style!.backgroundColor!.resolve({WidgetState.pressed}),
+      foreground.withValues(
+        alpha:
+            foreground.a * BusyMarkLinuxHeaderStyle.pressedBackgroundStrength,
+      ),
+    );
+
+    expect(back(), findsNothing);
+    _expectHeaderGeometry(tester);
+    await alt(LogicalKeyboardKey.arrowLeft);
+    expect(path(), '/workspace');
+
+    router.go(settingsLocation(SettingsReturnTarget.workspace));
+    await tester.pumpAndSettle();
+    expect(back(), findsOneWidget);
+    expect(home(), findsNothing);
+    await alt(LogicalKeyboardKey.arrowLeft);
+    expect(path(), '/workspace');
+
+    controller.updateActiveText('# Dirty');
+    await tester.pumpAndSettle();
+    await tester.tap(home());
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+    expect(path(), '/workspace');
+    expect(container.read(workspaceControllerProvider).activeText, '# Dirty');
+
+    router.go(settingsLocation(SettingsReturnTarget.workspace));
+    await tester.pumpAndSettle();
+    await alt(LogicalKeyboardKey.home);
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+    await tester.tap(find.text(l10n.discard));
+    await pumpUntil(
+      tester,
+      () => path() == '/',
+      operation: 'finish Home from Settings after Discard',
+    );
+    expect(home(), findsNothing);
+    expect(back(), findsNothing);
+    expect(file.readAsStringSync(), '# Original');
+
+    final changed = await container
+        .read(keymapControllerProvider.notifier)
+        .update(
+          BusyMarkCommandIds.home,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f6),
+          expected: const {},
+        );
+    expect(changed.status, KeymapUpdateStatus.saved);
+    router.go('/workspace');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('${l10n.home} (F6)'), findsOneWidget);
+    await alt(LogicalKeyboardKey.home);
+    expect(path(), '/workspace');
+    await tester.sendKeyEvent(LogicalKeyboardKey.f6);
+    await tester.pumpAndSettle();
+    expect(path(), '/');
+  });
+
   testWidgets(
-    'restored capture failure stays owned across Back create discard create',
+    'restored capture failure stays owned across Home create discard create',
     (tester) async {
       final root = (await tester.runAsync(
         () => Directory.systemTemp.createTemp('busymark-history-navigation-'),
@@ -2952,7 +3099,6 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settings),
           localHistoryStoreProvider.overrideWithValue(store),
           localHistoryTimerFactoryProvider.overrideWithValue(
@@ -3000,14 +3146,14 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('could not capture'), findsOneWidget);
-      Future<void> back() async {
+      Future<void> goHome() async {
         await container
             .read(busyMarkCommandRegistryProvider)
-            .execute(BusyMarkCommandIds.back);
+            .execute(BusyMarkCommandIds.home);
         await tester.pumpAndSettle();
       }
 
-      await back();
+      await goHome();
       expect(find.text(l10n.createMarkdownFile), findsOneWidget);
       await tester.tap(find.text(l10n.createMarkdownFile));
       await _pumpUntilCondition(
@@ -3028,7 +3174,7 @@ void main() {
       expect(firstDraft.id, isNot(originalId));
       expect(history.warningForBuffer(firstDraft.id), isNull);
       expect(find.textContaining('could not capture'), findsNothing);
-      await back();
+      await goHome();
       expect(find.text(l10n.discard), findsOneWidget);
       await tester.tap(find.text(l10n.discard));
       await tester.pumpAndSettle();
@@ -3093,10 +3239,7 @@ void main() {
   testWidgets('Escape closes header popup menus', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -3144,10 +3287,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -3184,10 +3324,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -3257,7 +3394,6 @@ void main() {
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         ],
@@ -3432,11 +3568,13 @@ void main() {
     expect(settingsStore.value['autoSave'], isTrue);
     expect(tester.widget<BusyMarkSwitchRow>(autoSaveRow).value, isTrue);
 
-    final header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
+    expect(find.text(l10n.editor), findsWidgets);
+    expect(
+      tester
+          .widget<LinuxPageFrame>(find.byType(LinuxPageFrame))
+          .sidebarAvailable,
+      isFalse,
     );
-    expect(header.configuration.title, l10n.editor);
-    expect(header.configuration.sidebarVisible, isFalse);
     expect(
       find.byKey(const ValueKey('settings-page-selector')),
       findsOneWidget,
@@ -3676,10 +3814,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -3711,12 +3846,15 @@ void main() {
     expect(appearanceTile.selected, isTrue);
     expect(editorTile.selected, isFalse);
 
-    var header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
+    expect(
+      tester
+          .widget<LinuxPageFrame>(find.byType(LinuxPageFrame))
+          .sidebarExpanded,
+      isTrue,
     );
-    expect(header.configuration.sidebarVisible, isTrue);
-    expect(header.configuration.sidebarToggleVisible, isFalse);
-    expect(header.configuration.title, l10n.appearance);
+    expect(find.byTooltip(l10n.showSidebar), findsNothing);
+    expect(find.byTooltip(l10n.hideSidebar), findsNothing);
+    expect(find.text(l10n.appearance), findsWidgets);
 
     await tester.tap(find.byKey(const ValueKey('settings-navigation-editor')));
     await tester.pumpAndSettle();
@@ -3741,11 +3879,13 @@ void main() {
       ],
     );
     expect(find.text(l10n.autoSave), findsOneWidget);
-    header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
+    expect(
+      tester
+          .widget<LinuxPageFrame>(find.byType(LinuxPageFrame))
+          .sidebarExpanded,
+      isTrue,
     );
-    expect(header.configuration.sidebarVisible, isTrue);
-    expect(header.configuration.title, l10n.editor);
+    expect(find.text(l10n.editor), findsWidgets);
 
     expect(find.text(l10n.spellingDictionaries), findsOneWidget);
     expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
@@ -3755,11 +3895,13 @@ void main() {
       tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
       isTrue,
     );
-    header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
+    expect(
+      tester
+          .widget<LinuxPageFrame>(find.byType(LinuxPageFrame))
+          .sidebarExpanded,
+      isTrue,
     );
-    expect(header.configuration.sidebarVisible, isTrue);
-    expect(header.configuration.title, l10n.editor);
+    expect(find.text(l10n.editor), findsWidgets);
     expect(
       tester
           .widget<BusyMarkSidebarNavigationTile>(
@@ -3768,11 +3910,13 @@ void main() {
           .selected,
       isTrue,
     );
-    header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
+    expect(
+      tester
+          .widget<LinuxPageFrame>(find.byType(LinuxPageFrame))
+          .sidebarExpanded,
+      isTrue,
     );
-    expect(header.configuration.sidebarVisible, isTrue);
-    expect(header.configuration.title, l10n.editor);
+    expect(find.text(l10n.editor), findsWidgets);
 
     final dictionariesNavigation = find.byKey(
       const ValueKey('settings-spelling-dictionaries'),
@@ -3791,10 +3935,7 @@ void main() {
           .selected,
       isTrue,
     );
-    header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
-    );
-    expect(header.configuration.title, l10n.spellingDictionaries);
+    expect(find.text(l10n.spellingDictionaries), findsWidgets);
     expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
     expect(find.text(l10n.spellingDictionaryProblems), findsNothing);
 
@@ -3802,10 +3943,7 @@ void main() {
       find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
     );
     await tester.pumpAndSettle();
-    header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
-    );
-    expect(header.configuration.title, l10n.editor);
+    expect(find.text(l10n.editor), findsWidgets);
     expect(find.text(l10n.autoSave), findsOneWidget);
   });
 
@@ -3836,7 +3974,6 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           spellingSessionControllerProvider.overrideWith((ref) => spelling),
         ],
@@ -4007,7 +4144,6 @@ void main() {
     var catalogResumed = false;
     final harness = await _pumpSettingsSpellingHarness(
       tester,
-      headerBarService: headerBarService,
       settingsStore: _MemorySettingsStore(),
       downloadFile: _copySettingsDictionaryDownload,
       catalogLoader:
@@ -4090,7 +4226,6 @@ void main() {
     (tester) async {
       final harness = await _pumpSettingsSpellingHarness(
         tester,
-        headerBarService: headerBarService,
         settingsStore: _MemorySettingsStore(),
         downloadFile: _copySettingsDictionaryDownload,
       );
@@ -4194,7 +4329,6 @@ void main() {
   ) async {
     final harness = await _pumpSettingsSpellingHarness(
       tester,
-      headerBarService: headerBarService,
       settingsStore: _MemorySettingsStore(),
       downloadFile: _copySettingsDictionaryDownload,
     );
@@ -4277,7 +4411,6 @@ void main() {
             .toJson();
       final harness = await _pumpSettingsSpellingHarness(
         tester,
-        headerBarService: headerBarService,
         settingsStore: settingsStore,
         downloadFile:
             ({
@@ -4349,7 +4482,6 @@ void main() {
             .toJson();
       final harness = await _pumpSettingsSpellingHarness(
         tester,
-        headerBarService: headerBarService,
         settingsStore: settingsStore,
         downloadFile:
             ({
@@ -4421,7 +4553,6 @@ void main() {
           .toJson();
     final harness = await _pumpSettingsSpellingHarness(
       tester,
-      headerBarService: headerBarService,
       settingsStore: settingsStore,
       downloadFile:
           ({
@@ -4465,7 +4596,6 @@ void main() {
       var downloadCount = 0;
       final harness = await _pumpSettingsSpellingHarness(
         tester,
-        headerBarService: headerBarService,
         settingsStore: _MemorySettingsStore(),
         projectLanguage: 'en-Test',
         downloadFile:
@@ -4529,13 +4659,11 @@ void main() {
         ..value = AppSettings.defaults()
             .copyWith(themeModePreference: preference)
             .toJson();
-      headerBarService = _FallbackHeaderBarService();
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(settingsStore),
           ],
           child: const BusyMarkApp(),
@@ -4555,9 +4683,6 @@ void main() {
       final surface = tester.widget<ColoredBox>(surfaceFinder);
       final surfaceContext = tester.element(surfaceFinder);
       final colors = BusyMarkSurfaceColors.of(surfaceContext);
-      final header = tester.widget<HeaderBarConfigurationPublisher>(
-        find.byType(HeaderBarConfigurationPublisher),
-      );
 
       expect(
         Theme.of(surfaceContext).brightness,
@@ -4566,7 +4691,6 @@ void main() {
             : Brightness.light,
       );
       expect(surface.color, colors.view);
-      expect(surface.color, header.configuration.theme.backgroundColor);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
@@ -4582,7 +4706,6 @@ void main() {
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
         ],
         child: const BusyMarkApp(),
@@ -4641,7 +4764,6 @@ void main() {
           ProviderScope(
             overrides: [
               ..._smokeAccentOverrides,
-              linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
               localSettingsStoreProvider.overrideWithValue(settingsStore),
             ],
             child: const BusyMarkApp(),
@@ -4666,6 +4788,7 @@ void main() {
   testWidgets('Writerside project dialog syncs generated fields until edited', (
     tester,
   ) async {
+    final menus = NativeMenuProbe(tester);
     final temp = Directory.systemTemp.createTempSync('busymark-create-dialog-');
     const fileSelectorChannel = MethodChannel(
       'plugins.flutter.io/file_selector',
@@ -4689,10 +4812,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -4704,14 +4824,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    final newDialog = find.byType(BusyMarkDialogShell);
-    expect(newDialog, findsOneWidget);
-    await tester.tap(
-      find.descendant(
-        of: newDialog,
-        matching: find.text(l10n.createWritersideProject),
-      ),
-    );
+    menus.select(l10n.createWritersideProject);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.createWritersideProject), findsWidgets);
@@ -4839,7 +4952,6 @@ void main() {
         ProviderScope(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(store),
           ],
           child: const BusyMarkApp(),
@@ -4947,10 +5059,7 @@ void main() {
     final l10n = AppLocalizationsEn();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -5252,10 +5361,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -5295,7 +5401,6 @@ void main() {
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
         ],
         child: const BusyMarkApp(),
@@ -5359,7 +5464,6 @@ void main() {
         ProviderScope(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(store),
           ],
           child: const BusyMarkApp(),
@@ -5435,7 +5539,6 @@ void main() {
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
         ],
         child: const BusyMarkApp(),
@@ -5479,10 +5582,7 @@ void main() {
   testWidgets('about dialog shows the BusyMark logo', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
+        overrides: [..._smokeAccentOverrides],
         child: const BusyMarkApp(),
       ),
     );
@@ -5539,20 +5639,117 @@ void main() {
     expect(logoSize.height, lessThanOrEqualTo(BusyMarkSizes.aboutLogoViewport));
   });
 
-  testWidgets('Ctrl+N chooses between Markdown and Writerside creation', (
+  testWidgets(
+    'New and Open pointer and held shortcuts share the header anchor',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      final service = _StartupWorkspaceService();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final search = find.byTooltip(l10n.search);
+      final open = find.byTooltip('Open (Ctrl+O)');
+      final create = find.byTooltip('New (Ctrl+N)');
+      final main = find.byTooltip(l10n.mainMenu);
+      expect(tester.getCenter(search).dx, lessThan(tester.getCenter(open).dx));
+      expect(tester.getCenter(open).dx, lessThan(tester.getCenter(create).dx));
+      expect(tester.getCenter(create).dx, lessThan(tester.getCenter(main).dx));
+
+      for (final (button, key, entries) in [
+        (
+          create,
+          LogicalKeyboardKey.keyN,
+          {
+            'M': l10n.createMarkdownFile,
+            'N': l10n.newNextcloudNote,
+            'W': l10n.createWritersideProject,
+          },
+        ),
+        (
+          open,
+          LogicalKeyboardKey.keyO,
+          {
+            'M': l10n.openMarkdownFile,
+            'F': l10n.openFolderOrWritersideProject,
+            'N': l10n.browseNotes,
+          },
+        ),
+      ]) {
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        final pointer = menus.packets.last;
+        expect(pointer['focusFirst'], isFalse);
+        expect({
+          for (final row in menus.entries) row['mnemonic']: row['label'],
+        }, entries);
+        menus.close();
+        await tester.pumpAndSettle();
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(key);
+        await tester.pumpAndSettle();
+        final shortcut = menus.packets.last;
+        expect(shortcut['focusFirst'], isTrue);
+        expect(shortcut['anchor'], pointer['anchor']);
+        expect(shortcut['entries'], pointer['entries']);
+        final count = menus.packets.length;
+        await tester.sendKeyRepeatEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyRepeatEvent(key);
+        await tester.sendKeyUpEvent(key);
+        await tester.pumpAndSettle();
+        expect(menus.packets, hasLength(count));
+        expect(menus.isOpen, isTrue);
+        menus.close();
+        await tester.pumpAndSettle();
+      }
+      expect(service.untitledCount, 0);
+      expect(find.byType(BusyMarkDialogShell), findsNothing);
+
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .saveShortcutOverrides({
+            BusyMarkCommandIds.newDocument: const BusyMarkKeyBinding(
+              LogicalKeyboardKey.f6,
+              alt: true,
+            ),
+          });
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
+      await tester.pumpAndSettle();
+      expect(menus.isOpen, isTrue);
+      expect(menus.contains(l10n.newNextcloudNote), isTrue);
+      expect(find.byTooltip('New (Alt+F6)'), findsOneWidget);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      menus.close();
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('Welcome Markdown creation focuses the visual editor', (
     tester,
   ) async {
     final service = _StartupWorkspaceService();
-    final settingsStore = _MemorySettingsStore()
-      ..value = AppSettings.defaults()
-          .copyWith(defaultSpellingLanguage: null)
-          .toJson();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: const BusyMarkApp(),
@@ -5560,70 +5757,40 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(find.text(l10n.createMarkdownFile));
     await tester.pumpAndSettle();
-
-    final newDialog = find.byType(BusyMarkDialogShell);
-    final createMarkdown = find.descendant(
-      of: newDialog,
-      matching: find.text(l10n.createMarkdownFile),
-    );
-    final createWriterside = find.descendant(
-      of: newDialog,
-      matching: find.text(l10n.createWritersideProject),
-    );
-    expect(service.untitledCount, 0);
-    expect(newDialog, findsOneWidget);
-    expect(createMarkdown, findsOneWidget);
-    expect(createWriterside, findsOneWidget);
-    expect(
-      find.descendant(
-        of: newDialog,
-        matching: find.byIcon(BusyMarkGlyphs.newDocument),
-      ),
-      findsOneWidget,
+    final fields = find.descendant(
+      of: find.byType(BusyMarkWysiwygEditor),
+      matching: find.byType(EditableText),
     );
     expect(
-      find.descendant(
-        of: newDialog,
-        matching: find.byIcon(BusyMarkGlyphs.writersideProject),
-      ),
-      findsOneWidget,
+      tester
+          .widgetList<EditableText>(fields)
+          .where((field) => field.focusNode.hasPrimaryFocus),
+      hasLength(1),
     );
-
-    await tester.tap(createMarkdown);
-    await tester.pumpAndSettle();
-
+    tester.testTextInput.enterText('Typed in Editor');
+    await tester.pump();
     expect(service.untitledCount, 1);
-    expect(find.text(l10n.createMarkdownFile), findsNothing);
-    expect(find.text(l10n.untitledMarkdownFileName), findsWidgets);
-    expect(find.byKey(const ValueKey('editor-tab-strip')), findsNothing);
-    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
-    expect(find.text('LF'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('document-spelling-language-status')),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.spellingLanguageUnsetStatus), findsOneWidget);
-    final spellingBanner = find.byKey(const ValueKey('spelling-banner'));
-    expect(spellingBanner, findsOneWidget);
-    expect(tester.widget<BusyMarkBanner>(spellingBanner).revealed, isFalse);
+    expect(find.text('Typed in Editor'), findsWidgets);
   });
 
   testWidgets('Ctrl+N keeps unsaved documents in independent tabs', (
     tester,
   ) async {
     final service = _StartupWorkspaceService();
+    final menus = NativeMenuProbe(tester);
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
-            ..value = AppSettings.defaults().copyWith(autoSave: false).toJson(),
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  documentViewMode: DocumentViewModePreference.source,
+                )
+                .toJson(),
         ),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(
@@ -5655,33 +5822,32 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    final firstNewDialog = find.byType(BusyMarkDialogShell);
-    expect(
-      find.descendant(
-        of: firstNewDialog,
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: firstNewDialog,
-        matching: find.text(l10n.createWritersideProject),
-      ),
-      findsOneWidget,
-    );
+    expect(menus.contains(l10n.createMarkdownFile), isTrue);
+    expect(menus.contains(l10n.createWritersideProject), isTrue);
     expect(find.text(l10n.unsavedChanges), findsNothing);
-
-    await tester.tap(
-      find.descendant(
-        of: firstNewDialog,
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pumpAndSettle();
+
+    final source = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(EditableText),
+    );
+    final field = tester.widget<EditableText>(source);
+    expect(field.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      field.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText('Typed into new tab');
+    await tester.pump();
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
     expect(service.untitledCount, 1);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      'Typed into new tab',
+    );
     expect(
       container.read(workspaceControllerProvider).documentBuffers,
       hasLength(2),
@@ -5700,16 +5866,32 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(BusyMarkDialogShell),
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
     expect(service.untitledCount, 2);
+    final nextField = tester.widget<EditableText>(source);
+    expect(nextField.focusNode, isNot(same(field.focusNode)));
+    expect(nextField.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      nextField.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText('Second created tab');
+    await tester.pump();
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      'Second created tab',
+    );
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .map((b) => b.text),
+      containsAll(['# Dirty\n', 'Typed into new tab']),
+    );
     expect(
       container.read(workspaceControllerProvider).documentBuffers,
       hasLength(3),
@@ -5717,9 +5899,113 @@ void main() {
     await tester.pump(const Duration(milliseconds: 800));
   });
 
+  testWidgets('Files New File opens the Dual Source field ready to type', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('busymark-files-new-');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final existing = File(p.join(folder.path, 'existing.md'))
+      ..writeAsStringSync('# Existing\n');
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  documentViewMode: DocumentViewModePreference.split,
+                )
+                .toJson(),
+        ),
+        startupPathProvider.overrideWithValue(folder.path),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await pumpUntil(
+      tester,
+      () => find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty,
+      operation: 'Open a real Markdown folder',
+    );
+    final menus = NativeMenuProbe(tester);
+    final viewSelector = find.byTooltip(
+      '${l10n.sidebarViewMenu} (Ctrl+Shift+F9)',
+    );
+    await tester.tap(viewSelector);
+    await tester.pumpAndSettle();
+    await menus.activate(l10n.files);
+    await tester.pumpAndSettle();
+    Future<void> openNewFile() async {
+      await tester.tap(
+        find.widgetWithText(BusyMarkSidebarTreeRow, 'existing.md'),
+        buttons: kSecondaryButton,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        menus.matching(l10n.newFile),
+        hasLength(1),
+        reason:
+            'Native menu entries: ${menus.entries.map((entry) => entry['label'])}',
+      );
+      await menus.activate(l10n.newFile);
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.newFile), findsOneWidget);
+    }
+
+    await openNewFile();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(File(p.join(folder.path, 'untitled.md')).existsSync(), isFalse);
+
+    await openNewFile();
+    final dialog = find.byType(BusyMarkModalEditorScaffold);
+    await tester.tap(
+      find.descendant(of: dialog, matching: find.text(l10n.create)),
+    );
+    await pumpUntil(
+      tester,
+      () =>
+          container.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          p.join(folder.path, 'untitled.md'),
+      operation: 'New File opens its new buffer',
+    );
+    await tester.pumpAndSettle();
+    final source = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(source.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      source.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText('Typed into Files-created Source');
+    await tester.pump();
+    final state = container.read(workspaceControllerProvider);
+    expect(state.activeText, 'Typed into Files-created Source');
+    expect(
+      state.activeBuffer!.editorState.mode,
+      DocumentViewModePreference.split,
+    );
+    expect(existing.readAsStringSync(), '# Existing\n');
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
   testWidgets('Ctrl+N creates real CommonMark inside a Writerside workspace', (
     tester,
   ) async {
+    final menus = NativeMenuProbe(tester);
     const yaruWindowChannel = MethodChannel('yaru_window');
     const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -5743,7 +6029,6 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
             ..value = AppSettings.defaults().copyWith(autoSave: false).toJson(),
@@ -5781,14 +6066,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.runAsync(
-      () => tester.tap(
-        find.descendant(
-          of: find.byType(BusyMarkDialogShell),
-          matching: find.text(l10n.createMarkdownFile),
-        ),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
@@ -6007,7 +6285,16 @@ code
         ))!;
         final workspaceState = WorkspaceState(
           workspace: workspace,
-          activeText: '# Nested\n',
+          documentBuffers: [
+            DocumentBuffer(
+              id: 'fixture',
+              filePath: workspace.activeFilePath,
+              text: '# Nested\n',
+              lastSavedText: '# Nested\n',
+              dirty: false,
+            ),
+          ],
+          activeBufferId: 'fixture',
         );
         final controller = _MutableWorkspaceController(workspaceState);
         final nativeCalls = <MethodCall>[];
@@ -6039,7 +6326,6 @@ code
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
             ),
@@ -7123,14 +7409,28 @@ code
         ))!;
         final controller =
             _MutableWorkspaceController(
-                WorkspaceState(workspace: workspace, activeText: topicSource),
+                WorkspaceState(
+                  workspace: workspace,
+                  documentBuffers: [
+                    DocumentBuffer(
+                      id: 'fixture',
+                      editorState: const DocumentEditorState(
+                        mode: DocumentViewModePreference.source,
+                      ),
+                      filePath: workspace.activeFilePath,
+                      text: topicSource,
+                      lastSavedText: topicSource,
+                      dirty: false,
+                    ),
+                  ],
+                  activeBufferId: 'fixture',
+                ),
               )
               ..topicRenamePlans['setup.topic'] = setupPlan
               ..simulateTopicRename = true;
         final container = ProviderContainer(
           overrides: [
             ..._smokeAccentOverrides,
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
             ),
@@ -7277,7 +7577,7 @@ code
         expect(File(topicPath).readAsStringSync(), topicSource);
         expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
 
-        controller.clearDocumentBuffersForTest();
+        controller.removeProjectDirtyBufferForTest();
         await openPopup(firstRow);
         await nativeMenus.activate(l10n.renameTopicFile);
         await tester.pumpAndSettle();
@@ -7547,7 +7847,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceControllerProvider.overrideWith(() => controller),
         ],
@@ -7711,7 +8010,6 @@ code
           sharedGitClientFactoryProvider.overrideWithValue(
             ({required authorize, prompts}) => sharedClient,
           ),
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
             ..value = AppSettings.defaults()
@@ -7760,7 +8058,6 @@ code
     });
     await tester.pumpAndSettle();
     if (git && openGitComparisons) {
-      container.read(gitControllerProvider.notifier).clearSelection();
       final workspace = container.read(workspaceControllerProvider).workspace!;
       final comparisons = [
         for (final path in ['README.md', 'guide.md'])
@@ -8333,7 +8630,6 @@ code
             ({required authorize, prompts}) => client,
           ),
           ..._smokeAccentOverrides.skip(2),
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(
             _MemorySettingsStore()
               ..value = AppSettings.defaults()
@@ -8451,10 +8747,7 @@ code
         same(staged),
       );
       await _chooseNativeSidebar(tester, l10n.gitHostGitLog);
-      await _chooseInspectorCommit(
-        tester,
-        gitState.projectHistory.commits.first.subject,
-      );
+      await _chooseInspectorCommit(tester, _sidebarCommit.subject);
       await pumpUntil(
         tester,
         () => find
@@ -8576,7 +8869,6 @@ code
             ({required authorize, prompts}) => client,
           ),
           ..._smokeAccentOverrides.skip(2),
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(
             _MemorySettingsStore()
               ..value = AppSettings.defaults()
@@ -8754,7 +9046,6 @@ code
           git: true,
           openGitComparisons: false,
         );
-        h.container.read(gitControllerProvider.notifier).clearSelection();
         final editor = find.byWidgetPredicate(
           (widget) =>
               widget is TextField &&
@@ -9235,14 +9526,6 @@ code
         );
         final after = h.container.read(workspaceControllerProvider);
         expect(_comparisonTabs(h.container).entries, isEmpty);
-        expect(
-          h.container.read(gitControllerProvider).openDiffFilePaths,
-          isEmpty,
-        );
-        expect(
-          h.container.read(gitControllerProvider).selectedDiffForDisplay,
-          isNull,
-        );
         expect(
           h.container.read(localHistoryControllerProvider).selectedRevisionId,
           isNull,
@@ -9733,7 +10016,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -9878,6 +10160,40 @@ code
     await tester.pump(const Duration(milliseconds: 800));
   });
 
+  testWidgets('Recent reveals the existing document behind a Git comparison', (
+    tester,
+  ) async {
+    final h = await tabWorkspace(tester, count: 1, git: true);
+    final before = h.container.read(workspaceControllerProvider);
+    final review = _comparisonTabs(h.container).active!;
+    final document = before.activeBuffer!;
+    final resource = RecentResource(
+      path: document.filePath!,
+      kind: 'markdown',
+      document: true,
+      lastOpenedAt: DateTime.now(),
+    );
+    await h.controller.recordRecentResource(resource);
+    await _chooseNativeSidebar(tester, l10n.recent);
+    await tester.pumpAndSettle();
+    expect(_comparisonTabs(h.container).active, same(review));
+
+    await tester.tap(
+      find.byKey(ValueKey(RecentSearchResult(resource).identity)),
+    );
+    await pumpUntil(
+      tester,
+      () => _comparisonTabs(h.container).active == null,
+      operation: 'reveal the existing authoring document from Recent',
+    );
+    final after = h.container.read(workspaceControllerProvider);
+    expect(after.documentBuffers.single.id, document.id);
+    expect(after.activeText, document.text);
+    expect(after.workspace!.id, before.workspace!.id);
+    expect(_comparisonTabs(h.container).entries, contains(review));
+    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
+  });
+
   testWidgets('Git diff files are shown as separate editor tabs', (
     tester,
   ) async {
@@ -10009,7 +10325,6 @@ code
             ({required authorize, prompts}) => client,
           ),
           ..._smokeAccentOverrides.skip(2),
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(temp.path),
@@ -10070,13 +10385,10 @@ code
       final parentReview = _comparisonTabs(container).active!;
       final parentComparison = parentReview.comparison;
       expect(find.byType(shared.GitFileHistoryView), findsNothing);
-      final entry = historyState.fileHistory.entries.single;
-      expect(
-        parentComparison.left.revision!.value,
-        entry.commit.parentHashes.single,
-      );
-      expect(parentComparison.right.revision!.value, entry.commit.fullHash);
-      expect(parentComparison.leftPath!.utf8Path, entry.pathInParent);
+      final entry = _historyCommit;
+      expect(parentComparison.left.revision!.value, entry.parents.single.value);
+      expect(parentComparison.right.revision!.value, entry.oid.value);
+      expect(parentComparison.leftPath!.utf8Path, 'README.md');
       await tester.pump();
       await pumpUntil(
         tester,
@@ -10118,7 +10430,7 @@ code
             'reopen historical selection without retargeting the first tab',
       );
       final row = find.ancestor(
-        of: find.text(entry.commit.subject),
+        of: find.text(entry.subject),
         matching: find.byType(shared.GitActionRow),
       );
       await _chooseNativeGitMenu(
@@ -10138,8 +10450,8 @@ code
       expect(currentReview.id, isNot(parentReview.id));
       expect(_comparisonTabs(container).entries.first, same(parentReview));
       expect(find.byType(shared.GitFileHistoryView), findsNothing);
-      expect(currentComparison.left.revision!.value, entry.commit.fullHash);
-      expect(currentComparison.leftPath!.utf8Path, entry.pathAtCommit);
+      expect(currentComparison.left.revision!.value, entry.oid.value);
+      expect(currentComparison.leftPath!.utf8Path, 'README.md');
       expect(currentComparison.right.kind, shared.ContentKind.workingTree);
       await tester.pump();
       await pumpUntil(
@@ -10226,7 +10538,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -10298,7 +10609,6 @@ code
           overrides: [
             ..._smokeAccentOverrides.skip(1),
             sharedGitDraftStoreProvider.overrideWithValue(store),
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
             ),
@@ -10539,7 +10849,6 @@ code
                   _SwitchingSharedGitReadFixture(first.path),
             ),
             sharedGitDraftStoreProvider.overrideWithValue(store),
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
             ),
@@ -10784,7 +11093,6 @@ code
           overrides: [
             ..._smokeAccentOverrides.skip(1),
             sharedGitDraftStoreProvider.overrideWithValue(store),
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore()
                 ..value = AppSettings.defaults()
@@ -10930,6 +11238,104 @@ code
     );
   }
 
+  testWidgets('remounted sidebar allocates the displayed view at scaled text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1500, 1100);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_mount_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            localeTag: 'ja',
+            autoSave: false,
+            validateOnEdit: false,
+            trustedGitWorkspacePaths: [temp.path],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(settings),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(_gitSidebarShortcutState(temp.path)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    Future<void> mount(String key) => tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: BusyMarkApp(key: ValueKey(key)),
+      ),
+    );
+    await mount('initial');
+    await pumpUntil(
+      tester,
+      () =>
+          !container.read(workspaceControllerProvider).isLoading &&
+          container.read(workspaceControllerProvider).activeBuffer != null,
+      operation: 'open sidebar allocation fixture',
+    );
+    await tester.pumpAndSettle();
+    await _executeViewCommand(tester, BusyMarkCommandIds.sidebarGit);
+    await pumpUntil(
+      tester,
+      () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+      operation: 'open shared Commit',
+    );
+    await tester.pumpAndSettle();
+    final frame = find.byKey(const ValueKey('workspace-page-frame'));
+    expect(
+      tester.widget<LinuxPageFrame>(frame).sidebarWidth,
+      greaterThan(BusyMarkSizes.sidebarWidth),
+    );
+    final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    service.openedAt = DateTime(2026, 2);
+    expect(
+      await tester.runAsync(
+        container
+            .read(workspaceControllerProvider.notifier)
+            .refreshWorkspaceFromDiskPreservingOpenTabs,
+      ),
+      isTrue,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      container.read(workspaceControllerProvider).workspace!.openedAt,
+      service.openedAt,
+    );
+    expect(find.byType(shared.GitCommitView), findsOneWidget);
+    expect(
+      tester.widget<LinuxPageFrame>(frame).sidebarWidth,
+      busyMarkGitSidebarMinimumWidth(tester.element(frame)),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await mount('remounted');
+    await tester.pumpAndSettle();
+    expect(find.text('Intro.md'), findsWidgets);
+    expect(find.byType(shared.GitCommitView), findsNothing);
+    expect(
+      tester.widget<LinuxPageFrame>(frame).sidebarWidth,
+      BusyMarkSizes.sidebarWidth,
+    );
+    final current = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(current.id, buffer.id);
+    expect(current.text, buffer.text);
+  });
+
   testWidgets('sidebar view commands select workspace sidebar tabs', (
     tester,
   ) async {
@@ -10970,7 +11376,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -11046,7 +11451,7 @@ code
     _expectHeaderControlGap(
       tester,
       leftTooltip: l10n.hideSidebar,
-      rightTooltip: l10n.back,
+      rightTooltip: l10n.home,
     );
     _expectHeaderControlGap(
       tester,
@@ -11058,17 +11463,23 @@ code
       leftTooltip: l10n.validate,
       rightTooltip: l10n.search,
     );
-    _expectHeaderControlGap(
-      tester,
-      leftTooltip: l10n.search,
-      rightTooltip: l10n.mainMenu,
-    );
+    final openMenu = '${l10n.open} (Ctrl+O)';
+    final newMenu = '${l10n.newResource} (Ctrl+N)';
+    for (final (left, right) in [
+      (l10n.search, openMenu),
+      (openMenu, newMenu),
+      (newMenu, l10n.mainMenu),
+    ]) {
+      _expectHeaderControlGap(tester, leftTooltip: left, rightTooltip: right);
+    }
     _expectHeaderGeometry(tester);
     for (final tooltip in [
-      l10n.back,
+      l10n.home,
       '${l10n.contentViewMenu} (Ctrl+Shift+F10)',
       l10n.validate,
       l10n.search,
+      openMenu,
+      newMenu,
       l10n.mainMenu,
     ]) {
       await _expectNeutralHeaderControl(tester, tooltip, selected: false);
@@ -11404,7 +11815,7 @@ code
     );
     expect(find.text(l10n.gitReturnToDocument), findsNothing);
     expect(find.byType(shared.GitLogView), findsNothing);
-    expect(container.read(gitControllerProvider).selectedView, GitView.changes);
+    expect(find.byType(shared.GitCommitView), findsOneWidget);
 
     await setDocumentViewMode(DocumentViewModePreference.editor);
     await selectSidebarCommand(LogicalKeyboardKey.digit3);
@@ -11546,7 +11957,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(
             const _SearchWorkspaceService('alpha beta\n'),
@@ -11819,7 +12229,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(
             const _SearchWorkspaceService('First\n\nSecond\n\nThird\n'),
@@ -11979,7 +12388,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceControllerProvider.overrideWith(() => controller),
         gitControllerProvider.overrideWith(
@@ -12374,7 +12782,6 @@ code
     final repository = GitRepositoryInfo(
       rootPath: temp.path,
       gitDirPath: '${temp.path}/.git',
-      currentBranch: 'main',
     );
     final service = _TabbedWorkspaceService(
       rootPath: temp.path,
@@ -12383,7 +12790,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -12476,7 +12882,6 @@ code
       final repository = GitRepositoryInfo(
         rootPath: temp.path,
         gitDirPath: '${temp.path}/.git',
-        currentBranch: 'main',
       );
       final service = _TabbedWorkspaceService(
         rootPath: temp.path,
@@ -12485,7 +12890,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(temp.path),
@@ -12605,12 +13009,23 @@ code
       () => const WorkspaceService().openPath(temp.path),
     ))!;
     final controller = _MutableWorkspaceController(
-      WorkspaceState(workspace: openedWorkspace, activeText: '# Readme\n'),
+      WorkspaceState(
+        workspace: openedWorkspace,
+        documentBuffers: [
+          DocumentBuffer(
+            id: 'fixture',
+            filePath: openedWorkspace.activeFilePath,
+            text: '# Readme\n',
+            lastSavedText: '# Readme\n',
+            dirty: false,
+          ),
+        ],
+        activeBufferId: 'fixture',
+      ),
     );
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
@@ -12691,7 +13106,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -12757,7 +13171,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -12842,7 +13255,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceControllerProvider.overrideWith(() => controller),
         ],
@@ -12939,14 +13351,25 @@ code
       () => const WorkspaceService().openPath(root.path),
     ))!;
     final controller = _MutableWorkspaceController(
-      WorkspaceState(workspace: workspace, activeText: '# Start\n'),
+      WorkspaceState(
+        workspace: workspace,
+        documentBuffers: [
+          DocumentBuffer(
+            id: 'fixture',
+            filePath: workspace.activeFilePath,
+            text: '# Start\n',
+            lastSavedText: '# Start\n',
+            dirty: false,
+          ),
+        ],
+        activeBufferId: 'fixture',
+      ),
     );
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults().copyWith(localeTag: 'ar').toJson();
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
@@ -13082,7 +13505,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
@@ -13162,7 +13584,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
@@ -13215,7 +13636,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -13318,7 +13738,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settings),
         workspaceServiceProvider.overrideWithValue(
           service ?? _SearchWorkspaceService(initialSource),
@@ -13361,6 +13780,153 @@ code
         matching: find.byType(TextField),
       )
       .first;
+
+  testWidgets(
+    'Writerside creation keeps the dirty editor on failure and focuses the new topic on success',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-create-from-editor-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final original = File(p.join(root.path, 'original.md'))
+        ..writeAsStringSync('# Original');
+      final occupied = Directory(p.join(root.path, 'occupied'))..createSync();
+      final existing = File(p.join(occupied.path, 'keep.txt'))
+        ..writeAsStringSync('Keep');
+      const channel = MethodChannel('plugins.flutter.io/file_selector');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        (_) async => root.path,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          null,
+        ),
+      );
+
+      final container = await historyApp(
+        tester,
+        DocumentViewModePreference.source,
+        service: const WorkspaceService(),
+        startupPath: original.path,
+      );
+      final editorFields = find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(TextField),
+      );
+      await pumpUntil(
+        tester,
+        () =>
+            !container.read(workspaceControllerProvider).isLoading &&
+            editorFields.evaluate().isNotEmpty,
+        operation: 'finish opening the original editor',
+        frameStep: const Duration(milliseconds: 20),
+      );
+      final editor = editorFields.first;
+      await tester.enterText(editor, '# Dirty original');
+      await tester.pumpAndSettle();
+      final oldFocus = tester.widget<TextField>(editor).focusNode!;
+      final originalOpening = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .opening;
+
+      Future<void> submit(String projectName) async {
+        await tester.tap(find.byKey(const ValueKey('header-new-menu')));
+        await tester.pump();
+        await menus.choose(l10n.createWritersideProject);
+        final dialog = find.byType(BusyMarkModalEditorScaffold);
+        await tester.enterText(
+          find
+              .descendant(of: dialog, matching: find.byType(EditableText))
+              .first,
+          projectName,
+        );
+        await tester.pump();
+        await tester.tap(
+          find.descendant(of: dialog, matching: find.text(l10n.create)),
+        );
+      }
+
+      await submit('Occupied');
+      final error = find.descendant(
+        of: find.byType(BusyMarkModalEditorScaffold),
+        matching: find.textContaining(
+          l10n.errorTargetDirectoryNotEmpty(occupied.path),
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => error.evaluate().isNotEmpty,
+        operation: 'show the creation failure in the live dialog',
+        frameStep: const Duration(milliseconds: 20),
+      );
+      expect(
+        find.textContaining(l10n.errorTargetDirectoryNotEmpty(occupied.path)),
+        findsOneWidget,
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '# Dirty original',
+      );
+      expect(existing.readAsStringSync(), 'Keep');
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(oldFocus));
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.opening,
+        same(originalOpening),
+      );
+
+      await submit('New project');
+      await pumpUntil(
+        tester,
+        () => find.text(l10n.discard).evaluate().isNotEmpty,
+        operation: 'authorize replacing the dirty workspace',
+        frameStep: const Duration(milliseconds: 20),
+        diagnostics: () {
+          final state = container.read(workspaceControllerProvider);
+          return 'dirty=${state.hasUnsavedChanges}; '
+              'loading=${state.isLoading}; message=${state.message?.error}';
+        },
+      );
+      await tester.tap(find.text(l10n.discard));
+      await pumpUntil(
+        tester,
+        () {
+          final state = container.read(workspaceControllerProvider);
+          return state.workspace?.kind == WorkspaceKind.writersideModule &&
+              find.byType(BusyMarkModalEditorScaffold).evaluate().isEmpty;
+        },
+        operation: 'activate the generated topic',
+        frameStep: const Duration(milliseconds: 20),
+        diagnostics: () {
+          final state = container.read(workspaceControllerProvider);
+          return 'kind=${state.workspace?.kind}; message=${state.message?.error}; '
+              'focus=${FocusManager.instance.primaryFocus?.debugLabel}';
+        },
+      );
+      await pumpUntil(
+        tester,
+        () =>
+            editorFields.evaluate().isNotEmpty &&
+            tester.widget<TextField>(editor).focusNode?.hasFocus == true,
+        operation: 'focus the generated topic',
+        frameStep: const Duration(milliseconds: 20),
+        diagnostics: () =>
+            'focus=${FocusManager.instance.primaryFocus?.debugLabel}; '
+            'view=${container.read(workspaceControllerProvider).activeBuffer?.editorState.mode}',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains(l10n.defaultStartTopicTitle),
+      );
+      expect(original.readAsStringSync(), '# Original');
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   Future<void> historyKey(WidgetTester tester, {bool redo = false}) async {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -14432,7 +14998,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -14584,7 +15149,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -14707,7 +15271,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -14823,7 +15386,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -14899,7 +15461,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue('/tmp/editing-toolbar-menu.md'),
@@ -15093,7 +15654,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/shared-frame.md'),
@@ -15294,7 +15854,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue('/tmp/empty-paragraphs.md'),
@@ -15420,7 +15979,6 @@ code
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue('/tmp/explicit-blank-line.md'),
@@ -15517,7 +16075,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/wrap-parity.md'),
@@ -15632,7 +16189,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/shared-quote.md'),
@@ -15738,7 +16294,6 @@ code
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/shared-code-block.md'),
@@ -15880,7 +16435,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/shared-block-geometry.md'),
@@ -16100,7 +16654,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
@@ -16194,7 +16747,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/structured-quote.md'),
@@ -16300,7 +16852,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
@@ -16395,7 +16946,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/editor-tab.md'),
@@ -16483,7 +17033,6 @@ After break.
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settings),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
           localHistoryStoreProvider.overrideWithValue(
@@ -16565,12 +17114,12 @@ After break.
   testWidgets('window close still warns when active changes are unsaved', (
     tester,
   ) async {
+    final menus = NativeMenuProbe(tester);
     final nativeWindow = _FakeNativeWindowController();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         ],
@@ -16588,12 +17137,7 @@ After break.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(BusyMarkDialogShell),
-        matching: find.text(l10n.createMarkdownFile),
-      ),
-    );
+    menus.select(l10n.createMarkdownFile);
     await tester.pumpAndSettle();
 
     nativeWindow.listeners.single.onWindowClose();
@@ -16610,7 +17154,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         workspaceServiceProvider.overrideWithValue(service),
@@ -16656,7 +17199,6 @@ After break.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -16755,7 +17297,6 @@ Body.
       final container = ProviderContainer(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(startupPath),
@@ -16897,7 +17438,6 @@ Gamma body.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -17200,7 +17740,6 @@ Gamma body.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(
           _SearchWorkspaceService(source),
@@ -17428,7 +17967,6 @@ Gamma body.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -17577,7 +18115,6 @@ Draft paragraph.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
       ],
@@ -17645,7 +18182,6 @@ Draft paragraph.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -17721,7 +18257,6 @@ Draft paragraph.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
       ],
     );
@@ -17791,107 +18326,221 @@ Draft paragraph.
     );
   });
 
-  testWidgets('Reading linked block and inline images open their targets', (
-    tester,
-  ) async {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
-    addTearDown(() {
-      binding.platformDispatcher.defaultRouteNameTestValue = '/';
-    });
-    const rootPath = '/tmp/busymark-linked-images';
-    const readmePath = '$rootPath/README.md';
-    const blockTargetPath = '$rootPath/block-guide.md';
-    const inlineTargetPath = '$rootPath/inline-guide.md';
-    const source = '''
-[![Block logo](block-logo.png)](block-guide.md)
+  for (final remote in [false, true]) {
+    testWidgets('Reading linked block and inline images (remote: $remote)', (
+      tester,
+    ) async {
+      final menus = NativeMenuProbe(tester);
+      await _withControlledImageClient((http) async {
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+        addTearDown(() {
+          binding.platformDispatcher.defaultRouteNameTestValue = '/';
+        });
+        const rootPath = '/tmp/busymark-linked-images';
+        const readmePath = '$rootPath/README.md';
+        const blockTargetPath = '$rootPath/block-guide.md';
+        const inlineTargetPath = '$rootPath/inline-guide.md';
+        final imageOrigin = remote ? 'https://example.com/' : '';
+        final source =
+            '''
+[![Block logo](${imageOrigin}block-logo.png)](block-guide.md)
 
-Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
+Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 ''';
-    final parsed = const MarkdownParser().parse(
-      filePath: readmePath,
-      source: source,
-    );
-    final workspace = Workspace(
-      id: readmePath,
-      rootPath: rootPath,
-      kind: WorkspaceKind.singleMarkdown,
-      openedAt: DateTime(2026),
-      activeFilePath: readmePath,
-      openFilePaths: const [readmePath],
-      files: [
-        for (final path in const [
-          readmePath,
-          blockTargetPath,
-          inlineTargetPath,
-        ])
-          DocumentFile(
-            absolutePath: path,
-            relativePath: p.basename(path),
-            kind: DocumentKind.markdown,
-            size: 1,
-            lastModified: DateTime(2026),
+        final parsed = const MarkdownParser().parse(
+          filePath: readmePath,
+          source: source,
+        );
+        final workspace = Workspace(
+          id: readmePath,
+          rootPath: rootPath,
+          kind: WorkspaceKind.singleMarkdown,
+          openedAt: DateTime(2026),
+          activeFilePath: readmePath,
+          openFilePaths: const [readmePath],
+          files: [
+            for (final path in const [
+              readmePath,
+              blockTargetPath,
+              inlineTargetPath,
+            ])
+              DocumentFile(
+                absolutePath: path,
+                relativePath: p.basename(path),
+                kind: DocumentKind.markdown,
+                size: 1,
+                lastModified: DateTime(2026),
+              ),
+          ],
+          diagnostics: parsed.diagnostics,
+          markdown: parsed,
+        );
+        final controller = _MutableWorkspaceController(
+          WorkspaceState(
+            workspace: workspace,
+            // Production owns an active document buffer for this Reading surface.
+            // Keep the image-link regression in that same command/view context.
+            documentBuffers: [
+              DocumentBuffer(
+                id: 'linked-images',
+                filePath: readmePath,
+                text: source,
+                lastSavedText: source,
+                dirty: false,
+                editorState: const DocumentEditorState(
+                  mode: DocumentViewModePreference.preview,
+                ),
+              ),
+            ],
+            activeBufferId: 'linked-images',
+            preview: const MarkdownPreviewBuilder().build(parsed),
           ),
-      ],
-      diagnostics: parsed.diagnostics,
-      markdown: parsed,
-    );
-    final controller = _MutableWorkspaceController(
-      WorkspaceState(
-        workspace: workspace,
-        activeText: source,
-        // Production owns an active document buffer for this Reading surface.
-        // Keep the image-link regression in that same command/view context.
-        documentBuffers: [
-          DocumentBuffer(
-            id: 'linked-images',
-            filePath: readmePath,
-            text: source,
-            lastSavedText: source,
-            dirty: false,
-            editorState: const DocumentEditorState(
-              mode: DocumentViewModePreference.preview,
-            ),
+        );
+        final settingsStore = _MemorySettingsStore()
+          ..value = AppSettings.defaults()
+              .copyWith(documentViewMode: DocumentViewModePreference.preview)
+              .toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+            workspaceControllerProvider.overrideWith(() => controller),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
           ),
-        ],
-        activeBufferId: 'linked-images',
-        preview: const MarkdownPreviewBuilder().build(parsed),
-      ),
-    );
-    final settingsStore = _MemorySettingsStore()
-      ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.preview)
-          .toJson();
-    final container = ProviderContainer(
-      overrides: [
-        ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        localSettingsStoreProvider.overrideWithValue(settingsStore),
-        workspaceControllerProvider.overrideWith(() => controller),
-      ],
-    );
-    addTearDown(container.dispose);
+        );
+        await tester.pumpAndSettle();
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const BusyMarkApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
+        expect(find.byType(MarkdownImageView), findsNWidgets(2));
+        expect(
+          tester
+              .widgetList<MarkdownImageView>(find.byType(MarkdownImageView))
+              .map((image) => image.alt),
+          ['Block logo', 'Inline logo'],
+        );
+        final blocked = find.text(l10n.remoteImageBlocked);
+        if (remote) {
+          expect(blocked, findsNWidgets(2));
+          expect(http.requests, isEmpty);
+          for (final destination in ['block-guide.md', 'inline-guide.md']) {
+            expect(
+              find.byKey(ValueKey('preview-linked-image-$destination')),
+              findsNothing,
+            );
+          }
 
-    expect(find.byType(MarkdownImageView), findsNWidgets(2));
-    for (final (destination, expectedPath) in const [
-      ('block-guide.md', blockTargetPath),
-      ('inline-guide.md', inlineTargetPath),
-    ]) {
-      await tester.tap(
-        find.byKey(ValueKey('preview-linked-image-$destination')),
-      );
-      await tester.pump();
-      expect(controller.openedFilePath, expectedPath);
-    }
-  });
+          await tester.tap(blocked.first);
+          await tester.pump();
+          expect(menus.isOpen, isTrue);
+          expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isFalse);
+          expect(menus.entries.map((entry) => entry['label']), [
+            l10n.loadThisRemoteImage,
+            l10n.loadRemoteImagesInDocument,
+            '',
+            l10n.alwaysLoadRemoteImages,
+          ]);
+          expect(menus.packets.last['focusFirst'], isTrue);
+          expect(
+            (menus.packets.last['anchor'] as Map)['width'],
+            greaterThan(0),
+          );
+          expect(http.requests, isEmpty);
+          final focused = FocusManager.instance.primaryFocus;
+          menus.close();
+          await tester.pump();
+          expect(FocusManager.instance.primaryFocus, same(focused));
+
+          final pointer = tester.getCenter(blocked.last);
+          final rightClick = await tester.startGesture(
+            pointer,
+            kind: PointerDeviceKind.mouse,
+            buttons: kSecondaryMouseButton,
+          );
+          await tester.pump(kPressTimeout + const Duration(milliseconds: 50));
+          expect(menus.isOpen, isFalse);
+          expect(find.byType(AdaptiveTextSelectionToolbar), findsNothing);
+          await rightClick.up();
+          await tester.pump();
+          expect(menus.isOpen, isTrue);
+          expect(find.byType(AdaptiveTextSelectionToolbar), findsNothing);
+          expect(menus.packets.last['anchor'], {
+            'x': pointer.dx,
+            'y': pointer.dy,
+            'width': 0.0,
+            'height': 0.0,
+          });
+          menus.close();
+          await tester.pump();
+          expect(controller.openedFilePath, isNull);
+          expect(http.requests, isEmpty);
+
+          for (final key in [
+            LogicalKeyboardKey.contextMenu,
+            LogicalKeyboardKey.f10,
+            LogicalKeyboardKey.space,
+            LogicalKeyboardKey.enter,
+          ]) {
+            if (key == LogicalKeyboardKey.f10) {
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+            }
+            await tester.sendKeyEvent(key);
+            if (key == LogicalKeyboardKey.f10) {
+              await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+            }
+            await tester.pump();
+            expect(menus.isOpen, isTrue, reason: key.keyLabel);
+            expect(http.requests, isEmpty);
+            if (key != LogicalKeyboardKey.enter) {
+              menus.close();
+              await tester.pump();
+            }
+          }
+          await menus.choose(l10n.loadThisRemoteImage);
+          expect(blocked, findsOneWidget);
+          expect(http.requests.map((request) => request.path), [
+            '/inline-logo.png',
+          ]);
+          expect(controller.openedFilePath, isNull);
+          expect(
+            find.byKey(const ValueKey('preview-linked-image-block-guide.md')),
+            findsNothing,
+          );
+
+          await tester.tap(blocked);
+          await tester.pump();
+          await menus.choose(l10n.loadThisRemoteImage);
+          expect(blocked, findsNothing);
+          expect(http.requests.map((request) => request.path), [
+            '/inline-logo.png',
+            '/block-logo.png',
+          ]);
+          expect(controller.openedFilePath, isNull);
+          expect(
+            container.read(appSettingsControllerProvider).allowRemoteImages,
+            isFalse,
+          );
+        }
+
+        for (final (destination, expectedPath) in const [
+          ('block-guide.md', blockTargetPath),
+          ('inline-guide.md', inlineTargetPath),
+        ]) {
+          await tester.tap(
+            find.byKey(ValueKey('preview-linked-image-$destination')),
+          );
+          await tester.pump();
+          expect(controller.openedFilePath, expectedPath);
+        }
+      });
+    });
+  }
 
   testWidgets('new empty document leaves remembered preview mode for editor', (
     tester,
@@ -17903,7 +18552,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(_StartupWorkspaceService()),
       ],
@@ -17932,59 +18580,660 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expect(find.byKey(const ValueKey('preview-document-scroll')), findsNothing);
   });
 
-  testWidgets('blocked remote image prompt allows the current workspace', (
+  testWidgets(
+    'remote image grants follow unsaved document and occurrence lifetimes',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      await _withControlledImageClient((http) async {
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+        addTearDown(
+          () => binding.platformDispatcher.defaultRouteNameTestValue = '/',
+        );
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-image-scopes-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        final settingsStore = _MemorySettingsStore()
+          ..value = AppSettings.defaults()
+              .copyWith(
+                autoSave: false,
+                validateOnEdit: false,
+                automaticSpelling: false,
+              )
+              .toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            startupPathProvider.overrideWithValue(null),
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        DocumentBuffer buffer() =>
+            container.read(workspaceControllerProvider).activeBuffer!;
+        await tabOperation(tester, controller.createMarkdownFile);
+        const url = 'HTTPS://example.com/lifetime.png';
+        const markup = '![Same]($url)';
+        const source = 'Introduction\n\n$markup\n\n$markup\n';
+        controller.updateActiveText(source);
+        await tester.pumpAndSettle();
+
+        final blocked = find.text(l10n.remoteImageBlocked);
+        final network = find.byWidgetPredicate(
+          (widget) => widget is Image && widget.image is NetworkImage,
+        );
+        expect(blocked, findsNWidgets(2));
+        expect(http.requests, isEmpty);
+        final beforePermission = buffer();
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadThisRemoteImage);
+        expect(network, findsOneWidget);
+        expect(blocked, findsOneWidget);
+        expect(http.requests, [Uri.parse(url)]);
+        expect(buffer().text, beforePermission.text);
+        expect(buffer().dirty, beforePermission.dirty);
+        expect(
+          buffer().editorState.undoState.undo,
+          same(beforePermission.editorState.undoState.undo),
+        );
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.isOpen, isTrue);
+        menus.close();
+        await tester.pumpAndSettle();
+        expect(buffer().text, beforePermission.text);
+        expect(http.requests, [Uri.parse(url)]);
+        final opening = buffer().opening;
+
+        await tester.enterText(
+          historyField(DocumentViewModePreference.editor),
+          'Edited introduction',
+        );
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+        expect(network, findsOneWidget);
+
+        Future<void> show(DocumentViewModePreference mode) async {
+          controller.updateActiveEditorMode(mode);
+          await tabOperation(tester, controller.validateActive);
+          await tester.pumpAndSettle();
+        }
+
+        for (final mode in [
+          DocumentViewModePreference.preview,
+          DocumentViewModePreference.split,
+          DocumentViewModePreference.editor,
+        ]) {
+          await show(mode);
+          expect(blocked, findsOneWidget, reason: mode.name);
+          expect(network, findsOneWidget, reason: mode.name);
+        }
+
+        final firstId = buffer().id;
+        final edited = buffer().text;
+        await tabOperation(tester, controller.createMarkdownFile);
+        controller.updateActiveText(source);
+        await tester.pumpAndSettle();
+        expect(blocked, findsNWidgets(2));
+        expect(network, findsNothing);
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadRemoteImagesInDocument);
+        expect(network, findsNWidgets(2));
+        expect(buffer().isUntitled, isTrue);
+        expect(
+          container.read(appSettingsControllerProvider).allowRemoteImages,
+          isFalse,
+        );
+        await tabOperation(
+          tester,
+          () => controller.activateDocumentBuffer(firstId),
+        );
+        await tester.pumpAndSettle();
+        expect(network, findsOneWidget);
+
+        final path = p.join(root.path, 'saved.md');
+        expect(
+          await tabOperation(tester, () => controller.saveActiveAs(path)),
+          isTrue,
+        );
+        await tester.pumpAndSettle();
+        expect(buffer().opening, same(opening));
+        expect(buffer().id, firstId);
+        expect(buffer().filePath, path);
+        expect(network, findsOneWidget);
+        expect(blocked, findsOneWidget);
+
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isFalse);
+        controller.updateActiveText(
+          edited.replaceAll(url, 'https://example.com/changed.png'),
+        );
+        await menus.choose(l10n.alwaysLoadRemoteImages);
+        expect(
+          container.read(appSettingsControllerProvider).allowRemoteImages,
+          isFalse,
+        );
+        expect(network, findsNothing);
+        expect(blocked, findsNWidgets(2));
+        expect(http.requests, [Uri.parse(url)]);
+
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadRemoteImagesInDocument);
+        expect(network, findsNWidgets(2));
+        controller.updateActiveText(
+          '${buffer().text}\n![New](https://example.com/after-grant.png)\n',
+        );
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        expect(http.requests.map((url) => url.path), [
+          '/lifetime.png',
+          '/changed.png',
+          '/after-grant.png',
+        ]);
+        expect(settingsStore.value['allowRemoteImages'], false);
+        expect(settingsStore.value['remoteImageAllowedWorkspaceIds'], isEmpty);
+
+        expect(
+          await tabOperation(
+            tester,
+            () => controller.closeDocumentBuffer(firstId, discard: true),
+          ),
+          isTrue,
+        );
+        await tabOperation(tester, () => controller.openPath(path));
+        await tester.pumpAndSettle();
+        final firstFileOpening = buffer().opening;
+        final fileId = buffer().id;
+        expect(blocked, findsNWidgets(2));
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadThisRemoteImage);
+        expect(network, findsOneWidget);
+        expect(
+          await tabOperation(
+            tester,
+            () => controller.closeDocumentBuffer(fileId),
+          ),
+          isTrue,
+        );
+        await tabOperation(tester, () => controller.openPath(path));
+        await tester.pumpAndSettle();
+        expect(buffer().id, fileId);
+        expect(buffer().opening, isNot(same(firstFileOpening)));
+        expect(blocked, findsNWidgets(2));
+        expect(network, findsNothing);
+      });
+    },
+  );
+
+  testWidgets(
+    'remote image workspace grant includes drafts and revokes immediately',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      await _withControlledImageClient((http) async {
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-image-workspace-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        final other = Directory(p.join(root.path, 'other'))..createSync();
+        const source = '![First](https://example.com/workspace.png)\n';
+        final standalone = File(p.join(root.path, 'standalone.md'))
+          ..writeAsStringSync(source);
+        File(p.join(other.path, 'other.md')).writeAsStringSync(source);
+
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            startupPathProvider.overrideWithValue(null),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(
+                      autoSave: false,
+                      validateOnEdit: false,
+                      automaticSpelling: false,
+                    )
+                    .toJson(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final settings = container.read(appSettingsControllerProvider.notifier);
+        final blocked = find.text(l10n.remoteImageBlocked);
+        await tabOperation(tester, () => controller.openPath(root.path));
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        expect(
+          container.read(workspaceControllerProvider).workspace?.kind,
+          WorkspaceKind.markdownFolder,
+        );
+        await tabOperation(tester, controller.createMarkdownFile);
+        controller.updateActiveText(source);
+        expect(container.read(workspaceControllerProvider).activeText, source);
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isTrue);
+        await menus.choose(l10n.loadRemoteImagesForWorkspace);
+        expect(blocked, findsNothing);
+        expect(http.requests, [Uri.parse('https://example.com/workspace.png')]);
+
+        await tabOperation(tester, () => controller.openPath(standalone.path));
+        await tester.pumpAndSettle();
+        await tester.tap(blocked);
+        await tester.pump();
+        expect(menus.contains(l10n.loadRemoteImagesForWorkspace), isFalse);
+        await menus.choose(l10n.alwaysLoadRemoteImages);
+        expect(
+          container.read(appSettingsControllerProvider).allowRemoteImages,
+          isTrue,
+        );
+        expect(blocked, findsNothing);
+        await settings.setAllowRemoteImages(false);
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+        for (final path in [other.path, standalone.path]) {
+          await tabOperation(tester, () => controller.openPath(path));
+          container.read(appRouterProvider).go('/workspace');
+          await tester.pumpAndSettle();
+          expect(blocked, findsOneWidget);
+        }
+        await tabOperation(tester, () => controller.openPath(root.path));
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        expect(blocked, findsNothing);
+        await settings.clearRemoteImageWorkspacePermissions();
+        await tester.pumpAndSettle();
+        expect(blocked, findsOneWidget);
+        expect(http.requests, hasLength(1));
+      });
+    },
+  );
+
+  testWidgets(
+    'nested HTML uses the same remote image occurrence in all views',
+    (tester) async {
+      final menus = NativeMenuProbe(tester);
+      await _withControlledImageClient((http) async {
+        const source = '''
+<div>
+  <p>One <img src="https://example.com/html-occurrence.png" alt="first"> inline.</p>
+  <figure><img src="https://example.com/html-occurrence.png" alt="second"></figure>
+</div>
+''';
+        final container = await historyApp(
+          tester,
+          DocumentViewModePreference.editor,
+          initialSource: source,
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final blocked = find.text(l10n.remoteImageBlocked);
+        expect(blocked, findsNWidgets(2));
+        expect(http.requests, isEmpty);
+        await tester.tap(blocked.first);
+        await tester.pump();
+        await menus.choose(l10n.loadThisRemoteImage);
+        expect(blocked, findsOneWidget);
+        for (final mode in [
+          DocumentViewModePreference.preview,
+          DocumentViewModePreference.split,
+        ]) {
+          controller.updateActiveEditorMode(mode);
+          await tabOperation(tester, controller.validateActive);
+          await tester.pumpAndSettle();
+          expect(blocked, findsOneWidget);
+          expect(
+            find.text('second\nhttps://example.com/html-occurrence.png'),
+            findsNothing,
+          );
+        }
+        expect(http.requests, [
+          Uri.parse('https://example.com/html-occurrence.png'),
+        ]);
+      });
+    },
+  );
+
+  testWidgets('Open completes after Discard disposes the initiating header', (
     tester,
   ) async {
-    const startupPath = '/tmp/remote-image.md';
-    final service = _SearchWorkspaceService(
-      '![Remote](https://example.com/logo.png)\n',
+    final menus = NativeMenuProbe(tester);
+    final service = _GatedResourceService('picked.md');
+    const picker = MethodChannel('plugins.flutter.io/file_selector');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      picker,
+      (_) async => ['picked.md'],
     );
-    final settingsStore = _MemorySettingsStore()
-      ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.preview)
-          .toJson();
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        picker,
+        null,
+      );
+      if (!service.release.isCompleted) service.release.complete();
+    });
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        startupPathProvider.overrideWithValue(null),
         workspaceServiceProvider.overrideWithValue(service),
-        startupPathProvider.overrideWithValue(startupPath),
+        workspaceFileMonitorProvider.overrideWithValue(
+          _SearchTestFileMonitor(),
+        ),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
       ],
     );
     addTearDown(container.dispose);
-
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
         child: const BusyMarkApp(),
       ),
     );
-    for (var i = 0; i < 20; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.remoteImageBlocked).evaluate().isNotEmpty) {
-        break;
-      }
-    }
-
-    expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
-
-    await tester.tap(find.text(l10n.remoteImageBlocked));
+    final controller = container.read(workspaceControllerProvider.notifier);
+    await tabOperation(tester, controller.createMarkdownFile);
+    controller.updateActiveText('# Discardable draft');
+    container.read(appRouterProvider).go('/workspace');
     await tester.pumpAndSettle();
-
-    expect(find.text(l10n.remoteImagesBlockedTitle), findsOneWidget);
-
-    await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
+    final button = find.byKey(const ValueKey('header-open-menu'));
+    final initiatingHeader = tester.element(button);
+    await tester.tap(button);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(
-      settingsStore.value['remoteImageAllowedWorkspacePaths'],
-      contains(startupPath),
+    menus.select(l10n.openMarkdownFile);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.discard));
+    await pumpUntil(
+      tester,
+      () => service.entered.isCompleted && !initiatingHeader.mounted,
+      operation: 'dispose the dirty document header during Open',
     );
+    expect(container.read(workspaceControllerProvider).workspace, isNull);
+    service.release.complete();
+    await pumpUntil(tester, () {
+      final live = container.read(workspaceControllerProvider);
+      return !live.isLoading && live.activeBuffer?.filePath == 'picked.md';
+    }, operation: 'finish the authorized Open');
+    expect(find.byKey(const ValueKey('workspace-page-frame')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
+  testWidgets(
+    'Recent reveals the new workspace after its row is disposed behind Local History',
+    (tester) async {
+      NativeMenuProbe(tester);
+      final fixture = Directory.systemTemp.createTempSync(
+        'busymark-recent-retained-',
+      );
+      addTearDown(() => fixture.deleteSync(recursive: true));
+      final destination = File(p.join(fixture.path, 'replacement.md'))
+        ..writeAsStringSync('# Replacement');
+      final service = _GatedResourceService(destination.path);
+      addTearDown(() {
+        if (!service.release.isCompleted) service.release.complete();
+      });
+      final historyStore = MemoryLocalHistoryStore();
+      await historyStore.capture(
+        LocalHistoryCaptureRequest(
+          path: p.join(fixture.path, 'deleted.md'),
+          displayName: 'Deleted document',
+          source: 'retained needle',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.now().toUtc(),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        const LocalHistoryPolicy(),
+      );
+      await historyStore.markDeleted(
+        p.join(fixture.path, 'deleted.md'),
+        recursive: false,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          startupPathProvider.overrideWithValue('first.md'),
+          workspaceServiceProvider.overrideWithValue(service),
+          workspaceFileMonitorProvider.overrideWithValue(
+            _SearchTestFileMonitor(),
+          ),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localHistoryStoreProvider.overrideWithValue(historyStore),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => find
+            .byKey(const ValueKey('workspace-page-frame'))
+            .evaluate()
+            .isNotEmpty,
+        operation: 'open the starting document',
+      );
+      await container.read(localHistoryControllerProvider.notifier).refresh();
+      final session = container.read(searchSessionProvider.notifier);
+      session.openHistory();
+      session.query('retained needle');
+      await _waitForSearchCondition(
+        tester,
+        () => container.read(searchSessionProvider).results.isNotEmpty,
+      );
+      final result = container.read(searchSessionProvider).results.single;
+      final resultRow = find.byKey(ValueKey(result.identity));
+      await tester.tap(resultRow);
+      await tester.pump(kDoubleTapMinTime + const Duration(milliseconds: 1));
+      await tester.tap(resultRow);
+      await _waitForSearchCondition(
+        tester,
+        () => find.byType(LocalHistoryComparisonView).evaluate().isNotEmpty,
+      );
+      expect(
+        find.byKey(const ValueKey('local-history-panel-header')),
+        findsNothing,
+      );
+      session.close(restoreFocus: false);
+
+      final recent = RecentResource(
+        path: destination.path,
+        kind: 'singleMarkdown',
+        lastOpenedAt: DateTime.now(),
+      );
+      final controller = container.read(workspaceControllerProvider.notifier);
+      await controller.recordRecentResource(recent);
+      await tester.pumpAndSettle();
+      await _chooseNativeSidebar(tester, l10n.recent);
+      final recentRow = find.byKey(
+        ValueKey(RecentSearchResult(recent).identity),
+      );
+      final initiatingRow = tester.element(recentRow);
+      await tester.tap(recentRow);
+      await pumpUntil(
+        tester,
+        () => service.entered.isCompleted,
+        operation: 'start opening from Recent',
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .removeRecentWorkspace(recent.identity);
+      await tester.pumpAndSettle();
+      expect(initiatingRow.mounted, isFalse);
+      expect(find.byType(LocalHistoryComparisonView), findsOneWidget);
+
+      service.release.complete();
+      await pumpUntil(tester, () {
+        final live = container.read(workspaceControllerProvider);
+        return !live.isLoading &&
+            live.activeBuffer?.filePath == destination.path &&
+            container.read(localHistoryControllerProvider).selectedRevisionId ==
+                null;
+      }, operation: 'reveal the Recent document and retire the comparison');
+      expect(find.byType(LocalHistoryComparisonView), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('Open uses the native Markdown and folder choosers', (
+    tester,
+  ) async {
+    final fixture = Directory.systemTemp.createTempSync('busymark-open-menu-');
+    addTearDown(() => fixture.deleteSync(recursive: true));
+    final document = File(p.join(fixture.path, 'picked.md'))
+      ..writeAsStringSync('# Picked');
+    final service = _StartupWorkspaceService();
+    final menus = NativeMenuProbe(tester);
+    final calls = <String>[];
+    const picker = MethodChannel('plugins.flutter.io/file_selector');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(picker, (
+      call,
+    ) async {
+      calls.add(call.method);
+      return switch (call.method) {
+        'openFile' => [document.path],
+        'getDirectoryPath' => fixture.path,
+        _ => throw StateError(call.method),
+      };
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        picker,
+        null,
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (final (label, expectedPath) in [
+      (l10n.openMarkdownFile, document.path),
+      (l10n.openFolderOrWritersideProject, fixture.path),
+    ]) {
+      await tester.tap(find.byKey(const ValueKey('header-open-menu')));
+      await tester.pumpAndSettle();
+      menus.select(label);
+      await _waitForSearchCondition(
+        tester,
+        () => service.openedPath == expectedPath,
+      );
+      await tester.pumpAndSettle();
+    }
+    expect(calls, ['openFile', 'getDirectoryPath']);
+    expect(find.byKey(const ValueKey('workspace-page-frame')), findsOneWidget);
+  });
+
+  testWidgets('Welcome reveals its remapped Sidebar View in a narrow window', (
+    tester,
+  ) async {
+    final menus = NativeMenuProbe(tester);
+    await tester.binding.setSurfaceSize(const Size(530, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            sidebarVisible: false,
+            shortcutOverrides: {
+              BusyMarkCommandIds.sidebarViewSelector: const BusyMarkKeyBinding(
+                LogicalKeyboardKey.f6,
+              ),
+            },
+          )
+          .toJson();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(settings),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
+    await pumpUntil(
+      tester,
+      () => menus.isOpen,
+      operation: 'reveal Welcome sidebar on keydown',
+    );
+    expect(menus.entries.single['label'], l10n.recent);
+    expect(menus.entries.single['selected'], isTrue);
+    expect(menus.entries.single['mnemonic'], 'E');
+    expect(find.text(l10n.home), findsOneWidget);
+    expect(find.byTooltip('${l10n.sidebarViewMenu} (F6)'), findsOneWidget);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
+    menus.close();
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('workspace-content-view-menu')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Recent is a separate global sidebar view', (tester) async {
+    final menus = NativeMenuProbe(tester);
     const startupPath = 'test/fixtures/markdown/basic.md';
     final recentDirectory = Directory.systemTemp.createTempSync(
       'busymark-recent-docs-',
@@ -18007,7 +19256,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(startupPath),
@@ -18035,8 +19283,33 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.openMarkdownFile), findsOneWidget);
-    expect(find.text(l10n.recent), findsOneWidget);
+    expect(menus.contains(l10n.openMarkdownFile), isTrue);
+    expect(menus.contains(l10n.recent), isFalse);
+    expect(menus.contains(p.basename(recentPath)), isFalse);
+    menus.close();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-view-menu')));
+    await tester.pumpAndSettle();
+    expect(
+      menus.entries.singleWhere((entry) => entry['selected'] == true)['label'],
+      l10n.outline,
+    );
+    expect(
+      menus.entries.singleWhere(
+        (entry) => entry['label'] == l10n.recent,
+      )['mnemonic'],
+      'E',
+    );
+    menus.select(l10n.recent);
+    await tester.pumpAndSettle();
+    expect(find.text(p.basename(recentPath)), findsOneWidget);
+    expect(service.openedPath, startupPath);
+    final search = container.read(searchSessionProvider.notifier);
+    search.open(category: SearchCategory.recent);
+    await tester.pumpAndSettle();
+    search.close();
+    await tester.pumpAndSettle();
     expect(find.text(p.basename(recentPath)), findsOneWidget);
 
     await tester.tap(find.text(p.basename(recentPath)));
@@ -18086,7 +19359,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         startupPathProvider.overrideWithValue(null),
       ],
@@ -18198,42 +19470,74 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
   });
 
-  testWidgets(
-    'shared Markdown image renderer blocks remote images by default',
-    (tester) async {
-      var promptCount = 0;
-
+  testWidgets('blocked remote image keeps compact accessible details', (
+    tester,
+  ) async {
+    final source =
+        'https://example.com/images/${'featured-article-photograph-' * 12}.png';
+    const alt = 'Portrait of W. S. Gilbert';
+    final semantics = tester.ensureSemantics();
+    try {
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
-            body: MarkdownImageView(
-              source: 'https://example.com/logo.png',
-              alt: 'Logo',
-              activeFilePath: 'doc.md',
-              workspaceRoot: null,
-              writersideRoot: null,
-              imagesDir: 'images',
-              allowRemoteImages: false,
-              onRemoteImageBlocked: () {
-                promptCount += 1;
-              },
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: MarkdownImagePermissionScope(
+                resolve: (_, _, _) => MarkdownImageActions(
+                  allowed: false,
+                  openMenu: (_, _, _) async {},
+                ),
+                child: MarkdownImageView(
+                  source: source,
+                  alt: alt,
+                  activeFilePath: 'doc.md',
+                  workspaceRoot: null,
+                  writersideRoot: null,
+                  imagesDir: 'images',
+                  maxHeight: 120,
+                  preferredHeight: 96,
+                ),
+              ),
             ),
           ),
         ),
       );
-      await tester.pump();
-
+      final image = find.byType(MarkdownImageView);
       expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
+      expect(find.byIcon(BusyMarkGlyphs.imageBlocked), findsOneWidget);
+      expect(find.byIcon(BusyMarkGlyphs.imageMissing), findsNothing);
       expect(find.byType(Image), findsNothing);
-
-      await tester.tap(find.text(l10n.remoteImageBlocked));
-      await tester.pump();
-
-      expect(promptCount, 1);
-    },
-  );
+      expect(find.byType(Scrollable), findsNothing);
+      expect(find.textContaining(source), findsNothing);
+      expect(tester.getSize(image).height, lessThan(60));
+      expect(find.byIcon(BusyMarkGlyphs.downArrow), findsNothing);
+      expect(find.byTooltip(l10n.remoteImageBlockedTooltip), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('${l10n.remoteImageBlocked}\n$alt\n$source'),
+        findsOneWidget,
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: tester.getCenter(image));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<Text>(find.text(l10n.remoteImageBlocked))
+            .style
+            ?.decoration,
+        TextDecoration.underline,
+      );
+      expect(find.text(l10n.remoteImageBlockedTooltip), findsOneWidget);
+      expect(find.textContaining(source), findsNothing);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
 
   testWidgets(
     'shared Markdown image renderer resolves absolute paths with spaces',
@@ -18615,12 +19919,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           addTearDown(tester.view.resetDevicePixelRatio);
           final original =
               '# Group\n${List.generate(count, (i) => 'cat $i\n').join()}';
-          final harness = await _pumpSearchRegression(
-            tester,
-            headerBarService,
-            {'a.md': original},
-            mode: mode,
-          );
+          final harness = await _pumpSearchRegression(tester, {
+            'a.md': original,
+          }, mode: mode);
           final container = harness.container;
           final session = container.read(searchSessionProvider.notifier);
           session.open(category: SearchCategory.file);
@@ -18835,7 +20136,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         addTearDown(tester.view.resetDevicePixelRatio);
         final original = 'cat\n${'gap\n' * 200}cat\n${'tail\n' * 200}cat\n';
         final modified = original.replaceRange(0, 3, 'wolf');
-        final harness = await _pumpSearchRegression(tester, headerBarService, {
+        final harness = await _pumpSearchRegression(tester, {
           'a.md': original,
           'b.md': 'other cat buffer\n',
         }, mode: mode);
@@ -18992,7 +20293,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
   }
 
-  testWidgets('Welcome, Recent search and Open use the same mixed chronology', (
+  testWidgets('Welcome and Recent search use the same mixed chronology', (
     tester,
   ) async {
     final settings = _MemorySettingsStore()
@@ -19029,7 +20330,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       overrides: [
         ..._smokeAccentOverrides,
         startupPathProvider.overrideWithValue(null),
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settings),
       ],
     );
@@ -19069,24 +20369,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expectChronologicalRows();
     search.close();
     await tester.pumpAndSettle();
-    final opening = container
-        .read(busyMarkCommandRegistryProvider)
-        .execute(BusyMarkCommandIds.open);
-    await tester.pumpAndSettle();
-    final recentRows = tester
-        .widgetList<BusyMarkActionRow>(
-          find.descendant(
-            of: find.byType(BusyMarkDialogShell),
-            matching: find.byType(BusyMarkActionRow),
-          ),
-        )
-        .where((r) => r.title.contains('entry'))
-        .map((r) => r.title.replaceAll('\u2066', '').replaceAll('\u2069', ''))
-        .toList();
-    expect(recentRows, ['Newest entry', 'Middle entry', 'Oldest entry']);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-    await opening;
+    expectChronologicalRows();
   });
 
   for (final mode in [
@@ -19133,7 +20416,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           final container = ProviderContainer(
             overrides: [
               ..._smokeAccentOverrides,
-              linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
               workspaceFileMonitorProvider.overrideWith(
                 (ref) => _SearchTestFileMonitor(),
               ),
@@ -19294,7 +20576,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       }
       await store.remapPath('/retired/same.md', '/deleted/same.md');
       await store.markDeleted('/deleted/same.md', recursive: false);
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Live heading\nlive source\n',
       }, historyStore: store);
       final container = harness.container;
@@ -19408,9 +20690,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     (tester) async {
       const text =
           '# Alpha\n## Shared\nalpha body\n# Beta\n## Shared\nbeta body\n';
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
-        'a.md': text,
-      });
+      final harness = await _pumpSearchRegression(tester, {'a.md': text});
       final container = harness.container;
       final session = container.read(searchSessionProvider.notifier);
       Future<void> outlineShortcut() async {
@@ -19510,7 +20790,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'unified search scopes, query isolation and explicit shortcut destinations',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': '# Alpha\nneedle alpha\n',
         'b.md': '# Beta\nneedle beta\n',
       });
@@ -19741,7 +21021,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'unified Actions formats captured Source selection and rejects a later selection',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'cat dog\n',
       });
       final container = harness.container;
@@ -19888,9 +21168,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'unified search overlay retains source controller and initial hidden sidebar',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
-        'a.md': 'needle\n',
-      });
+      final harness = await _pumpSearchRegression(tester, {'a.md': 'needle\n'});
       final container = harness.container;
       container.read(searchSessionProvider.notifier).close();
       await container
@@ -19937,7 +21215,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(
@@ -19984,6 +21261,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
+    expect(headerButton(l10n.home), findsOneWidget);
     expect(headerButton(l10n.back), findsNothing);
     expect(headerButton(l10n.validate), findsNothing);
     expect(
@@ -19995,7 +21273,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.tap(headerButton(l10n.search));
     await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields);
-    expect(headerButton(l10n.back), findsOneWidget);
+    expect(headerButton(l10n.home), findsOneWidget);
+    expect(headerButton(l10n.back), findsNothing);
     expect(editorFocus.hasFocus, isTrue);
     expect(headerButton(l10n.validate), findsOneWidget);
     expect(
@@ -20021,102 +21300,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   });
 
   testWidgets(
-    'native header Search action toggles search and Back visibility',
-    (tester) async {
-      if (!Platform.isLinux) {
-        return;
-      }
-      const channelName = 'test.busymark/headerbar-search-toggle';
-      const channel = MethodChannel(channelName);
-      const codec = StandardMethodCodec();
-      final nativeHeaderBarService = LinuxHeaderBarService(
-        channel: channel,
-        sessionId: 'search-toggle-session',
-      );
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, (call) async {
-            if (call.method == 'initialize' || call.method == 'focusSearch') {
-              return true;
-            }
-            if (call.method == 'applyConfiguration') {
-              final configuration = Map<Object?, Object?>.from(
-                call.arguments! as Map<Object?, Object?>,
-              );
-              return configuration['revision'];
-            }
-            return null;
-          });
-      addTearDown(() {
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(channel, null);
-        channel.setMethodCallHandler(null);
-      });
-      await nativeHeaderBarService.initialize();
-
-      final container = ProviderContainer(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(
-            nativeHeaderBarService,
-          ),
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-          workspaceServiceProvider.overrideWithValue(
-            _StartupWorkspaceService(),
-          ),
-          startupPathProvider.overrideWithValue(
-            'test/fixtures/markdown/basic.md',
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const BusyMarkApp(),
-        ),
-      );
-      await tester.pump();
-      for (var i = 0; i < 20; i += 1) {
-        await tester.pump(const Duration(milliseconds: 100));
-        if (find
-            .byKey(const ValueKey('workspace-page-frame'))
-            .evaluate()
-            .isNotEmpty) {
-          break;
-        }
-      }
-
-      HeaderBarConfiguration configuration() => tester
-          .widget<HeaderBarConfigurationPublisher>(
-            find.byType(HeaderBarConfigurationPublisher),
-          )
-          .configuration;
-
-      expect(configuration().searchActive, isFalse);
-      expect(configuration().backVisible, isTrue);
-
-      Future<void> pressNativeSearch() async {
-        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .handlePlatformMessage(
-              channelName,
-              codec.encodeMethodCall(const MethodCall('search')),
-              (_) {},
-            );
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-
-      await pressNativeSearch();
-      expect(configuration().searchActive, isTrue);
-      expect(configuration().backVisible, isFalse);
-
-      await pressNativeSearch();
-      expect(configuration().searchActive, isFalse);
-      expect(configuration().backVisible, isTrue);
-    },
-  );
-
-  testWidgets(
     'workspace search awaits non-active file reads without blocking builds',
     (tester) async {
       final service = _DeferredWorkspaceSearchService();
@@ -20134,7 +21317,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           workspaceFileMonitorProvider.overrideWith(
             (ref) => _SearchTestFileMonitor(),
           ),
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(
@@ -20233,13 +21415,22 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'document text native submit uses exact payload and selected sidebar occurrence',
     (tester) async {
-      final session = await _pumpSearchRegression(tester, headerBarService, {
+      final session = await _pumpSearchRegression(tester, {
         'a.md': 'cat\n cat \n cat \n',
       });
       session.container
           .read(searchSessionProvider.notifier)
           .open(category: SearchCategory.file);
-      session.events.add(const HeaderBarSearchSubmitted(' cat '));
+      final queryField = find.descendant(
+        of: find.byKey(const ValueKey('shared-search-query')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(queryField, ' cat ');
+      await _waitForSearchCondition(
+        tester,
+        () => session.container.read(searchSessionProvider).results.isNotEmpty,
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
       await _waitForSearchCondition(
         tester,
         () => _searchSourceController(tester).searchResult.totalMatchCount == 2,
@@ -20249,12 +21440,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         () => find.text(l10n.searchResultLine('a.md', 3)).evaluate().isNotEmpty,
       );
       expect(
-        tester
-            .widget<HeaderBarConfigurationPublisher>(
-              find.byType(HeaderBarConfigurationPublisher),
-            )
-            .configuration
-            .searchQuery,
+        ProviderScope.containerOf(
+          tester.element(find.byType(BusyMarkApp)),
+        ).read(searchSessionProvider).query,
         ' cat ',
       );
       await tester.tap(find.text(l10n.searchResultLine('a.md', 3)));
@@ -20279,7 +21467,12 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             session.container.read(workspaceControllerProvider).activeText ==
             'cat\n cat \n dog \n',
       );
-      session.events.add(const HeaderBarSearchSubmitted(' '));
+      await tester.enterText(queryField, ' ');
+      await _waitForSearchCondition(
+        tester,
+        () => session.container.read(searchSessionProvider).results.isNotEmpty,
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
       await _waitForSearchCondition(
         tester,
         () =>
@@ -20294,11 +21487,11 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'workspace search preserves query and lands on unopened destination',
     (tester) async {
-      final session = await _pumpSearchRegression(tester, headerBarService, {
+      final session = await _pumpSearchRegression(tester, {
         'a.md': 'First file\n',
         'b.md': 'Before\nsecond needle result\n',
       });
-      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      session.container.read(searchSessionProvider.notifier).query('needle');
       await _waitForSearchCondition(
         tester,
         () => find.text('second needle result').evaluate().isNotEmpty,
@@ -20337,12 +21530,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         () => find.text('second needle result').evaluate().isNotEmpty,
       );
       expect(
-        tester
-            .widget<HeaderBarConfigurationPublisher>(
-              find.byType(HeaderBarConfigurationPublisher),
-            )
-            .configuration
-            .searchQuery,
+        ProviderScope.containerOf(
+          tester.element(find.byType(BusyMarkApp)),
+        ).read(searchSessionProvider).query,
         'needle',
       );
       await tester.pumpWidget(const SizedBox());
@@ -20363,11 +21553,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           'a.md': 'Before\noriginal needle result\n',
           'b.md': '# B\n',
         };
-        final harness = await _pumpSearchRegression(
-          tester,
-          headerBarService,
-          sources,
-        );
+        final harness = await _pumpSearchRegression(tester, sources);
         final container = harness.container;
         final controller = container.read(workspaceControllerProvider.notifier);
         final original = container
@@ -20376,7 +21562,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         await controller.openActiveFile(
           '${_SearchRegressionService.root}/b.md',
         );
-        harness.events.add(const HeaderBarSearchQueryChanged('needle'));
+        harness.container.read(searchSessionProvider.notifier).query('needle');
         await _waitForSearchCondition(
           tester,
           () =>
@@ -20466,7 +21652,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'cancelled closed-tab result cannot navigate or publish feedback',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'original needle result\n',
         'b.md': '# B\n',
       });
@@ -20479,7 +21665,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       final destination = container
           .read(workspaceControllerProvider)
           .activeBuffer!;
-      harness.events.add(const HeaderBarSearchQueryChanged('needle'));
+      harness.container.read(searchSessionProvider.notifier).query('needle');
       await _waitForSearchCondition(
         tester,
         () =>
@@ -20546,7 +21732,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets('workspace search observes edits to inactive buffers', (
     tester,
   ) async {
-    final session = await _pumpSearchRegression(tester, headerBarService, {
+    final session = await _pumpSearchRegression(tester, {
       'a.md': 'First file\n',
       'b.md': 'disk needle\n',
     });
@@ -20561,7 +21747,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     controller.updateDocumentText(buffer.id, 'unsaved needle\n');
     await controller.openActiveFile('${_SearchRegressionService.root}/a.md');
     await tester.pump();
-    session.events.add(const HeaderBarSearchQueryChanged('needle'));
+    session.container.read(searchSessionProvider.notifier).query('needle');
     await _waitForSearchCondition(
       tester,
       () => find.text('unsaved needle').evaluate().isNotEmpty,
@@ -20592,11 +21778,11 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'workspace search reports limits and continues into later files',
     (tester) async {
-      final session = await _pumpSearchRegression(tester, headerBarService, {
+      final session = await _pumpSearchRegression(tester, {
         'a.md': List.generate(80, (i) => 'needle $i').join('\n'),
         'b.md': 'later needle\n',
       });
-      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      session.container.read(searchSessionProvider.notifier).query('needle');
       await _waitForSearchCondition(
         tester,
         () => find.text(l10n.workspaceSearchShowMore).evaluate().isNotEmpty,
@@ -20632,7 +21818,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     (tester) async {
       final session = await _pumpSearchRegression(
         tester,
-        headerBarService,
         {
           'a.md': 'active\n',
           'large.md': 'large needle',
@@ -20641,7 +21826,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         oversized: {'large.md'},
         unreadable: {'unreadable.md'},
       );
-      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      session.container.read(searchSessionProvider.notifier).query('needle');
       await _waitForSearchCondition(
         tester,
         () => find
@@ -20651,7 +21836,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       expect(find.text(l10n.noResults), findsNothing);
       expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
-      session.events.add(const HeaderBarSearchQueryChanged('['));
+      session.container.read(searchSessionProvider.notifier).query('[');
       await _waitForSearchCondition(
         tester,
         () => !session.container.read(searchSessionProvider).searching,
@@ -20669,19 +21854,19 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'workspace search cancels rapid literal queries while UI keeps building',
     (tester) async {
-      final session = await _pumpSearchRegression(tester, headerBarService, {
+      final session = await _pumpSearchRegression(tester, {
         'a.md': 'active\n',
         'b.md': '${'a' * 100}b\n',
       });
-      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      session.container.read(searchSessionProvider.notifier).query('needle');
       await tester.pump();
-      session.events.add(const HeaderBarSearchQueryChanged(r'^(a+)+$'));
+      session.container.read(searchSessionProvider.notifier).query(r'^(a+)+$');
       await tester.pump(const Duration(milliseconds: 1));
       await session.container
           .read(appSettingsControllerProvider.notifier)
           .setWordWrap(false);
       await tester.pump();
-      session.events.add(const HeaderBarSearchQueryChanged('active'));
+      session.container.read(searchSessionProvider.notifier).query('active');
       await _waitForSearchCondition(
         tester,
         () =>
@@ -20700,11 +21885,11 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'workspace search replacement review loads an asynchronous plan',
     (tester) async {
-      final session = await _pumpSearchRegression(tester, headerBarService, {
+      final session = await _pumpSearchRegression(tester, {
         'a.md': 'cat cat\n',
         'b.md': 'cat\n',
       });
-      session.events.add(const HeaderBarSearchQueryChanged('cat'));
+      session.container.read(searchSessionProvider.notifier).query('cat');
       await _waitForSearchCondition(
         tester,
         () => find.text(l10n.workspaceReplace).evaluate().isNotEmpty,
@@ -20761,7 +21946,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'preview search highlights preserve Unicode offsets and literal case-insensitive matching',
     (tester) async {
-      final harness = await _pumpSearchRegression(tester, headerBarService, {
+      final harness = await _pumpSearchRegression(tester, {
         'a.md': 'İ needle Cat catalog .*\n',
       }, mode: DocumentViewModePreference.preview);
       bool hasHighlight(InlineSpan span, String text) =>
@@ -20809,11 +21994,11 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   testWidgets(
     'literal workspace search bounds malformed Markdown snippets around the match',
     (tester) async {
-      final session = await _pumpSearchRegression(tester, headerBarService, {
+      final session = await _pumpSearchRegression(tester, {
         'a.md': 'Active document\n',
         'b.md': 'First line\n${'[' * 40000}needle\n',
       });
-      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      session.container.read(searchSessionProvider.notifier).query('needle');
       await _waitForSearchCondition(
         tester,
         () => find.text(l10n.searchResultLine('b.md', 2)).evaluate().isNotEmpty,
@@ -20883,7 +22068,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/search-scroll.md'),
@@ -20971,7 +22155,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/large-preview.md'),
@@ -21049,7 +22232,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/search-code-scroll.md'),
@@ -21124,7 +22306,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/search-readme-scroll.md'),
@@ -21196,7 +22377,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/list-spacing.md'),
@@ -21281,7 +22461,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/nested-list.md'),
@@ -21329,7 +22508,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/raw-html-table.md'),
@@ -21374,7 +22552,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/aligned-table.md'),
@@ -21422,7 +22599,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue('/tmp/search-readme-scroll.md'),
@@ -21473,7 +22649,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(
@@ -21505,16 +22680,12 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final temp = Directory.systemTemp.createTempSync('busymark_untitled_save_');
     final saveFile = File('${temp.path}/created.md');
     const editedText = '# Created\n\nDraft text.';
-    const fileSelectorChannel = MethodChannel(
-      'plugins.flutter.io/file_selector',
-    );
+    const fileSelectorChannel = MethodChannel('busymark/save_chooser');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       fileSelectorChannel,
       (call) async {
-        expect(call.method, 'getSavePath');
-        final args = call.arguments as Map<Object?, Object?>;
-        expect(args['suggestedName'], l10n.untitledMarkdownFileName);
-        return saveFile.path;
+        expect(call.method, 'save');
+        return SaveDestination.inspect(saveFile.path).chooserReview;
       },
     );
     addTearDown(() {
@@ -21535,7 +22706,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
       ],
@@ -21560,8 +22730,16 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
 
     final sourceField = find.byType(TextField).last;
-    await tester.tap(sourceField);
-    await tester.enterText(sourceField, editedText);
+    final editable = tester.widget<EditableText>(
+      find.descendant(of: sourceField, matching: find.byType(EditableText)),
+    );
+    expect(editable.focusNode.hasPrimaryFocus, isTrue);
+    expect(
+      editable.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.enterText(editedText);
     await tester.pump();
 
     expect(container.read(workspaceControllerProvider).activeText, editedText);
@@ -21994,20 +23172,6 @@ class _NavigationHistoryStore extends MemoryLocalHistoryStore {
   }
 }
 
-class _FallbackHeaderBarService extends LinuxHeaderBarService {
-  _FallbackHeaderBarService()
-    : super(channel: const MethodChannel('test.busymark/headerbar'));
-
-  @override
-  bool get isAvailable => false;
-
-  @override
-  bool get usesNativeHeaderBar => false;
-
-  @override
-  Stream<HeaderBarAction> get actions => const Stream.empty();
-}
-
 class _HistoryTestTimer implements Timer {
   _HistoryTestTimer(this.duration, this.callback);
 
@@ -22062,6 +23226,7 @@ class _MutableWorkspaceController extends WorkspaceController {
   }) {
     state = state.copyWith(
       documentBuffers: [
+        ...state.documentBuffers,
         DocumentBuffer(
           id: 'topic-rename-dirty',
           filePath: path,
@@ -22070,12 +23235,16 @@ class _MutableWorkspaceController extends WorkspaceController {
           dirty: true,
         ),
       ],
-      activeBufferId: null,
     );
   }
 
-  void clearDocumentBuffersForTest() {
-    state = state.copyWith(documentBuffers: const [], activeBufferId: null);
+  void removeProjectDirtyBufferForTest() {
+    state = state.copyWith(
+      documentBuffers: [
+        for (final buffer in state.documentBuffers)
+          if (buffer.id != 'topic-rename-dirty') buffer,
+      ],
+    );
   }
 
   @override
@@ -22184,7 +23353,15 @@ class _MutableWorkspaceController extends WorkspaceController {
         edit.replacement,
       );
     }
-    state = state.copyWith(activeText: source, isDirty: true);
+    state = state.copyWith(
+      documentBuffers: [
+        for (final buffer in state.documentBuffers)
+          if (buffer.id == state.activeBufferId)
+            buffer.edited(source)
+          else
+            buffer,
+      ],
+    );
     return true;
   }
 
@@ -22296,9 +23473,17 @@ class _MutableWorkspaceController extends WorkspaceController {
       final activePath = refreshed.activeFilePath;
       state = WorkspaceState(
         workspace: refreshed,
-        activeText: activePath == null
-            ? ''
-            : File(activePath).readAsStringSync(),
+        documentBuffers: [
+          if (activePath != null)
+            DocumentBuffer(
+              id: 'renamed',
+              filePath: activePath,
+              text: File(activePath).readAsStringSync(),
+              lastSavedText: File(activePath).readAsStringSync(),
+              dirty: false,
+            ),
+        ],
+        activeBufferId: activePath == null ? null : 'renamed',
       );
       return true;
     } on Object catch (error) {
@@ -22475,6 +23660,23 @@ class _MutableWorkspaceController extends WorkspaceController {
   }
 }
 
+class _GatedResourceService extends _StartupWorkspaceService {
+  _GatedResourceService(this.gatedPath);
+
+  final String gatedPath;
+  final entered = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    if (path == gatedPath) {
+      entered.complete();
+      await release.future;
+    }
+    return super.openPath(path);
+  }
+}
+
 class _StartupWorkspaceService extends WorkspaceService {
   String? openedPath;
   String? savedPath;
@@ -22499,7 +23701,6 @@ class _StartupWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime(2026),
       activeFilePath: path,
-      activeFileModifiedAt: DateTime(2026),
       files: [
         DocumentFile(
           absolutePath: path,
@@ -22560,6 +23761,21 @@ class _StartupWorkspaceService extends WorkspaceService {
     String text, {
     required WorkspaceFileSnapshot expectedSnapshot,
   }) => saveText(path, text);
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+    SaveDestination? authorization,
+    bool Function()? stillCurrent,
+    Future<void> Function()? onPublished,
+  }) {
+    authorization?.requireCurrent(path);
+    expect(stillCurrent?.call(), isNot(false));
+    return saveNewText(path, text, onPublished: onPublished);
+  }
 
   @override
   Future<WorkspaceFileSnapshot> saveNewText(
@@ -22640,7 +23856,7 @@ class _SwitchingGitController extends _PresetGitController {
 
 class _SwitchingSharedGitReadFixture extends SharedGitReadFixture {
   _SwitchingSharedGitReadFixture(String firstRoot)
-    : super(_gitSidebarShortcutState(firstRoot));
+    : super(_gitSidebarShortcutState(firstRoot), commits: [_sidebarCommit]);
 
   @override
   Future<shared.RepositoryId?> discover(
@@ -22671,6 +23887,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
   final WorkspaceKind kind;
   final String rootPath;
   final List<String> paths;
+  DateTime openedAt = DateTime(2026);
   final _sources = <String, String>{};
   String? savedPath;
   String? savedText;
@@ -22692,9 +23909,8 @@ class _TabbedWorkspaceService extends WorkspaceService {
       id: rootPath,
       rootPath: rootPath,
       kind: kind,
-      openedAt: DateTime(2026),
+      openedAt: openedAt,
       activeFilePath: paths.first,
-      activeFileModifiedAt: DateTime(2026),
       openFilePaths: [paths.first],
       files: files,
       diagnostics: const [],
@@ -22830,19 +24046,14 @@ BusyMarkSourceEditingController _searchSourceController(WidgetTester tester) =>
         .whereType<BusyMarkSourceEditingController>()
         .single;
 
-Future<
-  ({ProviderContainer container, StreamController<HeaderBarSearchEvent> events})
->
-_pumpSearchRegression(
+Future<({ProviderContainer container})> _pumpSearchRegression(
   WidgetTester tester,
-  LinuxHeaderBarService headerBar,
   Map<String, String> sources, {
   Set<String> oversized = const {},
   Set<String> unreadable = const {},
   DocumentViewModePreference mode = DocumentViewModePreference.source,
   LocalHistoryStore? historyStore,
 }) async {
-  final events = StreamController<HeaderBarSearchEvent>.broadcast();
   final settings = _MemorySettingsStore()
     ..value = AppSettings.defaults()
         .copyWith(autoSave: false, documentViewMode: mode)
@@ -22854,8 +24065,6 @@ _pumpSearchRegression(
       workspaceFileMonitorProvider.overrideWith(
         (ref) => _SearchTestFileMonitor(),
       ),
-      linuxHeaderBarServiceProvider.overrideWithValue(headerBar),
-      headerBarSearchEventsProvider.overrideWith((ref) => events.stream),
       localSettingsStoreProvider.overrideWithValue(settings),
       if (historyStore != null)
         localHistoryStoreProvider.overrideWithValue(historyStore),
@@ -22873,7 +24082,6 @@ _pumpSearchRegression(
   );
   addTearDown(() {
     container.dispose();
-    unawaited(events.close());
   });
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const BusyMarkApp()),
@@ -22882,13 +24090,16 @@ _pumpSearchRegression(
     tester,
     () =>
         container.read(workspaceControllerProvider).activeBuffer != null &&
-        find.byType(HeaderBarConfigurationPublisher).evaluate().isNotEmpty,
+        find
+            .byKey(const ValueKey('workspace-page-frame'))
+            .evaluate()
+            .isNotEmpty,
   );
   container
       .read(searchSessionProvider.notifier)
       .open(category: SearchCategory.workspace);
   await tester.pump();
-  return (container: container, events: events);
+  return (container: container);
 }
 
 class _SearchTestFileMonitor extends WorkspaceFileMonitor {
@@ -22980,7 +24191,6 @@ class _SearchWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime(2026),
       activeFilePath: path,
-      activeFileModifiedAt: DateTime(2026),
       files: [
         DocumentFile(
           absolutePath: path,
@@ -23033,7 +24243,6 @@ class _DeferredWorkspaceSearchService extends WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime(2026),
       activeFilePath: activePath,
-      activeFileModifiedAt: DateTime(2026),
       files: [
         DocumentFile(
           absolutePath: activePath,
@@ -23123,147 +24332,39 @@ class _PresetGitController extends GitController {
   }
 
   @override
-  Future<List<GitBranch>> loadBranches() async {
-    branchLoadCount += 1;
-    return state.branches.isEmpty
-        ? const [
-            GitBranch(name: 'main', current: true),
-            GitBranch(name: 'docs', current: false),
-          ]
-        : state.branches;
-  }
-
-  @override
-  Future<void> loadFileHistory(String absolutePath) async {
-    loadedFileHistoryPath = absolutePath;
-    final repositoryRoot = state.repositoryInfo?.rootPath;
-    final repoRelativePath =
-        repositoryRoot != null && absolutePath.startsWith('$repositoryRoot/')
-        ? absolutePath.substring(repositoryRoot.length + 1)
-        : absolutePath;
-    state = state.copyWith(
-      scopedFilePath: repoRelativePath,
-      selectedCommitFilePath: null,
-      openDiffFilePaths: const [],
-      selectedView: GitView.fileHistory,
-      fileHistory: GitFileHistoryState(
-        currentPath: repoRelativePath,
-        entries: [
-          GitFileHistoryEntry(
-            commit: GitCommitSummary(
-              fullHash: '45a2b81a41822ad4171f62205ef996f5752a3bbd',
-              shortHash: '45a2b81',
-              authorName: 'BusyMark Test',
-              authorEmail: 'test@example.invalid',
-              authorDate: DateTime(2026),
-              subject: 'File history test commit',
-              parentHashes: const [],
-            ),
-            pathAtCommit: repoRelativePath,
-            pathInParent: repoRelativePath,
-            status: GitDiffFileStatus.modified,
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
   Future<void> stageFiles(List<String> repoRelativePaths) async {
     stagedPaths = repoRelativePaths;
   }
-
-  @override
-  Future<void> compareFileHistoryWithCurrent() async {
-    compareWithCurrentCount += 1;
-    state = state.copyWith(
-      fileHistory: state.fileHistory.copyWith(
-        comparisonType: GitComparisonType.commitVersusCurrent,
-      ),
-    );
-  }
-
-  @override
-  Future<void> selectFileHistoryCommit(String hash) async {
-    commitComparisonCount += 1;
-    state = state.copyWith(
-      fileHistory: state.fileHistory.copyWith(
-        selectedCommitHash: hash,
-        comparisonType: GitComparisonType.commitChange,
-      ),
-    );
-  }
 }
 
-GitState _gitFileHistoryDiffState(String rootPath) {
-  final repository = GitRepositoryInfo(
-    rootPath: rootPath,
-    gitDirPath: '$rootPath/.git',
-    currentBranch: 'main',
-  );
-  const hash = '45a2b81a41822ad4171f62205ef996f5752a3bbd';
-  final commit = GitCommitSummary(
-    fullHash: hash,
-    shortHash: '45a2b81',
-    authorName: 'BusyMark Test',
-    authorEmail: 'test@example.invalid',
-    authorDate: DateTime(2026),
-    subject: 'File history test commit',
-    parentHashes: const ['30af618a6e962623a0098ad6a33b468f33dc49c7'],
-  );
-  final file = _readmeCodeBlockDiffFile();
-  final diff = GitDiff(
-    title: 'README.md',
-    files: [file],
-    rawPatch: '',
-    hasBinaryFiles: false,
-    fileSnapshots: const {'README.md': '# Readme change\n'},
-  );
-  return GitState(
-    availability: const GitAvailability(
-      available: true,
-      executablePath: '/usr/bin/git',
-      version: '2.50.0',
-    ),
-    repositoryInfo: repository,
-    statusSnapshot: GitStatusSnapshot(
-      repositoryInfo: repository,
-      files: const [],
-    ),
-    selectedView: GitView.fileHistory,
-    scopedFilePath: 'README.md',
-    fileHistory: GitFileHistoryState(
-      currentPath: 'README.md',
-      entries: [
-        GitFileHistoryEntry(
-          commit: commit,
-          pathAtCommit: 'README.md',
-          pathInParent: 'README.md',
-          status: GitDiffFileStatus.modified,
-        ),
-      ],
-      selectedCommitHash: hash,
-      comparison: GitHistoricalFileComparison(
-        oldPath: 'README.md',
-        newPath: 'README.md',
-        oldContent: '# Readme old\n',
-        newContent: '# Readme change\n',
-        diff: diff,
-      ),
-    ),
-    selectedCommitFilePath: 'README.md',
-    openDiffFilePaths: const ['README.md'],
-  );
-}
+GitState _gitFileHistoryDiffState(String rootPath) =>
+    _gitSidebarShortcutState(rootPath);
+final _historyCommit = shared.GitCommit(
+  oid: shared.GitOid('45a2b81a41822ad4171f62205ef996f5752a3bbd'),
+  parents: [shared.GitOid('30af618a6e962623a0098ad6a33b468f33dc49c7')],
+  subject: 'File history test commit',
+  author: 'BusyMark Test',
+  email: 'test@example.invalid',
+  date: DateTime(2026),
+);
+final _sidebarCommit = shared.GitCommit(
+  oid: shared.GitOid('21e982c772a5cf43f4a99de6d7db9fb1283f50d1'),
+  parents: [],
+  subject: 'Sidebar history shortcut commit',
+  author: 'BusyMark Test',
+  email: 'test@example.invalid',
+  date: DateTime(2026),
+);
+final shared.Json _historyEntry = {
+  'commit': _historyCommit.toJson(),
+  'pathAtCommit': shared.RepoPath.text('README.md').toJson(),
+  'pathInParent': shared.RepoPath.text('README.md').toJson(),
+};
 
 GitState _gitDiffState(String rootPath) {
   final repository = GitRepositoryInfo(
     rootPath: rootPath,
     gitDirPath: '$rootPath/.git',
-    currentBranch: 'main',
-    upstreamBranch: 'origin/main',
-    aheadCount: 2,
-    behindCount: 3,
   );
   return GitState(
     availability: const GitAvailability(
@@ -23292,102 +24393,6 @@ GitState _gitDiffState(String rootPath) {
         ),
       ],
     ),
-    selectedChange: const GitChangeSelection(
-      path: 'guide.md',
-      comparison: GitComparisonType.unstaged,
-    ),
-    changeDiff: GitDiff(
-      title: 'Update docs',
-      files: [
-        _readmeCodeBlockDiffFile(),
-        _gitDiffFile('guide.md', '# Guide old', '# Guide change'),
-      ],
-      rawPatch: '',
-      hasBinaryFiles: false,
-      fileSnapshots: const {
-        'README.md':
-            '# Readme change\n\n'
-            '```bash\n'
-            'echo before\n'
-            'echo added\n'
-            'echo after\n'
-            '```\n\n'
-            'Unchanged context after change.\n',
-        'guide.md': '# Guide change\n\nGuide context.\n',
-      },
-    ),
-    selectedCommitFilePath: 'guide.md',
-    openDiffFilePaths: const ['README.md', 'guide.md'],
-  );
-}
-
-GitDiffFile _readmeCodeBlockDiffFile() {
-  return const GitDiffFile(
-    oldPath: 'README.md',
-    newPath: 'README.md',
-    status: GitDiffFileStatus.modified,
-    hunks: [
-      GitDiffHunk(
-        oldStart: 1,
-        oldCount: 1,
-        newStart: 1,
-        newCount: 1,
-        heading: 'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
-        lines: [
-          GitDiffLine(
-            kind: GitDiffLineKind.removed,
-            content: '# Readme old',
-            oldLineNumber: 1,
-          ),
-          GitDiffLine(
-            kind: GitDiffLineKind.added,
-            content: '# Readme change',
-            newLineNumber: 1,
-          ),
-        ],
-      ),
-      GitDiffHunk(
-        oldStart: 3,
-        oldCount: 4,
-        newStart: 3,
-        newCount: 5,
-        heading: '',
-        lines: [
-          GitDiffLine(
-            kind: GitDiffLineKind.context,
-            content: '```bash',
-            oldLineNumber: 3,
-            newLineNumber: 3,
-          ),
-          GitDiffLine(
-            kind: GitDiffLineKind.context,
-            content: 'echo before',
-            oldLineNumber: 4,
-            newLineNumber: 4,
-          ),
-          GitDiffLine(
-            kind: GitDiffLineKind.added,
-            content: 'echo added',
-            newLineNumber: 5,
-          ),
-          GitDiffLine(
-            kind: GitDiffLineKind.context,
-            content: 'echo after',
-            oldLineNumber: 5,
-            newLineNumber: 6,
-          ),
-          GitDiffLine(
-            kind: GitDiffLineKind.context,
-            content: '```',
-            oldLineNumber: 6,
-            newLineNumber: 7,
-          ),
-        ],
-      ),
-    ],
-    binary: false,
-    additions: 2,
-    deletions: 1,
   );
 }
 
@@ -23395,7 +24400,6 @@ GitState _gitSidebarShortcutState(String rootPath) {
   final repository = GitRepositoryInfo(
     rootPath: rootPath,
     gitDirPath: '$rootPath/.git',
-    currentBranch: 'main',
   );
   return GitState(
     availability: const GitAvailability(
@@ -23408,56 +24412,6 @@ GitState _gitSidebarShortcutState(String rootPath) {
       repositoryInfo: repository,
       files: const [],
     ),
-    projectHistory: GitProjectHistoryState(
-      commits: [
-        GitCommitSummary(
-          fullHash: '21e982c772a5cf43f4a99de6d7db9fb1283f50d1',
-          shortHash: '21e982c',
-          authorName: 'BusyMark Test',
-          authorEmail: 'test@example.invalid',
-          authorDate: DateTime(2026),
-          subject: 'Sidebar history shortcut commit',
-          parentHashes: const [],
-        ),
-      ],
-    ),
-  );
-}
-
-GitDiffFile _gitDiffFile(
-  String path,
-  String oldContent,
-  String newContent, {
-  String hunkHeading = '',
-}) {
-  return GitDiffFile(
-    oldPath: path,
-    newPath: path,
-    status: GitDiffFileStatus.modified,
-    hunks: [
-      GitDiffHunk(
-        oldStart: 1,
-        oldCount: 1,
-        newStart: 1,
-        newCount: 3,
-        heading: hunkHeading,
-        lines: [
-          GitDiffLine(
-            kind: GitDiffLineKind.removed,
-            content: oldContent,
-            oldLineNumber: 1,
-          ),
-          GitDiffLine(
-            kind: GitDiffLineKind.added,
-            content: newContent,
-            newLineNumber: 1,
-          ),
-        ],
-      ),
-    ],
-    binary: false,
-    additions: 1,
-    deletions: 1,
   );
 }
 
@@ -23547,7 +24501,6 @@ class _SettingsSpellingHarness {
 
 Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
   WidgetTester tester, {
-  required LinuxHeaderBarService headerBarService,
   required _MemorySettingsStore settingsStore,
   required SpellingDictionaryFileDownload downloadFile,
   String? projectLanguage,
@@ -23606,7 +24559,6 @@ Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
   final container = ProviderContainer(
     overrides: [
       ..._smokeAccentOverrides,
-      linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
       localSettingsStoreProvider.overrideWithValue(settingsStore),
       systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
       spellingSessionControllerProvider.overrideWith((ref) => spelling),
@@ -23843,9 +24795,8 @@ final _smokeAccentOverrides = [
           : ref.read(gitControllerProvider);
       return SharedGitReadFixture(
         state,
-        fileHistoryState: state.repositoryInfo == null
-            ? null
-            : _gitFileHistoryDiffState(state.repositoryInfo!.rootPath),
+        commits: [_sidebarCommit],
+        fileHistory: [_historyEntry],
       );
     },
   ),
@@ -23858,7 +24809,8 @@ final _smokeAccentOverrides = [
 ];
 
 class _SearchableGitReadFixture extends SharedGitReadFixture {
-  _SearchableGitReadFixture(super.state);
+  _SearchableGitReadFixture(super.state)
+    : super(commits: [_sidebarCommit], fileHistory: [_historyEntry]);
   Completer<void>? discoveryGate;
   shared.GitException? discoveryError;
   final discoveryEntered = Completer<void>();
@@ -24091,6 +25043,10 @@ Future<void> _chooseNativeGitMenu(
 class _HistoryComparisonReadFixture extends _ComparisonTabReadFixture {
   _HistoryComparisonReadFixture(super.state);
   @override
+  List<shared.GitCommit> get commits => [_historyCommit];
+  @override
+  List<shared.Json> get fileHistory => [_historyEntry];
+  @override
   Future<shared.GitContent> content(
     shared.RepositoryId repository,
     shared.RepoPath path,
@@ -24105,7 +25061,7 @@ class _HistoryComparisonReadFixture extends _ComparisonTabReadFixture {
         cancellation: cancellation,
       );
     }
-    final entry = state.fileHistory.entries.single;
+    final entry = _historyCommit;
     return shared.GitContent(
       path: path,
       version: version,
@@ -24113,7 +25069,7 @@ class _HistoryComparisonReadFixture extends _ComparisonTabReadFixture {
       token: version.label,
       mode: '100644',
       bytes: utf8.encode(
-        version.revision?.value == entry.commit.parentHashes.single
+        version.revision?.value == entry.parents.single.value
             ? '# Before\nold text\n'
             : '# After\nneedle comparison\n',
       ),
@@ -24127,4 +25083,22 @@ Future<void> _executeViewCommand(WidgetTester tester, String id) async {
   final context = tester.element(find.byType(WorkspaceScreen));
   final container = ProviderScope.containerOf(context, listen: false);
   await container.read(busyMarkCommandRegistryProvider).execute(id);
+}
+
+Future<void> _withControlledImageClient(
+  Future<void> Function(ControlledImageHttpClient) run,
+) async {
+  final previous = debugNetworkImageHttpClientProvider;
+  final client = ControlledImageHttpClient();
+  final cache = PaintingBinding.instance.imageCache;
+  cache.clear();
+  cache.clearLiveImages();
+  debugNetworkImageHttpClientProvider = () => client;
+  try {
+    await run(client);
+  } finally {
+    debugNetworkImageHttpClientProvider = previous;
+    cache.clear();
+    cache.clearLiveImages();
+  }
 }

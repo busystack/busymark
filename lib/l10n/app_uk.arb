@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Створити",
   "open": "Відкрити",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Створити",
+  "home": "Головна",
+  "openMenu": "Меню «Відкрити»",
+  "newNextcloudNote": "Нова нотатка Nextcloud",
+  "shortcutNewDocument": "Меню «Створити»",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Створити файл Markdown або проєкт Writerside",
+  "shortcutNewDocumentDescription": "Показати меню створення ресурсів",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Відкрити файл Markdown, папку або проєкт Writerside",
+  "shortcutOpenDescription": "Показати меню відкриття ресурсів",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Очистити дозволи для віддалених зображень",
+  "clearRemoteImagePermissions": "Очистити дозволи на зображення в робочих просторах",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Забути робочі області, яким було дозволено завантажувати віддалені зображення.",
+  "clearRemoteImagePermissionsDescription": "Забути всі дозволи робочих просторів для віддалених зображень.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Виберіть, чи може BusyMark завантажувати віддалені зображення.",
+  "remoteImageBlockedTooltip": "Віддалене зображення заблоковано. Натисніть, щоб переглянути параметри завантаження.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Завантажити для цієї робочої області",
+  "loadThisRemoteImage": "Завантажити це зображення",
+  "remoteImageMoreOptions": "Інші варіанти…",
+  "remoteImageMoreOptionsTitle": "Дозволи для віддалених зображень",
+  "loadRemoteImagesInDocument": "Завантажити зображення в цьому документі",
+  "remoteImageUntilClose": "До закриття цього документа.",
+  "remoteImageWorkspacePermissionDetail": "Дозволяє віддалені зображення в {workspace}, доки не очистите дозволи робочих просторів у налаштуваннях конфіденційності.",
+  "remoteImageGlobalPermissionDetail": "Дозволяє віддалені зображення в усьому BusyMark, доки не вимкнете цю опцію в налаштуваннях конфіденційності.",
+  "remoteImageGlobalSettingsDetail": "Дозволяє віддалені зображення в усьому BusyMark. Дозволи робочих просторів налаштовуються окремо.",
+  "loadRemoteImagesForWorkspace": "Завжди дозволяти в цьому робочому просторі",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3653,7 +3665,7 @@
   "searchTopicsCategory": "Теми",
   "searchCurrentDocument": "Поточний документ",
   "searchCurrentWorkspace": "Поточна робоча область",
-  "browseNotes": "Переглянути нотатки",
+  "browseNotes": "Переглянути нотатки Nextcloud",
   "searchActionsCommand": "Пошук дій",
   "searchDocumentsCommand": "Пошук документів",
   "searchTopicsCommand": "Пошук тем",

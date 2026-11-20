@@ -721,6 +721,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Uus';
+
+  @override
   String get open => 'Ava';
 
   @override
@@ -904,15 +907,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutGroupGeneral => 'Üldine';
 
   @override
-  String get shortcutNewDocument => 'Loo';
+  String get home => 'Avaleht';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Loo Markdowni fail või Writerside’i projekt';
+  String get openMenu => 'Avamismenüü';
 
   @override
-  String get shortcutOpenDescription =>
-      'Ava Markdowni fail, kaust või Writerside’i projekt';
+  String get newNextcloudNote => 'Uus Nextcloudi märge';
+
+  @override
+  String get shortcutNewDocument => 'Uue ressursi menüü';
+
+  @override
+  String get shortcutNewDocumentDescription => 'Kuva ressursside loomise menüü';
+
+  @override
+  String get shortcutOpenDescription => 'Kuva ressursside avamise menüü';
 
   @override
   String get shortcutSaveDescription => 'Salvesta praegune dokument';
@@ -1210,12 +1220,11 @@ class AppLocalizationsEt extends AppLocalizations {
       'Luba Markdowni eelvaatel ja redaktoril laadida pilte HTTP- ja HTTPS-aadressidelt.';
 
   @override
-  String get clearRemoteImagePermissions =>
-      'Eemalda välispiltide laadimise load';
+  String get clearRemoteImagePermissions => 'Kustuta tööruumide pildiõigused';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Unusta tööruumid, millel oli lubatud välispilte laadida.';
+      'Unusta kõik tööruumide kaugpiltide õigused.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1569,7 +1578,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Vali, kas BusyMark võib välispilte laadida.';
+      'Välispilt on blokeeritud. Laadimisvalikute nägemiseks klõpsa.';
 
   @override
   String get remoteImagesBlockedTitle => 'Välispildid on blokeeritud';
@@ -1579,7 +1588,35 @@ class AppLocalizationsEt extends AppLocalizations {
       'See dokument viitab internetis olevatele piltidele. Nende laadimine võib avaldada pildi majutajale teie võrguteavet.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Laadi selles tööruumis';
+  String get loadThisRemoteImage => 'Laadi see pilt';
+
+  @override
+  String get remoteImageMoreOptions => 'Rohkem valikuid…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Kaugpiltide õigused';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Laadi selle dokumendi pildid';
+
+  @override
+  String get remoteImageUntilClose => 'Kuni selle dokumendi sulgemiseni.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Lubab kaugpildid tööruumis $workspace, kuni kustutad tööruumide õigused privaatsusseadetes.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Lubab kaugpildid kogu BusyMarkis, kuni lülitad selle privaatsusseadetes välja.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Luba kaugpildid kogu BusyMarkis. Tööruumide õigusi hallatakse eraldi.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Luba selles tööruumis alati';
 
   @override
   String get alwaysLoadRemoteImages => 'Laadi välispildid alati';
@@ -5511,7 +5548,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get searchCurrentWorkspace => 'Praegune tööruum';
 
   @override
-  String get browseNotes => 'Sirvi märkmeid';
+  String get browseNotes => 'Sirvi Nextcloudi märkmeid';
 
   @override
   String get searchActionsCommand => 'Otsi toiminguid';

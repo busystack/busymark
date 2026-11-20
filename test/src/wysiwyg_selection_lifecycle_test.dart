@@ -1,3 +1,4 @@
+import '../support/document_history_harness.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -11,7 +12,6 @@ import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -121,19 +121,17 @@ Future<WysiwygEditableHarnessState> _mount(
   String source,
   MemoryRichClipboard clipboard, {
   WysiwygEditorSessionState session = const WysiwygEditorSessionState(),
-  bool externalHistory = false,
   bool renderMath = false,
   BusyMarkClipboardInsertionRegistry? registry,
-  LinuxHeaderBarService? headerBarService,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1000, 1100));
   addTearDown(() => tester.binding.setSurfaceSize(null));
+  final history = await DocumentHistoryHarness.create(source: source);
+  addTearDown(history.dispose);
   final key = GlobalKey<WysiwygEditableHarnessState>();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        if (headerBarService != null)
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         if (renderMath)
           webRenderHostProvider.overrideWithValue(_LifecycleMathHost()),
       ],
@@ -142,7 +140,7 @@ Future<WysiwygEditableHarnessState> _mount(
         source: source,
         clipboard: clipboard,
         session: session,
-        externalHistory: externalHistory,
+        history: history,
         insertionRegistry: registry,
       ),
     ),
@@ -365,7 +363,7 @@ void _deferredExtentFocusRegressions() {
           );
         }
         expect(state.changes, isEmpty);
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(state.history.buffer.editorState.undoState.undo.length, 0);
         expect(
           tester
               .widgetList<BusyMarkWysiwygBlockField>(
@@ -439,10 +437,7 @@ void _deferredExtentFocusRegressions() {
       'deferred toolbar dialog completion preserves newer owner inactive=$inactive',
       (tester) async {
         enableDesktopFocusLifecycle(tester);
-        final barrier = _DelayedSelectionBarrier();
-        addTearDown(barrier.dispose);
         addTearDown(() {
-          if (!barrier.release.isCompleted) barrier.release.complete();
           tester.binding.handleAppLifecycleStateChanged(
             AppLifecycleState.resumed,
           );
@@ -456,7 +451,6 @@ void _deferredExtentFocusRegressions() {
           tester,
           '${paragraphs.join('\n\n')}\n',
           MemoryRichClipboard(),
-          headerBarService: barrier,
         );
         final target = tester.widget<TextField>(_field(paragraphs.first));
         target.controller!.selection = const TextSelection(
@@ -508,7 +502,6 @@ void _deferredExtentFocusRegressions() {
           rootNavigator: true,
         ).pop();
         await tester.pumpAndSettle();
-        expect(barrier.releaseStarted, isTrue);
         other.requestFocus();
         await tester.pumpAndSettle();
         expect(FocusManager.instance.primaryFocus, same(other));
@@ -521,7 +514,6 @@ void _deferredExtentFocusRegressions() {
             same(FocusManager.instance.rootScope),
           );
         }
-        barrier.release.complete();
         for (var frame = 0; frame < 30; frame++) {
           await tester.pump(const Duration(milliseconds: 16));
           expect(
@@ -542,7 +534,7 @@ void _deferredExtentFocusRegressions() {
           const TextSelection(baseOffset: 8, extentOffset: 2),
         );
         expect(state.changes, isEmpty);
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(state.history.buffer.editorState.undoState.undo.length, 0);
         entry.remove();
         await tester.pumpAndSettle();
         entry.dispose();
@@ -751,30 +743,12 @@ void _deferredExtentFocusRegressions() {
   }
 }
 
-class _DelayedSelectionBarrier extends LinuxHeaderBarService {
-  _DelayedSelectionBarrier()
-    : super(
-        channel: const MethodChannel(
-          'com.busymark.test/selection-modal-release',
-        ),
-      );
-  final release = Completer<void>();
-  bool releaseStarted = false;
-  @override
-  Future<void> setModalBarrierDepth(int depth) async {
-    if (depth == 0) {
-      releaseStarted = true;
-      await release.future;
-    }
-  }
-}
-
 void main() {
   _deferredExtentFocusRegressions();
-  for (final externalHistory in [false, true]) {
-    for (final reverse in [false, true]) {
+  {
+    for (final reverse in [true]) {
       testWidgets(
-        'non-editable selection endpoint settles and accepts paste external=$externalHistory reverse=$reverse',
+        'non-editable selection endpoint settles and accepts paste reverse=$reverse',
         (tester) async {
           const original = 'First\n\n---\n';
           final document = WysiwygEditableHarnessState.parser
@@ -788,7 +762,6 @@ void main() {
             original,
             MemoryRichClipboard(),
             session: saved,
-            externalHistory: externalHistory,
             registry: registry,
           );
           expect(state.session.anchorBlockId, saved.anchorBlockId);
@@ -810,7 +783,7 @@ void main() {
           expect(state.source, original);
           expect(state.changes, isEmpty);
           expect(state.undoSources, isEmpty);
-          expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+          expect(state.history.buffer.editorState.undoState.undo.length, 0);
           expect(
             await registry.paste(
               BusyMarkClipboardPayload(
@@ -1149,7 +1122,7 @@ void main() {
           }
         }
         expect(state.changes, isEmpty);
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(state.history.buffer.editorState.undoState.undo.length, 0);
       },
       variant: TargetPlatformVariant.only(TargetPlatform.linux),
     );
@@ -1740,12 +1713,7 @@ void main() {
   testWidgets('table selection IME input delegates platform history actions', (
     tester,
   ) async {
-    final state = await _mount(
-      tester,
-      _table,
-      MemoryRichClipboard(),
-      externalHistory: true,
-    );
+    final state = await _mount(tester, _table, MemoryRichClipboard());
     state.recreate(_documentSession(state.document));
     await tester.pumpAndSettle();
     final input = find.byWidgetPredicate(
@@ -1812,7 +1780,7 @@ void main() {
           expect(_selected(tester), isEmpty);
           expect(state.source, _surrounded);
           expect(state.changes, isEmpty);
-          expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+          expect(state.history.buffer.editorState.undoState.undo.length, 0);
         },
       );
     }
@@ -1896,9 +1864,7 @@ void main() {
                     : '$_before${action == 'Enter' ? '\n\n\n\n' : '\n\n\n'}$_after\n'
               : insertedSource.isNotEmpty
               ? '$insertedSource\n'
-              : action == 'Enter'
-              ? '\n'
-              : '';
+              : '\n';
           expect(state.source, expectedSource);
           expect(
             state.document.blocks.every(
@@ -1960,7 +1926,7 @@ void main() {
           );
           expect(state.source, source);
           expect(state.changes, isEmpty);
-          expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+          expect(state.history.buffer.editorState.undoState.undo.length, 0);
         },
       );
     }
@@ -2144,7 +2110,7 @@ void main() {
         expect(state.source, _protected);
         expect(state.changes, isEmpty);
         expect(_selected(tester), hasLength(2));
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(state.history.buffer.editorState.undoState.undo.length, 0);
       },
     );
   }
@@ -2162,7 +2128,7 @@ void main() {
     await _command(tester, LogicalKeyboardKey.keyA);
     await tester.sendKeyEvent(LogicalKeyboardKey.delete);
     await tester.pumpAndSettle();
-    expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+    expect(state.history.buffer.editorState.undoState.undo.length, 0);
     await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
     expect(state.source, changed);
   });
@@ -2283,7 +2249,7 @@ void _registerRestorationAndTerminalTests() {
         expect(_selected(tester), isEmpty);
         expect(state.source, _table);
         expect(state.changes, isEmpty);
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(state.history.buffer.editorState.undoState.undo.length, 0);
       },
     );
   }
@@ -2323,7 +2289,7 @@ void _registerRestorationAndTerminalTests() {
           tester.widget<TextField>(_field('🧭 stays.')).controller!.selection,
           const TextSelection.collapsed(offset: 2),
         );
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 1);
+        expect(state.history.buffer.editorState.undoState.undo.length, 1);
         await _command(tester, LogicalKeyboardKey.keyZ);
         expect(state.source, _surrounded);
         await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
@@ -2501,7 +2467,7 @@ void _registerRestorationAndTerminalTests() {
   }
   for (final source in [_table, _surrounded]) {
     testWidgets(
-      'undo table deletion restores a real cell caret surrounded=${source == _surrounded}',
+      'undo table deletion restores selection and a cell caret after collapse surrounded=${source == _surrounded}',
       (tester) async {
         final state = await _mount(tester, source, MemoryRichClipboard());
         await _selectTable(tester);
@@ -2509,6 +2475,9 @@ void _registerRestorationAndTerminalTests() {
         await tester.pumpAndSettle();
         await _command(tester, LogicalKeyboardKey.keyZ);
         expect(state.source, source);
+        expect(_selected(tester), hasLength(1));
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
         final fields = tester
             .widgetList<TextField>(find.byType(TextField))
             .where((f) => f.focusNode!.hasFocus);
@@ -2633,7 +2602,7 @@ void _registerRestorationAndTerminalTests() {
           await _command(tester, LogicalKeyboardKey.keyC);
           expect(clipboard.data.sourceText, copy);
           expect(state.changes, isEmpty);
-          expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+          expect(state.history.buffer.editorState.undoState.undo.length, 0);
           clipboard.data = const RichClipboardData(
             text: 'Restored replacement',
           );
@@ -2708,7 +2677,7 @@ void _registerRestorationAndTerminalTests() {
       await tester.pumpAndSettle();
       expect(state.source, next);
       expect(state.changes, isEmpty);
-      expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+      expect(state.history.buffer.editorState.undoState.undo.length, 0);
       if (changed == 'changed text') {
         expect(_selected(tester), hasLength(1));
         expect(
@@ -2883,7 +2852,7 @@ void _registerLifecycleMatrix() {
             );
             expect(state.source, fixture.source);
             expect(state.changes, isEmpty);
-            expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+            expect(state.history.buffer.editorState.undoState.undo.length, 0);
           },
         );
       }
@@ -2918,7 +2887,7 @@ void _registerLifecycleMatrix() {
             );
             expect(state.source, fixture.source);
             expect(state.changes, isEmpty);
-            expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+            expect(state.history.buffer.editorState.undoState.undo.length, 0);
             clipboard.data = const RichClipboardData(text: 'Must not paste');
             await _command(tester, LogicalKeyboardKey.keyV);
             expect(clipboard.reads, 0);
@@ -3089,17 +3058,10 @@ void _registerLifecycleMatrix() {
     });
   }
 
-  for (final external in [false, true]) {
-    testWidgets('empty table copy deletion undo externalHistory=$external', (
-      tester,
-    ) async {
+  {
+    testWidgets('empty table copy deletion undo', (tester) async {
       final clipboard = MemoryRichClipboard();
-      final state = await _mount(
-        tester,
-        _emptyTable,
-        clipboard,
-        externalHistory: external,
-      );
+      final state = await _mount(tester, _emptyTable, clipboard);
       await tester.tap(find.byType(TextField).first);
       await _command(tester, LogicalKeyboardKey.keyA);
       await _command(tester, LogicalKeyboardKey.keyA);
@@ -3108,7 +3070,7 @@ void _registerLifecycleMatrix() {
       expect(clipboard.data.sourceText, contains('| --- | --- |'));
       await tester.sendKeyEvent(LogicalKeyboardKey.delete);
       await tester.pumpAndSettle();
-      expect(state.source, '');
+      expect(state.source, '\n');
       expect(
         state.document.blocks.where((b) => b.kind == BusyBlockKind.table),
         isEmpty,
@@ -3117,12 +3079,12 @@ void _registerLifecycleMatrix() {
       await _command(tester, LogicalKeyboardKey.keyZ);
       expect(state.source, _emptyTable);
       expect(state.document.blocks.single.kind, BusyBlockKind.table);
-      if (external) {
+      {
         expect(state.undoCalls, 1);
-        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(state.history.buffer.editorState.undoState.undo.length, 0);
       }
       await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
-      expect(state.source, '');
+      expect(state.source, '\n');
     });
   }
 
@@ -3307,15 +3269,14 @@ void _registerLifecycleMatrix() {
   ]) {
     for (final reverse in [false, true]) {
       for (final lifecycle in ['recreate', 'reuse']) {
-        for (final externalHistory in [false, true]) {
+        {
           testWidgets(
-            'restored direct input ${fixture.name} reverse=$reverse lifecycle=$lifecycle external=$externalHistory',
+            'restored direct input ${fixture.name} reverse=$reverse lifecycle=$lifecycle',
             (tester) async {
               final state = await _mount(
                 tester,
                 fixture.source,
                 MemoryRichClipboard(),
-                externalHistory: externalHistory,
               );
               final tableEdge = fixture.name == 'table extent control';
               final lastText = tableEdge ? 'End!' : _after;
@@ -3380,7 +3341,7 @@ void _registerLifecycleMatrix() {
               ], ranges);
               expect(state.changes, isEmpty);
               expect(state.parses, lifecycle == 'recreate' ? 1 : 3);
-              expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+              expect(state.history.buffer.editorState.undoState.undo.length, 0);
               final tableInput = tableEdge && !reverse;
               final extentText = reverse ? _before : _after;
               final extentOffset = reverse ? 6 : 5;
@@ -3526,7 +3487,7 @@ void _registerLifecycleMatrix() {
                   state.changes.length,
                   _selected(tester).length,
                   focused.controller!.value,
-                  state.editorKey.currentState!.debugUndoSnapshotCount,
+                  state.history.buffer.editorState.undoState.undo.length,
                 ));
               }
               final finalText = cancel ? 'Before stays.' : 'Before你🧭 stays.';

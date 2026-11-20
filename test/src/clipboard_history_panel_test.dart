@@ -199,8 +199,9 @@ void main() {
         .map((entry) => entry.id)
         .toList();
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.f10);
-    expect(_menus.isOpen, isFalse, reason: 'GTK opens after modifier release');
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
+    expect(_menus.isOpen, isTrue, reason: 'GTK opens on keydown');
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.pump();
     expect(_menus.contains('Paste'), isTrue);

@@ -7,6 +7,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
@@ -21,6 +22,133 @@ import 'package:xml/xml.dart';
 
 void main() {
   const service = WorkspaceService();
+  test(
+    'normal conditional save preserves final-race content and symlink format/mode',
+    () async {
+      final root = await Directory.systemTemp.createTemp('normal-save-race-');
+      addTearDown(() => root.delete(recursive: true));
+      final target = File(p.join(root.path, 'target.md'));
+      await target.writeAsBytes([0xef, 0xbb, 0xbf, ...'old\r\n'.codeUnits]);
+      await Process.run('chmod', ['640', target.path]);
+      final link = Link(p.join(root.path, 'note.md'));
+      await link.create('target.md');
+      final loaded = await service.loadTextWithSnapshot(link.path);
+      final saved = await service.saveFormattedText(
+        link.path,
+        'new\n',
+        format: loaded.format,
+        expectedSnapshot: loaded.snapshot,
+      );
+      expect(await link.target(), 'target.md');
+      expect(await target.readAsBytes(), [
+        0xef,
+        0xbb,
+        0xbf,
+        ...'new\r\n'.codeUnits,
+      ]);
+      expect((await target.stat()).mode & 0x1ff, 0x1a0);
+      expect(
+        (await service.fileSnapshot(target.path)).differsFrom(saved),
+        isFalse,
+      );
+      final racing = WorkspaceService(
+        beforeNewFilePublish: (path) =>
+            File(path).writeAsString('external A').then((_) {}),
+      );
+      await expectLater(
+        racing.saveTextIfUnchanged(
+          link.path,
+          'BusyMark',
+          expectedSnapshot: saved,
+        ),
+        throwsA(isA<AtomicFileChangedException>()),
+      );
+      expect(await target.readAsString(), 'external A');
+      expect(await link.target(), 'target.md');
+    },
+  );
+
+  test(
+    'conditional save reports retained displaced path after a second writer',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'normal-save-recovery-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final target = File(p.join(root.path, 'note.md'));
+      await target.writeAsString('E');
+      final expected = await service.fileSnapshot(target.path);
+      final racing = WorkspaceService(
+        beforeNewFilePublish: (path) async {
+          await File(path).writeAsString('A');
+        },
+        beforeDisplacedValidation: (path, displaced) async {
+          await File(path).writeAsString('B');
+        },
+      );
+      AtomicFileChangedException? conflict;
+      try {
+        await racing.saveTextIfUnchanged(
+          target.path,
+          'S',
+          expectedSnapshot: expected,
+        );
+        fail('Publication must conflict');
+      } on AtomicFileChangedException catch (error) {
+        conflict = error;
+      }
+      expect(await target.readAsString(), 'B');
+      expect(conflict.recoveryPath, isNotNull);
+      expect(await File(conflict.recoveryPath!).readAsString(), 'A');
+    },
+  );
+
+  for (final newerWriter in [false, true]) {
+    test(
+      'batch validation I/O error recovers exchanged file, newer=$newerWriter',
+      () async {
+        final root = await Directory.systemTemp.createTemp('batch-validation-');
+        addTearDown(() => root.delete(recursive: true));
+        final a = File(p.join(root.path, 'a.md'))..writeAsStringSync('a');
+        final b = File(p.join(root.path, 'b.md'))..writeAsStringSync('b');
+        String? retained;
+        final writer = WorkspaceService(
+          beforeDisplacedValidation: (target, displaced) async {
+            if (target != b.path) return;
+            retained = displaced;
+            if (newerWriter) await File(target).writeAsString('external');
+            throw const FileSystemException(
+              'injected post-exchange read/stat failure',
+            );
+          },
+        );
+        await expectLater(
+          writer.saveFormattedTextBatch([
+            WorkspaceBatchTextWrite(
+              path: a.path,
+              text: 'A',
+              format: TextFormatMetadata.utf8Lf,
+              expectedSnapshot: await service.fileSnapshot(a.path),
+            ),
+            WorkspaceBatchTextWrite(
+              path: b.path,
+              text: 'B',
+              format: TextFormatMetadata.utf8Lf,
+              expectedSnapshot: await service.fileSnapshot(b.path),
+            ),
+          ]),
+          throwsA(
+            newerWriter
+                ? isA<WorkspaceBatchPartialApplicationConflict>()
+                : isA<FileSystemException>(),
+          ),
+        );
+        expect(await a.readAsString(), 'a');
+        expect(await b.readAsString(), newerWriter ? 'external' : 'b');
+        if (newerWriter) expect(await File(retained!).readAsString(), 'b');
+      },
+    );
+  }
 
   test('opens a single Markdown file workspace', () async {
     final workspace = await service.openPath('test/fixtures/markdown/basic.md');

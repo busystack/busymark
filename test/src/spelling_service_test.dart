@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -9,7 +10,6 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
-import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -3275,8 +3275,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              _spellingSettingsHeaderDefaults(context, child!),
+          builder: (context, child) => (child!),
           home: const SettingsScreen(
             returnTarget: SettingsReturnTarget.welcome,
             initialPage: SettingsPage.editor,
@@ -3354,8 +3353,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              _spellingSettingsHeaderDefaults(context, child!),
+          builder: (context, child) => (child!),
           home: const SettingsScreen(
             returnTarget: SettingsReturnTarget.welcome,
             initialPage: SettingsPage.editor,
@@ -3479,8 +3477,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              _spellingSettingsHeaderDefaults(context, child!),
+          builder: (context, child) => (child!),
           home: const SettingsScreen(
             returnTarget: SettingsReturnTarget.welcome,
             initialPage: SettingsPage.spellingDictionaries,
@@ -3539,8 +3536,7 @@ void main() {
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            builder: (context, child) =>
-                _spellingSettingsHeaderDefaults(context, child!),
+            builder: (context, child) => (child!),
             home: const SettingsScreen(
               returnTarget: SettingsReturnTarget.welcome,
               initialPage: SettingsPage.editor,
@@ -5923,68 +5919,6 @@ final class _SpellingMemorySettingsStore implements LocalSettingsStore {
   Future<void> save(Map<String, Object?> json) async {}
 }
 
-Widget _spellingSettingsHeaderDefaults(BuildContext context, Widget child) =>
-    HeaderBarConfigurationDefaults(
-      configuration: HeaderBarConfiguration(
-        title: 'Settings',
-        viewMode: AppViewMode.editor,
-        searchQuery: '',
-        textDirection: TextDirection.ltr,
-        canRefresh: false,
-        documentControlsVisible: false,
-        searchActive: false,
-        searchVisible: false,
-        sidebarVisible: false,
-        sidebarToggleVisible: false,
-        backVisible: true,
-        fullScreen: false,
-        modalBarrierDepth: 0,
-        sidebarWidth: 200,
-        labels: _spellingSettingsHeaderLabels,
-        theme: HeaderBarTheme.fromContext(context),
-      ),
-      child: child,
-    );
-
-const _spellingSettingsHeaderLabels = HeaderBarLabels(
-  editor: 'Editor',
-  source: 'Source',
-  preview: 'Preview',
-  split: 'Dual',
-  viewMode: 'View mode',
-  editorShortcut: '',
-  editorGtkAccelerator: '',
-  sourceShortcut: '',
-  sourceGtkAccelerator: '',
-  previewShortcut: '',
-  previewGtkAccelerator: '',
-  splitShortcut: '',
-  splitGtkAccelerator: '',
-  search: 'Search',
-  searchShortcut: '',
-  refresh: 'Refresh',
-  menu: 'Menu',
-  sidebar: 'Sidebar',
-  sidebarShortcut: '',
-  back: 'Back',
-  backShortcut: '',
-  save: 'Save',
-  export: 'Export',
-  exportShortcut: '',
-  exportGtkAccelerator: '',
-  fullScreen: 'Full screen',
-  fullScreenShortcut: '',
-  fullScreenGtkAccelerator: '',
-  settings: 'Settings',
-  settingsShortcut: '',
-  settingsGtkAccelerator: '',
-  syntaxReference: 'Syntax reference',
-  syntaxReferenceShortcut: '',
-  syntaxReferenceGtkAccelerator: '',
-  reportIssue: 'Report issue',
-  aboutBusyMark: 'About',
-);
-
 final class _DelayedAtomicFileWriter extends AtomicFileWriter {
   _DelayedAtomicFileWriter();
 
@@ -6000,7 +5934,9 @@ final class _DelayedAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     await super.writeBytes(
@@ -6028,7 +5964,9 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     writeCount++;
@@ -6051,6 +5989,7 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced,
     );
   }
@@ -6072,7 +6011,9 @@ final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     if (_hold) {
@@ -6085,6 +6026,7 @@ final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced,
     );
   }
@@ -6103,7 +6045,9 @@ final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     await super.writeBytes(
@@ -6111,6 +6055,7 @@ final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced == null
           ? null
           : (replacedPath) async {
@@ -6146,7 +6091,9 @@ final class _RejectedExchangeAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     await super.writeBytes(

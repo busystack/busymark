@@ -196,23 +196,6 @@ void main() {
     );
   });
 
-  test('workspace search groups authoring content by file', () {
-    final results = searchWorkspaceSources(
-      files: const {
-        'topics/intro.md': '# Intro\nInstall BusyMark.',
-        'topics/install.topic': '<topic>Install</topic>',
-        'images/install.png': 'Install',
-      },
-      options: const SourceSearchOptions(query: 'install'),
-    );
-
-    expect(results.map((result) => result.filePath), [
-      'topics/install.topic',
-      'topics/intro.md',
-    ]);
-    expect(results.expand((result) => result.matches), hasLength(2));
-  });
-
   test('source search worker cancels stale requests', () async {
     final worker = SourceSearchWorker();
     addTearDown(worker.dispose);

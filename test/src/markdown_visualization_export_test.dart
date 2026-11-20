@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -21,7 +22,7 @@ import 'package:path/path.dart' as p;
 void main() {
   late Directory temporaryDirectory;
   late Directory exportRoot;
-  late VisualizationCoordinator coordinator;
+  late _TrackingCoordinator coordinator;
 
   setUp(() async {
     temporaryDirectory = await Directory.systemTemp.createTemp(
@@ -30,7 +31,7 @@ void main() {
     exportRoot = await Directory(
       p.join(temporaryDirectory.path, 'export'),
     ).create();
-    coordinator = VisualizationCoordinator(
+    coordinator = _TrackingCoordinator(
       renderers: [_ExportRenderer()],
       cache: VisualizationCache(
         diskRoot: Directory(p.join(temporaryDirectory.path, 'cache')),
@@ -65,6 +66,11 @@ void main() {
         cancellationToken: MarkdownPdfCancellationToken(),
       );
 
+      expect(coordinator.retired, hasLength(4));
+      expect(coordinator.cleared, coordinator.retired);
+      for (final key in coordinator.retired) {
+        expect(coordinator.lastSuccessfulFor(key), isNull);
+      }
       expect(preparation.blockOverrides, hasLength(3));
       expect(preparation.warnings, hasLength(1));
       expect(
@@ -109,6 +115,54 @@ void main() {
             block.attributes['language'] == 'plantuml',
       );
       expect(failedPlantUml.text, contains('@startuml'));
+    },
+  );
+
+  test(
+    'cancellation retires every export key and clears retained results',
+    () async {
+      final parsed = const MarkdownParser().parse(
+        filePath: p.join(temporaryDirectory.path, 'guide.md'),
+        source: _allVisualizations,
+        validateLocalReferences: false,
+      );
+      final blocked = _BlockedExportRenderer();
+      coordinator.dispose();
+      coordinator = _TrackingCoordinator(
+        renderers: [blocked],
+        cache: VisualizationCache(),
+      );
+      final cancellation = MarkdownPdfCancellationToken();
+      final operation =
+          MarkdownVisualizationExportRenderer(coordinator: coordinator).prepare(
+            document: parsed.busyDocument,
+            exportRoot: exportRoot,
+            documentPath: parsed.filePath,
+            workspaceRoot: temporaryDirectory.path,
+            cancellationToken: cancellation,
+          );
+      final failure = expectLater(
+        operation,
+        throwsA(
+          anyOf(
+            isA<MarkdownPdfExportException>().having(
+              (e) => e.code,
+              'code',
+              MarkdownPdfFailureCode.cancelled,
+            ),
+            isA<VisualizationSupersededException>(),
+          ),
+        ),
+      );
+      await blocked.started.future;
+      cancellation.cancel();
+      blocked.release.complete();
+      await failure;
+      expect(coordinator.retired, hasLength(4));
+      expect(coordinator.cleared, coordinator.retired);
+      for (final key in coordinator.retired) {
+        expect(coordinator.lastSuccessfulFor(key), isNull);
+      }
     },
   );
 
@@ -466,5 +520,34 @@ class _RecordingExportRenderer extends _ExportRenderer {
   ) {
     requests.add(request);
     return super.render(request, cancellationToken);
+  }
+}
+
+class _TrackingCoordinator extends VisualizationCoordinator {
+  _TrackingCoordinator({required super.renderers, required super.cache});
+  final retired = <String>{}, cleared = <String>{};
+  @override
+  void cancel(String blockKey) {
+    retired.add(blockKey);
+    super.cancel(blockKey);
+  }
+
+  @override
+  void clearLastSuccessful(String blockKey) {
+    cleared.add(blockKey);
+    super.clearLastSuccessful(blockKey);
+  }
+}
+
+class _BlockedExportRenderer extends _ExportRenderer {
+  final started = Completer<void>(), release = Completer<void>();
+  @override
+  Future<VisualizationRenderResult> render(
+    VisualizationRenderRequest request,
+    VisualizationCancellationToken token,
+  ) async {
+    if (!started.isCompleted) started.complete();
+    await release.future;
+    return super.render(request, token);
   }
 }

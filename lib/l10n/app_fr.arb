@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Nouveau",
   "open": "Ouvrir",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Créer",
+  "home": "Accueil",
+  "openMenu": "Menu Ouvrir",
+  "newNextcloudNote": "Nouvelle note Nextcloud",
+  "shortcutNewDocument": "Menu Nouveau",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Créer un fichier Markdown ou un projet Writerside",
+  "shortcutNewDocumentDescription": "Afficher le menu de création de ressources",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Ouvrir un fichier Markdown, un dossier ou un projet Writerside",
+  "shortcutOpenDescription": "Afficher le menu d’ouverture de ressources",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Effacer les autorisations d’images distantes",
+  "clearRemoteImagePermissions": "Effacer les autorisations d’images des espaces de travail",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Oublier les espaces de travail autorisés à charger des images distantes.",
+  "clearRemoteImagePermissionsDescription": "Oublier toutes les autorisations d’images distantes des espaces de travail.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Choisissez si BusyMark peut charger des images distantes.",
+  "remoteImageBlockedTooltip": "Image distante bloquée. Cliquez pour voir les options de chargement.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Charger pour cet espace de travail",
+  "loadThisRemoteImage": "Charger cette image",
+  "remoteImageMoreOptions": "Plus d’options…",
+  "remoteImageMoreOptionsTitle": "Autorisations des images distantes",
+  "loadRemoteImagesInDocument": "Charger les images de ce document",
+  "remoteImageUntilClose": "Jusqu’à la fermeture de ce document.",
+  "remoteImageWorkspacePermissionDetail": "Autorise les images distantes dans {workspace} jusqu’à l’effacement des autorisations dans les paramètres de confidentialité.",
+  "remoteImageGlobalPermissionDetail": "Autorise les images distantes dans tout BusyMark jusqu’à la désactivation de cette option dans les paramètres de confidentialité.",
+  "remoteImageGlobalSettingsDetail": "Autorise les images distantes dans tout BusyMark. Les autorisations des espaces de travail sont gérées séparément.",
+  "loadRemoteImagesForWorkspace": "Toujours autoriser dans cet espace de travail",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3627,7 +3639,7 @@
   "searchTopicsCategory": "Rubriques",
   "searchCurrentDocument": "Document actuel",
   "searchCurrentWorkspace": "Espace de travail actuel",
-  "browseNotes": "Parcourir les notes",
+  "browseNotes": "Parcourir les notes Nextcloud",
   "searchActionsCommand": "Rechercher des actions",
   "searchDocumentsCommand": "Rechercher des documents",
   "searchTopicsCommand": "Rechercher des rubriques",

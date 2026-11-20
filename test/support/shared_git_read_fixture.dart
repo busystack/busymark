@@ -7,9 +7,14 @@ import 'package:busystack_git/busystack_git.dart' as shared;
 /// Unexpected mutations fail instead of manufacturing a successful outcome.
 class SharedGitReadFixture
     implements shared.GitClient, shared.GitWorkflowClient {
-  SharedGitReadFixture(this.state, {this.fileHistoryState});
+  SharedGitReadFixture(
+    this.state, {
+    this.commits = const [],
+    this.fileHistory = const [],
+  });
   final GitState state;
-  final GitState? fileHistoryState;
+  final List<shared.GitCommit> commits;
+  final List<shared.Json> fileHistory;
   int statusReads = 0, watchSubscriptions = 0;
   String get snapshotToken => 'shell-fixture';
   shared.RepositoryId? get repository {
@@ -21,7 +26,6 @@ class SharedGitReadFixture
             gitDir: info.gitDirPath,
             commonDir: info.gitDirPath,
             objectFormat: 'sha1',
-            bare: info.isBare,
           );
   }
 
@@ -38,18 +42,6 @@ class SharedGitReadFixture
     GitFileChangeStatus.ignored => '!',
     GitFileChangeStatus.unknown => '.',
   };
-  List<shared.GitCommit> get commits => state.projectHistory.commits
-      .map(
-        (commit) => shared.GitCommit(
-          oid: shared.GitOid(commit.fullHash),
-          parents: commit.parentHashes.map(shared.GitOid.new).toList(),
-          subject: commit.subject,
-          author: commit.authorName,
-          email: commit.authorEmail,
-          date: commit.authorDate,
-        ),
-      )
-      .toList();
   @override
   Future<shared.RepositoryId?> discover(
     String localPath, {
@@ -68,20 +60,15 @@ class SharedGitReadFixture
       indexToken: 'shell-fixture-index',
       head:
           commits.firstOrNull?.oid ??
-          ((fileHistoryState ?? state).fileHistory.entries.isEmpty
+          (fileHistory.isEmpty
               ? null
-              : shared.GitOid(
-                  (fileHistoryState ?? state)
-                      .fileHistory
-                      .entries
-                      .first
-                      .commit
-                      .fullHash,
-                )),
-      branch: state.repositoryInfo?.currentBranch,
-      upstream: state.repositoryInfo?.upstreamBranch,
-      ahead: state.repositoryInfo?.aheadCount ?? 0,
-      behind: state.repositoryInfo?.behindCount ?? 0,
+              : shared.GitCommit.fromJson(
+                  fileHistory.first['commit'] as shared.Json,
+                ).oid),
+      branch: 'main',
+      upstream: null,
+      ahead: 0,
+      behind: 0,
       changes: [
         for (final file in state.statusSnapshot?.files ?? <GitFileStatus>[])
           shared.GitChange(
@@ -102,9 +89,9 @@ class SharedGitReadFixture
   Future<List<shared.GitReference>> references(
     shared.RepositoryId repository,
   ) async => [
-    if (commits.isNotEmpty && state.repositoryInfo?.currentBranch != null)
+    if (commits.isNotEmpty)
       shared.GitReference(
-        name: 'refs/heads/${state.repositoryInfo!.currentBranch}',
+        name: 'refs/heads/main',
         oid: commits.first.oid,
         current: true,
       ),
@@ -149,31 +136,12 @@ class SharedGitReadFixture
     shared.GitInspectionKind.fileHistory => {
       'revision':
           request.revision?.value ??
-          (fileHistoryState ?? state)
-              .fileHistory
-              .entries
-              .firstOrNull
-              ?.commit
-              .fullHash,
-      'entries': [
-        for (final entry in (fileHistoryState ?? state).fileHistory.entries)
-          {
-            'commit': shared.GitCommit(
-              oid: shared.GitOid(entry.commit.fullHash),
-              parents: entry.commit.parentHashes
-                  .map(shared.GitOid.new)
-                  .toList(),
-              subject: entry.commit.subject,
-              author: entry.commit.authorName,
-              email: entry.commit.authorEmail,
-              date: entry.commit.authorDate,
-            ).toJson(),
-            'pathAtCommit': shared.RepoPath.text(entry.pathAtCommit).toJson(),
-            'pathInParent': shared.RepoPath.text(
-              entry.pathInParent ?? entry.pathAtCommit,
-            ).toJson(),
-          },
-      ],
+          (fileHistory.isEmpty
+              ? null
+              : shared.GitCommit.fromJson(
+                  fileHistory.first['commit'] as shared.Json,
+                ).oid.value),
+      'entries': fileHistory,
       'hasMore': false,
     },
     _ => throw StateError('Unexpected shell inspection: ${request.kind.name}'),

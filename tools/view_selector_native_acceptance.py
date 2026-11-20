@@ -19,7 +19,7 @@ from sidebar_native_acceptance import wait_state
 
 SIDEBAR = {'F': 'Files', 'T': 'Table of Contents', 'O': 'Outline', 'C': 'Commit',
            'G': 'Git Log', 'L': 'Local History', 'B': 'Clipboard History',
-           'R': 'References'}
+           'R': 'References', 'E': 'Recent'}
 CONTENT = {'E': 'Editor', 'S': 'Source', 'R': 'Reading', 'D': 'Dual'}
 
 
@@ -124,26 +124,61 @@ def run(binary, output, writerside, git, remapped):
         desktop.key('Return')
         desktop.send('wait', seconds=2)
 
-        def open_menu(key, expected=None):
-            desktop.key(*key)
-            rows = wait_state(desktop, lambda rows: bool(menu_rows(rows)), '_selector-open')
-            if expected is not None:
-                actual = [row['name'] for row in menu_rows(rows)]
-                if set(actual) != set(expected):
-                    raise RuntimeError(f'Wrong native selector or context-menu conflict: {actual}')
-            return menu_rows(rows)
+        def read_menu(name, expected):
+            rows = menu_rows(wait_state(desktop, lambda rows: bool(menu_rows(rows)), name))
+            actual = [row['name'] for row in rows]
+            if len(actual) != len(set(actual)):
+                raise RuntimeError(f'Duplicate native menu rows: {actual}')
+            if expected is not None and set(actual) != set(expected):
+                raise RuntimeError(f'Wrong native selector or context-menu conflict: {actual}')
+            return rows
+
+        def open_menu(key, expected=None, *, held=False, repeat=False):
+            if not held:
+                desktop.key(*key)
+                return read_menu('_selector-open', expected)
+            desktop.send('key', names=list(key), pressed=True)
+            try:
+                before_release = read_menu('_selector-before-release', expected)
+                if repeat:
+                    # Allow the X server to repeat the still-held trigger.
+                    desktop.send('wait', seconds=1)
+                    if before_release != read_menu('_selector-after-repeat', expected):
+                        raise RuntimeError('Holding the shortcut changed the native menu')
+            finally:
+                desktop.send('key', names=list(key), pressed=False)
+            after_release = read_menu('_selector-after-release', expected)
+            if before_release != after_release:
+                raise RuntimeError('Releasing the shortcut changed the native menu')
+            return after_release
 
         def closed():
             wait_state(desktop, lambda rows: not menu_rows(rows), '_selector-closed')
 
         desktop.key('F9')
-        open_menu(sidebar_key)
+        open_menu(content_key, CONTENT.values(), held=True)
+        desktop.key('Escape'); closed()
+        open_menu(sidebar_key, held=True, repeat=True)
         desktop.capture('hidden-sidebar-revealed')
         desktop.key('Escape'); closed()
         expected_sidebar = 'Sidebar view (F6)' if remapped else 'Sidebar view (Ctrl+Shift+F9)'
         expected_content = 'Content view (F8)' if remapped else 'Content view (Ctrl+Shift+F10)'
         wait_state(desktop, lambda rows: all(any(row['name'] == label and row['showing'] for row in rows)
                    for label in [expected_sidebar, expected_content, 'Hide sidebar (F9)']), '_selector-tooltips')
+        if not remapped:
+            desktop.send('key', names=list(sidebar_key), pressed=True)
+            try:
+                read_menu('_sidebar-held-before-pointer-dismissal', None)
+                desktop.send('key', names=list(sidebar_key[:-1]), pressed=False)
+                desktop.send('click', x=desktop.width // 2, y=125)
+                closed()
+                deadline = time.monotonic() + 1
+                while time.monotonic() < deadline:
+                    if not json.loads(settings.read_text())['sidebarVisible']:
+                        raise RuntimeError('Held F9 toggled the sidebar after pointer dismissal')
+                    time.sleep(.02)
+            finally:
+                desktop.send('key', names=[sidebar_key[-1]], pressed=False)
         previous_sidebar = 'Files'
         for letter, label in SIDEBAR.items():
             rows = open_menu(sidebar_key)
@@ -181,7 +216,19 @@ def run(binary, output, writerside, git, remapped):
             desktop.key(letter.lower()); closed()
             desktop.capture('content-' + letter)
             previous_content = label
-        open_menu(content_key, CONTENT.values()); desktop.key('s'); closed()
+        desktop.key('Num_Lock')
+        right_sidebar = sidebar_key if remapped else ('Control_R', 'Shift_R', 'F9')
+        right_content = content_key if remapped else ('Control_R', 'Shift_R', 'F10')
+        open_menu(right_content, CONTENT.values(), held=True, repeat=True)
+        desktop.key('e'); closed()
+        desktop.key('F9')
+        open_menu(right_content, CONTENT.values(), held=True)
+        desktop.key('Escape'); closed()
+        open_menu(right_sidebar, held=True)
+        desktop.key('Escape'); closed()
+        open_menu(right_content, CONTENT.values(), held=True)
+        desktop.key('s'); closed()
+        desktop.key('Num_Lock')
         for number in '123456':
             desktop.key('Control_L', number)
             if number in '1234': desktop.key('Control_L', 'Shift_L', number)
@@ -190,12 +237,25 @@ def run(binary, output, writerside, git, remapped):
             raise RuntimeError('Retired numeric shortcuts changed Content View')
         desktop.key('Escape'); closed()
         # Dismiss from a real focused source field, then type at its saved caret.
-        # Target the visible first source line, rather than empty canvas beyond
-        # the editable's measured text width.
-        desktop.send('click', x=desktop.width // 2, y=125)
+        if writerside:
+            rows = wait_state(desktop, lambda rows: any(
+                row['showing'] and row['name'] in {original, 'topics/home.md'}
+                for row in rows), '_fixture-document-available')
+            if not any(row['showing'] and row['name'] == original for row in rows):
+                desktop.click_accessible('topics/home.md', 'panel')
+        wait_document_text(desktop, original)
+        desktop.send('click', x=402, y=125)
         desktop.key('Control_L', 'End')
+        open_menu(content_key, CONTENT.values(), held=True)
+        desktop.send('key', names=['s'], pressed=True)
+        try:
+            closed()
+            desktop.send('wait', seconds=1)
+        finally:
+            desktop.send('key', names=['s'], pressed=False)
+        wait_document_text(desktop, original)
         for selector_key in [content_key, sidebar_key]:
-            open_menu(selector_key); desktop.key('Escape'); closed()
+            open_menu(selector_key, held=True); desktop.key('Escape'); closed()
             desktop.send('text', value='focussentinel')
             wait_document_text(desktop, original + 'focussentinel')
             desktop.key('Control_L', 's')

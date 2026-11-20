@@ -1,3 +1,4 @@
+import '../core/save_destination.dart';
 import 'package:flutter/foundation.dart';
 
 import 'markdown_pdf_models.dart';
@@ -9,6 +10,7 @@ class WritersidePdfExportRequest {
     required this.instanceId,
     required this.destinationPath,
     required this.overwrite,
+    this.authorization,
     this.projectRoot,
     this.options = const PdfExportOptions(),
     this.titlePage,
@@ -19,6 +21,7 @@ class WritersidePdfExportRequest {
   final String instanceId;
   final String destinationPath;
   final bool overwrite;
+  final SaveDestination? authorization;
   final PdfExportOptions options;
   final PdfTitlePageData? titlePage;
 }

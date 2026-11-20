@@ -1,7 +1,6 @@
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
-import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,7 +17,6 @@ void main() {
         accentColor: const Color(0xFF3584E4),
       );
       late Color flutterBarrier;
-      late Color nativeBarrier;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -26,9 +24,6 @@ void main() {
           home: Builder(
             builder: (context) {
               flutterBarrier = busyMarkModalBarrierColor(context);
-              nativeBarrier = HeaderBarTheme.fromContext(
-                context,
-              ).modalBarrierColor;
               return const SizedBox.shrink();
             },
           ),
@@ -37,7 +32,6 @@ void main() {
 
       final shade = theme.extension<BusyMarkSurfaceColors>()!.shade;
       expect(flutterBarrier, shade);
-      expect(nativeBarrier, shade);
       expect(flutterBarrier.a, closeTo(expectedAlpha, 0.0001));
     });
   }

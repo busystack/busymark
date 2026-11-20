@@ -33,7 +33,9 @@ class SourceDocument {
           SourceHiddenRanges(ranges: const [], textLength: fullText.length),
       lineIndex = SourceLineIndex(fullText) {
     visibleText = this.hiddenRanges.visibleTextFor(fullText);
-    visibleLineIndex = SourceLineIndex(visibleText);
+    visibleLineIndex = this.hiddenRanges.isEmpty
+        ? lineIndex
+        : SourceLineIndex(visibleText);
   }
 
   SourceDocument._({
@@ -51,16 +53,26 @@ class SourceDocument {
     required SourceVisibleEdit edit,
   }) {
     final visibleText = hiddenRanges.visibleTextFor(fullText);
+    final lineIndex = SourceLineIndex.updated(
+      previous: previous.lineIndex,
+      source: fullText,
+      oldStart: edit.fullStart,
+      oldEnd: edit.fullEnd,
+    );
+    if (hiddenRanges.isEmpty) {
+      return SourceDocument._(
+        fullText: fullText,
+        hiddenRanges: hiddenRanges,
+        lineIndex: lineIndex,
+        visibleText: visibleText,
+        visibleLineIndex: lineIndex,
+      );
+    }
     final visibleChange = _changedRange(previous.visibleText, visibleText);
     return SourceDocument._(
       fullText: fullText,
       hiddenRanges: hiddenRanges,
-      lineIndex: SourceLineIndex.updated(
-        previous: previous.lineIndex,
-        source: fullText,
-        oldStart: edit.fullStart,
-        oldEnd: edit.fullEnd,
-      ),
+      lineIndex: lineIndex,
       visibleText: visibleText,
       visibleLineIndex: SourceLineIndex.updated(
         previous: previous.visibleLineIndex,

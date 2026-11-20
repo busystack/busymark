@@ -423,7 +423,9 @@ void main() {
     expect(nativeMenu, contains('GTK_IS_MENU(session->menu)'));
     expect(nativeMenu, contains('gtk_menu_attach_to_widget('));
     expect(nativeMenu, contains('gtk_widget_translate_coordinates('));
-    expect(nativeMenu, contains('native_menu_capture_trigger_event'));
+    expect(nativeMenu, contains('native_menu_view_event'));
+    expect(nativeMenu, contains('native_menu_route_key_event'));
+    expect(nativeMenu, contains('deliver_menu_event_to_view(data, event)'));
     expect(nativeMenu, contains('gdk_event_copy(event)'));
     expect(nativeMenu, contains('gtk_menu_popup_at_rect('));
     expect(nativeMenu, contains('rect_window, &window_anchor'));

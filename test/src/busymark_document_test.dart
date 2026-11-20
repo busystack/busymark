@@ -1,7 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show CheckedState;
+
+import '../support/controlled_image_http_client.dart';
+import '../support/document_history_harness.dart';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -17,6 +19,7 @@ import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/markdown_image_permission_scope.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -30,7 +33,6 @@ import 'package:busymark/src/markdown/document_outline.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -1493,6 +1495,8 @@ void main() {}
   ) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Original\n');
     var markdown = parsed.source;
+    final history = await DocumentHistoryHarness.create(source: markdown);
+    addTearDown(history.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -1504,7 +1508,25 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (filePath, value) => markdown = value,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: () {
+                history.controller.undoActiveBuffer();
+                markdown = history.buffer.text;
+              },
+              onRedo: () {
+                history.controller.redoActiveBuffer();
+                markdown = history.buffer.text;
+              },
+              onSessionChanged: (_, value) =>
+                  history.controller.updateDocumentEditorState(
+                    history.buffer.id,
+                    history.buffer.editorState.copyWith(wysiwygState: value),
+                  ),
+              onSourceChanged: (filePath, value) {
+                history.controller.updateActiveText(value);
+                markdown = value;
+              },
             ),
           ),
         ),
@@ -1512,6 +1534,14 @@ void main() {}
     );
     await tester.pump();
 
+    await tester.tap(find.byType(TextField).first);
+    tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!
+        .selection = const TextSelection.collapsed(
+      offset: 2,
+    );
+    await tester.pump();
     await tester.enterText(find.byType(TextField).first, 'Changed');
     await tester.pump();
 
@@ -1567,9 +1597,19 @@ void main() {}
       filePath: 'second.md',
       source: 'Second original\n',
     );
+    final firstHistory = await DocumentHistoryHarness.create(
+      source: first.source,
+    );
+    final secondHistory = await DocumentHistoryHarness.create(
+      source: second.source,
+    );
+    addTearDown(firstHistory.dispose);
+    addTearDown(secondHistory.dispose);
+    var activeHistory = firstHistory;
     var activeDocument = first.busyDocument;
 
     Widget buildEditor() {
+      final history = activeHistory;
       return MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -1579,7 +1619,18 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: activeDocument,
-              onSourceChanged: (_, _) {},
+              documentId: history.buffer.id,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: history.controller.undoActiveBuffer,
+              onRedo: history.controller.redoActiveBuffer,
+              onSessionChanged: (_, value) =>
+                  history.controller.updateDocumentEditorState(
+                    history.buffer.id,
+                    history.buffer.editorState.copyWith(wysiwygState: value),
+                  ),
+              onSourceChanged: (_, value) =>
+                  history.controller.updateActiveText(value),
             ),
           ),
         ),
@@ -1598,6 +1649,7 @@ void main() {}
     );
 
     activeDocument = second.busyDocument;
+    activeHistory = secondHistory;
     await tester.pumpWidget(buildEditor());
     await tester.pump();
 
@@ -1616,6 +1668,9 @@ void main() {}
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Second original',
     );
+    expect(firstHistory.buffer.text, 'Unsaved first tab\n');
+    expect(firstHistory.buffer.editorState.undoState.undo, hasLength(1));
+    expect(secondHistory.buffer.editorState.undoState.undo, isEmpty);
   });
 
   testWidgets('WYSIWYG editor applies heading keyboard shortcuts', (
@@ -4108,66 +4163,6 @@ void main() {}
     expect(find.text(l10n.editHtml), findsOneWidget);
   });
 
-  testWidgets('WYSIWYG dialogs activate the native headerbar barrier', (
-    tester,
-  ) async {
-    if (!Platform.isLinux) {
-      return;
-    }
-    const channel = MethodChannel('com.busymark.test/wysiwyg-modal-barrier');
-    final calls = <MethodCall>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-          calls.add(call);
-          return call.method == 'initialize' ? true : null;
-        });
-    addTearDown(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, null);
-    });
-    final headerBarService = LinuxHeaderBarService(channel: channel);
-    await headerBarService.initialize();
-    final l10n = AppLocalizationsEn();
-    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
-
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: SizedBox(
-            width: 900,
-            height: 640,
-            child: BusyMarkWysiwygEditor(
-              document: parsed.busyDocument,
-              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
-              headerBarService: headerBarService,
-              onSourceChanged: (_, _) {},
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(TextField).first);
-    await tester.tap(find.byTooltip(l10n.htmlBlock));
-    await tester.pumpAndSettle();
-
-    expect(
-      calls.where((call) => call.method == 'setModalBarrierDepth').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', 1),
-    );
-
-    await tester.tap(find.text(l10n.cancel));
-    await tester.pumpAndSettle();
-
-    expect(
-      calls.where((call) => call.method == 'setModalBarrierDepth').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', 0),
-    );
-  });
-
   testWidgets('WYSIWYG typing preserves existing inline formatting', (
     tester,
   ) async {
@@ -5347,49 +5342,74 @@ void main() {}
     }
   });
 
-  testWidgets('WYSIWYG editor renders linked remote image blocks', (
-    tester,
-  ) async {
-    const imageUrl = 'https://example.com/remote.png';
-    final previousHttpClientProvider = debugNetworkImageHttpClientProvider;
-    final parsed = parser.parse(
-      filePath: 'README.md',
-      source: '[![busymark]($imageUrl)](https://snapcraft.io/busymark)\n',
-    );
+  testWidgets(
+    'WYSIWYG linked remote images request permission before rendering',
+    (tester) async {
+      const imageUrl = 'https://example.com/remote.png';
+      final previousHttpClientProvider = debugNetworkImageHttpClientProvider;
+      final parsed = parser.parse(
+        filePath: 'README.md',
+        source: '[![busymark]($imageUrl)](https://snapcraft.io/busymark)\n',
+      );
 
-    try {
-      debugNetworkImageHttpClientProvider = () => _FakeImageHttpClient();
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: SizedBox(
-              width: 900,
-              height: 640,
-              child: BusyMarkWysiwygEditor(
-                document: parsed.busyDocument,
-                allowRemoteImages: true,
-                onSourceChanged: (_, _) {},
+      try {
+        debugNetworkImageHttpClientProvider = () => ControlledImageHttpClient();
+        var requests = 0;
+        Future<void> render({required bool allow}) => tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: MarkdownImagePermissionScope(
+                  resolve: (_, _, _) => MarkdownImageActions(
+                    allowed: allow,
+                    openMenu: (_, _, _) async {
+                      requests++;
+                    },
+                  ),
+                  child: BusyMarkWysiwygEditor(
+                    document: parsed.busyDocument,
+                    allowRemoteImages: allow,
+                    onSourceChanged: (_, _) {},
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await render(allow: false);
+        await tester.pump();
+        final denied = find.text(
+          AppLocalizations.of(
+            tester.element(find.byType(MarkdownImageView)),
+          ).remoteImageBlocked,
+        );
+        expect(denied, findsOneWidget);
+        expect(find.byType(Image), findsNothing);
+        await tester.tap(denied);
+        await tester.pump();
+        expect(requests, 1);
+        expect(denied, findsOneWidget);
 
-      final imageView = tester.widget<MarkdownImageView>(
-        find.byType(MarkdownImageView),
-      );
-      expect(imageView.source, imageUrl);
-      expect(imageView.alt, 'busymark');
-      expect(find.byType(Image), findsOneWidget);
-      expect(find.text(imageUrl), findsNothing);
-      expect(find.byType(TextField), findsNothing);
-    } finally {
-      debugNetworkImageHttpClientProvider = previousHttpClientProvider;
-    }
-  });
+        await render(allow: true);
+        await tester.pump();
+        expect(denied, findsNothing);
+        final imageView = tester.widget<MarkdownImageView>(
+          find.byType(MarkdownImageView),
+        );
+        expect(imageView.source, imageUrl);
+        expect(imageView.alt, 'busymark');
+        expect(find.byType(Image), findsOneWidget);
+        expect(find.text(imageUrl), findsNothing);
+        expect(find.byType(TextField), findsNothing);
+      } finally {
+        debugNetworkImageHttpClientProvider = previousHttpClientProvider;
+      }
+    },
+  );
 
   for (final mode in MarkdownMode.values) {
     test('WYSIWYG Enter recognizes a pasted bare URL in ${mode.name}', () {
@@ -6506,6 +6526,10 @@ void main() {}
     (tester) async {
       final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
       var markdown = parsed.source;
+      final history = await DocumentHistoryHarness.create(
+        source: parsed.source,
+      );
+      addTearDown(history.dispose);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -6517,7 +6541,25 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
-                onSourceChanged: (filePath, value) => markdown = value,
+                readEditBase: history.readBase,
+                readSessionState: () => history.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  history.controller.undoActiveBuffer();
+                  markdown = history.buffer.text;
+                },
+                onRedo: () {
+                  history.controller.redoActiveBuffer();
+                  markdown = history.buffer.text;
+                },
+                onSessionChanged: (_, value) =>
+                    history.controller.updateDocumentEditorState(
+                      history.buffer.id,
+                      history.buffer.editorState.copyWith(wysiwygState: value),
+                    ),
+                onSourceChanged: (_, value) {
+                  history.controller.updateActiveText(value);
+                  markdown = value;
+                },
               ),
             ),
           ),
@@ -7824,66 +7866,4 @@ Future<void> _pressControlShortcut(
 
 class _TestTabIntent extends Intent {
   const _TestTabIntent();
-}
-
-class _FakeImageHttpClient implements HttpClient {
-  @override
-  Future<HttpClientRequest> getUrl(Uri url) async => _FakeImageRequest();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeImageRequest implements HttpClientRequest {
-  @override
-  HttpHeaders get headers => _FakeImageHeaders();
-
-  @override
-  Future<HttpClientResponse> close() async => _FakeImageResponse();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeImageHeaders implements HttpHeaders {
-  @override
-  void add(String name, Object value, {bool preserveHeaderCase = false}) {}
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeImageResponse extends Stream<List<int>>
-    implements HttpClientResponse {
-  static final _bytes = base64Decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
-  );
-
-  @override
-  int get statusCode => HttpStatus.ok;
-
-  @override
-  int get contentLength => _bytes.length;
-
-  @override
-  HttpClientResponseCompressionState get compressionState =>
-      HttpClientResponseCompressionState.notCompressed;
-
-  @override
-  StreamSubscription<List<int>> listen(
-    void Function(List<int> event)? onData, {
-    Function? onError,
-    void Function()? onDone,
-    bool? cancelOnError,
-  }) {
-    return Stream<List<int>>.fromIterable([_bytes]).listen(
-      onData,
-      onError: onError,
-      onDone: onDone,
-      cancelOnError: cancelOnError,
-    );
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

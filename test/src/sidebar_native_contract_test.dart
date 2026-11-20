@@ -121,12 +121,9 @@ void main() {
             expect(primary, 0);
             expect(menus, 1);
             await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-            await tester.sendKeyEvent(LogicalKeyboardKey.f10);
-            expect(
-              menus,
-              1,
-              reason: 'The native grab waits for trigger release',
-            );
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
+            expect(menus, 2, reason: 'The native menu opens on keydown');
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
             await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
             await tester.pump();
             expect(menus, 2);

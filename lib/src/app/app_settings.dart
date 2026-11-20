@@ -142,6 +142,7 @@ class AppSettings {
     required this.aiCloudProviderConsentIds,
     required this.allowRemoteImages,
     required this.remoteImageAllowedWorkspacePaths,
+    this.remoteImageAllowedWorkspaceIds = const [],
     required this.trustedGitWorkspacePaths,
     this.pdfExportOptions = const PdfExportOptions(),
     this.htmlExportOptions = const HtmlExportOptions(),
@@ -296,6 +297,9 @@ class AppSettings {
       ),
       allowRemoteImages:
           json['allowRemoteImages'] as bool? ?? defaults.allowRemoteImages,
+      remoteImageAllowedWorkspaceIds: _stringListFromJson(
+        json['remoteImageAllowedWorkspaceIds'],
+      ),
       remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
         json['remoteImageAllowedWorkspacePaths'],
       ),
@@ -362,6 +366,7 @@ class AppSettings {
   final List<String> aiCloudProviderConsentIds;
   final bool allowRemoteImages;
   final List<String> remoteImageAllowedWorkspacePaths;
+  final List<String> remoteImageAllowedWorkspaceIds;
   final List<String> trustedGitWorkspacePaths;
   final PdfExportOptions pdfExportOptions;
   final HtmlExportOptions htmlExportOptions;
@@ -411,6 +416,7 @@ class AppSettings {
     'aiCloudProviderConsentIds': aiCloudProviderConsentIds,
     'allowRemoteImages': allowRemoteImages,
     'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
+    'remoteImageAllowedWorkspaceIds': remoteImageAllowedWorkspaceIds,
     'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
     'pdfExportOptions': pdfExportOptions.toJson(),
     'htmlExportOptions': htmlExportOptions.toJson(),
@@ -496,6 +502,7 @@ class AppSettings {
     List<String>? aiCloudProviderConsentIds,
     bool? allowRemoteImages,
     List<String>? remoteImageAllowedWorkspacePaths,
+    List<String>? remoteImageAllowedWorkspaceIds,
     List<String>? trustedGitWorkspacePaths,
     PdfExportOptions? pdfExportOptions,
     HtmlExportOptions? htmlExportOptions,
@@ -553,6 +560,8 @@ class AppSettings {
       aiCloudProviderConsentIds:
           aiCloudProviderConsentIds ?? this.aiCloudProviderConsentIds,
       allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
+      remoteImageAllowedWorkspaceIds:
+          remoteImageAllowedWorkspaceIds ?? this.remoteImageAllowedWorkspaceIds,
       remoteImageAllowedWorkspacePaths:
           remoteImageAllowedWorkspacePaths ??
           this.remoteImageAllowedWorkspacePaths,
@@ -863,8 +872,8 @@ class AppSettingsController extends Notifier<AppSettings> {
     );
   }
 
-  Future<void> setSidebarVisible(bool enabled) {
-    if (state.sidebarVisible != enabled) {
+  Future<void> setSidebarVisible(bool enabled, {bool animate = true}) {
+    if (animate && state.sidebarVisible != enabled) {
       ref.read(sidebarTransitionGenerationProvider.notifier).increment();
     }
     return _mutate((settings) => settings.copyWith(sidebarVisible: enabled));
@@ -999,9 +1008,20 @@ class AppSettingsController extends Notifier<AppSettings> {
     });
   }
 
+  Future<void> allowRemoteImagesForWorkspaceId(String id) {
+    return _mutate((settings) {
+      final allowed = {id, ...settings.remoteImageAllowedWorkspaceIds}.toList()
+        ..sort();
+      return settings.copyWith(remoteImageAllowedWorkspaceIds: allowed);
+    });
+  }
+
   Future<void> clearRemoteImageWorkspacePermissions() {
     return _mutate(
-      (settings) => settings.copyWith(remoteImageAllowedWorkspacePaths: []),
+      (settings) => settings.copyWith(
+        remoteImageAllowedWorkspacePaths: [],
+        remoteImageAllowedWorkspaceIds: [],
+      ),
     );
   }
 

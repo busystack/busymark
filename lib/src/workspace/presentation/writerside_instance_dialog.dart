@@ -11,7 +11,6 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
-import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_instance_service.dart';
 import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_project_creator.dart';
@@ -582,10 +581,8 @@ class _BusyMarkWritersideInstanceDialogState
   }
 
   Future<bool> _confirmIdRename(String oldId, String newId) async {
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final result = await showBusyMarkModalDialog<bool>(
       context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
       barrierDismissible: false,
       builder: (context) => BusyMarkDialogShell(
         title: context.l10n.instanceIdRenameWarningTitle,

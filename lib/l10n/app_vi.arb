@@ -474,6 +474,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Tạo mới",
   "open": "Mở",
   "@open": {
     "description": "Open action label."
@@ -714,15 +715,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Tạo",
+  "home": "Trang chủ",
+  "openMenu": "Menu Mở",
+  "newNextcloudNote": "Ghi chú Nextcloud mới",
+  "shortcutNewDocument": "Menu Tạo mới",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for opening the content creation chooser."
   },
-  "shortcutNewDocumentDescription": "Tạo tệp Markdown hoặc dự án Writerside",
+  "shortcutNewDocumentDescription": "Hiển thị menu tạo tài nguyên",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
   },
-  "shortcutOpenDescription": "Mở tệp Markdown, thư mục hoặc dự án Writerside",
+  "shortcutOpenDescription": "Hiển thị menu mở tài nguyên",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -1072,11 +1076,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Xóa quyền hình ảnh từ xa",
+  "clearRemoteImagePermissions": "Xóa quyền tải hình ảnh của không gian làm việc",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Quên các không gian làm việc đã được cho phép tải hình ảnh từ xa.",
+  "clearRemoteImagePermissionsDescription": "Quên mọi quyền tải hình ảnh từ xa của các không gian làm việc.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1492,7 +1496,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Chọn xem BusyMark có thể tải hình ảnh từ xa hay không.",
+  "remoteImageBlockedTooltip": "Hình ảnh từ xa bị chặn. Nhấp để xem tùy chọn tải.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1504,7 +1508,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Tải cho không gian làm việc này",
+  "loadThisRemoteImage": "Tải hình ảnh này",
+  "remoteImageMoreOptions": "Tùy chọn khác…",
+  "remoteImageMoreOptionsTitle": "Quyền tải hình ảnh từ xa",
+  "loadRemoteImagesInDocument": "Tải hình ảnh trong tài liệu này",
+  "remoteImageUntilClose": "Cho đến khi đóng tài liệu này.",
+  "remoteImageWorkspacePermissionDetail": "Cho phép tải hình ảnh từ xa trong {workspace} cho đến khi bạn xóa quyền không gian làm việc trong phần Cài đặt quyền riêng tư.",
+  "remoteImageGlobalPermissionDetail": "Cho phép tải hình ảnh từ xa trong toàn bộ BusyMark cho đến khi bạn tắt tùy chọn này trong phần Cài đặt quyền riêng tư.",
+  "remoteImageGlobalSettingsDetail": "Cho phép tải hình ảnh từ xa trong toàn bộ BusyMark. Quyền của từng không gian làm việc được quản lý riêng.",
+  "loadRemoteImagesForWorkspace": "Luôn cho phép trong không gian làm việc này",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -5157,7 +5169,7 @@
   "searchTopicsCategory": "Chủ đề",
   "searchCurrentDocument": "Tài liệu hiện tại",
   "searchCurrentWorkspace": "Không gian làm việc hiện tại",
-  "browseNotes": "Duyệt ghi chú",
+  "browseNotes": "Duyệt ghi chú Nextcloud",
   "searchActionsCommand": "Tìm thao tác",
   "searchDocumentsCommand": "Tìm tài liệu",
   "searchTopicsCommand": "Tìm chủ đề",

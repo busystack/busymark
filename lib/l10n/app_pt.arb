@@ -359,6 +359,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
+  "newResource": "Novo",
   "open": "Abrir",
   "@open": {
     "description": "Open action label."
@@ -596,15 +597,18 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Criar",
+  "home": "Início",
+  "openMenu": "Menu Abrir",
+  "newNextcloudNote": "Nova nota do Nextcloud",
+  "shortcutNewDocument": "Menu Novo",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Criar ficheiro Markdown ou projeto Writerside",
+  "shortcutNewDocumentDescription": "Mostrar o menu para criar recursos",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Abrir um ficheiro Markdown, uma pasta ou um projeto Writerside",
+  "shortcutOpenDescription": "Mostrar o menu para abrir recursos",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -954,11 +958,11 @@
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Limpar permissões de imagens remotas",
+  "clearRemoteImagePermissions": "Limpar permissões de imagens dos espaços de trabalho",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Esquecer os espaços de trabalho autorizados a carregar imagens remotas.",
+  "clearRemoteImagePermissionsDescription": "Esquecer todas as permissões dos espaços de trabalho para imagens remotas.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
@@ -1328,7 +1332,7 @@
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Escolha se o BusyMark pode carregar imagens remotas.",
+  "remoteImageBlockedTooltip": "Imagem remota bloqueada. Clique para ver as opções de carregamento.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
@@ -1340,7 +1344,15 @@
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Carregar neste espaço de trabalho",
+  "loadThisRemoteImage": "Carregar esta imagem",
+  "remoteImageMoreOptions": "Mais opções…",
+  "remoteImageMoreOptionsTitle": "Permissões de imagens remotas",
+  "loadRemoteImagesInDocument": "Carregar imagens neste documento",
+  "remoteImageUntilClose": "Até fechar este documento.",
+  "remoteImageWorkspacePermissionDetail": "Permite imagens remotas em {workspace} até limpar as permissões de espaços de trabalho nas definições de privacidade.",
+  "remoteImageGlobalPermissionDetail": "Permite imagens remotas em todo o BusyMark até desativar esta opção nas definições de privacidade.",
+  "remoteImageGlobalSettingsDetail": "Permitir imagens remotas em todo o BusyMark. As permissões dos espaços de trabalho são geridas separadamente.",
+  "loadRemoteImagesForWorkspace": "Permitir sempre neste espaço de trabalho",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
@@ -3627,7 +3639,7 @@
   "searchTopicsCategory": "Tópicos",
   "searchCurrentDocument": "Documento atual",
   "searchCurrentWorkspace": "Área de trabalho atual",
-  "browseNotes": "Explorar notas",
+  "browseNotes": "Explorar notas do Nextcloud",
   "searchActionsCommand": "Pesquisar ações",
   "searchDocumentsCommand": "Pesquisar documentos",
   "searchTopicsCommand": "Pesquisar tópicos",

@@ -1,3 +1,7 @@
+import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../support/document_history_harness.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -14,7 +18,6 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_effective_properties.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
@@ -26,27 +29,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/desktop_focus.dart';
-
-class _GatedSemanticDialogBarrier extends LinuxHeaderBarService {
-  _GatedSemanticDialogBarrier()
-    : super(channel: const MethodChannel('busymark/test/semantic-focus'));
-
-  final release = Completer<void>();
-  bool releaseStarted = false;
-  bool releaseFinished = false;
-
-  @override
-  bool get isAvailable => true;
-
-  @override
-  Future<void> setModalBarrierDepth(int depth) async {
-    if (depth == 0) {
-      releaseStarted = true;
-      await release.future;
-      releaseFinished = true;
-    }
-  }
-}
 
 BusyDocument _document(bool xml, {String? source}) => xml
     ? const WritersideEditingAdapter().parseXml(
@@ -445,17 +427,77 @@ void main() {
   tearDown(() {
     binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
   });
-  Future<void> mount(
+  Future<DocumentHistoryHarness?> mount(
     WidgetTester tester,
     BusyMarkWysiwygEditor editor, {
     bool openProperties = true,
+    bool workspaceHost = false,
+    Size size = const Size(1100, 850),
+    Brightness brightness = Brightness.light,
+    TextDirection direction = TextDirection.ltr,
+    double scale = 1,
   }) async {
     tester.view.resetPhysicalSize();
-    tester.view.physicalSize = const Size(1100, 850);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(_app(editor));
+    DocumentHistoryHarness? host;
+    if (openProperties || workspaceHost) {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('workspace-inspector-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final name = editor.document.isXmlTopic ? 'a.topic' : 'a.md';
+      await tester.runAsync(() async {
+        await Directory('${root.path}/topics').create();
+        await File(
+          '${root.path}/topics/$name',
+        ).writeAsString(editor.document.source!);
+        await File('${root.path}/writerside.cfg').writeAsString(
+          '<ihp version="2.0"><module name="fixture"/><topics dir="topics"/><instance src="main.tree"/></ihp>',
+        );
+        await File('${root.path}/main.tree').writeAsString(
+          '<instance-profile id="main" name="Main" start-page="$name"><toc-element topic="$name"/></instance-profile>',
+        );
+      });
+      final history = (await tester.runAsync(
+        () => DocumentHistoryHarness.create(path: root.path),
+      ))!;
+      host = history;
+      addTearDown(history.dispose);
+      await tester.runAsync(() async {
+        final settings = history.container.read(
+          appSettingsControllerProvider.notifier,
+        );
+        await settings.setSidebarVisible(false);
+        await settings.setEditorToolbarDirection(editor.toolbarDirection);
+      });
+      final changes = history.container.listen(workspaceControllerProvider, (
+        before,
+        after,
+      ) {
+        if (before?.activeText != after.activeText) {
+          editor.onSourceChanged(editor.document.filePath, after.activeText);
+        }
+      });
+      addTearDown(changes.close);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: history.container,
+          child: _app(
+            const WorkspaceScreen(),
+            brightness: brightness,
+            direction: direction,
+            scale: scale,
+          ),
+        ),
+      );
+    } else {
+      await tester.pumpWidget(_app(editor));
+    }
     await tester.pumpAndSettle();
     if (openProperties) {
       final pointer = await tester.createGesture(kind: PointerDeviceKind.mouse);
@@ -473,6 +515,7 @@ void main() {
       await pointer.removePointer();
       await tester.pumpAndSettle();
     }
+    return host;
   }
 
   testWidgets(
@@ -595,8 +638,6 @@ void main() {
         );
         final body = _textField('Before Read guide and Other.');
         await tester.tap(body);
-        // Inside the unformatted segment, then inside the bold segment: both
-        // selections expose the same owning link, without changing styling.
         for (final caret in [9, 15]) {
           tester
               .widget<TextField>(_textField('Before Read guide and Other.'))
@@ -747,14 +788,61 @@ void main() {
               var saved = original;
               final changes = <String>[];
               final key = GlobalKey<BusyMarkWysiwygEditorState>();
+              var fixtureHistory102Document = document;
+              final fixtureHistory102 = await DocumentHistoryHarness.create(
+                source: fixtureHistory102Document.source ?? '',
+              );
+              addTearDown(fixtureHistory102.dispose);
               await mount(
                 tester,
                 BusyMarkWysiwygEditor(
+                  readEditBase: fixtureHistory102.readBase,
+                  readSessionState: () =>
+                      fixtureHistory102.buffer.editorState.wysiwygState,
+                  onUndo: () {
+                    if (fixtureHistory102.controller.undoActiveBuffer()) {
+                      ((_, source) {
+                        saved = source;
+                        changes.add(source);
+                      })(
+                        fixtureHistory102Document.filePath,
+                        fixtureHistory102.buffer.text,
+                      );
+                    }
+                  },
+                  onRedo: () {
+                    if (fixtureHistory102.controller.redoActiveBuffer()) {
+                      ((_, source) {
+                        saved = source;
+                        changes.add(source);
+                      })(
+                        fixtureHistory102Document.filePath,
+                        fixtureHistory102.buffer.text,
+                      );
+                    }
+                  },
+                  onDocumentChanged: (value) {
+                    fixtureHistory102Document = value;
+                  },
+                  onSessionChanged: (id, value) {
+                    fixtureHistory102.controller.updateDocumentEditorState(
+                      fixtureHistory102.buffer.id,
+                      fixtureHistory102.buffer.editorState.copyWith(
+                        wysiwygState: value,
+                      ),
+                    );
+                  },
                   key: key,
-                  document: document,
-                  onSourceChanged: (_, source) {
-                    saved = source;
-                    changes.add(source);
+                  document: fixtureHistory102Document,
+                  onSourceChanged: (path, text) {
+                    fixtureHistory102.controller.updateActiveWysiwygText(
+                      text,
+                      document: fixtureHistory102Document,
+                    );
+                    ((_, source) {
+                      saved = source;
+                      changes.add(source);
+                    })(path, text);
                   },
                 ),
                 openProperties: false,
@@ -867,7 +955,10 @@ void main() {
               expect(body.controller!.selection, selection);
               expect(saved, original);
               expect(changes, isEmpty);
-              expect(key.currentState!.debugUndoSnapshotCount, 0);
+              expect(
+                fixtureHistory102.buffer.editorState.undoState.undo.length,
+                0,
+              );
               if (owner == 'other trigger') return;
               expect(tester.testTextInput.hasAnyClients, isTrue);
               final text = owner == 'newer'
@@ -897,12 +988,18 @@ void main() {
                 expect(body.controller!.selection, selection);
                 expect(saved, original);
                 expect(changes, isEmpty);
-                expect(key.currentState!.debugUndoSnapshotCount, 0);
+                expect(
+                  fixtureHistory102.buffer.editorState.undoState.undo.length,
+                  0,
+                );
                 expect(position.pixels, closeTo(pixels, 0.1));
               } else {
                 expect(saved, original.replaceFirst('Text', text));
                 expect(changes, hasLength(1));
-                expect(key.currentState!.debugUndoSnapshotCount, 1);
+                expect(
+                  fixtureHistory102.buffer.editorState.undoState.undo.length,
+                  1,
+                );
                 expect(
                   tester.getTopLeft(_textField(text)).dy,
                   inInclusiveRange(0, 850),
@@ -1051,17 +1148,14 @@ void main() {
           '${xml ? "XML" : "Markdown"} delayed semantic cancellation $label newerOwner=$newerOwner',
           (tester) async {
             enableDesktopFocusLifecycle(tester);
-            final barrier = _GatedSemanticDialogBarrier();
             final newer = FocusNode(debugLabel: 'Search after semantic dialog');
             final search = TextEditingController(text: 'Search');
             OverlayEntry? entry;
             addTearDown(() {
-              if (!barrier.release.isCompleted) barrier.release.complete();
               entry?.remove();
               entry?.dispose();
               newer.dispose();
               search.dispose();
-              barrier.dispose();
             });
             final paragraphs = [
               'Text',
@@ -1074,15 +1168,61 @@ void main() {
             var saved = original;
             final changes = <String>[];
             final key = GlobalKey<BusyMarkWysiwygEditorState>();
+            var fixtureHistory104Document = _document(xml, source: original);
+            final fixtureHistory104 = await DocumentHistoryHarness.create(
+              source: fixtureHistory104Document.source ?? '',
+            );
+            addTearDown(fixtureHistory104.dispose);
             await mount(
               tester,
               BusyMarkWysiwygEditor(
+                readEditBase: fixtureHistory104.readBase,
+                readSessionState: () =>
+                    fixtureHistory104.buffer.editorState.wysiwygState,
+                onUndo: () {
+                  if (fixtureHistory104.controller.undoActiveBuffer()) {
+                    ((_, source) {
+                      saved = source;
+                      changes.add(source);
+                    })(
+                      fixtureHistory104Document.filePath,
+                      fixtureHistory104.buffer.text,
+                    );
+                  }
+                },
+                onRedo: () {
+                  if (fixtureHistory104.controller.redoActiveBuffer()) {
+                    ((_, source) {
+                      saved = source;
+                      changes.add(source);
+                    })(
+                      fixtureHistory104Document.filePath,
+                      fixtureHistory104.buffer.text,
+                    );
+                  }
+                },
+                onDocumentChanged: (value) {
+                  fixtureHistory104Document = value;
+                },
+                onSessionChanged: (id, value) {
+                  fixtureHistory104.controller.updateDocumentEditorState(
+                    fixtureHistory104.buffer.id,
+                    fixtureHistory104.buffer.editorState.copyWith(
+                      wysiwygState: value,
+                    ),
+                  );
+                },
                 key: key,
-                document: _document(xml, source: original),
-                headerBarService: barrier,
-                onSourceChanged: (_, source) {
-                  saved = source;
-                  changes.add(source);
+                document: fixtureHistory104Document,
+                onSourceChanged: (path, text) {
+                  fixtureHistory104.controller.updateActiveWysiwygText(
+                    text,
+                    document: fixtureHistory104Document,
+                  );
+                  ((_, source) {
+                    saved = source;
+                    changes.add(source);
+                  })(path, text);
                 },
               ),
               openProperties: false,
@@ -1109,7 +1249,10 @@ void main() {
             final readingText = reading.controller!.text;
             final readingTop = tester.getTopLeft(_textField(readingText)).dy;
             final generation = key.currentState!.spellingDocumentGeneration;
-            expect(key.currentState!.debugUndoSnapshotCount, 0);
+            expect(
+              fixtureHistory104.buffer.editorState.undoState.undo.length,
+              0,
+            );
             labels.add(label);
             await tester.tap(
               find.byKey(const ValueKey('wysiwyg-writerside')),
@@ -1122,7 +1265,6 @@ void main() {
             );
             await tester.tap(find.text('Cancel'), pointer: 1203);
             await tester.pumpAndSettle();
-            expect(barrier.releaseStarted, isTrue);
             expect(
               find.byKey(const ValueKey('wysiwyg-semantic-text')),
               findsNothing,
@@ -1148,7 +1290,6 @@ void main() {
               expect(FocusManager.instance.primaryFocus, same(newer));
             }
             expect(key.currentState!.spellingDocumentGeneration, generation);
-            barrier.release.complete();
             for (var frame = 0; frame < 30; frame++) {
               // A gated release can finish after the route animation has
               // stopped. Drive the render phase so post-frame restoration
@@ -1165,7 +1306,6 @@ void main() {
                 closeTo(readingTop, 0.1),
               );
             }
-            expect(barrier.releaseFinished, isTrue);
             expect(
               FocusManager.instance.primaryFocus,
               same(newerOwner ? newer : body.focusNode),
@@ -1173,7 +1313,10 @@ void main() {
             expect(body.controller!.selection, selection);
             expect(saved, original);
             expect(changes, isEmpty);
-            expect(key.currentState!.debugUndoSnapshotCount, 0);
+            expect(
+              fixtureHistory104.buffer.editorState.undoState.undo.length,
+              0,
+            );
             expect(tester.testTextInput.hasAnyClients, isTrue);
             // Use the existing IME connection; enterText would refocus and
             // conceal a cancellation callback that stole the newer owner.
@@ -1193,12 +1336,18 @@ void main() {
               expect(saved, original);
               expect(changes, isEmpty);
               expect(body.controller!.selection, selection);
-              expect(key.currentState!.debugUndoSnapshotCount, 0);
+              expect(
+                fixtureHistory104.buffer.editorState.undoState.undo.length,
+                0,
+              );
               expect(position.pixels, closeTo(pixels, 0.1));
             } else {
               expect(saved, original.replaceFirst('Text', 'Te!xt'));
               expect(changes, hasLength(1));
-              expect(key.currentState!.debugUndoSnapshotCount, 1);
+              expect(
+                fixtureHistory104.buffer.editorState.undoState.undo.length,
+                1,
+              );
               expect(
                 tester.getTopLeft(_textField('Te!xt')).dy,
                 inInclusiveRange(0, 850),
@@ -1236,11 +1385,52 @@ void main() {
         (tester) async {
           final original = _document(xml).source!;
           var saved = original;
+          var fixtureHistory105Document = _document(xml);
+          final fixtureHistory105 = await DocumentHistoryHarness.create(
+            source: fixtureHistory105Document.source ?? '',
+          );
+          addTearDown(fixtureHistory105.dispose);
           await mount(
             tester,
             BusyMarkWysiwygEditor(
-              document: _document(xml),
-              onSourceChanged: (_, s) => saved = s,
+              readEditBase: fixtureHistory105.readBase,
+              readSessionState: () =>
+                  fixtureHistory105.buffer.editorState.wysiwygState,
+              onUndo: () {
+                if (fixtureHistory105.controller.undoActiveBuffer()) {
+                  ((_, s) => saved = s)(
+                    fixtureHistory105Document.filePath,
+                    fixtureHistory105.buffer.text,
+                  );
+                }
+              },
+              onRedo: () {
+                if (fixtureHistory105.controller.redoActiveBuffer()) {
+                  ((_, s) => saved = s)(
+                    fixtureHistory105Document.filePath,
+                    fixtureHistory105.buffer.text,
+                  );
+                }
+              },
+              onDocumentChanged: (value) {
+                fixtureHistory105Document = value;
+              },
+              onSessionChanged: (id, value) {
+                fixtureHistory105.controller.updateDocumentEditorState(
+                  fixtureHistory105.buffer.id,
+                  fixtureHistory105.buffer.editorState.copyWith(
+                    wysiwygState: value,
+                  ),
+                );
+              },
+              document: fixtureHistory105Document,
+              onSourceChanged: (path, text) {
+                fixtureHistory105.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory105Document,
+                );
+                ((_, s) => saved = s)(path, text);
+              },
             ),
             openProperties: false,
           );
@@ -1320,11 +1510,52 @@ void main() {
               ? '<topic id="a" title="Title"><p>Before.</p><p>$style <b>example</b>.</p><p>After.</p></topic>'
               : '# Title\n\nBefore.\n\n$style **example**.\n\nAfter.\n';
           var source = original;
+          var fixtureHistory106Document = _document(xml, source: original);
+          final fixtureHistory106 = await DocumentHistoryHarness.create(
+            source: fixtureHistory106Document.source ?? '',
+          );
+          addTearDown(fixtureHistory106.dispose);
           await mount(
             tester,
             BusyMarkWysiwygEditor(
-              document: _document(xml, source: original),
-              onSourceChanged: (_, value) => source = value,
+              readEditBase: fixtureHistory106.readBase,
+              readSessionState: () =>
+                  fixtureHistory106.buffer.editorState.wysiwygState,
+              onUndo: () {
+                if (fixtureHistory106.controller.undoActiveBuffer()) {
+                  ((_, value) => source = value)(
+                    fixtureHistory106Document.filePath,
+                    fixtureHistory106.buffer.text,
+                  );
+                }
+              },
+              onRedo: () {
+                if (fixtureHistory106.controller.redoActiveBuffer()) {
+                  ((_, value) => source = value)(
+                    fixtureHistory106Document.filePath,
+                    fixtureHistory106.buffer.text,
+                  );
+                }
+              },
+              onDocumentChanged: (value) {
+                fixtureHistory106Document = value;
+              },
+              onSessionChanged: (id, value) {
+                fixtureHistory106.controller.updateDocumentEditorState(
+                  fixtureHistory106.buffer.id,
+                  fixtureHistory106.buffer.editorState.copyWith(
+                    wysiwygState: value,
+                  ),
+                );
+              },
+              document: fixtureHistory106Document,
+              onSourceChanged: (path, text) {
+                fixtureHistory106.controller.updateActiveWysiwygText(
+                  text,
+                  document: fixtureHistory106Document,
+                );
+                ((_, value) => source = value)(path, text);
+              },
             ),
             openProperties: false,
           );
@@ -1484,6 +1715,7 @@ void main() {
           writersideModuleId: project.index.modulesById.keys.single,
           onSourceChanged: (_, value) => saved = value,
         ),
+        openProperties: false,
       );
       await tester.tap(_textField('Text'));
       labels.addAll(['Include Reusable Content', 'library.topic', 'shared']);
@@ -1530,6 +1762,7 @@ void main() {
           writersideModuleId: 'm',
           onSourceChanged: (_, s) => source = s,
         ),
+        openProperties: false,
       );
       await tester.tap(_textField('Text'));
       await tester.pumpAndSettle();
@@ -1650,7 +1883,9 @@ void main() {
                 find.byType(BusyMarkWritersideProperties),
               )
               .topicSelected,
-          isTrue,
+          xml,
+          reason:
+              'The workspace retains a logical XML topic or its authored Markdown title target.',
         );
         await inspectSelection(tester);
         expect(
@@ -1667,13 +1902,12 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
         await tester.pumpAndSettle();
         expect(saved, original);
-        await tester.pumpWidget(
-          _app(
-            BusyMarkWysiwygEditor(
-              document: _document(xml, source: authored),
-              documentId: 'reopened',
-              onSourceChanged: (_, source) => saved = source,
-            ),
+        await mount(
+          tester,
+          BusyMarkWysiwygEditor(
+            document: _document(xml, source: authored),
+            documentId: 'reopened',
+            onSourceChanged: (_, source) => saved = source,
           ),
         );
         await tester.pumpAndSettle();
@@ -1903,7 +2137,11 @@ void main() {
             ),
             onSourceChanged: (_, s) => saved = s,
           );
-      await mount(tester, editor(1, source.indexOf('<control>') + 9));
+      await mount(
+        tester,
+        editor(1, source.indexOf('<control>') + 9),
+        openProperties: false,
+      );
       expect(saved, isEmpty);
       final field = _textField('Save  Save');
       expect(
@@ -1978,7 +2216,7 @@ void main() {
       expect(props.target!.attributes['id'], 'code');
       final entry = find.byKey(
         ValueKey(
-          'writerside-property-a.topic-element-${props.target!.id}-language',
+          'writerside-property-${props.document.filePath}-element-${props.target!.id}-language',
         ),
       );
       final language = find.descendant(
@@ -2026,12 +2264,12 @@ void main() {
         ),
         onSourceChanged: (_, _) => edits++,
       );
-      await mount(tester, editor(first));
+      final host = (await mount(tester, editor(first)))!;
       await tester.tap(_textField('print(1);'));
       await tester.pumpAndSettle();
       await inspectSelection(tester);
-      final property = find.byKey(
-        const ValueKey('writerside-property-a.topic-element-xml-1-language'),
+      final property = find.byWidgetPredicate(
+        (w) => w is BusyMarkGroupedTextEntry && w.label == 'Language (lang)',
       );
       final entry = find.descendant(
         of: property,
@@ -2040,8 +2278,9 @@ void main() {
       await tester.enterText(entry, 'python');
       await tester.pumpAndSettle();
       expect(edits, 0);
-      await tester.pumpWidget(_app(editor(replaced)));
+      host.controller.updateActiveText(replaced);
       await tester.pumpAndSettle();
+      final acceptedChanges = edits;
       expect(tester.widget<TextField>(entry).controller!.text, 'python');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -2049,7 +2288,8 @@ void main() {
         find.textContaining('document or element changed'),
         findsOneWidget,
       );
-      expect(edits, 0);
+      expect(edits, acceptedChanges);
+      expect(host.buffer.text, replaced);
     },
   );
   for (final direction in EditorToolbarDirection.values) {
@@ -2060,17 +2300,19 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
-        await tester.pumpWidget(
-          _app(
-            BusyMarkWysiwygEditor(
-              document: _document(true),
-              toolbarDirection: direction,
-              onSourceChanged: (_, _) {},
-            ),
-            brightness: Brightness.dark,
-            direction: TextDirection.rtl,
-            scale: 1.5,
+        await mount(
+          tester,
+          BusyMarkWysiwygEditor(
+            document: _document(true),
+            toolbarDirection: direction,
+            onSourceChanged: (_, _) {},
           ),
+          openProperties: false,
+          workspaceHost: true,
+          size: const Size(620, 800),
+          brightness: Brightness.dark,
+          direction: TextDirection.rtl,
+          scale: 1.5,
         );
         await tester.pumpAndSettle();
         expect(find.text('Writerside'), findsNothing);

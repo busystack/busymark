@@ -724,6 +724,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Yeni';
+
+  @override
   String get open => 'Aç';
 
   @override
@@ -907,15 +910,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutGroupGeneral => 'Genel';
 
   @override
-  String get shortcutNewDocument => 'Oluştur';
+  String get home => 'Ana Sayfa';
+
+  @override
+  String get openMenu => 'Aç Menüsü';
+
+  @override
+  String get newNextcloudNote => 'Yeni Nextcloud Notu';
+
+  @override
+  String get shortcutNewDocument => 'Yeni Menüsü';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Markdown dosyası veya Writerside projesi oluştur';
+      'Kaynak oluşturma menüsünü göster';
 
   @override
-  String get shortcutOpenDescription =>
-      'Markdown dosyasını, klasörünü veya Writerside projesini açın';
+  String get shortcutOpenDescription => 'Kaynak açma menüsünü göster';
 
   @override
   String get shortcutSaveDescription => 'Geçerli belgeyi kaydet';
@@ -1212,11 +1223,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Markdown önizleme ve düzenleme görsellerinin http ve https URL\'lerinden yüklenmesine izin verin.';
 
   @override
-  String get clearRemoteImagePermissions => 'Harici görsel izinlerini temizle';
+  String get clearRemoteImagePermissions =>
+      'Çalışma alanı resim izinlerini temizle';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Harici görsellerin yüklenmesine izin verilen çalışma alanlarını unutun.';
+      'Çalışma alanlarının tüm uzak resim izinlerini unut.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1570,7 +1582,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'BusyMark\'ın harici görselleri yükleyip yükleyemeyeceğini seçin.';
+      'Uzak görsel engellendi. Yükleme seçenekleri için tıklayın.';
 
   @override
   String get remoteImagesBlockedTitle => 'Harici görseller engellendi';
@@ -1580,7 +1592,36 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu belge internetteki görsellere başvuruyor. Bunları yüklemek ağ bilgilerini görselin barındırıldığı sunucuya açığa çıkarabilir.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Bu çalışma alanı için yükleme';
+  String get loadThisRemoteImage => 'Bu resmi yükle';
+
+  @override
+  String get remoteImageMoreOptions => 'Diğer seçenekler…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Uzak resim izinleri';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Bu belgedeki resimleri yükle';
+
+  @override
+  String get remoteImageUntilClose => 'Bu belge kapanana kadar.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Gizlilik ayarlarında çalışma alanı izinlerini temizleyene kadar $workspace içindeki uzak resimlere izin verir.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Gizlilik ayarlarında bu seçeneği kapatana kadar BusyMark genelinde uzak resimlere izin verir.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'BusyMark genelinde uzak resimlere izin ver. Çalışma alanı izinleri ayrı yönetilir.';
+
+  @override
+  String get loadRemoteImagesForWorkspace =>
+      'Bu çalışma alanında her zaman izin ver';
 
   @override
   String get alwaysLoadRemoteImages => 'Harici görselleri her zaman yükle';
@@ -5511,7 +5552,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchCurrentWorkspace => 'Geçerli çalışma alanı';
 
   @override
-  String get browseNotes => 'Notlara göz at';
+  String get browseNotes => 'Nextcloud Notlarına Göz At';
 
   @override
   String get searchActionsCommand => 'Eylemleri ara';

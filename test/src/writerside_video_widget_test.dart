@@ -1,3 +1,5 @@
+import 'package:busymark/src/editor/markdown_image_permission_scope.dart';
+import '../support/controlled_image_http_client.dart';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -221,6 +223,65 @@ void main() {
     expect(failures, 1);
     expect(find.byIcon(BusyMarkGlyphs.play), findsOneWidget);
   });
+
+  testWidgets(
+    'loading an authored remote poster is independent of video playback',
+    (tester) async {
+      const poster = 'https://example.com/authored-poster.png';
+      final http = ControlledImageHttpClient();
+      final original = debugNetworkImageHttpClientProvider;
+      final host = _FakeVideoPlayerHost();
+      debugNetworkImageHttpClientProvider = () => http;
+      try {
+        var allowed = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: StatefulBuilder(
+                builder: (context, setState) {
+                  return MarkdownImagePermissionScope(
+                    resolve: (source, span, snapshot) {
+                      expect(source, poster);
+                      return MarkdownImageActions(
+                        allowed: allowed,
+                        openMenu: (_, _, _) async =>
+                            setState(() => allowed = true),
+                      );
+                    },
+                    child: BusyMarkWritersideVideoView(
+                      source: 'https://youtu.be/BeJu9bMPLGU',
+                      previewSource: poster,
+                      activeFilePath: '/workspace/topics/video.md',
+                      workspaceRoot: '/workspace/topics',
+                      writersideRoot: '/workspace',
+                      imagesDir: 'images',
+                      playerHost: host,
+                      hostedPosterLoader: (_) async => throw StateError(
+                        'Authored poster must take precedence',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        expect(http.requests, isEmpty);
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(BusyMarkWritersideVideoView)),
+        );
+        await tester.tap(find.text(l10n.remoteImageBlocked));
+        await tester.pumpAndSettle();
+        expect(http.requests, [Uri.parse(poster)]);
+        expect(host.shown, isEmpty);
+        expect(find.byIcon(BusyMarkGlyphs.play), findsOneWidget);
+      } finally {
+        debugNetworkImageHttpClientProvider = original;
+      }
+    },
+  );
 
   testWidgets('WYSIWYG renders a Writerside video without rewriting source', (
     tester,

@@ -24,6 +24,94 @@ void main() {
     selectedNodePath: const [0],
   );
 
+  test(
+    'post-exchange rejection retains A and newer B and reports partial publication',
+    () async {
+      final fixture = await _homeFixture();
+      final analysis = await analyzeHome(fixture);
+      final tree = File(p.join(fixture.root.path, 'guide.tree'));
+      await Process.run('chmod', ['640', tree.path]);
+      String? displaced;
+      final racing = WritersideTopicRemovalService(
+        beforeFileExchange: (target, _) async {
+          await File(target).writeAsString('A');
+        },
+        afterFileExchange: (target, temporary) async {
+          displaced = temporary;
+          expect((await File(target).stat()).mode & 0x1ff, 0x1a0);
+          await File(target).writeAsString('B');
+        },
+      );
+      await expectLater(
+        racing.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: analysis.homePageReplacements.first,
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>()
+              .having(
+                (e) => e.code,
+                'truthful partial result',
+                'writerside.topic-removal.rollback-failed',
+              )
+              .having(
+                (e) => e.args['paths'],
+                'recovery path',
+                contains('busymark-safe-delete-'),
+              ),
+        ),
+      );
+      expect(await tree.readAsString(), 'B');
+      expect(await File(displaced!).readAsString(), 'A');
+      expect(File(analysis.topicPath).existsSync(), isTrue);
+    },
+  );
+
+  test(
+    'domain rollback preserves the recovery path from a failed earlier-file rollback',
+    () async {
+      final fixture = await _homeFixture(
+        referrer: '# Referrer\n\n[Old](doomed.md)\n',
+      );
+      final analysis = await analyzeHome(fixture);
+      var before = 0, after = 0;
+      String? retained, destination;
+      final racing = WritersideTopicRemovalService(
+        beforeFileExchange: (_, _) async {
+          if (++before == 2) {
+            throw StateError('fail later file before publication');
+          }
+        },
+        afterFileExchange: (target, displaced) async {
+          if (++after != 2) return;
+          retained = displaced;
+          destination = target;
+          await File(displaced).writeAsString('rollback A');
+          await File(target).writeAsString('rollback B');
+        },
+      );
+      BusyMarkException? failure;
+      try {
+        await racing.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: analysis.homePageReplacements.first,
+            updateUsagesAutomatically: true,
+          ),
+        );
+        fail('Rollback must report the uncertain publication');
+      } on BusyMarkException catch (error) {
+        failure = error;
+      }
+      expect(failure.code, 'writerside.topic-removal.rollback-failed');
+      expect(failure.args['paths'], contains(retained));
+      expect(await File(retained!).readAsString(), 'rollback A');
+      expect(await File(destination!).readAsString(), 'rollback B');
+    },
+  );
+
   for (final redirect in [false, true]) {
     test(
       'explicit Home Page replacement promotes children (redirect=$redirect)',

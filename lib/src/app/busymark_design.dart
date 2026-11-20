@@ -1091,6 +1091,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.disabledForegroundColor,
     this.backgroundColor,
     this.overlayColor,
+    this.applyHeaderStateColors = false,
     this.borderRadius = BusyMarkRadius.headerButton,
     this.focusBorderRadius = BusyMarkRadius.headerButton,
   });
@@ -1112,6 +1113,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final Color? disabledForegroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final WidgetStateProperty<Color?>? overlayColor;
+  final bool applyHeaderStateColors;
   final double borderRadius;
   final double focusBorderRadius;
 
@@ -1169,21 +1171,32 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
         );
     final foreground =
         style.foregroundColor?.resolve(states) ?? colors.foreground;
-    final button = YaruIconButton(
-      focusNode: focusNode,
-      isSelected: selected,
-      tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-      icon: BusyMarkGtkHeaderIcon(
-        icon,
-        nativeIcon: nativeIcon,
-        color: foreground,
-      ),
-      iconSize: BusyMarkSizes.iconButton,
-      padding: EdgeInsets.zero,
-      style: style,
-      hasFocusBorder: false,
-      onPressed: onPressed,
+    final label = shortcut == null ? tooltip : '$tooltip ($shortcut)';
+    final artwork = BusyMarkGtkHeaderIcon(
+      icon,
+      nativeIcon: nativeIcon,
+      color: foreground,
     );
+    final button = applyHeaderStateColors
+        ? _BusyMarkHeaderStateButton(
+            focusNode: focusNode,
+            isSelected: selected,
+            tooltip: label,
+            icon: artwork,
+            style: style,
+            onPressed: onPressed,
+          )
+        : YaruIconButton(
+            focusNode: focusNode,
+            isSelected: selected,
+            tooltip: label,
+            icon: artwork,
+            iconSize: BusyMarkSizes.iconButton,
+            padding: EdgeInsets.zero,
+            style: style,
+            hasFocusBorder: false,
+            onPressed: onPressed,
+          );
     final painted = PhysicalShape(
       clipper: ShapeBorderClipper(shape: shape),
       color:
@@ -1204,12 +1217,30 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     // The Linux accessibility bridge exposes the semantic label as the
     // control's name; IconButton's tooltip alone is not a native name.
     return MergeSemantics(
-      child: Semantics(
-        label: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-        child: content,
-      ),
+      child: Semantics(label: label, child: content),
     );
   }
+}
+
+class _BusyMarkHeaderStateButton extends YaruIconButton {
+  const _BusyMarkHeaderStateButton({
+    required super.focusNode,
+    required super.isSelected,
+    required super.tooltip,
+    required super.icon,
+    required super.style,
+    required super.onPressed,
+  }) : super(
+         iconSize: BusyMarkSizes.iconButton,
+         padding: EdgeInsets.zero,
+         hasFocusBorder: false,
+       );
+
+  @override
+  // Yaru merges its default style first. Give the native header layers
+  // precedence while retaining Yaru's size and input behavior.
+  ButtonStyle defaultStyleOf(BuildContext context) =>
+      style!.merge(super.defaultStyleOf(context));
 }
 
 /// A compact icon action that keeps Yaru's interaction and focus behavior.
@@ -1273,93 +1304,34 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   }
 }
 
-/// Opens an existing header menu after Flutter has observed the trigger's key
-/// releases. GTK grabs input while a native menu is open.
+/// Opens a header menu as soon as its trigger has been laid out.
 class BusyMarkHeaderMenuController {
   BusyMarkHeaderMenuController({this.debugLabel});
+
   final String? debugLabel;
   VoidCallback? _show;
   bool _pending = false;
-  bool _listening = false;
-  final _awaitingKeys = <PhysicalKeyboardKey>{};
 
-  void open({Iterable<ShortcutActivator> shortcuts = const []}) {
-    final keyboard = HardwareKeyboard.instance;
-    final triggerKeys = <LogicalKeyboardKey>{
-      for (final shortcut in shortcuts) ...?shortcut.triggers,
-      for (final shortcut in shortcuts.whereType<SingleActivator>()) ...{
-        if (shortcut.control) ...{
-          LogicalKeyboardKey.controlLeft,
-          LogicalKeyboardKey.controlRight,
-        },
-        if (shortcut.shift) ...{
-          LogicalKeyboardKey.shiftLeft,
-          LogicalKeyboardKey.shiftRight,
-        },
-        if (shortcut.alt) ...{
-          LogicalKeyboardKey.altLeft,
-          LogicalKeyboardKey.altRight,
-        },
-        if (shortcut.meta) ...{
-          LogicalKeyboardKey.metaLeft,
-          LogicalKeyboardKey.metaRight,
-        },
-      },
-    };
-    // Wait for the configured trigger and its concrete modifiers, rather than
-    // unrelated keys. In the live Linux keyboard state Num Lock can remain in
-    // physicalKeysPressed while its lock is enabled, indefinitely blocking an
-    // all-keys-up barrier. Keep actual lock-key bindings working as well.
-    _awaitingKeys
-      ..clear()
-      ..addAll(
-        keyboard.physicalKeysPressed.where(
-          (key) => triggerKeys.contains(keyboard.lookUpLayout(key)),
-        ),
-      );
+  void open({bool allowPending = true}) {
+    if (!allowPending && _show == null) return;
     if (debugLabel != null) {
       busyMarkViewSelectorTrace('controller-open', {
         'command': debugLabel,
         'attached': _show != null,
-        'pressedKeys': keyboard.physicalKeysPressed.length,
-        'awaitingKeys': _awaitingKeys.map((key) => key.debugName).toList(),
       });
     }
     _pending = true;
     _tryOpen();
   }
 
-  bool _released(KeyEvent event) {
-    _tryOpen();
-    return false;
-  }
-
   void _tryOpen() {
     if (!_pending || _show == null) return;
-    if (_awaitingKeys.any(
-      HardwareKeyboard.instance.physicalKeysPressed.contains,
-    )) {
-      if (!_listening) {
-        HardwareKeyboard.instance.addHandler(_released);
-        _listening = true;
-      }
-      return;
-    }
-    _stopListening();
     _pending = false;
-    // Let the release finish propagating before the host toolkit grabs input.
-    scheduleMicrotask(() => _show?.call());
-  }
-
-  void _stopListening() {
-    if (_listening) HardwareKeyboard.instance.removeHandler(_released);
-    _listening = false;
+    _show!();
   }
 
   void dispose() {
-    _stopListening();
     _pending = false;
-    _awaitingKeys.clear();
     _show = null;
   }
 }
@@ -1453,14 +1425,20 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
   void didUpdateWidget(covariant BusyMarkHeaderPopupMenuButton<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
-      oldWidget.controller?._show = null;
+      _detachController(oldWidget.controller);
       _attachController();
+    }
+  }
+
+  void _detachController(BusyMarkHeaderMenuController? controller) {
+    if (controller != null && controller._show == _openFromKeyboard) {
+      controller._show = null;
     }
   }
 
   @override
   void dispose() {
-    widget.controller?._show = null;
+    _detachController(widget.controller);
     final session = _activeMenuSession;
     _activeMenuSession = null;
     if (session != null) {
@@ -1501,7 +1479,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
     final onSelected = widget.onSelected;
     final onCanceled = widget.onCanceled;
     final previousFocus = FocusManager.instance.primaryFocus;
-    final restoreSelectorFocus = widget.controller != null;
+    var restoreFocus = widget.controller != null;
     final owningRoute = ModalRoute.of(context);
     try {
       final items = await widget.itemBuilder(context);
@@ -1542,8 +1520,10 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           });
         }
       }
+      restoreFocus = restoreFocus && !session.dismissed;
       if (mounted && !session.dismissed) {
         if (selection != null) {
+          restoreFocus = false;
           onSelected(selection);
         } else {
           onCanceled?.call(context);
@@ -1557,7 +1537,8 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
         );
       }
     } finally {
-      if (restoreSelectorFocus &&
+      if (restoreFocus &&
+          mounted &&
           (owningRoute?.isCurrent ?? true) &&
           previousFocus?.context?.mounted == true) {
         previousFocus!.requestFocus();
@@ -1964,7 +1945,7 @@ Future<T?> showBusyMarkContextMenu<T>(
   );
 }
 
-/// Sidebar entry menus use the existing GTK service without a Flutter route.
+/// Context menus use the existing GTK service without a Flutter route.
 /// Metadata entries never render; the service owns positioning and dismissal.
 Future<T?> showBusyMarkNativeContextMenu<T>(
   BuildContext context,
@@ -1977,7 +1958,7 @@ Future<T?> showBusyMarkNativeContextMenu<T>(
   final snapshot = List<PopupMenuEntry<T>>.unmodifiable(items);
   final entries = _busyMarkNativeMenuEntries(snapshot);
   if (entries == null) {
-    throw StateError('Sidebar menus require supported native menu entries.');
+    throw StateError('Context menus require supported native menu entries.');
   }
   final previousFocus = FocusManager.instance.primaryFocus;
   final owner = session ?? NativeMenuSession();
@@ -2540,6 +2521,12 @@ bool isBusyMarkContextMenuKeyEvent(KeyEvent event) {
               !keyboard.isShiftPressed ||
           event.logicalKey == LogicalKeyboardKey.f10 &&
               keyboard.isShiftPressed);
+}
+
+bool handleBusyMarkContextMenuKey(KeyEvent event, VoidCallback? open) {
+  if (open == null || !isBusyMarkContextMenuKeyEvent(event)) return false;
+  open();
+  return true;
 }
 
 class BusyMarkPopupSelectorOption<T> {
@@ -3295,7 +3282,6 @@ class _BusyMarkSidebarRecordRowState<T>
   late final FocusNode _rowFocusNode;
   var _contextMenuOpen = false;
   DateTime? _lastTapAt;
-  final _menuKeys = BusyMarkContextMenuKeys();
   NativeMenuSession? _menuSession;
 
   bool get _hasMenu =>
@@ -3310,7 +3296,6 @@ class _BusyMarkSidebarRecordRowState<T>
 
   @override
   void dispose() {
-    _menuKeys.clear();
     if (_menuSession case final session?) {
       unawaited(const NativeMenuService().dismiss(session));
     }
@@ -3319,7 +3304,7 @@ class _BusyMarkSidebarRecordRowState<T>
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    return _menuKeys.handle(
+    return handleBusyMarkContextMenuKey(
           event,
           _hasMenu ? () => unawaited(_showContextMenu()) : null,
         )
@@ -3421,10 +3406,7 @@ class _BusyMarkSidebarRecordRowState<T>
         clickable: enabled,
         selected: widget.selected || _contextMenuOpen,
         onKeyEvent: _handleKeyEvent,
-        onFocusChange: (focused) {
-          if (!focused) _menuKeys.clear();
-          widget.onFocusChange?.call(focused);
-        },
+        onFocusChange: widget.onFocusChange,
         onTap: widget.onTap == null ? null : _handleTap,
         onSecondaryTapUp: !_hasMenu
             ? null
@@ -5280,14 +5262,6 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
 }
 
 class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
-  final _menuKeys = BusyMarkContextMenuKeys();
-
-  @override
-  void dispose() {
-    _menuKeys.clear();
-    super.dispose();
-  }
-
   void showMenuFromKeyboard() {
     final onMenuRequested = widget.onMenuRequested;
     if (!widget.enabled || onMenuRequested == null) {
@@ -5328,7 +5302,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
         return KeyEventResult.handled;
       }
     }
-    return _menuKeys.handle(
+    return handleBusyMarkContextMenuKey(
           event,
           widget.enabled && widget.onMenuRequested != null
               ? showMenuFromKeyboard
@@ -5380,10 +5354,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
               ? null
               : (details) =>
                     widget.onMenuRequested!(context, details.globalPosition)),
-      onFocusChange: (focused) {
-        if (!focused) _menuKeys.clear();
-        widget.onFocusChange?.call(focused);
-      },
+      onFocusChange: widget.onFocusChange,
       child: Row(
         children: [
           SizedBox(

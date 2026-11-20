@@ -12,7 +12,7 @@ import 'src/app/startup_path.dart';
 import 'src/app/system_accent.dart';
 
 import 'src/git/application/git_controller.dart';
-import 'src/git/data/git_cli_gateway.dart';
+import 'src/git/data/git_shared_gateway.dart';
 import 'src/platform/gtk_animation_settings_service.dart';
 import 'src/platform/gtk_window_preferences_service.dart';
 import 'src/platform/gtk_header_icon_service.dart';

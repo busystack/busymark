@@ -8,6 +8,8 @@ import 'busymark_glyphs.dart';
 
 enum BusyMarkNativeActionRole { inline, standard, suggested, destructive }
 
+enum BusyMarkActionPresentation { standard, alert, toast }
+
 class BusyMarkNativeActionButton extends StatefulWidget {
   const BusyMarkNativeActionButton({
     super.key,
@@ -15,12 +17,14 @@ class BusyMarkNativeActionButton extends StatefulWidget {
     required this.child,
     required this.onPressed,
     this.compact = false,
+    this.presentation = BusyMarkActionPresentation.standard,
   });
 
   final BusyMarkNativeActionRole role;
   final Widget child;
   final VoidCallback? onPressed;
   final bool compact;
+  final BusyMarkActionPresentation presentation;
 
   @override
   State<BusyMarkNativeActionButton> createState() =>
@@ -61,7 +65,7 @@ class BusyMarkNativeActionButtonState
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final theme = Theme.of(context);
-    final style = switch (widget.role) {
+    var style = switch (widget.role) {
       // Match BusyMarkPushButton.flat: native neutral foreground, never the
       // accent/link foreground from the application's text-button theme.
       BusyMarkNativeActionRole.inline => theme.textButtonTheme.style?.copyWith(
@@ -84,6 +88,35 @@ class BusyMarkNativeActionButtonState
       BusyMarkNativeActionRole.standard => theme.filledButtonTheme.style,
       BusyMarkNativeActionRole.suggested => theme.elevatedButtonTheme.style,
     };
+    switch (widget.presentation) {
+      case BusyMarkActionPresentation.standard:
+        break;
+      case BusyMarkActionPresentation.alert:
+        style = style?.copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(104, 38)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+          ),
+          textStyle: WidgetStatePropertyAll(
+            theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        );
+      case BusyMarkActionPresentation.toast:
+        style = theme.filledButtonTheme.style?.copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(48, 30)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+          ),
+          foregroundColor: WidgetStatePropertyAll(colors.foreground),
+          textStyle: WidgetStatePropertyAll(
+            theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        );
+    }
     final states = _states;
     final enabled = widget.onPressed != null;
     final foreground = enabled
@@ -115,7 +148,9 @@ class BusyMarkNativeActionButtonState
     final radius = resolvedShape is RoundedRectangleBorder
         ? resolvedShape.borderRadius
         : BorderRadius.circular(kYaruButtonRadius);
-    final padding = widget.compact
+    final padding =
+        widget.compact ||
+            widget.presentation == BusyMarkActionPresentation.toast
         ? const EdgeInsets.symmetric(
             horizontal: BusyMarkSpacing.md,
             vertical: BusyMarkSpacing.xs,
@@ -527,11 +562,13 @@ class BusyMarkNativeDialogShell extends StatelessWidget {
     super.key,
     required this.title,
     this.maxWidth = BusyMarkSizes.dialogWide,
+    this.showHeader = true,
     this.children = const [],
     this.actions = const [],
   });
   final String title;
   final double maxWidth;
+  final bool showHeader;
   final List<Widget> children, actions;
   @override
   Widget build(BuildContext context) => Semantics(
@@ -561,34 +598,37 @@ class BusyMarkNativeDialogShell extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(BusyMarkSpacing.headerInset),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: BusyMarkSizes.iconButton),
-                        Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleMedium,
+                  if (showHeader)
+                    Padding(
+                      padding: const EdgeInsets.all(
+                        BusyMarkSpacing.headerInset,
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: BusyMarkSizes.iconButton),
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                           ),
-                        ),
-                        BusyMarkHeaderIconButton(
-                          tooltip: MaterialLocalizations.of(
-                            context,
-                          ).closeButtonTooltip,
-                          icon: BusyMarkGlyphs.windowClose,
-                          onPressed: () {
-                            if (ModalRoute.of(context)?.isCurrent == true) {
-                              Navigator.maybePop(context);
-                            }
-                          },
-                        ),
-                      ],
+                          BusyMarkHeaderIconButton(
+                            tooltip: MaterialLocalizations.of(
+                              context,
+                            ).closeButtonTooltip,
+                            icon: BusyMarkGlyphs.windowClose,
+                            onPressed: () {
+                              if (ModalRoute.of(context)?.isCurrent == true) {
+                                Navigator.maybePop(context);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(BusyMarkSpacing.lg),
@@ -653,5 +693,94 @@ class BusyMarkNativeDialogButton extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+/// A short decision with its own heading and response area.
+class BusyMarkAlert extends StatelessWidget {
+  const BusyMarkAlert({
+    super.key,
+    required this.heading,
+    required this.children,
+    required this.responses,
+  });
+
+  final String heading;
+  final List<Widget> children;
+  final List<Widget> responses;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return BusyMarkNativeDialogShell(
+      title: heading,
+      showHeader: false,
+      maxWidth: 440,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(
+                  heading,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: BusyMarkSpacing.sm),
+              DefaultTextStyle.merge(
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: children,
+                ),
+              ),
+              const SizedBox(height: BusyMarkSpacing.xl),
+              OverflowBar(
+                alignment: MainAxisAlignment.center,
+                overflowAlignment: OverflowBarAlignment.center,
+                spacing: BusyMarkSpacing.sm,
+                overflowSpacing: BusyMarkSpacing.sm,
+                children: responses,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class BusyMarkAlertResponse extends StatelessWidget {
+  const BusyMarkAlertResponse({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.destructive = false,
+    this.suggested = false,
+  }) : assert(!destructive || !suggested);
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool destructive;
+  final bool suggested;
+
+  @override
+  Widget build(BuildContext context) => BusyMarkNativeActionButton(
+    role: destructive
+        ? BusyMarkNativeActionRole.destructive
+        : suggested
+        ? BusyMarkNativeActionRole.suggested
+        : BusyMarkNativeActionRole.standard,
+    presentation: BusyMarkActionPresentation.alert,
+    onPressed: onPressed,
+    child: Text(label, textAlign: TextAlign.center),
   );
 }

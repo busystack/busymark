@@ -699,6 +699,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => '새로 만들기';
+
+  @override
   String get open => '열기';
 
   @override
@@ -881,14 +884,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shortcutGroupGeneral => '일반';
 
   @override
-  String get shortcutNewDocument => '만들기';
+  String get home => '홈';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Markdown 파일 또는 Writerside 프로젝트 만들기';
+  String get openMenu => '열기 메뉴';
 
   @override
-  String get shortcutOpenDescription => 'Markdown 파일, 폴더 또는 Writerside 프로젝트 열기';
+  String get newNextcloudNote => '새 Nextcloud 노트';
+
+  @override
+  String get shortcutNewDocument => '새로 만들기 메뉴';
+
+  @override
+  String get shortcutNewDocumentDescription => '리소스를 만드는 메뉴 표시';
+
+  @override
+  String get shortcutOpenDescription => '리소스를 여는 메뉴 표시';
 
   @override
   String get shortcutSaveDescription => '현재 문서 저장';
@@ -1159,11 +1170,11 @@ class AppLocalizationsKo extends AppLocalizations {
       'Markdown 미리보기 및 편집기 이미지가 http 및 https URL에서 로드되도록 허용합니다.';
 
   @override
-  String get clearRemoteImagePermissions => '원격 이미지 권한 초기화';
+  String get clearRemoteImagePermissions => '작업 공간의 이미지 권한 지우기';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      '원격 이미지 로드 권한이 허용된 작업공간의 저장된 권한을 삭제합니다.';
+      '모든 작업 공간의 원격 이미지 권한을 지웁니다.';
 
   @override
   String get clearGitWorkspaceTrust => '신뢰할 수 있는 Git 작업공간 초기화';
@@ -1509,7 +1520,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'BusyMark가 원격 이미지를 로드할 수 있는지 여부를 선택합니다.';
+      '원격 이미지가 차단되었습니다. 클릭하여 불러오기 옵션을 확인하세요.';
 
   @override
   String get remoteImagesBlockedTitle => '원격 이미지가 차단되었습니다.';
@@ -1519,7 +1530,35 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 문서는 인터넷의 이미지를 참조합니다. 이를 로드하면 이미지 호스트에 네트워크 정보가 공개될 수 있습니다.';
 
   @override
-  String get loadRemoteImagesForWorkspace => '이 작업공간에서 로드';
+  String get loadThisRemoteImage => '이 이미지 불러오기';
+
+  @override
+  String get remoteImageMoreOptions => '추가 옵션…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => '원격 이미지 권한';
+
+  @override
+  String get loadRemoteImagesInDocument => '이 문서의 이미지 불러오기';
+
+  @override
+  String get remoteImageUntilClose => '이 문서를 닫을 때까지 적용됩니다.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return '개인정보 보호 설정에서 작업 공간 권한을 지울 때까지 $workspace의 원격 이미지를 허용합니다.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      '개인정보 보호 설정에서 이 옵션을 끌 때까지 BusyMark 전체에서 원격 이미지를 허용합니다.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'BusyMark 전체에서 원격 이미지를 허용합니다. 작업 공간 권한은 별도로 관리됩니다.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => '이 작업 공간에서 항상 허용';
 
   @override
   String get alwaysLoadRemoteImages => '항상 원격 이미지 로드';
@@ -5357,7 +5396,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get searchCurrentWorkspace => '현재 작업 공간';
 
   @override
-  String get browseNotes => '노트 찾아보기';
+  String get browseNotes => 'Nextcloud 노트 찾아보기';
 
   @override
   String get searchActionsCommand => '작업 검색';

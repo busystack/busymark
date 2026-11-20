@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_publisher.dart';
@@ -514,7 +515,9 @@ class _FailHtmlWrite extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    SaveDestination? authorization,
     FutureOr<void> Function()? beforePublish,
+    void Function()? checkBeforeCommit,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     if (targetPath.endsWith('.html')) {
@@ -525,6 +528,7 @@ class _FailHtmlWrite extends AtomicFileWriter {
       bytes,
       overwrite: overwrite,
       beforePublish: beforePublish,
+      checkBeforeCommit: checkBeforeCommit,
       acceptReplaced: acceptReplaced,
     );
   }

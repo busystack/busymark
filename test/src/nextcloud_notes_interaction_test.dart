@@ -567,7 +567,12 @@ void main() {
         ),
       ),
     );
-    await _settle(tester);
+    // The result is rendered only after the SQLite and filesystem work has
+    // finished. Wait for the dialog to leave its progress state.
+    await _settle(
+      tester,
+      until: () => find.byType(LinearProgressIndicator).evaluate().isEmpty,
+    );
     expect(
       find.textContaining('The source changed after review'),
       findsOneWidget,

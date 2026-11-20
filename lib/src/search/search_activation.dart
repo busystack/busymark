@@ -14,7 +14,7 @@ import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import '../nextcloud_notes/domain/notes_search.dart';
 import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
-import '../workspace/document_navigation.dart';
+import '../workspace/workspace_tab_actions.dart';
 import '../workspace/outline_navigation.dart';
 import '../workspace/recent_navigation.dart';
 import '../workspace/workspace_controller.dart';
@@ -127,7 +127,7 @@ Future<void> activateSearchResult(
           session.close();
         }
       case RecentSearchResult(:final resource):
-        await openRecentResource(context, ref, resource);
+        await openRecentResource(ref, resource);
       case DocumentSearchResult(
         :final workspaceId,
         :final accountId,
@@ -155,7 +155,7 @@ Future<void> activateSearchResult(
             acceptNavigation: currentRequest,
           )) {
             if (!currentRequest()) return;
-            revealOpenedDocument(ref);
+            ref.read(revealOpenedDocumentProvider)();
             session.close(restoreFocus: false);
           }
         } else {
@@ -170,7 +170,7 @@ Future<void> activateSearchResult(
             acceptNavigation: currentRequest,
           )) {
             if (!currentRequest()) return;
-            revealOpenedDocument(ref);
+            ref.read(revealOpenedDocumentProvider)();
             session.close(restoreFocus: false);
           }
         }
@@ -194,7 +194,7 @@ Future<void> activateSearchResult(
           acceptNavigation: currentRequest,
         )) {
           if (!currentRequest()) return;
-          revealOpenedDocument(ref);
+          ref.read(revealOpenedDocumentProvider)();
           session.close(restoreFocus: false);
         }
       case HistorySearchResult(:final match):
@@ -286,7 +286,7 @@ Future<void> activateSearchResult(
           unavailable();
           return;
         }
-        revealOpenedDocument(ref);
+        ref.read(revealOpenedDocumentProvider)();
         ref
             .read(notesMatchNavigationProvider.notifier)
             .navigate(
@@ -338,7 +338,7 @@ Future<void> activateSearchResult(
               .setDocumentViewMode(DocumentViewModePreference.source);
           if (!context.mounted || !currentRequest()) return;
         }
-        revealOpenedDocument(ref);
+        ref.read(revealOpenedDocumentProvider)();
         if (hit.start != null && hit.end != null) {
           ref
               .read(notesMatchNavigationProvider.notifier)

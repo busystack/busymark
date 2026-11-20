@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../assets/document_media_resolver.dart';
 import '../core/atomic_file_writer.dart';
+import '../core/save_destination.dart';
 import '../nextcloud_notes/data/notes_attachment_references.dart';
 
 /// Exports one remote Markdown buffer and provider-owned media as a local copy.
@@ -20,6 +21,7 @@ class MarkdownCopyExportService {
     required String destinationPath,
     required DocumentMediaContext media,
     bool overwrite = false,
+    SaveDestination? authorization,
     void Function(String reference)? onMissing,
     bool Function()? isCancelled,
   }) async {
@@ -95,8 +97,19 @@ class MarkdownCopyExportService {
         destination,
         utf8.encode(exported),
         overwrite: overwrite,
+        authorization: authorization,
+        beforePublish: () {
+          if (isCancelled?.call() == true) {
+            throw const FileSystemException('Export cancelled.');
+          }
+        },
       );
       ownsPublished = false;
+    } on AtomicFileChangedException catch (error) {
+      // An uncertain exchange may have published the copy. Its attachments
+      // must survive alongside the displaced destination.
+      if (error.recoveryPath != null) ownsPublished = false;
+      rethrow;
     } finally {
       if (ownsPublished && await published.exists()) {
         await published.delete(recursive: true);

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/core/linux_file_identity.dart';
+import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -41,6 +43,89 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'conditional save exchange cannot retarget the authoring buffer',
+    () async {
+      final root = await Directory.systemTemp.createTemp('save-monitor-owner-');
+      addTearDown(() => root.delete(recursive: true));
+      final file = await File(
+        p.join(root.path, 'note.md'),
+      ).writeAsString('old');
+      final monitor = _ControlledFileMonitor();
+      final service = WorkspaceService(
+        beforeDisplacedValidation: (target, displaced) async {
+          monitor.emitEvent(
+            classifyWorkspaceFileMonitorEvent(
+              FileSystemMoveEvent(target, false, displaced),
+              openFilePaths: {target},
+              workspaceRoot: true,
+            )!,
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        },
+      );
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller;
+      await controller.openPath(file.path);
+      final id = controller.state.activeBuffer!.id;
+      controller.updateActiveText('saved');
+      expect(await controller.saveActive(), isTrue);
+      expect(controller.state.activeBuffer!.id, id);
+      expect(controller.state.activeBuffer!.filePath, file.path);
+      expect(controller.state.activeBuffer!.isDirty, isFalse);
+      expect(await file.readAsString(), 'saved');
+    },
+  );
+
+  for (final route in ['manual', 'all', 'auto']) {
+    test(
+      '$route save retains editor and both external versions on final publication race',
+      () async {
+        final root = await Directory.systemTemp.createTemp(
+          'controller-save-race-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final file = File(p.join(root.path, 'note.md'))..writeAsStringSync('E');
+        String? recovery;
+        final service = WorkspaceService(
+          beforeNewFilePublish: (target) async {
+            await File(target).writeAsString('A');
+          },
+          beforeDisplacedValidation: (target, displaced) async {
+            recovery = displaced;
+            await File(target).writeAsString('B');
+          },
+        );
+        final harness = await _createControllerHarness(service: service);
+        await harness.settingsController.setAutoSave(route == 'auto');
+        final controller = harness.controller;
+        await controller.openPath(file.path);
+        controller.updateActiveText('S');
+        if (route == 'manual') {
+          expect(await controller.saveActive(), isFalse);
+        } else if (route == 'all') {
+          final result = await controller.saveAll();
+          expect(result.conflictBufferIds, [controller.state.activeBuffer!.id]);
+          expect(result.failedBufferIds, isEmpty);
+        } else {
+          expect(await controller.autoSaveActiveIfNeeded(), isFalse);
+        }
+        expect(await file.readAsString(), 'B');
+        expect(await File(recovery!).readAsString(), 'A');
+        expect(controller.state.activeBuffer!.text, 'S');
+        expect(controller.state.activeBuffer!.isDirty, isTrue);
+        final error =
+            controller.state.message!.error as AtomicFileChangedException;
+        expect(error.recoveryPath, recovery);
+        await harness.settingsController.setAutoSave(false);
+      },
+    );
+  }
+
   for (final operation in ['open', 'Save As']) {
     test('Recent failure preserves successful $operation', () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -1113,7 +1198,14 @@ void main() {
         sourceFilePath: bPath,
       );
       await controller.openActiveFile(aPath);
+      await harness.settingsController.setValidateOnEdit(false);
+      final beforePreparation = controller.state;
       final index = (await controller.writersideEditorIndex())!;
+      expect(
+        controller.state,
+        same(beforePreparation),
+        reason: 'Reference preparation must not publish validation state',
+      );
       final symbol = index
           .definitions('a.topic#anchor', moduleId: 'docs')
           .single;
@@ -1500,7 +1592,7 @@ code
       expect(await controller.discardActiveChanges(), isTrue);
       expect(controller.state.activeText, savedText);
       expect(controller.state.isDirty, isFalse);
-      expect(controller.state.workspace?.activeFileSnapshot, isNotNull);
+      expect(controller.state.activeBuffer?.diskSnapshot, isNotNull);
 
       controller.dispose();
       settingsController.dispose();
@@ -1540,6 +1632,204 @@ code
     settingsController.dispose();
     await parent.delete(recursive: true);
   });
+
+  for (final dirty in [false, true]) {
+    for (final outcome in [
+      'valid',
+      'valid existing directory',
+      'nonempty',
+      'read failure',
+      'read failure in existing directory',
+      'cancelled',
+      'superseded',
+      'destination replaced',
+      'published entry replaced',
+    ]) {
+      test(
+        'Writerside creation from a ${dirty ? 'dirty' : 'clean'} workspace: $outcome',
+        () async {
+          final root = await Directory.systemTemp.createTemp(
+            'busymark-create-transaction-',
+          );
+          addTearDown(() => root.delete(recursive: true));
+          final source = File(p.join(root.path, 'original.md'))
+            ..writeAsStringSync('# Original');
+          final existing = Directory(p.join(root.path, 'destination'));
+          if (outcome.contains('existing directory') || outcome == 'nonempty') {
+            existing.createSync();
+          }
+          final existingIdentity = existing.existsSync()
+              ? LinuxFileIdentity.read(existing.path)
+              : null;
+          if (outcome == 'nonempty') {
+            File(
+              p.join(existing.path, 'keep.txt'),
+            ).writeAsStringSync('Keep this');
+          }
+          final service = _WritersideCreationService(
+            failRead: outcome.startsWith('read failure'),
+            pause:
+                outcome == 'superseded' ||
+                outcome == 'published entry replaced',
+          );
+          final harness = await _createControllerHarness(service: service);
+          final controller = harness._container.read(
+            workspaceControllerProvider.notifier,
+          );
+          final settings = harness._container.read(
+            appSettingsControllerProvider.notifier,
+          );
+          await settings.setAutoSave(false);
+          await settings.setValidateOnEdit(false);
+          WorkspaceState state() =>
+              harness._container.read(workspaceControllerProvider);
+          await controller.openPath(source.path);
+          controller.updateActiveEditorState(
+            state().activeBuffer!.editorState.copyWith(
+              selection: const TextSelection.collapsed(offset: 2),
+            ),
+          );
+          if (dirty) controller.updateActiveText('# Dirty original');
+          await controller.validateActive();
+          final before = state();
+          expect(before.hasUnsavedChanges, dirty);
+          var authorized = false;
+          WorkspaceMessage? error;
+          final creation = controller.createWritersideProject(
+            WritersideProjectCreateRequest(
+              parentDirectoryPath: root.path,
+              projectName: 'Docs',
+              directoryName: 'destination',
+              instanceName: 'User Guide',
+              topicTitle: 'Getting started',
+            ),
+            authorizeReplacement: (isCurrent) async {
+              expect(isCurrent(), isTrue);
+              expect(state().workspace?.id, before.workspace?.id);
+              expect(state().workspace?.openedAt, before.workspace?.openedAt);
+              expect(state().activeBuffer, same(before.activeBuffer));
+              expect(
+                root.listSync().any(
+                  (entry) => p
+                      .basename(entry.path)
+                      .startsWith('.busymark-writerside-'),
+                ),
+                isFalse,
+              );
+              expect(existing.existsSync(), existingIdentity != null);
+              authorized = true;
+              if (outcome == 'destination replaced') {
+                existing.createSync();
+                File(
+                  p.join(existing.path, 'keep.txt'),
+                ).writeAsStringSync('Concurrent work');
+              }
+              return outcome != 'cancelled';
+            },
+            onError: (message) => error = message,
+          );
+          if (outcome == 'superseded') {
+            await service.entered.future;
+            expect(state().activeBuffer, same(before.activeBuffer));
+            await controller.createMarkdownFile();
+            final replacement = state();
+            service.release.complete();
+            expect(await creation, isFalse);
+            expect(state().workspace, same(replacement.workspace));
+            expect(state().activeBuffer, same(replacement.activeBuffer));
+            expect(state().documentBuffers, contains(before.activeBuffer));
+            expect(authorized, isTrue);
+            expect(error, isNull);
+            expect(existing.existsSync(), isFalse);
+            expect(root.listSync().map((entry) => entry.path), [source.path]);
+            return;
+          }
+          if (outcome == 'published entry replaced') {
+            await service.entered.future;
+            final replacement = File(p.join(root.path, 'replacement.xml'))
+              ..writeAsStringSync('Concurrent configuration');
+            replacement.renameSync(p.join(existing.path, 'writerside.cfg'));
+            service.release.complete();
+          }
+          final succeeded = outcome.startsWith('valid');
+          expect(await creation, succeeded);
+          switch (outcome) {
+            case 'valid':
+            case 'valid existing directory':
+              expect(authorized, isTrue);
+              expect(state().workspace?.kind, WorkspaceKind.writersideModule);
+              expect(state().documentBuffers, hasLength(1));
+              expect(state().activeText, contains('Getting started'));
+              expect(source.readAsStringSync(), '# Original');
+            case 'nonempty':
+            case 'read failure':
+            case 'read failure in existing directory':
+            case 'destination replaced':
+            case 'published entry replaced':
+              expect(authorized, outcome != 'nonempty');
+              expect(
+                error?.code,
+                WorkspaceMessageCode.createWritersideProjectFailed,
+              );
+              if (outcome == 'nonempty') {
+                expect(
+                  File(p.join(existing.path, 'keep.txt')).readAsStringSync(),
+                  'Keep this',
+                );
+              }
+            case 'cancelled':
+              expect(authorized, isTrue);
+              expect(error, isNull);
+          }
+          if (existingIdentity != null) {
+            expect(LinuxFileIdentity.read(existing.path), existingIdentity);
+          }
+          if (!succeeded) {
+            if (outcome == 'read failure in existing directory') {
+              expect(existing.listSync(), isEmpty);
+            } else if (outcome == 'destination replaced') {
+              expect(
+                existing.listSync().map((entry) => p.basename(entry.path)),
+                ['keep.txt'],
+              );
+              expect(
+                File(p.join(existing.path, 'keep.txt')).readAsStringSync(),
+                'Concurrent work',
+              );
+            } else if (outcome == 'published entry replaced') {
+              expect(
+                existing.listSync().map((entry) => p.basename(entry.path)),
+                ['writerside.cfg'],
+              );
+              expect(
+                File(
+                  p.join(existing.path, 'writerside.cfg'),
+                ).readAsStringSync(),
+                'Concurrent configuration',
+              );
+            } else if (outcome != 'nonempty') {
+              expect(existing.existsSync(), isFalse);
+            }
+            expect(
+              root.listSync().any(
+                (entry) =>
+                    p.basename(entry.path).startsWith('.busymark-writerside-'),
+              ),
+              isFalse,
+            );
+            expect(state().workspace?.id, before.workspace?.id);
+            expect(state().workspace?.openedAt, before.workspace?.openedAt);
+            expect(state().documentBuffers, same(before.documentBuffers));
+            expect(
+              state().activeBuffer!.editorState,
+              same(before.activeBuffer!.editorState),
+            );
+            expect(state().hasUnsavedChanges, dirty);
+          }
+        },
+      );
+    }
+  }
 
   test(
     'creates a Writerside topic and opens it without changing recents',
@@ -2190,13 +2480,13 @@ CommonMark paragraph.
       await service.validationStarted.future;
 
       expect(await controller.saveActive(), isTrue);
-      final savedSnapshot = controller.state.workspace!.activeFileSnapshot!;
+      final savedSnapshot = controller.state.activeBuffer!.diskSnapshot!;
       expect(savedSnapshot.contentHash, '# Dirty A\n');
 
       service.finishValidation();
       await validation;
 
-      final finalSnapshot = controller.state.workspace!.activeFileSnapshot!;
+      final finalSnapshot = controller.state.activeBuffer!.diskSnapshot!;
       expect(finalSnapshot.contentHash, savedSnapshot.contentHash);
       expect(finalSnapshot.modifiedAt, savedSnapshot.modifiedAt);
 
@@ -2489,7 +2779,7 @@ CommonMark paragraph.
     await controller.closeOpenFileTab(initialPath);
 
     expect(controller.state.workspace?.activeFilePath, isNull);
-    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.activeBuffer?.diskSnapshot, isNull);
     expect(controller.state.workspace?.openFilePaths, isEmpty);
     expect(controller.state.activeText, isEmpty);
     expect(controller.state.preview, isNull);
@@ -2553,8 +2843,8 @@ CommonMark paragraph.
     await controller.closeAllOpenFileTabs();
 
     expect(controller.state.workspace?.activeFilePath, isNull);
-    expect(controller.state.workspace?.activeFileModifiedAt, isNull);
-    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.activeBuffer?.diskSnapshot?.modifiedAt, isNull);
+    expect(controller.state.activeBuffer?.diskSnapshot, isNull);
     expect(controller.state.workspace?.openFilePaths, isEmpty);
     expect(controller.state.workspace?.markdown, isNull);
     expect(controller.state.workspace?.diagnostics, isEmpty);
@@ -2654,20 +2944,35 @@ CommonMark paragraph.
     },
   );
 
-  test('failed open clears stale workspace state', () async {
-    final harness = await _createControllerHarness();
-    final settingsController = harness.settingsController;
-    final controller = harness.controller;
+  test(
+    'failed open preserves the current workspace and dirty document',
+    () async {
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
-    await controller.openPath('test/fixtures/markdown/basic.md');
-    await controller.openPath('test/fixtures/markdown/does-not-exist.md');
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final workspaceId = controller.state.workspace!.id;
+      final bufferId = controller.state.activeBufferId;
+      await controller.openPath('test/fixtures/markdown/does-not-exist.md');
+      expect(controller.state.workspace?.id, workspaceId);
+      expect(controller.state.activeBufferId, bufferId);
+      expect(controller.state.message?.code, WorkspaceMessageCode.openFailed);
 
-    expect(controller.state.workspace, isNull);
-    expect(controller.state.message?.code, WorkspaceMessageCode.openFailed);
+      await settingsController.setAutoSave(false);
+      controller.updateActiveText('# Unsaved work\n');
+      await controller.openPath('test/fixtures/markdown/does-not-exist.md');
 
-    controller.dispose();
-    settingsController.dispose();
-  });
+      expect(controller.state.workspace?.id, workspaceId);
+      expect(controller.state.activeBufferId, bufferId);
+      expect(controller.state.activeText, '# Unsaved work\n');
+      expect(controller.state.hasUnsavedChanges, isTrue);
+      expect(controller.state.isLoading, isFalse);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
 
   test(
     'math renderer failures become source-linked runtime diagnostics',
@@ -3426,7 +3731,7 @@ CommonMark paragraph.
     final controller = harness.controller;
 
     await controller.openPath(file.path);
-    final loadedSnapshot = controller.state.workspace!.activeFileSnapshot!;
+    final loadedSnapshot = controller.state.activeBuffer!.diskSnapshot!;
     await file.writeAsString('# External rewrite\n');
     await file.setLastModified(loadedSnapshot.modifiedAt);
     controller.updateActiveText('# BusyMark\n');
@@ -5145,11 +5450,6 @@ class _AutosaveWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime(2026),
       activeFilePath: path,
-      activeFileSnapshot: WorkspaceFileSnapshot(
-        modifiedAt: _autosaveInitialModifiedAt,
-        size: 11,
-        contentHash: 'initial',
-      ),
       files: [
         DocumentFile(
           absolutePath: path,
@@ -5327,7 +5627,6 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime(2026),
       activeFilePath: aPath,
-      activeFileSnapshot: _snapshots[aPath],
       openFilePaths: [aPath],
       files: [
         DocumentFile(
@@ -6170,6 +6469,28 @@ void _registerResponsivenessTests() {
       );
     },
   );
+}
+
+class _WritersideCreationService extends WorkspaceService {
+  _WritersideCreationService({required this.failRead, required this.pause});
+
+  final bool failRead;
+  final bool pause;
+  final entered = Completer<void>();
+  final release = Completer<void>();
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (p.basename(path) == 'getting-started.md') {
+      if (pause) {
+        entered.complete();
+        await release.future;
+      }
+      if (failRead) {
+        throw FileSystemException('Injected initial-topic read failure', path);
+      }
+    }
+    return super.loadTextWithSnapshot(path);
+  }
 }
 
 class _ChangedDuringOpenService extends WorkspaceService {

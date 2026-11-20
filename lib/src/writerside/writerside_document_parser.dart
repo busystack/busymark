@@ -302,8 +302,14 @@ WritersideDocumentNode _rebaseNode(
     startOffset: offset + original.startOffset,
     endOffset: offset + original.endOffset,
   );
+  BusyInline inline(BusyInline original) => original.copyWith(
+    imageSpan: original.imageSpan == null ? null : span(original.imageSpan!),
+    children: original.children.map(inline).toList(),
+  );
   BusyBlock block(BusyBlock original) => original.copyWith(
     sourceSpan: original.sourceSpan == null ? null : span(original.sourceSpan!),
+    posterSpan: original.posterSpan == null ? null : span(original.posterSpan!),
+    inlines: original.inlines.map(inline).toList(),
     children: original.children.map(block).toList(),
   );
   if (node is WritersideMarkdownBlockNode) {

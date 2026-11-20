@@ -1,6 +1,7 @@
 import '../../writerside/writerside_property_validation.dart';
 import 'dart:convert';
 import '../../core/source_span.dart';
+import '../../core/uri_utils.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
@@ -197,7 +198,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
       rebased = rebased.copyWith(blocks: rebased.blocks.map(commit).toList());
       _document = busyMarkWysiwygBindMarkdownReferences(rebased);
+    } else if (_hasRemoteImages()) {
+      _document = const MarkdownParser().rebindImageSpans(_document, source);
     }
+  }
+
+  bool _hasRemoteImages() {
+    bool hasImage(BusyInline inline) =>
+        (inline.kind == BusyInlineKind.image &&
+            isRemoteImageSource(inline.destination)) ||
+        inline.children.any(hasImage);
+
+    return _flattenBlocks(_document.blocks).any(
+      (block) =>
+          (block.kind == BusyBlockKind.image &&
+              isRemoteImageSource(block.attributes['src'])) ||
+          block.inlines.any(hasImage),
+    );
   }
 
   BusyDocument _reparseNativeListOwnership(String source) {

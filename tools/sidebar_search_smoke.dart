@@ -1,4 +1,3 @@
-import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:busymark/src/workspace/presentation/keyboard_shortcuts_settings.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 // Native Linux search workflows with disposable files and a cached offline
@@ -214,6 +213,15 @@ class _TraceHistoryStore extends FileLocalHistoryStore {
   Future<LocalHistoryRevision?> readRevision(String revisionId) {
     reads++;
     return super.readRevision(revisionId);
+  }
+
+  @override
+  Future<List<LocalHistoryRevision>> readRevisions(
+    Iterable<String> revisionIds,
+  ) {
+    final ids = revisionIds.toList();
+    reads += ids.length;
+    return super.readRevisions(ids);
   }
 }
 
@@ -1938,19 +1946,23 @@ pix.savev(sys.argv[1], 'png', [], [])
         .read(workspaceControllerProvider)
         .activeText;
     await contentView('S');
-    check(
-      widgets<BusyMarkSourceEditor>().isEmpty &&
-          ref.read(workspaceControllerProvider).activeText ==
-              beforeUnassignedView,
-      'old unassigned view key cannot switch modes',
+    // Selector mnemonics are fixed view actions, independent of direct keys.
+    await wait(
+      () => widgets<BusyMarkSourceEditor>().isNotEmpty,
+      'Source remains selectable without a direct shortcut',
     );
-    // The shared Flutter page frame publishes this configuration even when
-    // the legacy native header service is unavailable on the current runner.
-    final labels =
-        widgets<HeaderBarConfigurationPublisher>().single.configuration.labels;
     check(
-      labels.sourceShortcut.isEmpty && labels.sourceGtkAccelerator.isEmpty,
-      'mounted header removes unassigned view metadata',
+      ref.read(workspaceControllerProvider).activeText == beforeUnassignedView,
+      'selecting an unbound view preserves document bytes',
+    );
+    check(
+      ref
+              .read(
+                busyMarkCommandRegistryProvider,
+              )[BusyMarkCommandIds.viewSource]
+              ?.shortcut ==
+          null,
+      'mounted command removes unassigned view metadata',
     );
     await assign('search.find', 'F12');
     await key('ctrl+f', verifySearch: false);

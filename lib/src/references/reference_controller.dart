@@ -28,7 +28,7 @@ final referenceBatchParserProvider = Provider<ReferenceBatchParser>(
 );
 
 /// Coalesces edits and filesystem/repository notifications outside widget builds.
-/// Content digests retain unchanged parsing; generations fence obsolete results.
+/// Retained sources reuse unchanged parsing; generations fence obsolete results.
 class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
   Timer? _timer;
   StreamSubscription<void>? _notes;
@@ -36,7 +36,54 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
   final _cache = <String, ParsedReferenceDocument>{};
   @override
   AsyncValue<ReferenceIndex> build() {
-    ref.listen(workspaceControllerProvider, (before, after) => refresh());
+    ref.listen(workspaceControllerProvider, (before, after) {
+      final previous = before?.workspace, next = after.workspace;
+      final oldBuffers = before?.documentBuffers ?? const [];
+      final buffers = after.documentBuffers;
+      if (previous?.id != next?.id ||
+          previous?.openedAt != next?.openedAt ||
+          !identical(previous?.files, next?.files) ||
+          !identical(previous?.writersideProject, next?.writersideProject) ||
+          oldBuffers.length != buffers.length ||
+          buffers.indexed.any((entry) {
+            final old = oldBuffers[entry.$1], current = entry.$2;
+            return old.id != current.id ||
+                old.filePath != current.filePath ||
+                old.text != current.text ||
+                old.remoteNote != current.remoteNote;
+          })) {
+        refresh();
+      }
+    });
+    final files = ref.read(workspaceFileMonitorProvider).events.listen((event) {
+      final root = ref
+          .read(workspaceControllerProvider)
+          .workspace
+          ?.filesystemRootPath;
+      if (root != null &&
+          [
+            event.path,
+            if (event.destinationPath != null) event.destinationPath!,
+          ].any((path) => p.equals(root, path) || p.isWithin(root, path)) &&
+          (event.isDirectory ||
+              [
+                event.path,
+                if (event.destinationPath != null) event.destinationPath!,
+              ].any(
+                (path) => {
+                  '.md',
+                  '.markdown',
+                  '.topic',
+                  '.tree',
+                  '.cfg',
+                  '.list',
+                  '.properties',
+                  '.xml',
+                }.contains(p.extension(path).toLowerCase()),
+              ))) {
+        refresh();
+      }
+    });
     ref.listen(nextcloudNotesRepositoryProvider, (before, after) {
       _notes?.cancel();
       _notes = after.value?.changes.listen((_) => refresh());
@@ -46,6 +93,7 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
       _generation++;
       _timer?.cancel();
       _notes?.cancel();
+      unawaited(files.cancel());
     });
     refresh();
     return const AsyncLoading();
@@ -162,7 +210,7 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
       final changed = <ReferenceDocument>[];
       for (final document in documents) {
         final cached = _cache[document.identity];
-        if (cached?.document.revision == document.revision &&
+        if (cached?.document.source == document.source &&
             cached?.document.available == document.available &&
             cached?.document.title == document.title &&
             cached?.document.mode == document.mode &&

@@ -77,27 +77,28 @@ class ReferencePage {
 }
 
 class ParsedReferenceDocument {
-  ParsedReferenceDocument(this.document)
-    : headings = document.available
-          ? const MarkdownParser()
-                .parse(
-                  filePath: document.identity,
-                  source: document.source,
-                  mode: document.mode,
-                  validateLocalReferences: false,
-                )
-                .headings
-          : const [],
-      authored = document.available
-          ? markdownReferences(
-              identity: document.identity,
-              source: document.source,
-              mode: document.mode,
-            )
-          : const [];
+  ParsedReferenceDocument(this.document) {
+    final parsed = document.available
+        ? const MarkdownParser().parse(
+            filePath: document.identity,
+            source: document.source,
+            mode: document.mode,
+            validateLocalReferences: false,
+          )
+        : null;
+    headings = parsed?.headings ?? const [];
+    authored = parsed == null
+        ? const []
+        : markdownReferences(
+            identity: document.identity,
+            source: document.source,
+            mode: document.mode,
+            parsedDocument: parsed,
+          );
+  }
   final ReferenceDocument document;
-  final List<MarkdownHeading> headings;
-  final List<AuthoredReference> authored;
+  late final List<MarkdownHeading> headings;
+  late final List<AuthoredReference> authored;
 }
 
 /// Entirely derived; no writes to notes, source, history or synchronization.

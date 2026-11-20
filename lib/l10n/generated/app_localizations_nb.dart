@@ -730,6 +730,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Ny';
+
+  @override
   String get open => 'Åpne';
 
   @override
@@ -913,15 +916,23 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutGroupGeneral => 'Generelt';
 
   @override
-  String get shortcutNewDocument => 'Opprett';
+  String get home => 'Hjem';
+
+  @override
+  String get openMenu => 'Åpne-meny';
+
+  @override
+  String get newNextcloudNote => 'Nytt Nextcloud-notat';
+
+  @override
+  String get shortcutNewDocument => 'Ny-meny';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Opprett en Markdown-fil eller et Writerside-prosjekt';
+      'Vis menyen for å opprette ressurser';
 
   @override
-  String get shortcutOpenDescription =>
-      'Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt';
+  String get shortcutOpenDescription => 'Vis menyen for å åpne ressurser';
 
   @override
   String get shortcutSaveDescription => 'Lagre gjeldende dokument';
@@ -1216,11 +1227,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Tøm tillatelser for eksterne bilder';
+      'Slett bildetillatelser for arbeidsområder';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.';
+      'Glem alle tillatelser for eksterne bilder i arbeidsområder.';
 
   @override
   String get clearGitWorkspaceTrust => 'Tøm klarerte Git-arbeidsområder';
@@ -1573,7 +1584,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Velg om BusyMark kan laste inn eksterne bilder.';
+      'Eksternt bilde blokkert. Klikk for innlastingsvalg.';
 
   @override
   String get remoteImagesBlockedTitle => 'Eksterne bilder er blokkert';
@@ -1583,8 +1594,36 @@ class AppLocalizationsNb extends AppLocalizations {
       'Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.';
 
   @override
+  String get loadThisRemoteImage => 'Last inn dette bildet';
+
+  @override
+  String get remoteImageMoreOptions => 'Flere valg…';
+
+  @override
+  String get remoteImageMoreOptionsTitle => 'Tillatelser for eksterne bilder';
+
+  @override
+  String get loadRemoteImagesInDocument => 'Last inn bilder i dette dokumentet';
+
+  @override
+  String get remoteImageUntilClose => 'Til dette dokumentet lukkes.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Tillater eksterne bilder i $workspace til du sletter arbeidsområdetillatelsene i personverninnstillingene.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Tillater eksterne bilder i hele BusyMark til du slår dette av i personverninnstillingene.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Tillat eksterne bilder i hele BusyMark. Tillatelser for arbeidsområder administreres separat.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Last inn for dette arbeidsområdet';
+      'Tillat alltid i dette arbeidsområdet';
 
   @override
   String get alwaysLoadRemoteImages => 'Last alltid inn eksterne bilder';
@@ -5518,7 +5557,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get searchCurrentWorkspace => 'Gjeldende arbeidsområde';
 
   @override
-  String get browseNotes => 'Bla gjennom notater';
+  String get browseNotes => 'Bla gjennom Nextcloud-notater';
 
   @override
   String get searchActionsCommand => 'Søk etter handlinger';

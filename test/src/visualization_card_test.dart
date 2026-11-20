@@ -1,6 +1,7 @@
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
-import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
@@ -16,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/widget_async.dart';
 
 void main() {
   late Directory cacheDirectory;
@@ -38,14 +41,12 @@ void main() {
         cache: _MemoryVisualizationCache(cacheDirectory),
       );
       addTearDown(coordinator.dispose);
-      final barrier = _VisualizationModalBarrier();
       final previousFocus = FocusNode();
       addTearDown(previousFocus.dispose);
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             visualizationCoordinatorProvider.overrideWithValue(coordinator),
-            linuxHeaderBarServiceProvider.overrideWithValue(barrier),
           ],
           child: _App(
             child: Focus(
@@ -64,7 +65,6 @@ void main() {
       final previewTransform = preview.transformationController!.value.clone();
       await tester.tap(find.byTooltip('Full Screen'));
       await tester.pumpAndSettle();
-      expect(barrier.depths, [1]);
       expect(find.byType(BusyMarkModalShortcutBoundary), findsOneWidget);
       expect(find.byType(BusyMarkDialogTitleBar), findsOneWidget);
       final viewer = tester.widget<InteractiveViewer>(
@@ -85,7 +85,6 @@ void main() {
       expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 2);
       await tester.tap(find.bySemanticsLabel('Close').last);
       await tester.pumpAndSettle();
-      expect(barrier.depths, [1, 0]);
       expect(find.byType(BusyMarkDialogTitleBar), findsNothing);
       expect(preview.transformationController!.value, previewTransform);
       expect(previousFocus.hasFocus, isTrue);
@@ -94,7 +93,6 @@ void main() {
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(barrier.depths, [1, 0, 1, 0]);
       expect(find.byType(InteractiveViewer), findsOneWidget);
       expect(previousFocus.hasFocus, isTrue);
     },
@@ -147,6 +145,71 @@ void main() {
     expect(selectedLine, 12);
     expect(find.textContaining('```MerMAID'), findsOneWidget);
   });
+
+  testWidgets(
+    'Save image refuses an unapproved final SVG and publishes a new one',
+    (tester) async {
+      final coordinator = VisualizationCoordinator(
+        renderers: const [_CardRenderer()],
+        cache: _MemoryVisualizationCache(cacheDirectory),
+      );
+      addTearDown(coordinator.dispose);
+      const chooser = MethodChannel('busymark/save_chooser');
+      final messenger = tester.binding.defaultBinaryMessenger;
+      Map<String, Object?>? selection;
+      messenger.setMockMethodCallHandler(chooser, (call) async {
+        expect(call.method, 'save');
+        expect((call.arguments as Map)['suffix'], '.svg');
+        return selection;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+      final protected = File('${cacheDirectory.path}/diagram.svg')
+        ..writeAsStringSync('existing SVG');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            visualizationCoordinatorProvider.overrideWithValue(coordinator),
+          ],
+          child: const _App(child: _CardHarness(onDiagnosticSelected: _ignore)),
+        ),
+      );
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+      Future<void> choose(Map<String, Object?>? review) async {
+        selection = review;
+        await tester.tap(find.byTooltip('Save image'));
+        await tester.pumpAndSettle();
+      }
+
+      final reviewed = SaveDestination.inspect(protected.path).chooserReview;
+      await choose({...reviewed, 'path': '${cacheDirectory.path}/diagram'});
+      await choose({...reviewed, 'entry': null});
+      await choose(null);
+      expect(protected.readAsStringSync(), 'existing SVG');
+      expect(find.textContaining('Saved diagram.svg'), findsNothing);
+
+      for (var index = 0; index < 2; index++) {
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+      }
+
+      final published = File('${cacheDirectory.path}/new-diagram.SVG');
+      await choose(SaveDestination.inspect(published.path).chooserReview);
+      await pumpUntil(
+        tester,
+        published.existsSync,
+        operation: 'Publish staged SVG',
+      );
+      expect(published.readAsStringSync(), startsWith('<svg'));
+      expect(protected.readAsStringSync(), 'existing SVG');
+      await pumpUntil(
+        tester,
+        () => find.text('Saved new-diagram.SVG').evaluate().isNotEmpty,
+        operation: 'Show successful SVG publication',
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets('fits a small Mermaid diagram to the preview width', (
     tester,
@@ -272,6 +335,8 @@ class _MemoryVisualizationCache extends VisualizationCache {
   }
 }
 
+void _ignore(int _) {}
+
 class _App extends StatelessWidget {
   const _App({required this.child});
 
@@ -282,7 +347,9 @@ class _App extends StatelessWidget {
     return MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: SingleChildScrollView(child: child)),
+      home: BusyMarkToastOverlay(
+        child: Scaffold(body: SingleChildScrollView(child: child)),
+      ),
     );
   }
 }
@@ -517,10 +584,4 @@ class _OpenReferenceHost implements WebRenderHost {
     required VisualizationTheme theme,
     required VisualizationCancellationToken cancellationToken,
   }) => throw UnimplementedError();
-}
-
-class _VisualizationModalBarrier extends LinuxHeaderBarService {
-  final depths = <int>[];
-  @override
-  Future<void> setModalBarrierDepth(int value) async => depths.add(value);
 }

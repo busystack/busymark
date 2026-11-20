@@ -728,6 +728,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
+  String get newResource => 'Создать';
+
+  @override
   String get open => 'Открыть';
 
   @override
@@ -911,15 +914,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shortcutGroupGeneral => 'Общие';
 
   @override
-  String get shortcutNewDocument => 'Создать';
+  String get home => 'Главная';
+
+  @override
+  String get openMenu => 'Меню «Открыть»';
+
+  @override
+  String get newNextcloudNote => 'Новая заметка Nextcloud';
+
+  @override
+  String get shortcutNewDocument => 'Меню «Создать»';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Создать файл Markdown или проект Writerside';
+      'Показать меню создания ресурсов';
 
   @override
-  String get shortcutOpenDescription =>
-      'Открыть файл Markdown, папку или проект Writerside';
+  String get shortcutOpenDescription => 'Показать меню открытия ресурсов';
 
   @override
   String get shortcutSaveDescription => 'Сохранить текущий документ';
@@ -1216,11 +1227,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissions =>
-      'Сбросить разрешения на удалённые изображения';
+      'Очистить разрешения для изображений в рабочих пространствах';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Забыть рабочие области, которым было разрешено загружать удалённые изображения.';
+      'Забыть все разрешения рабочих пространств на загрузку удалённых изображений.';
 
   @override
   String get clearGitWorkspaceTrust =>
@@ -1582,7 +1593,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Выберите, может ли BusyMark загружать удалённые изображения.';
+      'Удалённое изображение заблокировано. Нажмите, чтобы выбрать способ загрузки.';
 
   @override
   String get remoteImagesBlockedTitle => 'Удалённые изображения заблокированы';
@@ -1592,8 +1603,38 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот документ ссылается на изображения из интернета. Их загрузка может раскрыть сведения о вашей сети серверам, на которых размещены изображения.';
 
   @override
+  String get loadThisRemoteImage => 'Загрузить это изображение';
+
+  @override
+  String get remoteImageMoreOptions => 'Другие варианты…';
+
+  @override
+  String get remoteImageMoreOptionsTitle =>
+      'Разрешения для удалённых изображений';
+
+  @override
+  String get loadRemoteImagesInDocument =>
+      'Загрузить изображения в этом документе';
+
+  @override
+  String get remoteImageUntilClose => 'До закрытия этого документа.';
+
+  @override
+  String remoteImageWorkspacePermissionDetail(String workspace) {
+    return 'Разрешает удалённые изображения в $workspace, пока вы не очистите разрешения для рабочих пространств в настройках конфиденциальности.';
+  }
+
+  @override
+  String get remoteImageGlobalPermissionDetail =>
+      'Разрешает удалённые изображения во всём BusyMark, пока вы не отключите эту настройку в разделе конфиденциальности.';
+
+  @override
+  String get remoteImageGlobalSettingsDetail =>
+      'Разрешает удалённые изображения во всём BusyMark. Разрешения рабочих пространств настраиваются отдельно.';
+
+  @override
   String get loadRemoteImagesForWorkspace =>
-      'Загрузить для этой рабочей области';
+      'Всегда разрешать в этом рабочем пространстве';
 
   @override
   String get alwaysLoadRemoteImages => 'Всегда загружать удалённые изображения';
@@ -5570,7 +5611,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchCurrentWorkspace => 'Текущая рабочая область';
 
   @override
-  String get browseNotes => 'Обзор заметок';
+  String get browseNotes => 'Просмотр заметок Nextcloud';
 
   @override
   String get searchActionsCommand => 'Поиск действий';

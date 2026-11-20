@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final names = [
+    '/tmp/.busymark-save-10/contents',
+    '/tmp/.busymark-save-batch-10/contents',
     '/tmp/.guide.tree.busymark-topic-create-10-100-0',
     '/tmp/.guide.tree.busymark-safe-delete-10-100-0',
     '/tmp/.topic.md.busymark-safe-delete-quarantine-10-100-0',
