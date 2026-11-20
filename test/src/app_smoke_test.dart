@@ -1843,9 +1843,22 @@ void main() {
         expect(parsed.blocks.single.attributes['level'], '2');
         expect(parsed.blocks.single.plainText, 'About the job');
       }
-      bool? saved;
-      unawaited(workspace.saveActive().then((value) => saved = value));
-      await _waitForSearchCondition(tester, () => saved != null);
+      final saving = workspace.saveActive();
+      final saved = await tester.runAsync(() async {
+        // Save crosses real file I/O and callbacks queued on the widget clock.
+        // Drive both until the controller reports the transaction result.
+        var finished = false;
+        final result = saving.whenComplete(() => finished = true);
+        Future<void> flushFramesUntilSaved() async {
+          while (!finished) {
+            await tester.pump();
+            if (!finished) await Future<void>.delayed(Duration.zero);
+          }
+        }
+
+        final (value, _) = await (result, flushFramesUntilSaved()).wait;
+        return value;
+      });
       expect(saved, isTrue);
       await tester.pumpAndSettle();
       expect(file.readAsStringSync(), savedSource);
