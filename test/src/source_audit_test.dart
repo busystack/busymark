@@ -124,6 +124,7 @@ void main() {
       r'^version:\s*([^\s]+)\s*$',
       multiLine: true,
     ).firstMatch(pubspec)!.group(1)!;
+    final releaseVersion = 'v$version';
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
     final appMetadata = File(
       'lib/src/app/app_metadata.dart',
@@ -132,9 +133,9 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(snapcraft, contains('version: "$version"'));
-    expect(appMetadata, contains("busyMarkAppVersion = '$version'"));
-    expect(appstream, contains('<release version="$version"'));
+    expect(snapcraft, contains('version: "$releaseVersion"'));
+    expect(appMetadata, contains("busyMarkAppVersion = '$releaseVersion'"));
+    expect(appstream, contains('<release version="$releaseVersion"'));
   });
 
   test('top-level app routes do not animate between desktop surfaces', () {

@@ -32,7 +32,7 @@ void main() {
     expect(pubspec, contains(RegExp(r'^version: 0\.7\.3$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.7\.3"$', multiLine: true)),
+      contains(RegExp(r'^version: "v0\.7\.3"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -59,7 +59,7 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.7.3"'));
+    expect(metainfo, contains('<release version="v0.7.3"'));
     expect(pubspec, isNot(contains('0.6.11')));
     expect(snapcraft, isNot(contains('0.6.11')));
   });
