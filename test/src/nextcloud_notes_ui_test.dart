@@ -2220,7 +2220,10 @@ void main() {
 
       await keyboardOpen(beta);
       await menu.activate('Favorites');
-      await settleStorage(tester);
+      await settleStorage(
+        tester,
+        until: () => repository.noteById(beta.localId)?.favorite == true,
+      );
       expect(repository.noteById(beta.localId)!.favorite, isTrue);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
       await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
@@ -2229,7 +2232,10 @@ void main() {
       await tester.pumpAndSettle();
       await keyboardOpen(beta);
       await menu.activate('Remove favorite');
-      await settleStorage(tester);
+      await settleStorage(
+        tester,
+        until: () => repository.noteById(beta.localId)?.favorite == false,
+      );
       expect(repository.noteById(beta.localId)!.favorite, isFalse);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
       await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
