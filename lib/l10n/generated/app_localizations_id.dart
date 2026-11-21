@@ -129,6 +129,18 @@ class AppLocalizationsId extends AppLocalizations {
       'Penyimpanan lokal gagal. Periksa penyimpanan dan coba item ini lagi; item yang berhasil tetap tersimpan.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'Catatan server berubah. Draf penggabungan Anda dipertahankan. Tinjau perbandingan terbaru dan pilih penyelesaian lagi.';
 

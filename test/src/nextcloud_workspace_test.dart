@@ -7,6 +7,7 @@ import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
@@ -23,6 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:path/path.dart' as p;
+import 'package:sqlite3/sqlite3.dart';
 
 import 'nextcloud_notes/notes_api_test.dart' show serverNote;
 
@@ -754,6 +756,189 @@ void main() {
     );
   }
 
+  test(
+    'batch deletion preserves each blocked, failed and uncertain note',
+    () async {
+      final notes = {
+        for (var id = 1; id <= 8; id++)
+          id: serverNote(id, content: 'server body $id', readonly: id == 3),
+      };
+      final started = Completer<void>();
+      final release = Completer<void>();
+      final deletes = <int>[];
+      final history = _FailingDeleteHistoryStore();
+      var deleting = false;
+      final h = await _Harness.create(
+        seedLocal: false,
+        deferPersistence: true,
+        historyStore: history,
+        client: MockClient((request) async {
+          final id = int.tryParse(request.url.pathSegments.last);
+          if (request.method == 'DELETE') {
+            deletes.add(id!);
+            if (id == 5) throw http.ClientException('response lost');
+            expect(id, 1);
+            notes.remove(id);
+            return http.Response('', 200);
+          }
+          expect(request.method, 'GET');
+          if (deleting && id == 1) {
+            started.complete();
+            await release.future;
+          }
+          if (deleting && id == 2) {
+            return http.Response(
+              jsonEncode(
+                serverNote(2, etag: 'changed', content: 'new server body'),
+              ),
+              200,
+            );
+          }
+          if (deleting && id == 7) throw http.ClientException('offline');
+          if (deleting && id == 8) {
+            return http.Response(
+              jsonEncode({...notes[8]!, 'readonly': true}),
+              200,
+            );
+          }
+          return http.Response(
+            jsonEncode(id == null ? notes.values.toList() : notes[id]),
+            200,
+          );
+        }),
+      );
+      addTearDown(h.dispose);
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+      });
+      await h.repository.synchronize(_accountId, allowWrites: false);
+      await h.controller.openNextcloudWorkspace(_accountId);
+      await h.controller.refreshNextcloudNotes();
+      final targets = [
+        for (var id = 1; id <= 8; id++)
+          h.repository.notes.singleWhere((note) => note.serverId == id),
+      ];
+      history.failId = targets[3].localId;
+      await h.controller.openNextcloudNote(targets[0].localId);
+      h.controller.updateActiveText('dirty content retained in history');
+      await h.controller.openNextcloudNote(targets[5].localId);
+
+      final database = sqlite3.open(h.repository.store.path);
+      try {
+        database.execute('''
+        CREATE TRIGGER fail_fixture_delete_save BEFORE UPDATE ON notes
+        WHEN NEW.id = '${targets[5].localId}'
+         AND json_extract(NEW.data, '\$.content') = 'dirty content stays in editor'
+        BEGIN SELECT RAISE(ABORT, 'fixture save failure'); END
+      ''');
+      } finally {
+        database.close();
+      }
+      addTearDown(() {
+        final cleanup = sqlite3.open(h.repository.store.path);
+        try {
+          cleanup.execute('DROP TRIGGER fail_fixture_delete_save');
+        } finally {
+          cleanup.close();
+        }
+      });
+      h.controller.updateActiveText('dirty content stays in editor');
+      final draft = await h.repository.create(
+        _accountId,
+        content: 'unsent draft',
+      );
+      // Refresh any revisions saved by opening another tab before making the review.
+      final reviewed = [
+        for (final target in targets) h.repository.noteById(target.localId)!,
+        draft,
+      ];
+      final generation = h.repository.accountGeneration(_accountId);
+      deleting = true;
+      final progress = <String>[];
+      final submission = h.controller.batchDeleteNextcloudNotes(
+        reviewed,
+        accountGeneration: generation,
+        onOutcome: (outcome) => progress.add(outcome.localId),
+      );
+      await Future.any([
+        started.future,
+        submission.then<void>((outcomes) {
+          throw StateError(
+            'Deletion did not reach its fresh GET. '
+            '${outcomes.map((o) => '${o.status}: ${o.reason}: ${o.detail}').join(', ')}',
+          );
+        }),
+      ]).timeout(const Duration(seconds: 5));
+      try {
+        await expectLater(
+          h.controller.batchDeleteNextcloudNotes(
+            reviewed,
+            accountGeneration: generation,
+          ),
+          throwsA(
+            isA<NotesException>().having(
+              (e) => e.code,
+              'code',
+              NotesFailureCode.conflict,
+            ),
+          ),
+        );
+        expect(progress, isEmpty);
+        expect(deletes, isEmpty);
+      } finally {
+        release.complete();
+      }
+      final outcomes = await submission;
+      expect(progress, reviewed.map((n) => n.localId).toList());
+      expect(outcomes.map((value) => value.reason), [
+        null,
+        NotesBatchReason.reviewChanged,
+        NotesBatchReason.readOnly,
+        NotesBatchReason.historyNotSaved,
+        NotesBatchReason.deletionUncertain,
+        NotesBatchReason.editorNotSaved,
+        NotesBatchReason.unavailable,
+        NotesBatchReason.readOnly,
+        null,
+      ]);
+      expect(deletes, [1, 5]);
+      expect(
+        outcomes
+            .where((o) => o.status == NotesBatchStatus.changed)
+            .map((o) => o.localId),
+        [targets[0].localId, draft.localId],
+      );
+      expect(
+        h.repository.noteById(targets[0].localId)!.syncState,
+        NoteSyncState.deletedRemotely,
+      );
+      expect(h.repository.noteById(draft.localId)!.content, 'unsent draft');
+      expect(
+        h.repository.noteById(draft.localId)!.syncState,
+        NoteSyncState.deletedRemotely,
+      );
+      expect(
+        h.repository.noteById(targets[1].localId)!.remote!.content,
+        'new server body',
+      );
+      for (final target in targets.skip(1)) {
+        final current = h.repository.noteById(target.localId)!;
+        expect(current.syncState, isNot(NoteSyncState.deletedRemotely));
+        expect(current.content, target.content);
+      }
+      expect(
+        history.beforeDelete[targets[0].localId],
+        'dirty content retained in history',
+      );
+      expect(
+        h.state.documentBuffers
+            .singleWhere((b) => b.remoteNote?.localId == targets[5].localId)
+            .text,
+        'dirty content stays in editor',
+      );
+    },
+  );
+
   for (final explicitDelete in [false, true]) {
     test(
       'removed active note activates remaining tab (explicit: $explicitDelete)',
@@ -1175,6 +1360,27 @@ class _BlockingRestoreHistoryStore extends MemoryLocalHistoryStore {
     if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
       if (!started.isCompleted) started.complete();
       await release.future;
+    }
+    return super.capture(request, policy);
+  }
+}
+
+class _FailingDeleteHistoryStore extends MemoryLocalHistoryStore {
+  String? failId;
+  final beforeDelete = <String, String>{};
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    final note = request.remoteNote;
+    if (request.reason == LocalHistoryCaptureReason.beforeDelete &&
+        note != null) {
+      if (note.localId == failId) {
+        throw const FileSystemException('fixture history failure');
+      }
+      beforeDelete[note.localId] = request.source;
     }
     return super.capture(request, policy);
   }

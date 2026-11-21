@@ -108,6 +108,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
 
   @override

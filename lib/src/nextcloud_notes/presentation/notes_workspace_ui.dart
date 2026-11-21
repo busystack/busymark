@@ -96,10 +96,13 @@ Future<void> showNotesBatch(
           if (repository.noteById(id) != null) repository.metadataSnapshot(id),
       ];
   if (!context.mounted || reviewed.isEmpty) return;
+  final accountId = reviewed.first.note.accountId;
+  final accountGeneration = repository.accountGeneration(accountId);
   var action = initialAction ?? 'favorite';
   var category = reviewed.length == 1 ? reviewed.single.note.category : '';
   var busy = false;
   List<NotesBatchOutcome>? outcomes;
+  final completed = <String, NotesBatchOutcome>{};
   String? error;
   await showBusyMarkModalDialog<void>(
     context,
@@ -109,10 +112,15 @@ Future<void> showNotesBatch(
         String actionLabel(String value) => switch (value) {
           'move' => context.l10n.notesMove,
           'unfavorite' => context.l10n.notesRemoveFavorite,
+          'delete' => context.l10n.delete,
           _ => context.l10n.nextcloudFavorites,
         };
+        final deleting = action == 'delete';
         String statusLabel(NotesBatchStatus value) => switch (value) {
-          NotesBatchStatus.changed => context.l10n.nextcloudSavedLocally,
+          NotesBatchStatus.changed =>
+            deleting
+                ? context.l10n.localHistoryDeleted
+                : context.l10n.nextcloudSavedLocally,
           NotesBatchStatus.skipped => context.l10n.notesSkipped,
           NotesBatchStatus.conflicted => context.l10n.gitConflicts,
           NotesBatchStatus.failed => context.l10n.notesFailed,
@@ -131,26 +139,63 @@ Future<void> showNotesBatch(
               ),
               if (outcomes == null)
                 BusyMarkDialogButton(
-                  label: context.l10n.save,
+                  label: deleting ? context.l10n.delete : context.l10n.save,
+                  destructive: deleting,
                   onPressed: busy
                       ? null
                       : () async {
+                          if (busy || outcomes != null) return;
                           update(() {
                             busy = true;
                             error = null;
                           });
                           try {
-                            final result = await ref
-                                .read(workspaceControllerProvider.notifier)
-                                .batchNextcloudMetadata(
-                                  reviewed,
-                                  category: action == 'move' ? category : null,
-                                  favorite: action == 'move'
-                                      ? null
-                                      : action == 'favorite',
-                                );
+                            final controller = ref.read(
+                              workspaceControllerProvider.notifier,
+                            );
+                            final navigation = ref.read(
+                              notesNavigationProvider(accountId),
+                            );
+                            final result = deleting
+                                ? await controller.batchDeleteNextcloudNotes(
+                                    reviewed
+                                        .map((snapshot) => snapshot.note)
+                                        .toList(),
+                                    accountGeneration: accountGeneration,
+                                    onOutcome: (outcome) {
+                                      if (outcome.status ==
+                                          NotesBatchStatus.changed) {
+                                        navigation.selected.remove(
+                                          outcome.localId,
+                                        );
+                                      }
+                                      if (context.mounted) {
+                                        update(
+                                          () => completed[outcome.localId] =
+                                              outcome,
+                                        );
+                                      }
+                                    },
+                                  )
+                                : await controller.batchNextcloudMetadata(
+                                    reviewed,
+                                    category: action == 'move'
+                                        ? category
+                                        : null,
+                                    favorite: action == 'move'
+                                        ? null
+                                        : action == 'favorite',
+                                  );
                             if (context.mounted) {
-                              update(() => outcomes = result);
+                              update(() {
+                                outcomes = result;
+                                completed.addEntries(
+                                  result.map(
+                                    (outcome) =>
+                                        MapEntry(outcome.localId, outcome),
+                                  ),
+                                );
+                              });
                             }
                           } on Object catch (failure) {
                             if (context.mounted) {
@@ -171,7 +216,7 @@ Future<void> showNotesBatch(
               if (initialAction == null && outcomes == null)
                 BusyMarkComboRow<String>(
                   title: context.l10n.notesActions,
-                  values: const ['favorite', 'unfavorite', 'move'],
+                  values: const ['favorite', 'unfavorite', 'move', 'delete'],
                   selected: action,
                   labelFor: actionLabel,
                   enabled: !busy,
@@ -184,19 +229,24 @@ Future<void> showNotesBatch(
                   enabled: !busy,
                   onChanged: (value) => category = value,
                 ),
-              if (busy) const LinearProgressIndicator(),
+              if (deleting && !busy && outcomes == null)
+                Text(context.l10n.notesBatchDeleteHelp),
+              if (busy)
+                LinearProgressIndicator(
+                  value: deleting ? completed.length / reviewed.length : null,
+                ),
               if (error != null)
                 BusyMarkStatusBox(
                   message: error!,
                   kind: BusyMarkStatusKind.error,
                 ),
-              if (outcomes != null)
+              if (outcomes != null || (deleting && busy))
                 Semantics(
                   liveRegion: true,
                   child: Text(
                     [
                       for (final status in NotesBatchStatus.values)
-                        '${statusLabel(status)}: ${outcomes!.where((o) => o.status == status).length}',
+                        '${statusLabel(status)}: ${completed.values.where((o) => o.status == status).length}',
                     ].join(' · '),
                   ),
                 ),
@@ -207,24 +257,28 @@ Future<void> showNotesBatch(
                     for (final snapshot in reviewed)
                       BusyMarkActionRow(
                         title: snapshot.note.title,
-                        subtitle: outcomes == null
+                        subtitle: !completed.containsKey(snapshot.note.localId)
                             ? snapshot.note.category
                             : null,
-                        subtitleWidget: outcomes == null
-                            ? null
-                            : Text(() {
-                                final outcome = outcomes!.firstWhere(
-                                  (o) => o.localId == snapshot.note.localId,
-                                );
-                                final reason = localizeNotesBatchReason(
-                                  context,
-                                  outcome,
-                                );
-                                return [
-                                  statusLabel(outcome.status),
-                                  if (reason.isNotEmpty) reason,
-                                ].join(' · ');
-                              }()),
+                        subtitleWidget: switch (completed[snapshot
+                            .note
+                            .localId]) {
+                          final outcome? => Text(
+                            [
+                              statusLabel(outcome.status),
+                              if (deleting &&
+                                  outcome.reason == NotesBatchReason.readOnly)
+                                context.l10n.nextcloudReadOnly
+                              else if (localizeNotesBatchReason(
+                                    context,
+                                    outcome,
+                                  )
+                                  case final reason when reason.isNotEmpty)
+                                reason,
+                            ].join(' · '),
+                          ),
+                          null => null,
+                        },
                       ),
                   ],
                 ),

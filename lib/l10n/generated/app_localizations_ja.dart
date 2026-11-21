@@ -124,6 +124,18 @@ class AppLocalizationsJa extends AppLocalizations {
       'ローカル保存に失敗しました。保存領域を確認してこの項目を再試行してください。成功した項目は保存済みです。';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'サーバーのノートが変わりました。マージの下書きは保持されています。更新された比較を確認し、解決方法を再度選んでください。';
 

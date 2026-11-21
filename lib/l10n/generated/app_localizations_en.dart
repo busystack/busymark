@@ -129,6 +129,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'The local save failed. Check local storage and retry this item; successful items remain saved.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'The server note changed. Your merge draft is retained. Review the updated comparison and choose how to resolve it again.';
 
@@ -5777,7 +5789,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'External media requires a connection. BusyMark only retains note text and managed attachments.';
+      'External media requires a connection. BusyMark retains note text and supported Notes attachments.';
 
   @override
   String get notesEmptyAll => 'No notes yet. Create a note to get started.';

@@ -77,9 +77,10 @@ Optional category/projection queries retain their immutable request scope and
 all pagination parameters. Missing fields remain absent, including an explicitly
 excluded ID; reduced payloads never become complete NoteState objects. These
 reads use no collection validator/checkpoint and never infer account deletions.
-The authoritative full-account list strategy and local category/search workflows
-remain unchanged. Portable note URLs and reference workflows are described in
-[the user guide](../references.md).
+Full-account synchronization takes membership from the completed final page.
+It publishes only earlier full representations whose IDs still occur in that
+inventory. Portable note URLs and reference workflows are described in [the
+user guide](../references.md).
 
 ## Authentication and credential boundary
 
@@ -189,8 +190,9 @@ to the revision actually sent; newer local edits stay pending. Canonical
 server-returned titles/categories are adopted without overwriting newer edits.
 Editor revisions and their content digests are tracked independently of storage
 revisions so delayed recovery snapshots cannot undo later saves. Conflict
-resolution checks both the displayed local revision and a freshly fetched remote
-ETag; another change requires another review.
+resolution checks the displayed local revision, the freshly fetched remote
+version, and intervening repository observations before committing. A newer
+remote alternative or deletion requires renewed review.
 
 When the refreshed note is read-only, conflict resolution may still retain or
 choose `favorite`, provided resolved content, title and category exactly match
@@ -279,6 +281,9 @@ is captured before loss and tombstones remain recoverable. There is an
 unavoidable **refresh → DELETE race** if another actor changes the note between
 those requests; BusyMark does not claim a guarantee the server cannot provide.
 Destructive offline server deletes are not queued for blind replay.
+The selected-notes action runs the same checks for each reviewed note and shows
+each outcome. A failed local save or history capture blocks that note. An
+unconfirmed server deletion requires a refresh and renewed review before retry.
 
 Remote disappearance without pending work can be reconciled normally. Local
 pending work plus remote deletion stays visible for explicit recovery/discard.
@@ -295,7 +300,7 @@ multipart response `filename` is retained, including deduplication/renaming.
 Publication conditionally replaces namespaced `busymark-attachment:` references
 with the returned filename, using the current ETag. API 1.4 on Notes 6.0.x
 returns flat randomized filenames; Notes 6.1.x returns `.attachments.ID/filename`.
-Both are accepted, while foreign note folders and traversal are rejected. Each significant stage
+Upload results accept those two forms under the uploading note's ownership. Each significant stage
 survives restart. Uncertain upload outcomes require deliberate retry/adoption
 and may leave a server orphan; they are not silently repeated. Attachment
 deletion operations retain their durable ordering and version gate.
@@ -307,6 +312,12 @@ API paths/filenames are raw strings. Markdown destinations are decoded exactly
 once and raw segments encoded exactly once; literal percent sequences remain
 filename characters. Upload response paths commit durably before reference
 replacement, so later local failures cannot cause a second upload.
+
+Reads resolve from the server's note category. They can reach sibling folders
+and another note's attachments within the configured Notes root. Downloads
+remain on the authenticated Notes endpoint and cached reads are bound to the
+note, account, and server category. Remote deletion requires the current note's
+own managed folder.
 
 Attachment downloads have a dedicated streaming path and share the existing local
 asset ingestion limit, `maximumManagedAssetBytes` (**100 MiB**). Advertised
@@ -406,11 +417,14 @@ acceptance_dir="$(mktemp -d)"
 python3 tools/nextcloud_login_live_acceptance.py \
   /path/to/private-test-account.json "$acceptance_dir/app-credentials.json" \
   "$acceptance_dir/login.json"
-dart run tools/nextcloud_notes_live_acceptance.dart \
-  "$acceptance_dir/app-credentials.json" "$acceptance_dir/notes.json"
+BUSYMARK_NOTES_LIVE_CREDENTIALS="$acceptance_dir/app-credentials.json" \
+BUSYMARK_NOTES_LIVE_REPORT="$acceptance_dir/notes.json" \
+flutter test --no-pub tools/nextcloud_notes_live_acceptance_test.dart
 ```
 
-The Dart harness also accepts a third argument naming a test CA certificate.
+Set `BUSYMARK_NOTES_LIVE_CA` to the path to a private test CA if needed.
+Set `BUSYMARK_NOTES_LIVE_ATTACHMENT_READS=1` with the CA to run the focused
+category-relative attachment checks, including offline reopening.
 It exercises disposable notes and attachments, including conflicts, offline
 saves, restart, and explicit adoption after uncertain creation. Repeat against
 the supported Notes 6.0.x and 6.1.x baselines when changing the API contract;
@@ -455,6 +469,7 @@ container to verify refresh without a changed note ETag.
 | --- | --- |
 | `--full` (default) | Metadata races, authentication/retry, settings, idle/focus polling, media refresh, and workspace workflows. |
 | `--workspace` | Category creation, Quick Open/search, batch review, offline media, recovery, and export/import. |
+| `--batch-delete` | Native multi-selection, cancellation, confirmation, per-note results, remote-change protection and Local History. |
 | `--offline-start`, then `--offline-resume` | Pending text/media, category retention, history and search across a real process restart, native shortcuts, and switching to local Markdown/Writerside. |
 | `--references`, then `--references-resume` | Portable note links, reviewed rename/category changes, missing targets, and cached ID navigation after restart. |
 | `--local-references`, then `--local-references-resume` | Local Markdown link creation, reviewed moves, and media/link navigation after restart. |
@@ -493,7 +508,7 @@ so there are no persistent empty server folders. Sort by local editing activity
 Shift-click extends a range, and Ctrl+A selects the current list. The checkbox
 marks selection, the edge marks focus, and the document icon marks the open note.
 The Selected action and a row's context menu review the exact target titles
-before setting/removing favorites or moving notes. A move can introduce a category.
+before setting/removing favorites, moving notes, or deleting them. A move can introduce a category.
 Read-only notes support favorite changes. Partial results retain successes and
 identify skipped, conflicting or failed notes; resolve conflicts through the
 existing review workflow.

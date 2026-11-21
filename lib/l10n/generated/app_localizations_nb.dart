@@ -129,6 +129,18 @@ class AppLocalizationsNb extends AppLocalizations {
       'Lokal lagring mislyktes. Kontroller lagringsplassen og prøv dette elementet igjen; vellykkede elementer er lagret.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'Servernotaten ble endret. Fletteutkastet er bevart. Gjennomgå den oppdaterte sammenligningen og velg løsning på nytt.';
 

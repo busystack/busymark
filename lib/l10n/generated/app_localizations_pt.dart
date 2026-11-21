@@ -130,6 +130,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'Falha ao guardar localmente. Verifique o armazenamento e repita este item; os bem-sucedidos continuam guardados.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'A nota no servidor mudou. O rascunho de união foi preservado. Reveja a comparação atualizada e escolha novamente a resolução.';
 

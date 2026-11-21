@@ -129,6 +129,18 @@ class AppLocalizationsHi extends AppLocalizations {
       'स्थानीय सहेजना विफल हुआ। संग्रहण जाँचकर इस आइटम पर फिर प्रयास करें; सफल आइटम सहेजे हुए हैं।';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'सर्वर का नोट बदल गया। आपका विलय मसौदा सुरक्षित है। नई तुलना की समीक्षा करें और समाधान फिर चुनें।';
 

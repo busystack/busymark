@@ -2522,6 +2522,51 @@ void main() {
     );
   }
 
+  testWidgets('a selected Notes batch offers a reviewed deletion action', (
+    tester,
+  ) async {
+    const ids = [
+      '223e4567-e89b-42d3-a456-426614174000',
+      '323e4567-e89b-42d3-a456-426614174000',
+    ];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (_) async => repository,
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                onPressed: () => showNotesBatch(context, ref, ids),
+                child: const Text('Review selected notes'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Review selected notes'));
+    await settleStorage(tester);
+    await tester.tap(find.byType(BusyMarkComboRow<String>));
+    await tester.pumpAndSettle();
+    final deleteOption = find.text('Delete');
+    expect(deleteOption, findsOneWidget);
+    await tester.tap(deleteOption);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(BusyMarkDialogButton, 'Delete'), findsOneWidget);
+    expect(find.widgetWithText(BusyMarkDialogButton, 'Cancel'), findsOneWidget);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    expect(repository.noteById(ids.first), isNotNull);
+    expect(repository.noteById(ids.last), isNotNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('mixed batch keeps each skipped and conflicted reason visible', (
     tester,
   ) async {
@@ -3465,9 +3510,19 @@ class _CachedNotesRepository extends NotesRepository {
 
   int deleteCalls = 0;
   @override
-  Future<void> delete(String localId) {
+  Future<void> delete(
+    String localId, {
+    NextcloudNote? reviewed,
+    int? expectedAccountGeneration,
+    bool Function()? editorIsProtected,
+  }) {
     deleteCalls++;
-    return super.delete(localId);
+    return super.delete(
+      localId,
+      reviewed: reviewed,
+      expectedAccountGeneration: expectedAccountGeneration,
+      editorIsProtected: editorIsProtected,
+    );
   }
 
   @override

@@ -126,6 +126,18 @@ class AppLocalizationsKo extends AppLocalizations {
       '로컬 저장에 실패했습니다. 저장소를 확인하고 이 항목을 다시 시도하세요. 성공한 항목은 저장되어 있습니다.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       '서버 노트가 변경되었습니다. 병합 초안은 보존됩니다. 새 비교를 검토하고 해결 방법을 다시 선택하세요.';
 

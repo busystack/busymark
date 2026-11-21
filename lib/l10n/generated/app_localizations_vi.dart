@@ -129,6 +129,18 @@ class AppLocalizationsVi extends AppLocalizations {
       'Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'Ghi chú trên máy chủ đã đổi. Bản nháp hợp nhất được giữ. Xem xét so sánh mới rồi chọn lại cách giải quyết.';
 

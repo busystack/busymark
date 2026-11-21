@@ -129,6 +129,18 @@ class AppLocalizationsUk extends AppLocalizations {
       'Локальне збереження не вдалося. Перевірте сховище й повторіть цей елемент; успішні елементи збережено.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'Нотатка сервера змінилася. Чернетку злиття збережено. Перевірте нове порівняння й виберіть рішення знову.';
 

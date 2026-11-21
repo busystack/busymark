@@ -129,6 +129,18 @@ class AppLocalizationsFa extends AppLocalizations {
       'ذخیرهٔ محلی شکست خورد. فضای ذخیره‌سازی را بررسی و این مورد را تکرار کنید؛ موارد موفق ذخیره می‌مانند.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'یادداشت سرور تغییر کرد. پیش‌نویس ادغام حفظ شده است. مقایسهٔ به‌روز را بازبینی و راه‌حل را دوباره انتخاب کنید.';
 

@@ -129,6 +129,18 @@ class AppLocalizationsTr extends AppLocalizations {
       'Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'Sunucu notu değişti. Birleştirme taslağınız korunuyor. Güncel karşılaştırmayı inceleyip çözümü yeniden seçin.';
 

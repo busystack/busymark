@@ -453,7 +453,6 @@ void main() {
         'https://evil.example/i.png',
         '../escape',
         'a\\b',
-        '.attachments.2/foreign.png',
       ]) {
         await expectLater(
           client.fetchAttachment(

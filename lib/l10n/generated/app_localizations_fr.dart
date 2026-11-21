@@ -131,6 +131,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec de l’enregistrement local. Vérifiez le stockage et réessayez cet élément ; les éléments réussis restent enregistrés.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'La note du serveur a changé. Votre brouillon de fusion est conservé. Examinez la comparaison actualisée et choisissez à nouveau la résolution.';
 

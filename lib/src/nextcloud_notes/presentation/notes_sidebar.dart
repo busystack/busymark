@@ -26,6 +26,7 @@ import 'notes_messages.dart';
 import '../application/attachment_markdown.dart';
 import '../domain/notes_models.dart';
 import '../domain/notes_conflict.dart';
+import '../data/notes_api_client.dart' show isManagedNoteAttachmentPath;
 import '../data/notes_attachment_references.dart';
 
 final nextcloudNotesChangesProvider = StreamProvider<int>((ref) async* {
@@ -383,6 +384,8 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
           enabled: !note.readonly && !note.error,
           label: context.l10n.notesMove,
         ),
+        if (targets.length > 1)
+          BusyMarkPopupMenuItem(value: 'delete', label: context.l10n.delete),
       ],
       if (targets.length == 1) ...[
         if (!recovery)
@@ -467,7 +470,17 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
       case 'copy':
         await _saveCopy(note);
       case 'delete':
-        await _deleteNote(note);
+        if (reviewed.length == 1) {
+          await _deleteNote(note);
+        } else {
+          await showNotesBatch(
+            context,
+            ref,
+            targets,
+            initialAction: 'delete',
+            reviewedTargets: reviewed,
+          );
+        }
     }
   }
 
@@ -503,7 +516,7 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
         mounted &&
         await ref
             .read(workspaceControllerProvider.notifier)
-            .deleteNextcloudNote(note.localId);
+            .deleteNextcloudNote(note.localId, reviewed: note);
   }
 
   @override
@@ -1947,17 +1960,20 @@ class _ManagedAttachmentsState extends ConsumerState<_ManagedAttachments> {
               for (final attachment in attachments)
                 BusyMarkActionRow(
                   title: attachment.filename,
-                  subtitle:
-                      attachment.remotePath != null &&
-                          account?.supportsAttachmentDeletion != true
+                  subtitle: attachment.remotePath == null
+                      ? null
+                      : account?.supportsAttachmentDeletion != true
                       ? context.l10n.notesRemoteDeleteUnavailable
+                      : !_ownsRemoteAttachment(attachment)
+                      ? context.l10n.nextcloudReadOnly
                       : null,
                   trailing: BusyMarkCompactIconButton(
                     tooltip: context.l10n.delete,
                     icon: BusyMarkGlyphs.delete,
                     onPressed:
                         (attachment.remotePath != null &&
-                                account?.supportsAttachmentDeletion != true) ||
+                                (account?.supportsAttachmentDeletion != true ||
+                                    !_ownsRemoteAttachment(attachment))) ||
                             _busy ||
                             widget.note.readonly ||
                             widget.note.error ||
@@ -1980,6 +1996,13 @@ class _ManagedAttachmentsState extends ConsumerState<_ManagedAttachments> {
       );
     },
   );
+
+  bool _ownsRemoteAttachment(NotesAttachment attachment) =>
+      widget.note.serverId != null &&
+      isManagedNoteAttachmentPath(
+        widget.note.serverId!,
+        attachment.remotePath!,
+      );
 
   Future<void> _delete(NotesAttachment attachment) async {
     final confirmed = await showBusyMarkModalDialog<bool>(

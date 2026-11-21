@@ -108,6 +108,44 @@ void main() {
     await root.delete(recursive: true);
   });
 
+  test(
+    'a held adoption cannot replace a newer observation of its candidate',
+    () async {
+      final draft = await uncertain();
+      await repository.synchronize(draft.accountId, allowWrites: false);
+      final reviewed = review(draft.localId);
+      final started = Completer<void>();
+      final release = Completer<void>();
+      getCandidate = (_) async {
+        started.complete();
+        await release.future;
+        return http.Response(jsonEncode(reviewed.candidate.toJson()), 200);
+      };
+      final resolving = expectLater(
+        adopt(reviewed),
+        throwsA(isA<NotesException>()),
+      );
+      await started.future;
+      try {
+        remotes[1]!['title'] = 'Newer server title';
+        remotes[1]!['etag'] = 'newer-server-version';
+        await repository.synchronize(draft.accountId, allowWrites: false);
+        expect(review(draft.localId).candidate.etag, 'newer-server-version');
+      } finally {
+        release.complete();
+      }
+      await resolving;
+      final current = repository.noteById(draft.localId)!;
+      expect(current.serverId, isNull);
+      expect(current.syncState, NoteSyncState.creationUncertain);
+      expect(current.remote!.title, 'Newer server title');
+      expect(
+        repository.notes.singleWhere((n) => n.serverId == 1).title,
+        'Newer server title',
+      );
+    },
+  );
+
   for (final scenario in [
     'exact',
     'sanitized',

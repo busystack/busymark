@@ -231,6 +231,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   bool _notesApplicationVisible = true;
   bool _notesWorkspaceActive = true;
   final _remoteDurabilityWrites = <String, int>{};
+  final _nextcloudNoteDeletions = <String>{};
+  bool _nextcloudBatchDeletion = false;
   final _pendingRemoteDiscards = <String>{};
   var _restoringLocalHistorySession = false;
   StreamSubscription<WorkspaceFileMonitorEvent>? _fileMonitorSubscription;
@@ -1218,29 +1220,200 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   void synchronizeImportedNotes(String accountId) =>
       _scheduleRemoteSync(accountId);
 
-  Future<bool> deleteNextcloudNote(String localId) async {
+  Future<bool> deleteNextcloudNote(
+    String localId, {
+    NextcloudNote? reviewed,
+  }) async {
     try {
       final repository = await _ensureNotesRepository();
-      final note = repository.noteById(localId);
+      final note = reviewed ?? repository.noteById(localId);
       if (note == null) return false;
-      final buffer = state.documentBuffers
-          .where((b) => b.remoteNote?.localId == localId)
-          .firstOrNull;
-      if (buffer?.isDirty == true &&
-          !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
-        return false;
-      }
-      if (!await _localHistory.captureBeforeLoss(
-        LocalHistoryBufferSnapshot.fromBuffer(buffer ?? _remoteBuffer(note)),
-        LocalHistoryCaptureReason.beforeDelete,
-      )) {
-        return false;
-      }
-      await repository.delete(localId);
-      return true;
+      final outcome = await _deleteReviewedNextcloudNote(
+        repository,
+        note,
+        repository.accountGeneration(note.accountId),
+      );
+      if (outcome.cause case final cause?) _reportNextcloudFailure(cause);
+      return outcome.status == NotesBatchStatus.changed;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
       return false;
+    }
+  }
+
+  Future<List<NotesBatchOutcome>> batchDeleteNextcloudNotes(
+    List<NextcloudNote> reviewed, {
+    required int accountGeneration,
+    void Function(NotesBatchOutcome)? onOutcome,
+  }) async {
+    if (_nextcloudBatchDeletion) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'A Notes deletion is already in progress.',
+      );
+    }
+    final targets = {for (final note in reviewed) note.localId: note}.values;
+    if (targets.isEmpty) return const [];
+    _nextcloudBatchDeletion = true;
+    try {
+      final repository = await _ensureNotesRepository();
+      final accountId = targets.first.accountId;
+      final outcomes = <NotesBatchOutcome>[];
+      for (final note in targets) {
+        final outcome = note.accountId == accountId
+            ? await _deleteReviewedNextcloudNote(
+                repository,
+                note,
+                accountGeneration,
+              )
+            : NotesBatchOutcome(
+                note.localId,
+                note.title,
+                NotesBatchStatus.skipped,
+                null,
+                NotesBatchReason.reviewChanged,
+              );
+        outcomes.add(outcome);
+        onOutcome?.call(outcome);
+      }
+      return outcomes;
+    } finally {
+      _nextcloudBatchDeletion = false;
+    }
+  }
+
+  Future<NotesBatchOutcome> _deleteReviewedNextcloudNote(
+    NotesRepository repository,
+    NextcloudNote reviewed,
+    int generation,
+  ) async {
+    final id = reviewed.localId;
+    NotesBatchOutcome outcome(
+      NotesBatchStatus status, [
+      NotesBatchReason? reason,
+      Object? cause,
+    ]) => NotesBatchOutcome(
+      id,
+      reviewed.title,
+      status,
+      cause?.toString(),
+      reason,
+      cause,
+    );
+
+    if (!_nextcloudNoteDeletions.add(id)) {
+      return outcome(NotesBatchStatus.skipped, NotesBatchReason.reviewChanged);
+    }
+    try {
+      bool stillInWorkspace() =>
+          ref.mounted &&
+          state.workspace?.nextcloudAccountId == reviewed.accountId;
+      DocumentBuffer? currentBuffer() => state.documentBuffers
+          .where(
+            (buffer) =>
+                buffer.remoteNote?.accountId == reviewed.accountId &&
+                buffer.remoteNote?.localId == id,
+          )
+          .firstOrNull;
+      final current = repository.noteById(id);
+      if (current == null) {
+        return outcome(NotesBatchStatus.skipped, NotesBatchReason.missing);
+      }
+      if (!stillInWorkspace() ||
+          repository.accountGeneration(reviewed.accountId) != generation ||
+          current.accountId != reviewed.accountId ||
+          current.serverId != reviewed.serverId ||
+          current.revision != reviewed.revision ||
+          current.etag != reviewed.etag ||
+          current.remote?.etag != reviewed.remote?.etag) {
+        return outcome(
+          NotesBatchStatus.conflicted,
+          NotesBatchReason.reviewChanged,
+        );
+      }
+      if (current.readonly || current.error) {
+        return outcome(NotesBatchStatus.skipped, NotesBatchReason.readOnly);
+      }
+      final buffer = currentBuffer();
+      if (buffer?.isDirty == true &&
+          !await _saveRemoteBufferSnapshot(
+            buffer!,
+            scheduleSync: false,
+            captureHistory: false,
+          )) {
+        return outcome(
+          NotesBatchStatus.failed,
+          NotesBatchReason.editorNotSaved,
+        );
+      }
+      if (!stillInWorkspace() || currentBuffer()?.isDirty == true) {
+        return outcome(
+          NotesBatchStatus.conflicted,
+          NotesBatchReason.reviewChanged,
+        );
+      }
+      final protected = repository.noteById(id);
+      if (protected == null ||
+          protected.serverId != reviewed.serverId ||
+          protected.etag != reviewed.etag ||
+          protected.remote?.etag != reviewed.remote?.etag) {
+        return outcome(
+          NotesBatchStatus.conflicted,
+          NotesBatchReason.reviewChanged,
+        );
+      }
+      if (!await _localHistory.captureBeforeLoss(
+        LocalHistoryBufferSnapshot.fromBuffer(
+          currentBuffer() ?? _remoteBuffer(protected),
+        ),
+        LocalHistoryCaptureReason.beforeDelete,
+        sourceAlreadyDurable: true,
+      )) {
+        return outcome(
+          NotesBatchStatus.failed,
+          NotesBatchReason.historyNotSaved,
+        );
+      }
+      await repository.delete(
+        id,
+        reviewed: protected,
+        expectedAccountGeneration: generation,
+        editorIsProtected: () =>
+            stillInWorkspace() && currentBuffer()?.isDirty != true,
+      );
+      return outcome(NotesBatchStatus.changed);
+    } on NotesException catch (error) {
+      return switch (error) {
+        NotesDeletionUncertain() => outcome(
+          NotesBatchStatus.failed,
+          NotesBatchReason.deletionUncertain,
+          error,
+        ),
+        NotesException(code: NotesFailureCode.forbidden) => outcome(
+          NotesBatchStatus.skipped,
+          NotesBatchReason.readOnly,
+          error,
+        ),
+        NotesException(code: NotesFailureCode.conflict) => outcome(
+          NotesBatchStatus.conflicted,
+          NotesBatchReason.reviewChanged,
+          error,
+        ),
+        NotesException(code: NotesFailureCode.missing) => outcome(
+          NotesBatchStatus.skipped,
+          NotesBatchReason.missing,
+          error,
+        ),
+        _ => outcome(
+          NotesBatchStatus.failed,
+          NotesBatchReason.unavailable,
+          error,
+        ),
+      };
+    } on Object catch (error) {
+      return outcome(NotesBatchStatus.failed, NotesBatchReason.storage, error);
+    } finally {
+      _nextcloudNoteDeletions.remove(id);
     }
   }
 

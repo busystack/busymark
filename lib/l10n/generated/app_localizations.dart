@@ -319,6 +319,24 @@ abstract class AppLocalizations {
   /// **'The local save failed. Check local storage and retry this item; successful items remain saved.'**
   String get notesBatchStorage;
 
+  /// No description provided for @notesBatchDeleteHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark checks and deletes each note individually. Existing server notes require a connection.'**
+  String get notesBatchDeleteHelp;
+
+  /// No description provided for @notesBatchDeleteHistoryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not capture Local History. The note was kept.'**
+  String get notesBatchDeleteHistoryFailed;
+
+  /// No description provided for @notesBatchDeleteUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud did not confirm deletion. Refresh and review this note before trying again.'**
+  String get notesBatchDeleteUncertain;
+
   /// No description provided for @notesRemoteReviewChanged.
   ///
   /// In en, this message translates to:
@@ -9891,7 +9909,7 @@ abstract class AppLocalizations {
   /// No description provided for @notesOfflineExternal.
   ///
   /// In en, this message translates to:
-  /// **'External media requires a connection. BusyMark only retains note text and managed attachments.'**
+  /// **'External media requires a connection. BusyMark retains note text and supported Notes attachments.'**
   String get notesOfflineExternal;
 
   /// No description provided for @notesEmptyAll.

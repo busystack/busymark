@@ -9,6 +9,7 @@ import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_capabilities.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -60,6 +61,338 @@ void main() {
   Future<String> seed(NotesRepository r) async {
     await r.synchronize(testAccount().id, allowWrites: false);
     return r.notes.single.localId;
+  }
+
+  test(
+    'attachment reads use the note category and survive offline restart',
+    () async {
+      const references = {
+        '../Shared/diagram%20%C3%A9.png': '../Shared/diagram é.png',
+        'legacy.png': 'legacy.png',
+        '.attachments.1/owned.png': '.attachments.1/owned.png',
+        '.attachments.2/shared.png': '.attachments.2/shared.png',
+        '../Shared/report%20%23.pdf': '../Shared/report #.pdf',
+      };
+      const unsafe = [
+        '../../outside.png',
+        './../../outside.png',
+        '%2e%2e/%2e%2e/outside.png',
+        'https://other.example/file.png',
+        '//other.example/file.png',
+        '%2Foutside.png',
+        '..%5CShared/file.png',
+      ];
+      final content = [
+        for (final reference in [...references.keys, ...unsafe])
+          '${reference.endsWith('.pdf') ? '' : '!'}[asset]($reference)',
+      ].join('\n');
+      var offline = false;
+      final fetched = <String>[];
+      final transport = MockClient((request) async {
+        expect(request.url.origin, testAccount().server.origin);
+        expect(request.followRedirects, isFalse);
+        expect(request.headers['Authorization'], startsWith('Basic '));
+        expect(request.method, 'GET');
+        if (request.url.path.endsWith('/v1/notes')) {
+          return http.Response(
+            jsonEncode([
+              {...serverNote(1, content: content), 'category': 'Projects'},
+            ]),
+            200,
+          );
+        }
+        expect(
+          request.url.path,
+          '/nextcloud/index.php/apps/notes/api/v1.4/attachment/1',
+        );
+        final path = request.url.queryParameters['path']!;
+        expect(references.values, contains(path));
+        fetched.add(path);
+        if (offline) throw http.ClientException('disconnected');
+        return http.Response.bytes(utf8.encode(path), 200);
+      });
+      var repository = await open(transport);
+      final id = await seed(repository);
+      final account = testAccount().id;
+      final availability = await repository.attachmentAvailability(id);
+      expect(availability.required, unorderedEquals(references.keys));
+      expect(availability.external, unorderedEquals(unsafe));
+      for (final entry in references.entries) {
+        final cached = await repository.resolveMedia(account, id, entry.key);
+        expect(cached, isNotNull, reason: entry.key);
+        expect(await File(cached!).readAsString(), entry.value);
+      }
+      for (final reference in unsafe) {
+        expect(await repository.resolveMedia(account, id, reference), isNull);
+      }
+      final relative = await repository.resolveMedia(
+        account,
+        id,
+        './${references.keys.first}',
+      );
+      expect(await File(relative!).readAsString(), references.values.first);
+      expect(fetched, unorderedEquals(references.values));
+      for (final reference in [
+        '../Shared/diagram%20%C3%A9.png',
+        '.attachments.2/shared.png',
+        'legacy.png',
+      ]) {
+        await expectLater(
+          repository.deleteAttachment(id, reference),
+          throwsA(
+            isA<NotesException>().having(
+              (e) => e.code,
+              'code',
+              NotesFailureCode.unsafeReference,
+            ),
+          ),
+        );
+      }
+      await restart(repository);
+      offline = true;
+      repository = await open(transport);
+      expect(
+        (await repository.attachmentAvailability(id)).available,
+        unorderedEquals(references.keys),
+      );
+      for (final entry in references.entries) {
+        final cached = await repository.resolveCachedMedia(
+          account,
+          id,
+          entry.key,
+        );
+        expect(await File(cached!).readAsString(), entry.value);
+      }
+      expect(fetched, hasLength(references.length));
+    },
+  );
+
+  for (final cachedFirst in [true, false]) {
+    test(
+      'the final page removes a deleted earlier-page note (cached: $cachedFirst)',
+      () async {
+        const listStarted = 1770000100;
+        const cursor = 'fixture-cursor';
+        final members = [
+          for (var id = 2; id <= 100; id++) {'id': id},
+        ];
+        // The tagged controller hashes the ID-keyed data before stripping its keys.
+        http.Response page(
+          List<Map<String, Object?>> items, {
+          int time = listStarted,
+          bool continued = false,
+        }) {
+          final keyed = {for (final item in items) '${item['id']}': item};
+          return http.Response(
+            jsonEncode(items),
+            200,
+            headers: {
+              'etag': '"${md5.convert(utf8.encode(jsonEncode(keyed)))}"',
+              'last-modified': HttpDate.format(
+                DateTime.fromMillisecondsSinceEpoch(time * 1000, isUtc: true),
+              ),
+              if (continued) 'x-notes-chunk-cursor': cursor,
+              if (continued) 'x-notes-chunk-pending': '1',
+            },
+          );
+        }
+
+        final finalPage = page(members);
+        var step = cachedFirst ? 0 : 1;
+        final transport = MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, endsWith('/v1/notes'));
+          expect(request.url.queryParameters['chunkSize'], '100');
+          final next = request.url.queryParameters['chunkCursor'];
+          switch (step++) {
+            case 0:
+              return page([serverNote(1)], time: listStarted - 10);
+            case 1:
+              expect(next, isNull);
+              return page([
+                for (var id = 1; id <= 100; id++) serverNote(id),
+              ], continued: true);
+            case 2:
+              expect(next, cursor);
+              expect(request.headers['If-None-Match'], isNull);
+              // 101 eligible initially, then both 1 and 101 disappear. The
+              // remaining notes precede the cursor and arrive here as IDs only.
+              return finalPage;
+            default:
+              expect(next, isNull);
+              expect(
+                request.url.queryParameters['pruneBefore'],
+                '$listStarted',
+              );
+              expect(
+                request.headers['If-None-Match'],
+                finalPage.headers['etag'],
+              );
+              return http.Response(
+                '',
+                304,
+                headers: {'etag': finalPage.headers['etag']!},
+              );
+          }
+        });
+        var repository = await open(transport);
+        String? deletedLocalId;
+        if (cachedFirst) {
+          deletedLocalId = await seed(repository);
+          await repository.save(
+            deletedLocalId,
+            content: 'pending work to recover',
+          );
+        }
+        await repository.synchronize(testAccount().id, allowWrites: false);
+        void check() {
+          final active = repository.notes.where(
+            (note) => note.syncState != NoteSyncState.deletedRemotely,
+          );
+          expect(
+            active.map((note) => note.serverId).toSet(),
+            members.map((item) => item['id']).toSet(),
+          );
+          if (deletedLocalId != null) {
+            final retained = repository.noteById(deletedLocalId)!;
+            expect(retained.syncState, NoteSyncState.deletedRemotely);
+            expect(retained.content, 'pending work to recover');
+            expect(retained.hasPendingChanges, isTrue);
+          } else {
+            expect(repository.notes.any((note) => note.serverId == 1), isFalse);
+          }
+          expect(
+            repository.accounts.single.listEtag,
+            finalPage.headers['etag'],
+          );
+          expect(
+            repository.accounts.single.lastModified,
+            finalPage.headers['last-modified'],
+          );
+        }
+
+        check();
+        await repository.synchronize(testAccount().id, allowWrites: false);
+        await restart(repository);
+        repository = await open(transport);
+        check();
+        await repository.synchronize(testAccount().id, allowWrites: false);
+        check();
+        expect(step, 5);
+      },
+    );
+  }
+
+  for (final concurrent in ['remote update', 'remote deletion', 'local edit']) {
+    test('a resolution GET cannot undo a concurrent $concurrent', () async {
+      final reviewed = serverNote(1, etag: 'reviewed-a', content: 'remote A');
+      final newer = serverNote(1, etag: 'remote-b', content: 'remote B');
+      final started = Completer<void>();
+      final release = Completer<void>();
+      var collection = 0;
+      var validator = '"base"';
+      const checkpoint = 'Tue, 03 Feb 2026 02:40:00 GMT';
+      const prunedCheckpoint = 'Wed, 04 Feb 2026 02:40:00 GMT';
+      final transport = MockClient((request) async {
+        expect(request.method, 'GET');
+        if (request.url.path.endsWith('/notes/1')) {
+          started.complete();
+          await release.future;
+          return http.Response(jsonEncode(reviewed), 200);
+        }
+        expect(request.url.path, endsWith('/v1/notes'));
+        final sentValidator = request.headers['If-None-Match'];
+        switch (collection++) {
+          case 0:
+            return http.Response(
+              jsonEncode([serverNote(1)]),
+              200,
+              headers: {'etag': validator},
+            );
+          case 1:
+            validator = '"reviewed-list"';
+            return http.Response(
+              jsonEncode([reviewed]),
+              200,
+              headers: {'etag': validator},
+            );
+          case 2:
+            validator = concurrent == 'remote deletion'
+                ? '"empty"'
+                : '"new-list"';
+            return http.Response(
+              jsonEncode([
+                if (concurrent != 'remote deletion')
+                  (concurrent == 'remote update' ? newer : reviewed),
+              ]),
+              200,
+              headers: {'etag': validator, 'last-modified': checkpoint},
+            );
+          default:
+            expect(sentValidator, validator);
+            if (concurrent != 'remote deletion' && collection == 4) {
+              validator = '"id-only"';
+              return http.Response(
+                '[{"id":1}]',
+                200,
+                headers: {'etag': validator, 'last-modified': prunedCheckpoint},
+              );
+            }
+            return http.Response('', 304, headers: {'etag': validator});
+        }
+      });
+      var repository = await open(transport);
+      final id = await seed(repository);
+      await repository.save(id, content: 'durable local work');
+      await repository.synchronize(testAccount().id, allowWrites: false);
+      final original = repository.noteById(id)!;
+      final resolution = expectLater(
+        repository.resolveConflict(
+          id,
+          NoteConflictResolution.takeRemote,
+          expectedRevision: original.revision,
+          reviewedRemote: original.remote,
+        ),
+        throwsA(
+          isA<NotesException>().having(
+            (error) => error.code,
+            'code',
+            NotesFailureCode.conflict,
+          ),
+        ),
+      );
+      await started.future;
+      try {
+        if (concurrent == 'local edit') {
+          await repository.save(id, content: 'newer local work');
+        }
+        await repository.synchronize(testAccount().id, allowWrites: false);
+        expect(repository.accounts.single.lastModified, checkpoint);
+      } finally {
+        release.complete();
+      }
+      await resolution;
+      await repository.synchronize(testAccount().id, allowWrites: false);
+      await restart(repository);
+      repository = await open(transport);
+      await repository.synchronize(testAccount().id, allowWrites: false);
+      final retained = repository.noteById(id)!;
+      expect(retained.hasPendingChanges, isTrue);
+      expect(
+        retained.content,
+        concurrent == 'local edit' ? 'newer local work' : 'durable local work',
+      );
+      expect(
+        retained.syncState,
+        concurrent == 'remote deletion'
+            ? NoteSyncState.deletedRemotely
+            : NoteSyncState.conflict,
+      );
+      if (concurrent == 'remote update') {
+        expect(retained.remote!.content, 'remote B');
+      }
+      expect(repository.accounts.single.listEtag, validator);
+    });
   }
 
   test(

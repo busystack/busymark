@@ -51,6 +51,7 @@ import 'package:window_manager/window_manager.dart';
 enum _Scenario {
   full('full'),
   workspace('workspace'),
+  batchDelete('batch-delete'),
   unifiedSearch('unified-search'),
   offlineStart('offline-start'),
   offlineResume('offline-resume'),
@@ -417,6 +418,175 @@ class _HarnessState extends ConsumerState<_Harness> {
       return action != null;
     }, 'action $label');
     action!();
+  }
+
+  Future<void> tapWhere(
+    bool Function(Widget) matches,
+    String description,
+  ) async {
+    RenderBox? target;
+    await wait(() {
+      void visit(Element element) {
+        if (element.widget is Offstage &&
+            (element.widget as Offstage).offstage) {
+          return;
+        }
+        if (matches(element.widget)) {
+          final render = element.findRenderObject();
+          if (render is RenderBox && render.hasSize) {
+            target = render;
+            return;
+          }
+        }
+        element.visitChildren(visit);
+      }
+
+      WidgetsBinding.instance.rootElement?.visitChildren(visit);
+      return target != null;
+    }, description);
+    final box = target!;
+    final position = box.localToGlobal(box.size.center(Offset.zero));
+    GestureBinding.instance.handlePointerEvent(
+      PointerDownEvent(
+        position: position,
+        pointer: 100,
+        kind: ui.PointerDeviceKind.mouse,
+      ),
+    );
+    GestureBinding.instance.handlePointerEvent(
+      PointerUpEvent(
+        position: position,
+        pointer: 100,
+        kind: ui.PointerDeviceKind.mouse,
+      ),
+    );
+  }
+
+  Future<void> batchDeleteJourney(WorkspaceController workspace) async {
+    final category = 'Batch deletion fixture';
+    final first = await repository.create(
+      widget.account.id,
+      title: 'Delete this fixture',
+      category: category,
+      content: 'First fixture history',
+    );
+    final second = await repository.create(
+      widget.account.id,
+      title: 'Retain changed fixture',
+      category: category,
+      content: 'Second fixture history',
+    );
+    await workspace.refreshNextcloudNotes();
+    final firstId = repository.noteById(first.localId)!.serverId!;
+    final reviewed = repository.noteById(second.localId)!;
+    created.addAll([firstId, reviewed.serverId!]);
+    await tapWhere(
+      (w) => w.key == ValueKey('nextcloud-note-${first.localId}'),
+      'first Notes row',
+    );
+    final navigation = ref.read(notesNavigationProvider(widget.account.id));
+    await wait(
+      () => navigation.selected.contains(first.localId),
+      'selected first Notes row',
+    );
+    // Select the fixture rows through the native keyboard route.
+    await nativeShortcut('ctrl+a', focusWindow: false);
+    await wait(
+      () =>
+          navigation.selected.containsAll([first.localId, second.localId]) &&
+          navigation.selected.length == 2,
+      'two selected Notes rows',
+    );
+    check(true, 'nativeNotesMultiSelection');
+
+    Future<void> openDeleteReview() async {
+      await tapWhere(
+        (w) =>
+            w is BusyMarkCompactIconButton && w.tooltip == 'Selected notes (2)',
+        'selected notes actions',
+      );
+      await tapWhere(
+        (w) => w is BusyMarkComboRow<String>,
+        'batch action selector',
+      );
+      // The combo uses a native GTK menu on Linux. Select its last action
+      // through the popup's keyboard handling.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await nativeShortcut('end', focusWindow: false);
+      await nativeShortcut('enter', focusWindow: false);
+      await wait(
+        () => widgets<BusyMarkDialogButton>().any(
+          (button) => button.label == 'Delete' && button.destructive,
+        ),
+        'destructive batch confirmation',
+      );
+    }
+
+    await openDeleteReview();
+    await capture('notes-batch-delete-review');
+    await label('Cancel');
+    await wait(
+      () => !widgets<BusyMarkDialogButton>().any(
+        (button) => button.label == 'Delete' && button.destructive,
+      ),
+      'dismissed batch review',
+    );
+    check(
+      (await api.get(firstId)).id == firstId &&
+          (await api.get(reviewed.serverId!)).id == reviewed.serverId,
+      'cancelKeepsBothServerNotes',
+    );
+
+    await openDeleteReview();
+    await api.update(
+      reviewed.copyWith(content: 'Newer remote fixture content'),
+    );
+    await label('Delete');
+    await wait(
+      () =>
+          widgets<Text>().any(
+            (text) => text.data?.contains('Deleted: 1') == true,
+          ) &&
+          widgets<Text>().any(
+            (text) =>
+                text.data?.contains('This note changed after review.') == true,
+          ),
+      'partial deletion results',
+    );
+    await capture('notes-batch-delete-results');
+    try {
+      await api.get(firstId);
+      throw StateError('The server still has the successful deletion target.');
+    } on NotesException catch (error) {
+      check(
+        error.code == NotesFailureCode.missing,
+        'nativeConfirmedDeletionReachedServer',
+      );
+      created.remove(firstId);
+    }
+    check(
+      (await api.get(reviewed.serverId!)).content ==
+              'Newer remote fixture content' &&
+          repository.noteById(second.localId)!.syncState ==
+              NoteSyncState.conflict,
+      'nativeRemoteChangeBlocksDeletion',
+    );
+    final history = await ref.read(localHistoryStoreProvider).load();
+    check(
+      history.documents.any(
+        (document) => document.remoteNote?.localId == first.localId,
+      ),
+      'nativeDeletionRetainsHistory',
+    );
+    await label('Close');
+    await wait(
+      () =>
+          navigation.selected.length == 1 &&
+          navigation.selected.contains(second.localId) &&
+          navigation.visible.every((note) => note.localId != first.localId),
+      'selection and list reflect each outcome',
+    );
+    check(true, 'nativePartialOutcomeAndSelection');
   }
 
   void edit(TextField field, String value) {
@@ -2848,6 +3018,8 @@ class _HarnessState extends ConsumerState<_Harness> {
             await performanceJourney(workspace);
           case _Scenario.unifiedSearch:
             await unifiedSearchJourney(workspace);
+          case _Scenario.batchDelete:
+            await batchDeleteJourney(workspace);
           case _Scenario.workspace ||
               _Scenario.offlineStart ||
               _Scenario.offlineResume:

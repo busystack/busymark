@@ -129,6 +129,18 @@ class AppLocalizationsEt extends AppLocalizations {
       'Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.';
 
   @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark could not capture Local History. The note was kept.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+
+  @override
   String get notesRemoteReviewChanged =>
       'Serveri märge muutus. Liitmise mustand säilis. Vaata uus võrdlus üle ja vali lahendus uuesti.';
 

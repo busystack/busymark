@@ -173,9 +173,11 @@ void _require(bool condition, String message) {
 }
 
 Future<void> main(List<String> arguments) async {
-  if (arguments.length < 2 || arguments.length > 3) {
+  final attachmentReads =
+      arguments.length == 4 && arguments[3] == '--attachment-reads';
+  if (arguments.length < 2 || arguments.length > 3 && !attachmentReads) {
     stderr.writeln(
-      'Usage: dart run tools/nextcloud_notes_live_acceptance.dart <private-credentials.json> <report.json> [test-ca.pem]',
+      'Usage: dart run tools/nextcloud_notes_live_acceptance.dart <private-credentials.json> <report.json> [test-ca.pem [--attachment-reads]]',
     );
     exitCode = 64;
     return;
@@ -190,7 +192,7 @@ Future<void> main(List<String> arguments) async {
   // Live harness only: trust this specific test CA; hostname and certificate
   // validation remain enabled. Production uses the OS trust store unchanged.
   final context = SecurityContext(withTrustedRoots: true);
-  if (arguments.length == 3) context.setTrustedCertificates(arguments[2]);
+  if (arguments.length >= 3) context.setTrustedCertificates(arguments[2]);
   final connection = _Connection(IOClient(HttpClient(context: context)));
   final directory = await Directory.systemTemp.createTemp(
     'busymark-notes-live-db-',
@@ -242,6 +244,19 @@ Future<void> main(List<String> arguments) async {
 
     repository = await reopen();
     await repository.upsertAccount(account);
+    if (attachmentReads) {
+      await _attachmentReadChecks(
+        connection,
+        account,
+        password,
+        api(account),
+        repository,
+        reopen,
+        checks,
+      );
+      await _writeLiveSuccess(arguments[1], checks);
+      return;
+    }
     originalSettings = await api(account).getSettings();
     final linked = await repository.create(
       account.id,
@@ -762,15 +777,7 @@ Future<void> main(List<String> arguments) async {
       checks,
       directory.path,
     );
-    await File(arguments[1]).writeAsString(
-      const JsonEncoder.withIndent(
-        '  ',
-      ).convert({'ok': true, 'checks': checks}),
-      flush: true,
-    );
-    stdout.writeln(
-      'Live Nextcloud Notes acceptance passed (${checks.length} checks).',
-    );
+    await _writeLiveSuccess(arguments[1], checks);
   } on Object catch (error, stack) {
     await File(arguments[1]).writeAsString(
       const JsonEncoder.withIndent('  ').convert({
@@ -825,6 +832,177 @@ Future<void> main(List<String> arguments) async {
     await repository?.dispose();
     connection.close();
     await directory.delete(recursive: true);
+  }
+}
+
+Future<void> _writeLiveSuccess(String path, Map<String, Object?> checks) async {
+  await File(path).writeAsString(
+    const JsonEncoder.withIndent('  ').convert({'ok': true, 'checks': checks}),
+    flush: true,
+  );
+  stdout.writeln(
+    'Live Nextcloud Notes acceptance passed (${checks.length} checks).',
+  );
+}
+
+Future<void> _attachmentReadChecks(
+  _Connection connection,
+  NextcloudAccount account,
+  String password,
+  NotesApiClient api,
+  NotesRepository repository,
+  Future<NotesRepository> Function() reopen,
+  Map<String, Object?> checks,
+) async {
+  final settings = await api.getSettings();
+  final scope = 'BusyMark-reads-${const Uuid().v4()}';
+  final projects = '$scope/Projects';
+  final owned = <int>[];
+  Future<void> dav(String method, String path, {List<int>? bytes}) async {
+    final uri = account.server.replace(
+      pathSegments: [
+        ...account.server.pathSegments.where((part) => part.isNotEmpty),
+        'remote.php',
+        'dav',
+        'files',
+        account.loginName,
+        ...settings.notesPath.split('/'),
+        ...path.split('/'),
+      ],
+    );
+    final request = http.Request(method, uri)
+      ..followRedirects = false
+      ..headers['Authorization'] = nextcloudAuthorization(
+        account.loginName,
+        password,
+      );
+    if (bytes != null) request.bodyBytes = bytes;
+    final response = await connection.send(request);
+    await response.stream.drain<void>();
+    _require(
+      response.statusCode >= 200 && response.statusCode < 300 ||
+          method == 'DELETE' && response.statusCode == 404,
+      'Fixture WebDAV $method returned ${response.statusCode}.',
+    );
+  }
+
+  try {
+    final note = await repository.create(
+      account.id,
+      title: 'Attachment reader',
+      category: projects,
+    );
+    final other = await repository.create(
+      account.id,
+      title: 'Second attachment owner',
+      category: projects,
+    );
+    await repository.synchronize(account.id);
+    final id = repository.noteById(note.localId)!.serverId!;
+    final otherId = repository.noteById(other.localId)!.serverId!;
+    owned.addAll([id, otherId]);
+
+    final uploaded = await api.uploadAttachment(
+      id,
+      'own.png',
+      Uint8List.fromList([1, 2]),
+    );
+    final foreign = '.attachments.$otherId/shared.png';
+    final assets = {
+      uploaded: [1, 2],
+      '../Shared/diagram é #.png': [3, 4],
+      '../Shared/report #.pdf': [5, 6],
+      'legacy flat.png': [7, 8],
+      foreign: [9, 10],
+    };
+    await dav('MKCOL', '$scope/Shared');
+    await dav('MKCOL', '$projects/.attachments.$otherId');
+    await dav(
+      'PUT',
+      '$scope/Shared/diagram é #.png',
+      bytes: assets.values.elementAt(1),
+    );
+    await dav(
+      'PUT',
+      '$scope/Shared/report #.pdf',
+      bytes: assets.values.elementAt(2),
+    );
+    await dav(
+      'PUT',
+      '$projects/legacy flat.png',
+      bytes: assets.values.elementAt(3),
+    );
+    await dav('PUT', '$projects/$foreign', bytes: assets[foreign]);
+    await repository.save(
+      note.localId,
+      content: [
+        for (final path in assets.keys)
+          '${path.endsWith('.pdf') ? '' : '!'}[asset](${attachmentMarkdownReference(path)})',
+      ].join('\n'),
+    );
+    await repository.synchronize(account.id);
+    final available = await repository.attachmentAvailability(note.localId);
+    _require(
+      available.required.length == assets.length,
+      'The offline dependency list omitted an asset.',
+    );
+    for (final entry in assets.entries) {
+      final path = await repository.resolveMedia(
+        account.id,
+        note.localId,
+        attachmentMarkdownReference(entry.key),
+      );
+      _require(
+        path != null &&
+            base64Encode(await File(path).readAsBytes()) ==
+                base64Encode(entry.value),
+        'The Notes endpoint did not return the expected attachment bytes.',
+      );
+    }
+    for (final reference in [
+      '../../../outside.png',
+      '%2e%2e/%2e%2e/%2e%2e/outside.png',
+      'https://example.invalid/credentials.png',
+    ]) {
+      _require(
+        await repository.resolveMedia(account.id, note.localId, reference) ==
+            null,
+        'An unsafe attachment reference was accepted.',
+      );
+    }
+    checks['categoryRelativeFlatManagedForeignAndEncodedReads'] = true;
+    await repository.dispose();
+    connection.offline = true;
+    final offline = await reopen();
+    try {
+      final availability = await offline.attachmentAvailability(note.localId);
+      _require(
+        availability.available.length == assets.length,
+        'Attachments did not remain available offline after reopening.',
+      );
+      for (final entry in assets.entries) {
+        final path = await offline.resolveCachedMedia(
+          account.id,
+          note.localId,
+          attachmentMarkdownReference(entry.key),
+        );
+        _require(
+          path != null &&
+              base64Encode(await File(path).readAsBytes()) ==
+                  base64Encode(entry.value),
+          'The reopened offline cache did not return the expected bytes.',
+        );
+      }
+      checks['categoryRelativeReadsReopenOffline'] = true;
+    } finally {
+      await offline.dispose();
+    }
+  } finally {
+    connection.offline = false;
+    for (final id in owned) {
+      await api.delete(id);
+    }
+    await dav('DELETE', scope);
   }
 }
 

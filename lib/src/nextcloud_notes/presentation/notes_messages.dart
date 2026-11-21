@@ -83,6 +83,9 @@ String localizeNotesBatchReason(
   NotesBatchReason.missing => context.l10n.notesBatchMissing,
   NotesBatchReason.storage => context.l10n.notesBatchStorage,
   NotesBatchReason.editorNotSaved => context.l10n.notesBuffersNotSaved,
+  NotesBatchReason.historyNotSaved =>
+    context.l10n.notesBatchDeleteHistoryFailed,
+  NotesBatchReason.deletionUncertain => context.l10n.notesBatchDeleteUncertain,
   NotesBatchReason.unavailable => localizeNotesFailure(context, outcome.cause),
   null => '',
 };
