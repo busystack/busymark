@@ -108,16 +108,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
 
   @override
-  String get notesBatchDeleteHelp =>
-      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+  String get notesBatchDeleteHelp => 'BusyMark 会逐条检查并删除笔记。删除服务器上的现有笔记需要网络连接。';
 
   @override
-  String get notesBatchDeleteHistoryFailed =>
-      'BusyMark could not capture Local History. The note was kept.';
+  String get notesBatchDeleteHistoryFailed => 'BusyMark 无法将笔记记录到本地历史。该笔记已保留。';
 
   @override
-  String get notesBatchDeleteUncertain =>
-      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+  String get notesBatchDeleteUncertain => 'Nextcloud 未确认删除。请刷新并检查此笔记，然后重试。';
 
   @override
   String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
@@ -5510,7 +5507,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
 
   @override
-  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+  String get notesOfflineExternal =>
+      '外部媒体需要网络连接。BusyMark 会保留笔记文本和受支持的 Notes 附件。';
 
   @override
   String get notesEmptyAll => '还没有笔记。请新建一条笔记。';
@@ -8758,6 +8756,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
 
   @override
+  String get notesBatchDeleteHelp => 'BusyMark 会逐条检查并删除笔记。删除服务器上的现有笔记需要网络连接。';
+
+  @override
+  String get notesBatchDeleteHistoryFailed => 'BusyMark 无法将笔记记录到本地历史。该笔记已保留。';
+
+  @override
+  String get notesBatchDeleteUncertain => 'Nextcloud 未确认删除。请刷新并检查此笔记，然后重试。';
+
+  @override
   String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
 
   @override
@@ -14148,7 +14155,8 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
 
   @override
-  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+  String get notesOfflineExternal =>
+      '外部媒体需要网络连接。BusyMark 会保留笔记文本和受支持的 Notes 附件。';
 
   @override
   String get notesEmptyAll => '还没有笔记。请新建一条笔记。';

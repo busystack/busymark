@@ -130,15 +130,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesBatchDeleteHelp =>
-      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+      'BusyMark her notu ayrı ayrı denetler ve siler. Sunucuda bulunan notları silmek için bağlantı gerekir.';
 
   @override
   String get notesBatchDeleteHistoryFailed =>
-      'BusyMark could not capture Local History. The note was kept.';
+      'BusyMark notu Yerel Geçmiş’e kaydedemedi. Not korundu.';
 
   @override
   String get notesBatchDeleteUncertain =>
-      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+      'Nextcloud silme işlemini onaylamadı. Yeniden denemeden önce notu yenileyip gözden geçirin.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -5774,7 +5774,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.';
+      'Harici medya bağlantı gerektirir. BusyMark not metnini ve desteklenen Notes eklerini saklar.';
 
   @override
   String get notesEmptyAll => 'Henüz not yok. Başlamak için bir not oluşturun.';

@@ -131,15 +131,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesBatchDeleteHelp =>
-      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+      'O BusyMark verifica e elimina cada nota individualmente. As notas no servidor requerem uma ligação.';
 
   @override
   String get notesBatchDeleteHistoryFailed =>
-      'BusyMark could not capture Local History. The note was kept.';
+      'O BusyMark não conseguiu guardar a nota no Histórico Local. A nota foi mantida.';
 
   @override
   String get notesBatchDeleteUncertain =>
-      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+      'O Nextcloud não confirmou a eliminação. Atualize e reveja esta nota antes de tentar novamente.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -5839,7 +5839,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'O conteúdo multimédia externo requer ligação. O BusyMark mantém apenas o texto e os anexos geridos.';
+      'O conteúdo multimédia externo requer ligação. O BusyMark mantém o texto das notas e os anexos do Notes suportados.';
 
   @override
   String get notesEmptyAll => 'Ainda não há notas. Crie uma para começar.';
@@ -9239,6 +9239,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get notesBatchStorage =>
       'Falha ao salvar localmente. Verifique o armazenamento e repita este item; os bem-sucedidos continuam salvos.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'O BusyMark verifica e exclui cada nota individualmente. As notas existentes no servidor exigem uma conexão.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'O BusyMark não conseguiu registrar a nota no Histórico Local. A nota foi mantida.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'O Nextcloud não confirmou a exclusão. Atualize e revise esta nota antes de tentar novamente.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -14935,7 +14947,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notesOfflineExternal =>
-      'Mídia externa exige conexão. O BusyMark mantém apenas texto e anexos gerenciados.';
+      'Mídia externa exige conexão. O BusyMark mantém o texto das notas e os anexos compatíveis do Notes.';
 
   @override
   String get notesEmptyAll => 'Ainda não há notas. Crie uma para começar.';

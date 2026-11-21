@@ -125,15 +125,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesBatchDeleteHelp =>
-      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+      'BusyMark はノートを一件ずつ確認して削除します。サーバー上のノートを削除するには接続が必要です。';
 
   @override
   String get notesBatchDeleteHistoryFailed =>
-      'BusyMark could not capture Local History. The note was kept.';
+      'BusyMark はノートをローカル履歴に保存できませんでした。ノートは保持されました。';
 
   @override
   String get notesBatchDeleteUncertain =>
-      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+      'Nextcloud から削除の確認が届きませんでした。再試行する前に、ノートを更新して内容を確認してください。';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -5612,7 +5612,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      '外部メディアには接続が必要です。BusyMark が保持するのはノート本文と管理対象の添付ファイルのみです。';
+      '外部メディアには接続が必要です。BusyMark はノート本文と対応する Notes の添付ファイルを保持します。';
 
   @override
   String get notesEmptyAll => 'ノートはまだありません。新しく作成してください。';

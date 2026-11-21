@@ -2884,12 +2884,28 @@ void main() {
   testWidgets(
     'attachment deletion warns about links and cancellation retains the file',
     (tester) async {
+      const localId = '223e4567-e89b-42d3-a456-426614174000';
+      await tester.runAsync(() async {
+        // This case needs a server note that owns the already uploaded file.
+        // Other cases use this note as a local draft.
+        final note = repository.noteById(localId)!;
+        final path = repository.store.path;
+        await repository.store.saveNote(
+          note.copyWith(
+            serverId: 1,
+            content: '${note.content}\n[Report](.attachments.1/report.pdf)',
+          ),
+        );
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(path: path),
+        );
+        await repository.initialize();
+      });
       await pump(tester);
       await openNativeNoteProperties(
         tester,
-        find.byKey(
-          const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
-        ),
+        find.byKey(const ValueKey('nextcloud-note-$localId')),
       );
       await settleStorage(tester);
       for (

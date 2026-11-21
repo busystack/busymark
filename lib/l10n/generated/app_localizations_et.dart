@@ -130,15 +130,15 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get notesBatchDeleteHelp =>
-      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+      'BusyMark kontrollib ja kustutab iga märkme eraldi. Serveris olevad märkmed vajavad ühendust.';
 
   @override
   String get notesBatchDeleteHistoryFailed =>
-      'BusyMark could not capture Local History. The note was kept.';
+      'BusyMark ei saanud märget paiksesse ajalukku salvestada. Märge jäeti alles.';
 
   @override
   String get notesBatchDeleteUncertain =>
-      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+      'Nextcloud ei kinnitanud kustutamist. Enne uut katset värskenda märget ja vaata see üle.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -5771,7 +5771,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.';
+      'Väline meedia vajab ühendust. BusyMark säilitab märkmete teksti ja toetatud Notesi manused.';
 
   @override
   String get notesEmptyAll => 'Märkmeid veel pole. Alustamiseks loo märge.';

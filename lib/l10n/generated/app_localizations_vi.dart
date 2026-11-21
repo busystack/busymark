@@ -130,15 +130,15 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesBatchDeleteHelp =>
-      'BusyMark checks and deletes each note individually. Existing server notes require a connection.';
+      'BusyMark kiểm tra và xóa từng ghi chú riêng lẻ. Ghi chú có trên máy chủ cần kết nối.';
 
   @override
   String get notesBatchDeleteHistoryFailed =>
-      'BusyMark could not capture Local History. The note was kept.';
+      'BusyMark không thể ghi ghi chú vào Lịch sử cục bộ. Ghi chú vẫn được giữ lại.';
 
   @override
   String get notesBatchDeleteUncertain =>
-      'Nextcloud did not confirm deletion. Refresh and review this note before trying again.';
+      'Nextcloud chưa xác nhận việc xóa. Hãy làm mới và kiểm tra ghi chú trước khi thử lại.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -5764,7 +5764,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.';
+      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark giữ văn bản ghi chú và tệp đính kèm Notes được hỗ trợ.';
 
   @override
   String get notesEmptyAll => 'Chưa có ghi chú. Hãy tạo ghi chú đầu tiên.';
