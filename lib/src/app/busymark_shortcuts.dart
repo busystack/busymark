@@ -31,6 +31,7 @@ enum BusyMarkAppShortcutAction {
   newDocument,
   open,
   save,
+  saveAs,
   export,
   fullScreen,
   home,
@@ -120,6 +121,15 @@ abstract final class BusyMarkAppShortcuts {
     label: saveLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyS, control: true),
     gtkAccelerator: saveGtkAccelerator,
+  );
+  static const saveAs = BusyMarkShortcutDefinition(
+    label: 'Ctrl+Shift+S',
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyS,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: '<Primary><Shift>s',
   );
   static const export = BusyMarkShortcutDefinition(
     label: exportLabel,
@@ -224,6 +234,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.newDocument: newDocument,
         BusyMarkAppShortcutAction.open: open,
         BusyMarkAppShortcutAction.save: save,
+        BusyMarkAppShortcutAction.saveAs: saveAs,
         BusyMarkAppShortcutAction.export: export,
         BusyMarkAppShortcutAction.fullScreen: fullScreen,
         BusyMarkAppShortcutAction.home: home,

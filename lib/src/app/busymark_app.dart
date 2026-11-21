@@ -55,6 +55,22 @@ import 'linux/linux_window_host.dart';
 
 final _busyMarkDefaultCommandRegistryProvider =
     Provider<BusyMarkCommandRegistry>((ref) {
+      bool saveCommandAvailable({required bool saveAs}) {
+        if (!ref.read(searchSessionProvider.notifier).workspaceVisible) {
+          return false;
+        }
+        final state = ref.read(workspaceControllerProvider);
+        final workspace = state.workspace;
+        final buffer = state.activeBuffer;
+        if (workspace == null ||
+            buffer == null ||
+            ref.read(localHistoryControllerProvider).selectedRevision != null ||
+            ref.read(sharedGitReviewProvider)[workspace.id]?.activeId != null) {
+          return false;
+        }
+        return saveAs ? canSaveMarkdownAs(buffer) : !buffer.readonly;
+      }
+
       final commandIntents = <String, Intent>{
         for (final id in BusyMarkCommandCatalog.notesWorkspaceCommandIds)
           id: _NotesWorkspaceActionIntent(id),
@@ -64,7 +80,6 @@ final _busyMarkDefaultCommandRegistryProvider =
         BusyMarkCommandIds.browseNotes: const _NotesActionIntent(
           WelcomeNotesAction.browse,
         ),
-        BusyMarkCommandIds.save: const _SaveActiveIntent(),
         BusyMarkCommandIds.export: const _ExportIntent(),
         BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
         BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
@@ -93,6 +108,25 @@ final _busyMarkDefaultCommandRegistryProvider =
       };
       final defaults = BusyMarkCommandCatalog.create(
         executions: {
+          for (final (id, saveAs) in [
+            (BusyMarkCommandIds.save, false),
+            (BusyMarkCommandIds.saveAs, true),
+          ])
+            id: () async {
+              final context = rootNavigatorKey.currentContext;
+              if (context == null ||
+                  (rootNavigatorKey.currentState?.canPop() ?? false)) {
+                return;
+              }
+              bool current() =>
+                  ref.mounted && saveCommandAvailable(saveAs: saveAs);
+              await saveDocumentFromCommand(
+                context,
+                ref.container,
+                saveAs: saveAs,
+                isInScope: current,
+              );
+            },
           for (final id in BusyMarkResourceMenuButton.commandIds)
             id: () {
               if (!(rootNavigatorKey.currentState?.canPop() ?? false)) {
@@ -237,9 +271,8 @@ final _busyMarkDefaultCommandRegistryProvider =
                 .read(searchSessionProvider.notifier)
                 .categories
                 .contains(entry.value),
-          BusyMarkCommandIds.save: () =>
-              ref.read(searchSessionProvider.notifier).workspaceVisible &&
-              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.save: () => saveCommandAvailable(saveAs: false),
+          BusyMarkCommandIds.saveAs: () => saveCommandAvailable(saveAs: true),
           BusyMarkCommandIds.export: () =>
               ref.read(searchSessionProvider.notifier).workspaceVisible &&
               canExportWorkspace(ref.read(workspaceControllerProvider)),
@@ -413,21 +446,6 @@ class BusyMarkApp extends ConsumerWidget {
                         performWorkspaceResourceAction(
                           ref,
                           WorkspaceResourceAction.forNotes(intent.action),
-                        ),
-                      );
-                    }
-                    return null;
-                  },
-                ),
-                _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
-                  onInvoke: (intent) {
-                    final state = ref.read(workspaceControllerProvider);
-                    final navigatorContext = rootNavigatorKey.currentContext;
-                    if (state.workspace != null && navigatorContext != null) {
-                      unawaited(
-                        saveActiveWithOverwriteConfirmation(
-                          navigatorContext,
-                          ref,
                         ),
                       );
                     }
@@ -1158,10 +1176,6 @@ class _BusyMarkSearchShortcutHandlerState
       child: widget.child,
     );
   }
-}
-
-class _SaveActiveIntent extends Intent {
-  const _SaveActiveIntent();
 }
 
 class _ExportIntent extends Intent {

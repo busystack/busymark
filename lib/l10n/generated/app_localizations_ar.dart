@@ -11,6 +11,50 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'حفظ باسم…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'حفظ مستند ماركداون الحالي في موقع جديد';
+
+  @override
+  String get documentSaved => 'تم الحفظ';
+
+  @override
+  String get documentModified => 'معدّل';
+
+  @override
+  String get documentSaving => 'جارٍ الحفظ…';
+
+  @override
+  String get documentNotSaved => 'غير محفوظ';
+
+  @override
+  String get documentSaveFailed => 'تعذّر الحفظ';
+
+  @override
+  String get documentSaveConflict => 'تعارض';
+
+  @override
+  String get documentFileMissing => 'الملف مفقود';
+
+  @override
+  String get documentSaveUnverified => 'حالة الملف غير معروفة';
+
+  @override
+  String get documentSavedLocally => 'محفوظ محليًا';
+
+  @override
+  String get documentSyncPending => 'المزامنة معلّقة';
+
+  @override
+  String get documentSyncFailed => 'تعذّرت المزامنة';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'اختر ملف ماركداون منفصلًا ليس مفتوحًا بالفعل.';
+
+  @override
   String get notesNewFromRetainedText => 'ملاحظة جديدة من النص المحتفَظ به';
 
   @override

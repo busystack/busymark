@@ -11,6 +11,50 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'इस रूप में सहेजें…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'मौजूदा Markdown दस्तावेज़ को नई जगह सहेजें';
+
+  @override
+  String get documentSaved => 'सहेजा गया';
+
+  @override
+  String get documentModified => 'संशोधित';
+
+  @override
+  String get documentSaving => 'सहेजा जा रहा है…';
+
+  @override
+  String get documentNotSaved => 'सहेजा नहीं गया';
+
+  @override
+  String get documentSaveFailed => 'सहेजना विफल';
+
+  @override
+  String get documentSaveConflict => 'टकराव';
+
+  @override
+  String get documentFileMissing => 'फ़ाइल मौजूद नहीं है';
+
+  @override
+  String get documentSaveUnverified => 'फ़ाइल की स्थिति अज्ञात है';
+
+  @override
+  String get documentSavedLocally => 'स्थानीय रूप से सहेजा गया';
+
+  @override
+  String get documentSyncPending => 'सिंक बाकी है';
+
+  @override
+  String get documentSyncFailed => 'सिंक विफल';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'ऐसी अलग Markdown फ़ाइल चुनें जो पहले से खुली न हो।';
+
+  @override
   String get notesNewFromRetainedText => 'सहेजे गए पाठ से नया नोट';
 
   @override

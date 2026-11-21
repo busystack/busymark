@@ -11,6 +11,50 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'ذخیره با نام…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'ذخیرهٔ سند مارک‌داون کنونی در مکانی جدید';
+
+  @override
+  String get documentSaved => 'ذخیره شد';
+
+  @override
+  String get documentModified => 'تغییریافته';
+
+  @override
+  String get documentSaving => 'در حال ذخیره…';
+
+  @override
+  String get documentNotSaved => 'ذخیره نشده';
+
+  @override
+  String get documentSaveFailed => 'ذخیره ناموفق بود';
+
+  @override
+  String get documentSaveConflict => 'تداخل';
+
+  @override
+  String get documentFileMissing => 'پرونده یافت نشد';
+
+  @override
+  String get documentSaveUnverified => 'وضعیت پرونده نامشخص است';
+
+  @override
+  String get documentSavedLocally => 'ذخیره‌شده در دستگاه';
+
+  @override
+  String get documentSyncPending => 'در انتظار همگام‌سازی';
+
+  @override
+  String get documentSyncFailed => 'همگام‌سازی ناموفق بود';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'پروندهٔ مارک‌داون دیگری را انتخاب کنید که باز نباشد.';
+
+  @override
   String get notesNewFromRetainedText => 'یادداشت جدید از متن نگه‌داری‌شده';
 
   @override

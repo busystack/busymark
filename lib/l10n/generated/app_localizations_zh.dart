@@ -11,6 +11,48 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get saveAsEllipsis => '另存为…';
+
+  @override
+  String get shortcutSaveAsDescription => '将当前 Markdown 文档保存到新位置';
+
+  @override
+  String get documentSaved => '已保存';
+
+  @override
+  String get documentModified => '已修改';
+
+  @override
+  String get documentSaving => '正在保存…';
+
+  @override
+  String get documentNotSaved => '未保存';
+
+  @override
+  String get documentSaveFailed => '保存失败';
+
+  @override
+  String get documentSaveConflict => '冲突';
+
+  @override
+  String get documentFileMissing => '文件缺失';
+
+  @override
+  String get documentSaveUnverified => '文件状态未知';
+
+  @override
+  String get documentSavedLocally => '已保存到本地';
+
+  @override
+  String get documentSyncPending => '等待同步';
+
+  @override
+  String get documentSyncFailed => '同步失败';
+
+  @override
+  String get saveAsSeparateMarkdown => '请选择另一个尚未打开的 Markdown 文件。';
+
+  @override
   String get notesNewFromRetainedText => '从保留的文本新建笔记';
 
   @override
@@ -8657,6 +8699,48 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get saveAsEllipsis => '另存为…';
+
+  @override
+  String get shortcutSaveAsDescription => '将当前 Markdown 文档保存到新位置';
+
+  @override
+  String get documentSaved => '已保存';
+
+  @override
+  String get documentModified => '已修改';
+
+  @override
+  String get documentSaving => '正在保存…';
+
+  @override
+  String get documentNotSaved => '未保存';
+
+  @override
+  String get documentSaveFailed => '保存失败';
+
+  @override
+  String get documentSaveConflict => '冲突';
+
+  @override
+  String get documentFileMissing => '文件缺失';
+
+  @override
+  String get documentSaveUnverified => '文件状态未知';
+
+  @override
+  String get documentSavedLocally => '已保存到本地';
+
+  @override
+  String get documentSyncPending => '等待同步';
+
+  @override
+  String get documentSyncFailed => '同步失败';
+
+  @override
+  String get saveAsSeparateMarkdown => '请选择另一个尚未打开的 Markdown 文件。';
 
   @override
   String get notesNewFromRetainedText => '从保留的文本新建笔记';

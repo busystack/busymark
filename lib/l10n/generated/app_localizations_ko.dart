@@ -11,6 +11,48 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get saveAsEllipsis => '다른 이름으로 저장…';
+
+  @override
+  String get shortcutSaveAsDescription => '현재 Markdown 문서를 새 위치에 저장';
+
+  @override
+  String get documentSaved => '저장됨';
+
+  @override
+  String get documentModified => '수정됨';
+
+  @override
+  String get documentSaving => '저장 중…';
+
+  @override
+  String get documentNotSaved => '저장되지 않음';
+
+  @override
+  String get documentSaveFailed => '저장 실패';
+
+  @override
+  String get documentSaveConflict => '충돌';
+
+  @override
+  String get documentFileMissing => '파일 없음';
+
+  @override
+  String get documentSaveUnverified => '파일 상태를 알 수 없음';
+
+  @override
+  String get documentSavedLocally => '로컬에 저장됨';
+
+  @override
+  String get documentSyncPending => '동기화 대기 중';
+
+  @override
+  String get documentSyncFailed => '동기화 실패';
+
+  @override
+  String get saveAsSeparateMarkdown => '열려 있지 않은 다른 Markdown 파일을 선택하세요.';
+
+  @override
   String get notesNewFromRetainedText => '보관된 텍스트로 새 노트 만들기';
 
   @override

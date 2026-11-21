@@ -963,6 +963,9 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.save:
+      case BusyMarkMainMenuAction.saveAs:
+        break;
       case BusyMarkMainMenuAction.export:
         unawaited(exportWorkspace(context, ref));
       case BusyMarkMainMenuAction.fullScreen:
@@ -8842,47 +8845,57 @@ class _EditorTabStrip extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      key: const ValueKey('editor-tab-strip'),
-      decoration: BoxDecoration(
-        color: colors.headerbarFlat,
-        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-      ),
-      child: SizedBox(
-        height: BusyMarkSizes.paneHeaderHeight,
-        child: Row(
-          children: [
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(
-                  BusyMarkSpacing.sm,
-                  BusyMarkSpacing.xs,
-                  BusyMarkSpacing.sm,
-                  0,
+    final properties = ref
+        .read(workspaceControllerProvider.notifier)
+        .propertyEdits;
+    return ListenableBuilder(
+      listenable: properties,
+      builder: (context, _) => DecoratedBox(
+        key: const ValueKey('editor-tab-strip'),
+        decoration: BoxDecoration(
+          color: colors.headerbarFlat,
+          border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+        ),
+        child: SizedBox(
+          height: BusyMarkSizes.paneHeaderHeight,
+          child: Row(
+            children: [
+              Expanded(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(
+                    BusyMarkSpacing.sm,
+                    BusyMarkSpacing.xs,
+                    BusyMarkSpacing.sm,
+                    0,
+                  ),
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    return _WorkspaceTabButton(
+                      key: ValueKey(entry.key),
+                      title: _tabTitle(context, workspace, entry),
+                      icon: _tabIcon(workspace, entry),
+                      diff: entry.kind == WorkspaceTabKind.gitDiff,
+                      active: entry.active,
+                      dirty:
+                          entry.dirty ||
+                          (entry.kind == WorkspaceTabKind.file &&
+                              entry.active &&
+                              properties.hasPending),
+                      onSelected: () =>
+                          _selectTab(context, ref, workspace, entry),
+                      onClose: () => onClose(entry),
+                      onSecondaryTapUp: (details) =>
+                          onShowMenu(entry, details.globalPosition),
+                    );
+                  },
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: BusyMarkSpacing.xs),
+                  itemCount: entries.length,
                 ),
-                itemBuilder: (context, index) {
-                  final entry = entries[index];
-                  return _WorkspaceTabButton(
-                    key: ValueKey(entry.key),
-                    title: _tabTitle(context, workspace, entry),
-                    icon: _tabIcon(workspace, entry),
-                    diff: entry.kind == WorkspaceTabKind.gitDiff,
-                    active: entry.active,
-                    dirty: _tabDirty(workspace, entry),
-                    onSelected: () =>
-                        _selectTab(context, ref, workspace, entry),
-                    onClose: () => onClose(entry),
-                    onSecondaryTapUp: (details) =>
-                        onShowMenu(entry, details.globalPosition),
-                  );
-                },
-                separatorBuilder: (context, index) =>
-                    const SizedBox(width: BusyMarkSpacing.xs),
-                itemCount: entries.length,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -8919,10 +8932,6 @@ class _EditorTabStrip extends ConsumerWidget {
         ? null
         : _documentFileForPath(workspace, entry.path);
     return _documentKindIcon(file?.kind ?? DocumentKind.markdown);
-  }
-
-  bool _tabDirty(Workspace workspace, WorkspaceTabEntry entry) {
-    return entry.kind == WorkspaceTabKind.file && entry.dirty;
   }
 
   Future<void> _selectTab(
@@ -9598,6 +9607,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               NextcloudNoteStatus(
                 localId: remoteRef.localId,
                 unsaved: activeBuffer!.isDirty,
+                showStatus: false,
               ),
             if (activeBuffer?.recovered == true)
               _RecoveredDocumentBanner(
@@ -10155,15 +10165,26 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ),
             ),
             if (activeBuffer != null)
-              BusyMarkDocumentStatusBar(
-                format: activeBuffer.format,
-                spellingLabel: spellingLabel,
-                spellingTooltip: spellingSupported
-                    ? context.l10n.chooseSpellingLanguage
-                    : null,
-                onSpellingPressed: spellingSupported
-                    ? () => unawaited(_chooseDocumentSpellingLanguage())
-                    : null,
+              ListenableBuilder(
+                listenable: _propertyEdits,
+                builder: (context, _) => Consumer(
+                  builder: (context, ref, _) => BusyMarkDocumentStatusBar(
+                    format: activeBuffer.format,
+                    saveStatus: DocumentSaveStatus.forBuffer(
+                      context,
+                      ref,
+                      activeBuffer,
+                      pendingProperties: _propertyEdits.hasPending,
+                    ),
+                    spellingLabel: spellingLabel,
+                    spellingTooltip: spellingSupported
+                        ? context.l10n.chooseSpellingLanguage
+                        : null,
+                    onSpellingPressed: spellingSupported
+                        ? () => unawaited(_chooseDocumentSpellingLanguage())
+                        : null,
+                  ),
+                ),
               ),
           ],
         ),

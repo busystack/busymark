@@ -11,6 +11,50 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Сохранить как…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Сохранить текущий документ Markdown в новом месте';
+
+  @override
+  String get documentSaved => 'Сохранено';
+
+  @override
+  String get documentModified => 'Изменено';
+
+  @override
+  String get documentSaving => 'Сохранение…';
+
+  @override
+  String get documentNotSaved => 'Не сохранено';
+
+  @override
+  String get documentSaveFailed => 'Ошибка сохранения';
+
+  @override
+  String get documentSaveConflict => 'Конфликт';
+
+  @override
+  String get documentFileMissing => 'Файл отсутствует';
+
+  @override
+  String get documentSaveUnverified => 'Состояние файла неизвестно';
+
+  @override
+  String get documentSavedLocally => 'Сохранено локально';
+
+  @override
+  String get documentSyncPending => 'Ожидание синхронизации';
+
+  @override
+  String get documentSyncFailed => 'Ошибка синхронизации';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Выберите отдельный файл Markdown, который ещё не открыт.';
+
+  @override
   String get notesNewFromRetainedText => 'Новая заметка из сохранённого текста';
 
   @override

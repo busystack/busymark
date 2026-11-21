@@ -11,6 +11,50 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Guardar como…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Guardar o documento Markdown atual numa nova localização';
+
+  @override
+  String get documentSaved => 'Guardado';
+
+  @override
+  String get documentModified => 'Alterado';
+
+  @override
+  String get documentSaving => 'A guardar…';
+
+  @override
+  String get documentNotSaved => 'Por guardar';
+
+  @override
+  String get documentSaveFailed => 'Falha ao guardar';
+
+  @override
+  String get documentSaveConflict => 'Conflito';
+
+  @override
+  String get documentFileMissing => 'Ficheiro em falta';
+
+  @override
+  String get documentSaveUnverified => 'Estado do ficheiro desconhecido';
+
+  @override
+  String get documentSavedLocally => 'Guardado localmente';
+
+  @override
+  String get documentSyncPending => 'Sincronização pendente';
+
+  @override
+  String get documentSyncFailed => 'Falha na sincronização';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Escolha um ficheiro Markdown separado que não esteja aberto.';
+
+  @override
   String get notesNewFromRetainedText =>
       'Nova nota a partir do texto preservado';
 
@@ -9120,6 +9164,50 @@ class AppLocalizationsPt extends AppLocalizations {
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get saveAsEllipsis => 'Salvar como…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Salvar o documento Markdown atual em um novo local';
+
+  @override
+  String get documentSaved => 'Salvo';
+
+  @override
+  String get documentModified => 'Modificado';
+
+  @override
+  String get documentSaving => 'Salvando…';
+
+  @override
+  String get documentNotSaved => 'Não salvo';
+
+  @override
+  String get documentSaveFailed => 'Falha ao salvar';
+
+  @override
+  String get documentSaveConflict => 'Conflito';
+
+  @override
+  String get documentFileMissing => 'Arquivo ausente';
+
+  @override
+  String get documentSaveUnverified => 'Estado do arquivo desconhecido';
+
+  @override
+  String get documentSavedLocally => 'Salvo localmente';
+
+  @override
+  String get documentSyncPending => 'Sincronização pendente';
+
+  @override
+  String get documentSyncFailed => 'Falha na sincronização';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Escolha outro arquivo Markdown que não esteja aberto.';
 
   @override
   String get notesNewFromRetainedText =>

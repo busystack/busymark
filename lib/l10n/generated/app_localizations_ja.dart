@@ -11,6 +11,48 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get saveAsEllipsis => '名前を付けて保存…';
+
+  @override
+  String get shortcutSaveAsDescription => '現在のMarkdown文書を別の場所に保存';
+
+  @override
+  String get documentSaved => '保存済み';
+
+  @override
+  String get documentModified => '変更あり';
+
+  @override
+  String get documentSaving => '保存中…';
+
+  @override
+  String get documentNotSaved => '未保存';
+
+  @override
+  String get documentSaveFailed => '保存に失敗';
+
+  @override
+  String get documentSaveConflict => '競合';
+
+  @override
+  String get documentFileMissing => 'ファイルが見つかりません';
+
+  @override
+  String get documentSaveUnverified => 'ファイルの状態が不明';
+
+  @override
+  String get documentSavedLocally => 'ローカルに保存済み';
+
+  @override
+  String get documentSyncPending => '同期保留中';
+
+  @override
+  String get documentSyncFailed => '同期に失敗';
+
+  @override
+  String get saveAsSeparateMarkdown => '開いていない別のMarkdownファイルを選択してください。';
+
+  @override
   String get notesNewFromRetainedText => '保持されたテキストから新規ノートを作成';
 
   @override

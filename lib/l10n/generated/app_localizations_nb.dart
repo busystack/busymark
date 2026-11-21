@@ -11,6 +11,50 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Lagre som…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Lagre gjeldende Markdown-dokument på et nytt sted';
+
+  @override
+  String get documentSaved => 'Lagret';
+
+  @override
+  String get documentModified => 'Endret';
+
+  @override
+  String get documentSaving => 'Lagrer …';
+
+  @override
+  String get documentNotSaved => 'Ikke lagret';
+
+  @override
+  String get documentSaveFailed => 'Lagring mislyktes';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Filen mangler';
+
+  @override
+  String get documentSaveUnverified => 'Ukjent filstatus';
+
+  @override
+  String get documentSavedLocally => 'Lagret lokalt';
+
+  @override
+  String get documentSyncPending => 'Venter på synkronisering';
+
+  @override
+  String get documentSyncFailed => 'Synkronisering mislyktes';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Velg en egen Markdown-fil som ikke allerede er åpen.';
+
+  @override
   String get notesNewFromRetainedText => 'Nytt notat fra bevart tekst';
 
   @override

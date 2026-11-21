@@ -11,6 +11,50 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Simpan sebagai…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Simpan dokumen Markdown saat ini ke lokasi baru';
+
+  @override
+  String get documentSaved => 'Tersimpan';
+
+  @override
+  String get documentModified => 'Diubah';
+
+  @override
+  String get documentSaving => 'Menyimpan…';
+
+  @override
+  String get documentNotSaved => 'Belum disimpan';
+
+  @override
+  String get documentSaveFailed => 'Gagal menyimpan';
+
+  @override
+  String get documentSaveConflict => 'Konflik';
+
+  @override
+  String get documentFileMissing => 'Berkas tidak ditemukan';
+
+  @override
+  String get documentSaveUnverified => 'Status berkas tidak diketahui';
+
+  @override
+  String get documentSavedLocally => 'Disimpan secara lokal';
+
+  @override
+  String get documentSyncPending => 'Sinkronisasi tertunda';
+
+  @override
+  String get documentSyncFailed => 'Sinkronisasi gagal';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Pilih berkas Markdown lain yang belum terbuka.';
+
+  @override
   String get notesNewFromRetainedText => 'Catatan baru dari teks tersimpan';
 
   @override

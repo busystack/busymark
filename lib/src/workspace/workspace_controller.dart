@@ -23,7 +23,7 @@ import '../core/busymark_temporary_path.dart';
 import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
-import '../core/path_utils.dart' show isTextDocumentationPath;
+import '../core/path_utils.dart' show isMarkdownPath, isTextDocumentationPath;
 import '../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
@@ -190,6 +190,11 @@ class SaveAllResult {
       conflictBufferIds.isEmpty &&
       normalizationRequiredBufferIds.isEmpty;
 }
+
+enum SaveAsIntent { relocate, markdown }
+
+bool canSaveMarkdownAs(DocumentBuffer buffer) =>
+    buffer.isRemote || buffer.isUntitled || isMarkdownPath(buffer.filePath!);
 
 enum _BufferWriteResult { saved, failed, conflict }
 
@@ -1011,7 +1016,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     bool captureHistory = true,
   }) async {
     final reference = target.remoteNote;
-    if (reference == null) return false;
+    final workspace = state.workspace;
+    if (reference == null || workspace == null) return false;
+    final saveTarget = _captureBufferSaveTarget(workspace, target);
+    if (_bufferForSaveBinding(saveTarget) == null) return false;
+    DocumentSaveActivity? activity;
     _remoteDurabilityWrites.update(
       target.id,
       (count) => count + 1,
@@ -1019,16 +1028,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
     try {
       final repository = await _ensureNotesRepository();
+      if (_bufferForSaveBinding(saveTarget) == null) return false;
+      activity = _startDocumentWrite(saveTarget);
       final saved = await repository.save(
         reference.localId,
         content: target.text,
         editorRevision: target.revision,
         editBase: target.remoteEditBase,
       );
-      final latest = state.documentBuffers
-          .where((b) => b.id == target.id)
-          .firstOrNull;
-      if (ref.mounted && latest != null && latest.remoteNote == reference) {
+      final latest = _bufferForSaveBinding(saveTarget);
+      if (latest != null && latest.remoteNote == reference) {
         final unchanged =
             latest.revision == target.revision && latest.text == target.text;
         final text = unchanged
@@ -1044,6 +1053,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
                 .replaced(text)
                 .copyWith(
                   lastSavedText: saved.content,
+                  saveActivity: null,
                   remoteEditBase: unchanged
                       ? repository.editorBase(reference.localId)
                       : latest.remoteEditBase,
@@ -1075,16 +1085,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return true;
     } on Object catch (error) {
-      if (ref.mounted) {
-        state = state.copyWith(
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.saveFailed,
-            error: error,
-          ),
-        );
-      }
+      _recordDocumentWriteError(saveTarget, error);
       return false;
     } finally {
+      _finishDocumentWrite(saveTarget, activity);
       final remaining = (_remoteDurabilityWrites[target.id] ?? 1) - 1;
       if (remaining == 0) {
         _remoteDurabilityWrites.remove(target.id);
@@ -2761,6 +2765,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       lastSavedText: recovery.lastSavedText,
       dirty: true,
       diskSnapshot: recovery.diskSnapshot,
+      lastSavedFormat: conflict ? null : disk.format,
       format: recovery.format,
       editorState: editorState ?? recovery.editorState,
       revision: recovery.revision,
@@ -7408,6 +7413,82 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return _autoSaveBufferIfNeeded(buffer.id);
   }
 
+  WorkspaceMessage? saveConflictFor(ActiveDocumentSaveTarget target) {
+    if (!isActiveDocumentSaveTargetCurrent(target)) return null;
+    final message = state.activeBuffer?.currentSaveActivity?.message;
+    return message?.code == WorkspaceMessageCode.saveBlockedFileChangedOnDisk
+        ? message
+        : null;
+  }
+
+  DocumentSaveActivity? _startDocumentWrite(ActiveDocumentSaveTarget target) =>
+      _recordDocumentSavePhase(target, DocumentSavePhase.saving);
+
+  DocumentSaveActivity? _recordDocumentSavePhase(
+    ActiveDocumentSaveTarget target,
+    DocumentSavePhase phase, {
+    WorkspaceMessage? message,
+  }) {
+    if (!_isBufferSaveTargetCurrent(target)) return null;
+    final buffer = _bufferForSaveBinding(target)!;
+    final activity = (
+      phase: phase,
+      revision: target.editRevision,
+      path: target.path,
+      format: target.format,
+      snapshot: buffer.diskSnapshot,
+      message: message,
+    );
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(
+        state.documentBuffers,
+        buffer.copyWith(saveActivity: activity),
+      ),
+      message: message,
+    );
+    return activity;
+  }
+
+  void _finishDocumentWrite(
+    ActiveDocumentSaveTarget target,
+    DocumentSaveActivity? activity,
+  ) {
+    if (activity == null) return;
+    final buffer = _bufferForSaveBinding(target);
+    if (buffer == null || buffer.saveActivity != activity) return;
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(
+        state.documentBuffers,
+        buffer.copyWith(saveActivity: null),
+      ),
+    );
+  }
+
+  void _recordDocumentWriteError(
+    ActiveDocumentSaveTarget target,
+    Object error,
+  ) {
+    final conflict = error is AtomicFileChangedException;
+    final message = WorkspaceMessage(
+      conflict
+          ? WorkspaceMessageCode.saveBlockedFileChangedOnDisk
+          : WorkspaceMessageCode.saveFailed,
+      error: error,
+    );
+    _recordDocumentSavePhase(
+      target,
+      conflict ? DocumentSavePhase.conflict : DocumentSavePhase.failed,
+      message: message,
+    );
+    // An uncertain publication still has recovery evidence even if the
+    // editor was changed during the write.
+    if (error is AtomicFileChangedException &&
+        error.recoveryPath != null &&
+        _bufferForSaveBinding(target) != null) {
+      state = state.copyWith(message: message);
+    }
+  }
+
   Future<bool> saveActive({
     FileSaveConflictResolution? conflictResolution,
     ActiveDocumentSaveTarget? target,
@@ -7445,13 +7526,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required FileSaveConflictResolution? conflictResolution,
     required LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
-    final remoteBuffer = state.documentBuffers
-        .where((buffer) => buffer.id == target.bufferId && buffer.isRemote)
-        .firstOrNull;
-    if (remoteBuffer != null) {
-      return _saveRemoteBufferSnapshot(
-        remoteBuffer.copyWith(text: target.text, revision: target.editRevision),
-      );
+    final buffer = _bufferForSaveBinding(target);
+    if (buffer == null || buffer.readonly) return false;
+    if (buffer.isRemote) {
+      return _saveRemoteBufferSnapshot(buffer);
     }
     final active = target.path;
     if (active == null) {
@@ -7464,6 +7542,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return false;
     }
+    DocumentSaveActivity? activity;
     try {
       final baseline = target.snapshot;
       var expectedSnapshot = baseline;
@@ -7478,6 +7557,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               format: current.format,
               reason: LocalHistoryCaptureReason.beforeDiscard,
             )) {
+          _recordDocumentWriteError(
+            target,
+            StateError('Could not protect the file in Local History'),
+          );
           return false;
         }
       } else if (conflictResolution == null &&
@@ -7490,7 +7573,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             : baseline == null
             ? WorkspaceSaveConflict.unknownBaseline
             : WorkspaceSaveConflict.changed;
-        state = state.copyWith(
+        _recordDocumentSavePhase(
+          target,
+          exists ? DocumentSavePhase.conflict : DocumentSavePhase.missing,
           message: WorkspaceMessage(
             WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
             saveConflict: conflict,
@@ -7499,11 +7584,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       if (!_isBufferSaveTargetCurrent(target)) return false;
+      final current = _bufferForSaveBinding(target)!;
+      if (conflictResolution == null &&
+          !current.isDirty &&
+          current.diskState == DocumentDiskState.present &&
+          mixedLineEndingNormalization == null) {
+        _finishDocumentWrite(target, current.saveActivity);
+        return true;
+      }
       final text = target.format.formattedText(
         target.text,
         mixedNormalization: mixedLineEndingNormalization,
       );
       final WorkspaceFileSnapshot snapshot;
+      activity = _startDocumentWrite(target);
       if (conflictResolution == FileSaveConflictResolution.recreate) {
         snapshot = await _service.saveNewFormattedText(
           active,
@@ -7520,7 +7614,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       final currentBuffer = _bufferForSaveBinding(target);
-      if (currentBuffer == null) return false;
+      if (currentBuffer == null ||
+          !_sameFileSnapshot(currentBuffer.diskSnapshot, target.snapshot)) {
+        return false;
+      }
       final savedFormat =
           target.format.hasMixedLineEndings &&
               mixedLineEndingNormalization != null
@@ -7533,6 +7630,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         lastSavedText: target.text,
         dirty: currentBuffer.text != target.text,
         diskSnapshot: snapshot,
+        lastSavedFormat: savedFormat,
+        saveActivity: null,
         format: unchanged ? savedFormat : currentBuffer.format,
         diskState: DocumentDiskState.present,
         diskVersionText: null,
@@ -7569,17 +7668,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return true;
     } on Object catch (error) {
-      if (_bufferForSaveBinding(target) != null) {
-        state = state.copyWith(
-          message: error is AtomicFileChangedException
-              ? WorkspaceMessage(
-                  WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
-                  error: error,
-                )
-              : WorkspaceMessage(WorkspaceMessageCode.saveFailed, error: error),
-        );
-      }
+      _recordDocumentWriteError(target, error);
       return false;
+    } finally {
+      _finishDocumentWrite(target, activity);
     }
   }
 
@@ -7738,6 +7830,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final path = target.path!;
     // An earlier write may advance the baseline for this same binding.
     final expected = current.diskSnapshot;
+    DocumentSaveActivity? activity;
+    final statusTarget = _refreshBufferSaveTarget(target) ?? target;
     try {
       if (expected == null || await _service.fileChangedSince(path, expected)) {
         return _BufferWriteResult.conflict;
@@ -7748,6 +7842,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           !_sameFileSnapshot(beforeWrite.diskSnapshot, expected)) {
         return _BufferWriteResult.conflict;
       }
+      activity = _startDocumentWrite(statusTarget);
       final snapshot = await _service.saveTextIfUnchanged(
         path,
         target.format.formattedText(
@@ -7757,7 +7852,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         expectedSnapshot: expected,
       );
       final latest = _bufferForSaveBinding(target);
-      if (latest == null) {
+      if (latest == null || !_sameFileSnapshot(latest.diskSnapshot, expected)) {
         return _BufferWriteResult.failed;
       }
       final unchanged =
@@ -7770,6 +7865,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         lastSavedText: target.text,
         dirty: !unchanged,
         diskSnapshot: snapshot,
+        lastSavedFormat: savedFormat,
+        saveActivity: null,
         format: unchanged ? savedFormat : latest.format,
         diskState: DocumentDiskState.present,
         diskVersionText: null,
@@ -7791,22 +7888,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return _BufferWriteResult.saved;
     } on AtomicFileChangedException catch (error) {
-      if (_bufferForSaveBinding(target) != null) {
-        state = state.copyWith(
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
-            error: error,
-          ),
-        );
-      }
+      _recordDocumentWriteError(statusTarget, error);
       return _BufferWriteResult.conflict;
     } on Object catch (error, stackTrace) {
+      _recordDocumentWriteError(statusTarget, error);
       busyMarkDebugLogError(
         '[BusyMark] Save All could not save a document',
         error,
         stackTrace,
       );
       return _BufferWriteResult.failed;
+    } finally {
+      _finishDocumentWrite(statusTarget, activity);
     }
   }
 
@@ -7815,6 +7908,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     ActiveDocumentSaveTarget? target,
     bool overwriteExisting = false,
     SaveDestination? authorization,
+    SaveAsIntent intent = SaveAsIntent.relocate,
+    bool Function()? isInScope,
     LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     if (target != null && !isActiveDocumentSaveTargetCurrent(target)) {
@@ -7826,23 +7921,224 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         !isActiveDocumentSaveTargetCurrent(operationTarget)) {
       return false;
     }
-    _cancelAutoSave(operationTarget.bufferId);
-    _cancelPendingDerivedRefresh();
+    final publicMarkdown = intent == SaveAsIntent.markdown;
+    final copy =
+        operationTarget.workspaceKind == WorkspaceKind.nextcloudNotes ||
+        (publicMarkdown &&
+            operationTarget.workspaceKind == WorkspaceKind.writersideModule &&
+            !operationTarget.needsSaveLocation);
+    if (publicMarkdown &&
+        (authorization == null ||
+            !isMarkdownPath(path) ||
+            !canSaveMarkdownAs(state.activeBuffer!))) {
+      _reportSaveAsError(
+        operationTarget,
+        const BusyMarkException('workspace.save-as-separate-markdown'),
+      );
+      return false;
+    }
     return _enqueueBufferWrite(operationTarget.bufferId, () async {
       final refreshedTarget = _refreshBufferSaveTarget(operationTarget);
       if (refreshedTarget == null ||
+          isInScope?.call() == false ||
           (authorization != null &&
-              !isActiveDocumentSaveTargetCurrent(operationTarget))) {
+              !isActiveDocumentSaveTargetCurrent(refreshedTarget))) {
         return false;
       }
-      return _saveActiveAsNow(
-        path,
-        target: refreshedTarget,
-        overwriteExisting: authorization?.replacesExisting ?? overwriteExisting,
-        authorization: authorization,
-        mixedLineEndingNormalization: mixedLineEndingNormalization,
-      );
+      final overwrite = authorization?.replacesExisting ?? overwriteExisting;
+      final reviewedOwners = {
+        if (publicMarkdown && overwrite)
+          for (final buffer in state.documentBuffers)
+            if (buffer.filePath != null) (buffer.opening, buffer.filePath),
+      };
+      bool destinationAvailable() =>
+          !publicMarkdown ||
+          state.documentBuffers.every(
+            (buffer) =>
+                buffer.filePath == null ||
+                (!p.equals(buffer.filePath!, path) &&
+                    (!overwrite ||
+                        reviewedOwners.contains((
+                          buffer.opening,
+                          buffer.filePath,
+                        )))),
+          );
+      if (publicMarkdown) {
+        try {
+          final valid = await _isSeparateMarkdownDestination(
+            path,
+            reviewedOwners.map((owner) => owner.$2!),
+          );
+          if (!isActiveDocumentSaveTargetCurrent(refreshedTarget) ||
+              isInScope?.call() == false ||
+              propertyEdits.hasPending) {
+            return false;
+          }
+          if (!valid || !destinationAvailable()) {
+            _reportSaveAsError(
+              refreshedTarget,
+              const BusyMarkException('workspace.save-as-separate-markdown'),
+            );
+            return false;
+          }
+        } on FileSystemException catch (error) {
+          _reportSaveAsError(refreshedTarget, error);
+          return false;
+        }
+      }
+      if (copy) {
+        return _writeMarkdownCopy(
+          path,
+          target: refreshedTarget,
+          overwrite: overwrite,
+          destinationAvailable: destinationAvailable,
+          authorization: authorization,
+          normalization: mixedLineEndingNormalization,
+        );
+      }
+      _cancelAutoSave(refreshedTarget.bufferId);
+      _cancelPendingDerivedRefresh();
+      try {
+        return await _saveActiveAsNow(
+          path,
+          target: refreshedTarget,
+          overwriteExisting: overwrite,
+          destinationAvailable: destinationAvailable,
+          authorization: authorization,
+          intent: intent,
+          mixedLineEndingNormalization: mixedLineEndingNormalization,
+        );
+      } finally {
+        if (_bufferForSaveBinding(refreshedTarget) != null) {
+          _scheduleAutoSave(refreshedTarget.bufferId);
+        }
+      }
     });
+  }
+
+  bool _saveDestinationHasEditor(String path, {Object? exceptOpening}) =>
+      state.documentBuffers.any(
+        (buffer) =>
+            !identical(buffer.opening, exceptOpening) &&
+            buffer.filePath != null &&
+            p.equals(buffer.filePath!, path),
+      );
+
+  Future<bool> _isSeparateMarkdownDestination(
+    String path,
+    Iterable<String> openPaths,
+  ) async {
+    final parent = p.dirname(path);
+    // Keep the chooser's review on its original directory entry. A new editor
+    // binding needs a canonical path, and a copy must never write via an alias.
+    if (!p.equals(await Directory(parent).resolveSymbolicLinks(), parent)) {
+      return false;
+    }
+    final type = await FileSystemEntity.type(path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) return true;
+    if (type != FileSystemEntityType.file) return false;
+    for (final openPath in openPaths) {
+      try {
+        final resolved = await File(openPath).resolveSymbolicLinks();
+        if (p.equals(path, resolved) ||
+            await FileSystemEntity.identical(path, resolved)) {
+          return false;
+        }
+      } on FileSystemException catch (error) {
+        if (error.osError?.errorCode != 2) rethrow;
+        // Missing entries remain covered by the open-path ownership check.
+      }
+    }
+    return true;
+  }
+
+  Future<WorkspaceFileSnapshot> _protectSaveAsDestination(String path) async {
+    final destination = await _service.loadTextWithSnapshot(path);
+    if (!await _localHistory.capturePathBeforeLoss(
+      path: path,
+      text: destination.text,
+      format: destination.format,
+      reason: LocalHistoryCaptureReason.beforeDiscard,
+    )) {
+      throw StateError(
+        'Could not protect the existing destination in Local History',
+      );
+    }
+    return destination.snapshot;
+  }
+
+  void _reportSaveAsError(ActiveDocumentSaveTarget target, Object error) {
+    if (_isBufferSaveTargetCurrent(target)) {
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.saveFailed,
+          error: error,
+        ),
+      );
+    }
+  }
+
+  Future<bool> _writeMarkdownCopy(
+    String path, {
+    required ActiveDocumentSaveTarget target,
+    required bool overwrite,
+    required bool Function() destinationAvailable,
+    required SaveDestination? authorization,
+    required LineEndingNormalization? normalization,
+  }) async {
+    bool stillCurrent() =>
+        _bufferForSaveBinding(target) != null &&
+        !_saveDestinationHasEditor(path) &&
+        destinationAvailable();
+    try {
+      authorization?.requireCurrent(path);
+      final buffer = _bufferForSaveBinding(target);
+      if (buffer == null || !stillCurrent()) return false;
+      if (buffer.remoteNote case final reference?) {
+        final media = NextcloudDocumentMedia(
+          await _ensureNotesRepository(),
+          reference.accountId,
+          reference.localId,
+        );
+        if (!stillCurrent()) return false;
+        await const MarkdownCopyExportService().export(
+          source: target.text,
+          destinationPath: path,
+          media: media.context,
+          overwrite: overwrite,
+          authorization: authorization,
+          isCancelled: () => !stillCurrent(),
+        );
+      } else {
+        final reviewed = authorization!;
+        final text = target.format.formattedText(
+          target.text,
+          mixedNormalization: normalization,
+        );
+        if (overwrite) {
+          final snapshot = await _protectSaveAsDestination(path);
+          if (!stillCurrent()) return false;
+          await _service.saveFormattedTextReplacingPath(
+            path,
+            text,
+            expectedSnapshot: snapshot,
+            authorization: reviewed,
+            stillCurrent: stillCurrent,
+          );
+        } else {
+          await _service.saveNewFormattedText(
+            path,
+            text,
+            authorization: reviewed,
+            stillCurrent: stillCurrent,
+          );
+        }
+      }
+      return true;
+    } on Object catch (error) {
+      _reportSaveAsError(target, error);
+      return false;
+    }
   }
 
   Future<bool> _commitSavedAsSourceRecoveryAfterPublication(
@@ -7865,50 +8161,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String path, {
     required ActiveDocumentSaveTarget target,
     required bool overwriteExisting,
+    required bool Function() destinationAvailable,
     required SaveDestination? authorization,
+    required SaveAsIntent intent,
     required LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
-    if (target.workspaceKind == WorkspaceKind.nextcloudNotes) {
-      try {
-        authorization?.requireCurrent(path);
-        final buffer = state.documentBuffers
-            .where((buffer) => buffer.id == target.bufferId)
-            .firstOrNull;
-        final reference = buffer?.remoteNote;
-        if (reference == null) return false;
-        final media = NextcloudDocumentMedia(
-          await _ensureNotesRepository(),
-          reference.accountId,
-          reference.localId,
-        );
-        await const MarkdownCopyExportService().export(
-          source: target.text,
-          destinationPath: path,
-          media: media.context,
-          overwrite: overwriteExisting,
-          authorization: authorization,
-          isCancelled: authorization == null
-              ? null
-              : () => !isActiveDocumentSaveTargetCurrent(target),
-        );
-        // Save As exports a copy; it never promotes a remote identity to a path.
-        return true;
-      } on Object catch (error) {
-        state = state.copyWith(
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.saveFailed,
-            error: error,
-          ),
-        );
-        return false;
-      }
-    }
-    bool destinationOwnedByAnotherBuffer() => state.documentBuffers.any(
-      (buffer) =>
-          buffer.id != target.bufferId &&
-          buffer.filePath != null &&
-          p.equals(buffer.filePath!, path),
-    );
+    bool destinationOwnedByAnotherBuffer() =>
+        _saveDestinationHasEditor(path, exceptOpening: target.opening) ||
+        !destinationAvailable();
     // One editor owner per filesystem path is a prerequisite for Save As
     // history partitioning. A missing/deleted destination tab can still own
     // dirty recovery and must not be folded into this buffer's cleanup journal.
@@ -7926,27 +8186,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? savedAsSourceRecoveryOwner;
     String? destinationCleanupOperationId;
     WorkspaceFileSnapshot? protectedDestinationSnapshot;
+    DocumentSaveActivity? activity;
     try {
       authorization?.requireCurrent(path);
       final destinationExisted =
           overwriteExisting && await _service.pathExists(path);
       if (destinationExisted) {
-        try {
-          final destination = await _service.loadTextWithSnapshot(path);
-          protectedDestinationSnapshot = destination.snapshot;
-          if (!await _localHistory.capturePathBeforeLoss(
-            path: path,
-            text: destination.text,
-            format: destination.format,
-            reason: LocalHistoryCaptureReason.beforeDiscard,
-          )) {
-            return false;
-          }
-        } on Object {
-          // Overwrite protection must settle durably before destination bytes
-          // can be replaced.
-          return false;
-        }
+        protectedDestinationSnapshot = await _protectSaveAsDestination(path);
       }
       final savedFormat =
           target.format.hasMixedLineEndings &&
@@ -7997,7 +8243,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       bool stillCurrent() =>
           _bufferForSaveBinding(target) != null &&
           !destinationOwnedByAnotherBuffer() &&
-          (authorization == null || isActiveDocumentSaveTargetCurrent(target));
+          (intent == SaveAsIntent.markdown ||
+              authorization == null ||
+              isActiveDocumentSaveTargetCurrent(target));
       if (!stillCurrent()) return false;
       authorization?.requireCurrent(path);
       final text = target.format.formattedText(
@@ -8013,6 +8261,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
 
       WorkspaceFileSnapshot? savedSnapshot;
+      activity = _startDocumentWrite(target);
       try {
         if (overwriteExisting) {
           final expected = protectedDestinationSnapshot;
@@ -8109,6 +8358,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         lastSavedText: target.text,
         dirty: hasNewerEdits,
         diskSnapshot: savedSnapshot,
+        lastSavedFormat: savedFormat,
+        saveActivity: null,
         format: hasNewerEdits ? currentBuffer.format : savedFormat,
         diskState: DocumentDiskState.present,
         diskVersionText: null,
@@ -8227,17 +8478,26 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _schedulePersistence();
       return true;
     } on Object catch (error) {
-      if (ref.mounted &&
-          _workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
-        state = state.copyWith(
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.saveFailed,
-            error: error,
-          ),
+      if (!bufferPathPublished) {
+        final message = WorkspaceMessage(
+          WorkspaceMessageCode.saveFailed,
+          error: error,
         );
+        final failure = _recordDocumentSavePhase(
+          target,
+          DocumentSavePhase.failed,
+          message: message,
+        );
+        if (failure == null &&
+            error is AtomicFileChangedException &&
+            error.recoveryPath != null &&
+            _bufferForSaveBinding(target) != null) {
+          state = state.copyWith(message: message);
+        }
       }
       return bufferPathPublished;
     } finally {
+      _finishDocumentWrite(target, activity);
       if (ref.mounted) {
         if (!historyPathCommitted) {
           await _localHistory.cancelSavedAsSourceRecovery(
@@ -9941,10 +10201,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<bool> _autoSaveBufferIfNeeded(String bufferId) =>
-      _enqueueBufferWrite(bufferId, () => _autoSaveBufferNow(bufferId));
+  Future<bool> _autoSaveBufferIfNeeded(String bufferId) {
+    final opening = state.documentBuffers
+        .where((buffer) => buffer.id == bufferId)
+        .firstOrNull
+        ?.opening;
+    final generation = _workspaceGeneration;
+    return _enqueueBufferWrite(bufferId, () async {
+      if (generation != _workspaceGeneration) return false;
+      return _autoSaveBufferNow(bufferId, opening);
+    });
+  }
 
-  Future<bool> _autoSaveBufferNow(String bufferId) async {
+  Future<bool> _autoSaveBufferNow(String bufferId, Object? opening) async {
     if (!ref.mounted ||
         _windowCloseFrozen ||
         !_settingsController.state.autoSave) {
@@ -9953,41 +10222,44 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final target = state.documentBuffers
         .where((buffer) => buffer.id == bufferId)
         .firstOrNull;
-    if (target == null || !target.isDirty) {
+    if (target == null || target.opening != opening || !target.isDirty) {
       return true;
     }
     if (!_canAutoSave(target)) {
       return false;
     }
     if (target.isRemote) return _saveRemoteBufferSnapshot(target);
+    final saveTarget = _captureBufferSaveTarget(state.workspace!, target);
     final path = target.filePath!;
-    if (target.diskSnapshot == null ||
-        await _service.fileChangedSince(path, target.diskSnapshot)) {
-      return false;
-    }
-    final beforeWrite = state.documentBuffers
-        .where((buffer) => buffer.id == bufferId)
-        .firstOrNull;
-    if (beforeWrite == null || beforeWrite.revision != target.revision) {
-      _scheduleAutoSave(bufferId);
-      return false;
-    }
+    DocumentSaveActivity? activity;
     try {
+      if (target.diskSnapshot == null ||
+          await _service.fileChangedSince(path, target.diskSnapshot)) {
+        final exists = await _service.pathExists(path);
+        _recordDocumentSavePhase(
+          saveTarget,
+          exists ? DocumentSavePhase.conflict : DocumentSavePhase.missing,
+        );
+        return false;
+      }
+      if (!_isBufferSaveTargetCurrent(saveTarget)) return false;
+      activity = _startDocumentWrite(saveTarget);
       final snapshot = await _service.saveTextIfUnchanged(
         path,
         target.format.formattedText(target.text),
         expectedSnapshot: target.diskSnapshot!,
       );
-      final current = state.documentBuffers
-          .where((buffer) => buffer.id == bufferId)
-          .firstOrNull;
-      if (current == null) {
+      final current = _bufferForSaveBinding(saveTarget);
+      if (current == null ||
+          !_sameFileSnapshot(current.diskSnapshot, saveTarget.snapshot)) {
         return false;
       }
       final next = current.copyWith(
         lastSavedText: target.text,
         dirty: current.text != target.text,
         diskSnapshot: snapshot,
+        lastSavedFormat: target.format,
+        saveActivity: null,
         diskState: DocumentDiskState.present,
         diskVersionText: null,
         diskVersionSnapshot: null,
@@ -10003,13 +10275,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return true;
     } on Object catch (error) {
-      state = state.copyWith(
-        message: WorkspaceMessage(
-          WorkspaceMessageCode.saveFailed,
-          error: error,
-        ),
-      );
+      _recordDocumentWriteError(saveTarget, error);
       return false;
+    } finally {
+      _finishDocumentWrite(saveTarget, activity);
     }
   }
 
@@ -10092,6 +10361,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return buffer != null &&
         buffer.revision == target.editRevision &&
         buffer.text == target.text &&
+        buffer.format.sameEncoding(target.format) &&
         _sameFileSnapshot(buffer.diskSnapshot, target.snapshot);
   }
 
@@ -10101,7 +10371,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final buffer = _bufferForSaveBinding(target);
     if (buffer == null ||
         buffer.revision != target.editRevision ||
-        buffer.text != target.text) {
+        buffer.text != target.text ||
+        !buffer.format.sameEncoding(target.format)) {
       return null;
     }
     return ActiveDocumentSaveTarget._(

@@ -139,6 +139,90 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// No description provided for @saveAsEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Save As…'**
+  String get saveAsEllipsis;
+
+  /// No description provided for @shortcutSaveAsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the current Markdown document to a new location'**
+  String get shortcutSaveAsDescription;
+
+  /// No description provided for @documentSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get documentSaved;
+
+  /// No description provided for @documentModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get documentModified;
+
+  /// No description provided for @documentSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get documentSaving;
+
+  /// No description provided for @documentNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved'**
+  String get documentNotSaved;
+
+  /// No description provided for @documentSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed'**
+  String get documentSaveFailed;
+
+  /// No description provided for @documentSaveConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict'**
+  String get documentSaveConflict;
+
+  /// No description provided for @documentFileMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'File missing'**
+  String get documentFileMissing;
+
+  /// No description provided for @documentSaveUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'File status unknown'**
+  String get documentSaveUnverified;
+
+  /// No description provided for @documentSavedLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved locally'**
+  String get documentSavedLocally;
+
+  /// No description provided for @documentSyncPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync pending'**
+  String get documentSyncPending;
+
+  /// No description provided for @documentSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get documentSyncFailed;
+
+  /// No description provided for @saveAsSeparateMarkdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a separate Markdown file that is not already open.'**
+  String get saveAsSeparateMarkdown;
+
   /// No description provided for @notesNewFromRetainedText.
   ///
   /// In en, this message translates to:

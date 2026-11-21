@@ -35,7 +35,8 @@ import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_sidebar.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
-import 'package:busymark/src/workspace/document_origin.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/presentation/document_status_bar.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
@@ -3180,6 +3181,86 @@ void main() {
         },
       );
     }
+  }
+
+  for (final (syncState, pending, failure, dirty, label) in [
+    (NoteSyncState.synced, false, null, false, 'Synced'),
+    (NoteSyncState.synced, true, null, false, 'Saved locally · Sync pending'),
+    (NoteSyncState.offline, true, null, false, 'Saved locally · Offline'),
+    (
+      NoteSyncState.pending,
+      true,
+      NotesFailureCode.server,
+      false,
+      'Saved locally · Sync failed',
+    ),
+    (NoteSyncState.conflict, true, null, false, 'Conflict'),
+    (NoteSyncState.pending, true, null, true, 'Modified'),
+  ]) {
+    testWidgets('document save status represents Notes durability: $label', (
+      tester,
+    ) async {
+      const id = 'metadata-server';
+      final note = repository
+          .noteById(id)!
+          .copyWith(
+            revision: 4,
+            ackRevision: pending ? 3 : 4,
+            syncState: syncState,
+            failureCode: failure,
+          );
+      await tester.runAsync(() async {
+        await repository.store.saveNote(note);
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(
+            path: p.join(root.path, 'notes.sqlite3'),
+          ),
+        );
+        await repository.initialize();
+      });
+      final buffer = DocumentBuffer.nextcloud(
+        reference: NextcloudNoteReference(
+          accountId: note.accountId,
+          localId: id,
+        ),
+        title: note.title,
+        content: note.content,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) => BusyMarkDocumentStatusBar(
+                  format: buffer.format,
+                  saveStatus: DocumentSaveStatus.forBuffer(
+                    context,
+                    ref,
+                    dirty ? buffer.edited('Unstored edit') : buffer,
+                    pendingProperties: false,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await settleStorage(
+        tester,
+        until: () => find.text(label).evaluate().isNotEmpty,
+      );
+      expect(find.text(label), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   }
 
   for (final state in [NoteSyncState.pending, NoteSyncState.synced]) {

@@ -11,6 +11,50 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Save As…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Save the current Markdown document to a new location';
+
+  @override
+  String get documentSaved => 'Saved';
+
+  @override
+  String get documentModified => 'Modified';
+
+  @override
+  String get documentSaving => 'Saving…';
+
+  @override
+  String get documentNotSaved => 'Not saved';
+
+  @override
+  String get documentSaveFailed => 'Save failed';
+
+  @override
+  String get documentSaveConflict => 'Conflict';
+
+  @override
+  String get documentFileMissing => 'File missing';
+
+  @override
+  String get documentSaveUnverified => 'File status unknown';
+
+  @override
+  String get documentSavedLocally => 'Saved locally';
+
+  @override
+  String get documentSyncPending => 'Sync pending';
+
+  @override
+  String get documentSyncFailed => 'Sync failed';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Choose a separate Markdown file that is not already open.';
+
+  @override
   String get notesNewFromRetainedText => 'New note from retained text';
 
   @override

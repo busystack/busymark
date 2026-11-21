@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
@@ -1148,6 +1150,59 @@ void main() {
       expect(harness.state.activeBuffer!.filePath, isNull);
       expect(harness.state.workspace!.kind, WorkspaceKind.nextcloudNotes);
       expect(harness.repository.notes.single.hasPendingChanges, isTrue);
+    },
+  );
+
+  test(
+    'public Save As exports a dirty offline note and its durable attachment',
+    () async {
+      final harness = await _Harness.create(deferPersistence: true);
+      addTearDown(harness.dispose);
+      await harness.controller.openNextcloudWorkspace(_accountId);
+      final before = harness.state.activeBuffer!;
+      final id = before.remoteNote!.localId;
+      final cached = harness.repository.noteById(id)!;
+      final bytes = Uint8List.fromList([1, 2, 3, 4]);
+      final attachment = await harness.repository.addAttachment(
+        id,
+        filename: 'attachment.bin',
+        bytes: bytes,
+      );
+      final draft =
+          '# Offline draft\n\n[Attachment](${attachment.reference})\n';
+      harness.controller.updateActiveText(draft);
+      final editor = harness.state.activeBuffer!;
+      expect(editor.isDirty, isTrue);
+
+      final file = File(p.join(harness.root.path, 'offline.md'));
+      expect(
+        await harness.controller.saveActiveAs(
+          file.path,
+          authorization: SaveDestination.inspect(file.path),
+          intent: SaveAsIntent.markdown,
+        ),
+        isTrue,
+      );
+      final output = await file.readAsString();
+      final link = RegExp(r'\[Attachment\]\(([^)]+)\)').firstMatch(output)![1]!;
+      expect(output, startsWith('# Offline draft'));
+      expect(
+        await File(
+          p.join(file.parent.path, Uri.decodeFull(link)),
+        ).readAsBytes(),
+        bytes,
+      );
+      expect(harness.state.activeBuffer!.opening, same(before.opening));
+      expect(harness.state.activeBuffer!.remoteNote, before.remoteNote);
+      expect(
+        harness.state.activeBuffer!.remoteEditBase,
+        same(editor.remoteEditBase),
+      );
+      expect(harness.state.activeBuffer!.text, draft);
+      expect(harness.state.activeBuffer!.isDirty, isTrue);
+      expect(harness.repository.noteById(id)!.revision, cached.revision);
+      expect(harness.repository.noteById(id)!.ackRevision, cached.ackRevision);
+      expect(harness.repository.noteById(id)!.content, cached.content);
     },
   );
 

@@ -1070,6 +1070,19 @@ class NotesRepository {
     }
   }
 
+  /// Includes queued deletion and legacy publication state that can outlive
+  /// the note revision that first queued the attachment.
+  Future<bool> hasPendingAttachmentWork(NextcloudNote note) async {
+    final attachments = await store.attachments(note.localId);
+    if (attachments.any((attachment) => attachment.state == 'deletePending')) {
+      return true;
+    }
+    if (!note.content.contains('busymark-attachment:')) return false;
+    return (await scanNotesAttachmentReferences(note.content)).any(
+      (reference) => reference.reference.startsWith('busymark-attachment:'),
+    );
+  }
+
   Future<List<NotesAttachment>> attachments(String localId) =>
       store.attachments(localId);
 

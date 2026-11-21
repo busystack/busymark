@@ -11,6 +11,50 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Zapisz jako…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Zapisz bieżący dokument Markdown w nowej lokalizacji';
+
+  @override
+  String get documentSaved => 'Zapisano';
+
+  @override
+  String get documentModified => 'Zmieniono';
+
+  @override
+  String get documentSaving => 'Zapisywanie…';
+
+  @override
+  String get documentNotSaved => 'Nie zapisano';
+
+  @override
+  String get documentSaveFailed => 'Zapis nie powiódł się';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Brak pliku';
+
+  @override
+  String get documentSaveUnverified => 'Nieznany stan pliku';
+
+  @override
+  String get documentSavedLocally => 'Zapisano lokalnie';
+
+  @override
+  String get documentSyncPending => 'Oczekiwanie na synchronizację';
+
+  @override
+  String get documentSyncFailed => 'Synchronizacja nie powiodła się';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Wybierz osobny plik Markdown, który nie jest otwarty.';
+
+  @override
   String get notesNewFromRetainedText => 'Nowa notatka z zachowanego tekstu';
 
   @override

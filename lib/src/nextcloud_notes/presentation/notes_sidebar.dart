@@ -60,7 +60,7 @@ String nextcloudSyncLabel(
 
 // Legacy response transitions may have left a transient/synchronized state
 // alongside durable review evidence. That evidence still takes precedence.
-bool _metadataNeedsReview(NextcloudNote note) =>
+bool nextcloudMetadataNeedsReview(NextcloudNote note) =>
     note.metadataConflict != null &&
     {
       NoteSyncState.synced,
@@ -899,7 +899,7 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                               ? YaruIcons.star_filled
                               : YaruIcons.document,
                           title: note.title,
-                          subtitle: _metadataNeedsReview(note)
+                          subtitle: nextcloudMetadataNeedsReview(note)
                               ? context.l10n.gitConflicts
                               : note.syncState != NoteSyncState.synced
                               ? nextcloudSyncLabel(context, note.syncState)
@@ -1145,6 +1145,16 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
   }
 }
 
+bool _hasActionableNoteStatus(NextcloudNote note) =>
+    nextcloudMetadataNeedsReview(note) ||
+    switch (note.syncState) {
+      NoteSyncState.synced ||
+      NoteSyncState.pending ||
+      NoteSyncState.syncing ||
+      NoteSyncState.offline => false,
+      _ => true,
+    };
+
 /// A durable note condition always takes precedence over account activity.
 String nextcloudNoteStatusLabel(
   BuildContext context,
@@ -1152,7 +1162,7 @@ String nextcloudNoteStatusLabel(
   bool unsaved = false,
 }) {
   if (unsaved) return context.l10n.closeUnsavedChangesTitle;
-  if (_metadataNeedsReview(note)) return context.l10n.gitConflicts;
+  if (nextcloudMetadataNeedsReview(note)) return context.l10n.gitConflicts;
   if (!{
     NoteSyncState.synced,
     NoteSyncState.pending,
@@ -1182,9 +1192,11 @@ class NextcloudNoteStatus extends ConsumerWidget {
     super.key,
     required this.localId,
     required this.unsaved,
+    this.showStatus = true,
   });
   final String localId;
   final bool unsaved;
+  final bool showStatus;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(nextcloudNotesChangesProvider);
@@ -1204,9 +1216,15 @@ class NextcloudNoteStatus extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  nextcloudNoteStatusLabel(context, note, unsaved: unsaved),
-                ),
+                child: showStatus || (unsaved && _hasActionableNoteStatus(note))
+                    ? Text(
+                        nextcloudNoteStatusLabel(
+                          context,
+                          note,
+                          unsaved: showStatus && unsaved,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
               if (note.readonly) Text(context.l10n.nextcloudReadOnly),
               if (note.syncState == NoteSyncState.reconnectRequired)
@@ -1263,11 +1281,10 @@ class NextcloudNoteStatus extends ConsumerWidget {
                 ),
             ],
           ),
-          if (repository.isSynchronizing(note.accountId) &&
-              {
-                NoteSyncState.syncing,
-                NoteSyncState.pending,
-              }.contains(note.syncState))
+          if (note.syncState == NoteSyncState.syncing ||
+              (showStatus &&
+                  note.syncState == NoteSyncState.pending &&
+                  repository.isSynchronizing(note.accountId)))
             const LinearProgressIndicator(),
           if (repository.accountById(note.accountId)?.lastServerCheck
               case final checked?)
@@ -1276,8 +1293,9 @@ class NextcloudNoteStatus extends ConsumerWidget {
                 '${MaterialLocalizations.of(context).formatShortDate(checked.toLocal())} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(checked.toLocal()))}',
               ),
             ),
-          if (note.errorMessage != null &&
-              !_metadataNeedsReview(note) &&
+          if (showStatus &&
+              note.errorMessage != null &&
+              !nextcloudMetadataNeedsReview(note) &&
               note.syncState != NoteSyncState.synced)
             Text(
               nextcloudSyncLabel(context, note.syncState),

@@ -10,6 +10,8 @@ import 'localization.dart';
 import 'window_control_service.dart';
 
 enum BusyMarkMainMenuAction {
+  save,
+  saveAs,
   export,
   fullScreen,
   settings,
@@ -41,6 +43,18 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
       tooltip: l10n.mainMenu,
       icon: BusyMarkGlyphs.menuVertical,
       itemBuilder: (context) => [
+        for (final (action, id) in [
+          (BusyMarkMainMenuAction.save, BusyMarkCommandIds.save),
+          (BusyMarkMainMenuAction.saveAs, BusyMarkCommandIds.saveAs),
+        ])
+          BusyMarkPopupMenuItem(
+            value: action,
+            label: command(id).label(context),
+            icon: BusyMarkGlyphs.save,
+            shortcut: command(id).shortcut?.label,
+            gtkAccelerator: command(id).shortcut?.gtkAccelerator,
+            enabled: command(id).canExecute,
+          ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.export,
           label: command(BusyMarkCommandIds.export).label(context),
@@ -94,6 +108,8 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
       ],
       onSelected: (action) {
         final commandId = switch (action) {
+          BusyMarkMainMenuAction.save => BusyMarkCommandIds.save,
+          BusyMarkMainMenuAction.saveAs => BusyMarkCommandIds.saveAs,
           BusyMarkMainMenuAction.export => BusyMarkCommandIds.export,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,

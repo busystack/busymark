@@ -35,6 +35,15 @@ class TextFormatMetadata {
   final int crlfCount;
   final int crCount;
 
+  bool sameEncoding(TextFormatMetadata other) =>
+      hasUtf8Bom == other.hasUtf8Bom &&
+      (lineEnding == other.lineEnding ||
+          (lineEnding == DocumentLineEnding.none &&
+              other.lineEnding == DocumentLineEnding.lf) ||
+          (lineEnding == DocumentLineEnding.lf &&
+              other.lineEnding == DocumentLineEnding.none)) &&
+      hasFinalNewline == other.hasFinalNewline;
+
   bool get hasMixedLineEndings => lineEnding == DocumentLineEnding.mixed;
 
   TextFormatMetadata copyWith({

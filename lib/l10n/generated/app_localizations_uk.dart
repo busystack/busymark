@@ -11,6 +11,50 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Зберегти як…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Зберегти поточний документ Markdown у новому місці';
+
+  @override
+  String get documentSaved => 'Збережено';
+
+  @override
+  String get documentModified => 'Змінено';
+
+  @override
+  String get documentSaving => 'Збереження…';
+
+  @override
+  String get documentNotSaved => 'Не збережено';
+
+  @override
+  String get documentSaveFailed => 'Помилка збереження';
+
+  @override
+  String get documentSaveConflict => 'Конфлікт';
+
+  @override
+  String get documentFileMissing => 'Файл відсутній';
+
+  @override
+  String get documentSaveUnverified => 'Стан файлу невідомий';
+
+  @override
+  String get documentSavedLocally => 'Збережено локально';
+
+  @override
+  String get documentSyncPending => 'Очікування синхронізації';
+
+  @override
+  String get documentSyncFailed => 'Помилка синхронізації';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Виберіть окремий файл Markdown, який ще не відкрито.';
+
+  @override
   String get notesNewFromRetainedText => 'Нова нотатка зі збереженого тексту';
 
   @override

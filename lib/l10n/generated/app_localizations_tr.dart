@@ -11,6 +11,50 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Farklı Kaydet…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Geçerli Markdown belgesini yeni bir konuma kaydet';
+
+  @override
+  String get documentSaved => 'Kaydedildi';
+
+  @override
+  String get documentModified => 'Değiştirildi';
+
+  @override
+  String get documentSaving => 'Kaydediliyor…';
+
+  @override
+  String get documentNotSaved => 'Kaydedilmedi';
+
+  @override
+  String get documentSaveFailed => 'Kaydetme başarısız';
+
+  @override
+  String get documentSaveConflict => 'Çakışma';
+
+  @override
+  String get documentFileMissing => 'Dosya eksik';
+
+  @override
+  String get documentSaveUnverified => 'Dosya durumu bilinmiyor';
+
+  @override
+  String get documentSavedLocally => 'Yerel olarak kaydedildi';
+
+  @override
+  String get documentSyncPending => 'Eşitleme bekliyor';
+
+  @override
+  String get documentSyncFailed => 'Eşitleme başarısız';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Açık olmayan ayrı bir Markdown dosyası seçin.';
+
+  @override
   String get notesNewFromRetainedText => 'Saklanan metinden yeni not';
 
   @override

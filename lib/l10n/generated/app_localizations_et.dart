@@ -11,6 +11,50 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Salvesta nimega…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Salvesta praegune Markdowni dokument uude asukohta';
+
+  @override
+  String get documentSaved => 'Salvestatud';
+
+  @override
+  String get documentModified => 'Muudetud';
+
+  @override
+  String get documentSaving => 'Salvestamine…';
+
+  @override
+  String get documentNotSaved => 'Salvestamata';
+
+  @override
+  String get documentSaveFailed => 'Salvestamine nurjus';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Fail puudub';
+
+  @override
+  String get documentSaveUnverified => 'Faili olek teadmata';
+
+  @override
+  String get documentSavedLocally => 'Kohalikult salvestatud';
+
+  @override
+  String get documentSyncPending => 'Sünkroonimine ootel';
+
+  @override
+  String get documentSyncFailed => 'Sünkroonimine nurjus';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Vali eraldi Markdowni fail, mis pole juba avatud.';
+
+  @override
   String get notesNewFromRetainedText => 'Uus märge säilitatud tekstist';
 
   @override

@@ -2867,6 +2867,15 @@ void main() {
       isFalse,
     );
     expect(find.text(BusyMarkAppShortcuts.export.label), findsOneWidget);
+    for (final label in [l10n.save, l10n.saveAsEllipsis]) {
+      final item = tester.widget<BusyMarkPopupMenuItem<Object?>>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+        ),
+      );
+      expect(item.enabled, isFalse);
+    }
     for (final documentCommand in <String>{
       l10n.clipboardHistory,
       l10n.localHistory,
@@ -14433,6 +14442,153 @@ code
           tester.widget<TextField>(historyField(mode)).controller!.selection,
           const TextSelection.collapsed(offset: 2),
         );
+      },
+    );
+  }
+
+  for (final autoSave in [false, true]) {
+    testWidgets(
+      'Main menu, Actions and shortcuts save with Auto Save $autoSave',
+      (tester) async {
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-save-command-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        final original = File(p.join(root.path, 'original.md'))
+          ..writeAsStringSync('Original');
+        final destination = File(p.join(root.path, 'copy.md'));
+        final secondDestination = File(p.join(root.path, 'second.md'));
+        const chooser = MethodChannel('busymark/save_chooser');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        String? nextDestination;
+        var chooserCalls = 0;
+        messenger.setMockMethodCallHandler(chooser, (call) async {
+          expect(call.method, 'save');
+          chooserCalls++;
+          final path = nextDestination;
+          return path == null
+              ? null
+              : SaveDestination.inspect(path).chooserReview;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+
+        const mode = DocumentViewModePreference.source;
+        final container = await historyApp(
+          tester,
+          mode,
+          service: const WorkspaceService(),
+          startupPath: original.path,
+        );
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .setAutoSave(autoSave);
+        final controller = container.read(workspaceControllerProvider.notifier);
+        WorkspaceState state() => container.read(workspaceControllerProvider);
+        final opening = state().activeBuffer!.opening;
+        final keymap = container.read(keymapControllerProvider.notifier);
+        expect(
+          (await keymap.update(
+            BusyMarkCommandIds.saveAs,
+            const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+            expected: container
+                .read(appSettingsControllerProvider)
+                .shortcutOverrides,
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final status = find.byKey(const ValueKey('document-save-status'));
+        String? statusLabel() => tester.widget<Text>(status).data;
+        expect(statusLabel(), l10n.documentSaved);
+
+        Future<void> openMenu() async {
+          await tester.tap(find.byTooltip(l10n.mainMenu));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 250));
+        }
+
+        BusyMarkPopupMenuItem<Object?> menuItem(String label) => tester.widget(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkPopupMenuItem<Object?> &&
+                widget.label == label,
+          ),
+        );
+
+        await openMenu();
+        expect(menuItem(l10n.save).enabled, isTrue);
+        expect(menuItem(l10n.saveAsEllipsis).enabled, isTrue);
+        expect(menuItem(l10n.saveAsEllipsis).shortcut, 'F8');
+        expect(
+          tester.getTopLeft(find.text(l10n.saveAsEllipsis)).dy,
+          lessThan(tester.getTopLeft(find.text(l10n.export)).dy),
+        );
+
+        nextDestination = destination.path;
+        await tester.tap(find.text(l10n.saveAsEllipsis));
+        await pumpUntil(
+          tester,
+          () => state().activeBuffer?.filePath == destination.path,
+          operation: 'Save As from Main menu',
+        );
+        await tester.pump();
+        expect(destination.readAsStringSync(), 'Original');
+        expect(state().activeBuffer!.opening, same(opening));
+        expect(state().documentBuffers, hasLength(1));
+
+        controller.updateActiveText('Save by shortcut');
+        await tester.pump();
+        expect(statusLabel(), l10n.documentModified);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => !state().isDirty,
+          operation: 'Save by shortcut',
+        );
+        await tester.pump();
+        expect(statusLabel(), l10n.documentSaved);
+        expect(destination.readAsStringSync(), 'Save by shortcut');
+        expect(original.readAsStringSync(), 'Original');
+
+        nextDestination = null;
+        await tester.sendKeyEvent(LogicalKeyboardKey.f8);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+        expect(chooserCalls, 2);
+        expect(state().activeBuffer!.filePath, destination.path);
+        expect(statusLabel(), l10n.documentSaved);
+
+        nextDestination = secondDestination.path;
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+        final actions = find.descendant(
+          of: find.byKey(const ValueKey('shared-search-query')),
+          matching: find.byType(EditableText),
+        );
+        await tester.enterText(actions, 'Save As');
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+        await tester.tap(find.text(l10n.saveAsEllipsis).last);
+        await pumpUntil(
+          tester,
+          () => state().activeBuffer?.filePath == secondDestination.path,
+          operation: 'Save As from Actions',
+        );
+        expect(secondDestination.readAsStringSync(), 'Save by shortcut');
+        expect(state().activeBuffer!.opening, same(opening));
+        expect(chooserCalls, 3);
+        await tabOperation(tester, controller.flushPersistence);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 2));
       },
     );
   }

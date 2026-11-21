@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/core/linux_file_identity.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
@@ -2019,6 +2020,172 @@ code
         (harness.controller.state.message!.error as BusyMarkException).code,
         'writerside.topic-file.project-buffers-dirty',
       );
+    },
+  );
+
+  test(
+    'public Writerside Save As copies pending properties and format without rebinding',
+    () async {
+      final root = await _createWritableWritersideFixture('markdown-copy');
+      addTearDown(() => root.delete(recursive: true));
+      final source = await File(
+        p.join(root.path, 'topics', 'intro.md'),
+      ).writeAsString('\uFEFF# Saved\r\n');
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final workspace = harness.controller.state.workspace!;
+      expect(await controller.openActiveFile(source.path), isTrue);
+      final before = harness.controller.state.activeBuffer!;
+      final session = controller.propertyEdits;
+      final draft = session.bind('title', 'Saved', (value) {
+        if (value.isEmpty) return false;
+        controller.updateActiveText('# $value\n');
+        return true;
+      });
+      session.edit(draft, '');
+      final copy = File(p.join(root.path, 'copy.markdown'));
+      Future<bool> saveAs() => controller.saveActiveAs(
+        copy.path,
+        authorization: SaveDestination.inspect(copy.path),
+        intent: SaveAsIntent.markdown,
+      );
+      expect(await saveAs(), isFalse);
+      expect(draft.error, isNotNull);
+      expect(await copy.exists(), isFalse);
+
+      session.edit(draft, 'Pending title');
+      expect(await saveAs(), isTrue);
+      final live = harness.controller.state.activeBuffer!;
+      expect(live.opening, same(before.opening));
+      expect(live.filePath, source.path);
+      expect(live.isDirty, isTrue);
+      expect(harness.controller.state.workspace!.id, workspace.id);
+      expect(
+        harness.controller.state.workspace!.openFilePaths,
+        isNot(contains(copy.path)),
+      );
+      expect(await source.readAsBytes(), [
+        0xef,
+        0xbb,
+        0xbf,
+        ...'# Saved\r\n'.codeUnits,
+      ]);
+      expect(await copy.readAsBytes(), [
+        0xef,
+        0xbb,
+        0xbf,
+        ...'# Pending title\r\n'.codeUnits,
+      ]);
+
+      final tree = workspace
+          .writersideProject!
+          .modules
+          .first
+          .instances
+          .first
+          .sourceTreePath;
+      expect(await controller.openActiveFile(tree), isTrue);
+      expect(await saveAs(), isFalse);
+      expect(await controller.saveActive(), isTrue);
+    },
+  );
+
+  test(
+    'public Save As rejects an open destination and source aliases',
+    () async {
+      final root = await Directory.systemTemp.createTemp('save-as-alias-');
+      addTearDown(() => root.delete(recursive: true));
+      final source = await File(
+        p.join(root.path, 'source.md'),
+      ).writeAsString('source');
+      final other = await File(
+        p.join(root.path, 'open.md'),
+      ).writeAsString('open');
+      final alias = await Link(
+        p.join(root.path, 'alias.md'),
+      ).create(source.path);
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      expect(await controller.openActiveFile(other.path), isTrue);
+      expect(await controller.openActiveFile(source.path), isTrue);
+      final opening = harness.controller.state.activeBuffer!.opening;
+
+      for (final path in [source.path, other.path, alias.path]) {
+        expect(
+          await controller.saveActiveAs(
+            path,
+            authorization: SaveDestination.inspect(
+              path,
+              kind: SaveDestinationKind.fileOrSymbolicLink,
+            ),
+            intent: SaveAsIntent.markdown,
+          ),
+          isFalse,
+        );
+        expect(harness.controller.state.activeBuffer!.opening, same(opening));
+        expect(harness.controller.state.activeBuffer!.filePath, source.path);
+      }
+      expect(await source.readAsString(), 'source');
+      expect(await other.readAsString(), 'open');
+      expect(await alias.target(), source.path);
+    },
+  );
+
+  test(
+    'authorized Save As keeps a newer revision dirty against the new file',
+    () async {
+      final root = await Directory.systemTemp.createTemp('save-as-newer-edit-');
+      addTearDown(() => root.delete(recursive: true));
+      final source = await File(
+        p.join(root.path, 'source.md'),
+      ).writeAsString('original');
+      final copy = File(p.join(root.path, 'copy.md'));
+      final staged = Completer<void>();
+      final release = Completer<void>();
+      final harness = await _createControllerHarness(
+        service: WorkspaceService(
+          beforeNewFilePublish: (path) async {
+            if (path == copy.path && !staged.isCompleted) {
+              staged.complete();
+              await release.future;
+            }
+          },
+        ),
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(source.path);
+      controller.updateActiveText('captured');
+      final opening = harness.controller.state.activeBuffer!.opening;
+      final saving = controller.saveActiveAs(
+        copy.path,
+        authorization: SaveDestination.inspect(copy.path),
+        intent: SaveAsIntent.markdown,
+      );
+      await staged.future;
+      expect(
+        harness.controller.state.activeBuffer!.currentSaveActivity?.phase,
+        DocumentSavePhase.saving,
+      );
+      controller.updateActiveText('newer');
+      expect(
+        harness.controller.state.activeBuffer!.currentSaveActivity,
+        isNull,
+      );
+      release.complete();
+      expect(await saving, isTrue);
+      final current = harness.controller.state.activeBuffer!;
+      expect(current.opening, same(opening));
+      expect(current.filePath, copy.path);
+      expect(current.isDirty, isTrue);
+      expect(current.text, 'newer');
+      expect(await copy.readAsString(), 'captured');
+      expect(await source.readAsString(), 'original');
+      expect(await controller.saveActive(), isTrue);
+      expect(await copy.readAsString(), 'newer');
     },
   );
 

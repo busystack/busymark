@@ -8,6 +8,7 @@ import '../spellcheck/spelling_language.dart';
 import '../nextcloud_notes/domain/notes_models.dart';
 import 'text_format_metadata.dart';
 import 'workspace_file_snapshot.dart';
+import 'workspace_message.dart';
 import 'document_origin.dart';
 
 export 'document_origin.dart';
@@ -15,6 +16,18 @@ export 'document_origin.dart';
 const Object _bufferUnset = Object();
 
 enum DocumentDiskState { present, changed, deleted, conflict }
+
+enum DocumentSavePhase { saving, failed, conflict, missing }
+
+/// A transient observation of one revision at its current destination.
+typedef DocumentSaveActivity = ({
+  DocumentSavePhase phase,
+  int revision,
+  String? path,
+  TextFormatMetadata format,
+  WorkspaceFileSnapshot? snapshot,
+  WorkspaceMessage? message,
+});
 
 class DocumentHistoryState {
   const DocumentHistoryState({
@@ -206,6 +219,8 @@ class DocumentBuffer {
     this.filePath,
     this.untitledName,
     this.diskSnapshot,
+    TextFormatMetadata? lastSavedFormat,
+    this.saveActivity,
     this.format = TextFormatMetadata.utf8Lf,
     this.editorState = const DocumentEditorState(),
     this.revision = 0,
@@ -218,6 +233,8 @@ class DocumentBuffer {
     this.remoteEditBase,
     this.readonly = false,
   }) : opening = opening ?? Object(),
+       lastSavedFormat =
+           lastSavedFormat ?? (diskSnapshot == null ? null : format),
        assert(remoteNote == null || filePath == null);
 
   factory DocumentBuffer.file({
@@ -285,6 +302,8 @@ class DocumentBuffer {
   final String lastSavedText;
   final bool dirty;
   final WorkspaceFileSnapshot? diskSnapshot;
+  final TextFormatMetadata? lastSavedFormat;
+  final DocumentSaveActivity? saveActivity;
   final TextFormatMetadata format;
   final DocumentEditorState editorState;
   final int revision;
@@ -305,7 +324,22 @@ class DocumentBuffer {
   bool get isRemote => origin == DocumentOrigin.nextcloudNote;
 
   bool get isUntitled => origin == DocumentOrigin.untitled;
-  bool get isDirty => dirty;
+  bool get isDirty =>
+      dirty ||
+      (lastSavedFormat != null && !format.sameEncoding(lastSavedFormat!));
+
+  DocumentSaveActivity? get currentSaveActivity {
+    final activity = saveActivity;
+    if (activity == null ||
+        revision != activity.revision ||
+        filePath != activity.path ||
+        !format.sameEncoding(activity.format) ||
+        diskSnapshot != activity.snapshot) {
+      return null;
+    }
+    return activity;
+  }
+
   bool get hasConflict => diskState == DocumentDiskState.conflict;
   bool get deletedOnDisk => diskState == DocumentDiskState.deleted;
   String get identity => remoteNote?.identity ?? filePath ?? id;
@@ -383,6 +417,8 @@ class DocumentBuffer {
     String? lastSavedText,
     bool? dirty,
     Object? diskSnapshot = _bufferUnset,
+    TextFormatMetadata? lastSavedFormat,
+    Object? saveActivity = _bufferUnset,
     TextFormatMetadata? format,
     DocumentEditorState? editorState,
     int? revision,
@@ -395,6 +431,9 @@ class DocumentBuffer {
     NotesEditorBase? remoteEditBase,
     bool? readonly,
   }) {
+    final publishesBaseline =
+        (lastSavedText != null && dirty == false) ||
+        !identical(diskSnapshot, _bufferUnset);
     return DocumentBuffer(
       opening: opening,
       id: id,
@@ -410,6 +449,12 @@ class DocumentBuffer {
       diskSnapshot: identical(diskSnapshot, _bufferUnset)
           ? this.diskSnapshot
           : diskSnapshot as WorkspaceFileSnapshot?,
+      lastSavedFormat:
+          lastSavedFormat ??
+          (publishesBaseline ? format ?? this.format : this.lastSavedFormat),
+      saveActivity: identical(saveActivity, _bufferUnset)
+          ? this.saveActivity
+          : saveActivity as DocumentSaveActivity?,
       format: format ?? this.format,
       editorState: editorState ?? this.editorState,
       revision: revision ?? this.revision,

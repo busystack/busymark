@@ -11,6 +11,50 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Opslaan als…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Het huidige Markdown-document op een nieuwe locatie opslaan';
+
+  @override
+  String get documentSaved => 'Opgeslagen';
+
+  @override
+  String get documentModified => 'Gewijzigd';
+
+  @override
+  String get documentSaving => 'Opslaan…';
+
+  @override
+  String get documentNotSaved => 'Niet opgeslagen';
+
+  @override
+  String get documentSaveFailed => 'Opslaan mislukt';
+
+  @override
+  String get documentSaveConflict => 'Conflict';
+
+  @override
+  String get documentFileMissing => 'Bestand ontbreekt';
+
+  @override
+  String get documentSaveUnverified => 'Bestandsstatus onbekend';
+
+  @override
+  String get documentSavedLocally => 'Lokaal opgeslagen';
+
+  @override
+  String get documentSyncPending => 'Synchronisatie in afwachting';
+
+  @override
+  String get documentSyncFailed => 'Synchronisatie mislukt';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Kies een ander Markdown-bestand dat nog niet geopend is.';
+
+  @override
   String get notesNewFromRetainedText => 'Nieuwe notitie van bewaarde tekst';
 
   @override

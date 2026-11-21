@@ -11,6 +11,50 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Speichern unter…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Aktuelles Markdown-Dokument an einem neuen Ort speichern';
+
+  @override
+  String get documentSaved => 'Gespeichert';
+
+  @override
+  String get documentModified => 'Geändert';
+
+  @override
+  String get documentSaving => 'Wird gespeichert…';
+
+  @override
+  String get documentNotSaved => 'Nicht gespeichert';
+
+  @override
+  String get documentSaveFailed => 'Speichern fehlgeschlagen';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Datei fehlt';
+
+  @override
+  String get documentSaveUnverified => 'Dateistatus unbekannt';
+
+  @override
+  String get documentSavedLocally => 'Lokal gespeichert';
+
+  @override
+  String get documentSyncPending => 'Synchronisierung ausstehend';
+
+  @override
+  String get documentSyncFailed => 'Synchronisierung fehlgeschlagen';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Wählen Sie eine separate Markdown-Datei, die noch nicht geöffnet ist.';
+
+  @override
   String get notesNewFromRetainedText => 'Neue Notiz aus aufbewahrtem Text';
 
   @override

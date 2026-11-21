@@ -11,6 +11,49 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Lưu thành…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Lưu tài liệu Markdown hiện tại vào vị trí mới';
+
+  @override
+  String get documentSaved => 'Đã lưu';
+
+  @override
+  String get documentModified => 'Đã sửa đổi';
+
+  @override
+  String get documentSaving => 'Đang lưu…';
+
+  @override
+  String get documentNotSaved => 'Chưa lưu';
+
+  @override
+  String get documentSaveFailed => 'Không lưu được';
+
+  @override
+  String get documentSaveConflict => 'Xung đột';
+
+  @override
+  String get documentFileMissing => 'Thiếu tệp';
+
+  @override
+  String get documentSaveUnverified => 'Chưa rõ trạng thái tệp';
+
+  @override
+  String get documentSavedLocally => 'Đã lưu cục bộ';
+
+  @override
+  String get documentSyncPending => 'Đang chờ đồng bộ';
+
+  @override
+  String get documentSyncFailed => 'Đồng bộ thất bại';
+
+  @override
+  String get saveAsSeparateMarkdown => 'Chọn một tệp Markdown khác chưa mở.';
+
+  @override
   String get notesNewFromRetainedText => 'Ghi chú mới từ văn bản được giữ lại';
 
   @override
