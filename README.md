@@ -1,6 +1,6 @@
 # BusyMark
 
-Markdown, Writerside, and Nextcloud Notes editor for Linux.
+Workspace for Markdown documents, Nextcloud Notes, and Writerside projects for Linux.
 
 [![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
 
