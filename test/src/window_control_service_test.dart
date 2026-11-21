@@ -62,7 +62,10 @@ void main() {
               return true;
             },
             beforeClose: metadata,
-            discardChanges: metadata,
+            discardChanges: () async {
+              await metadata();
+              return true;
+            },
             finalCloseGuard: () {
               order.add('guard');
               entered.complete();

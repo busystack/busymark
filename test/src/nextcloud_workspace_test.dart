@@ -676,6 +676,91 @@ void main() {
     },
   );
 
+  test(
+    'direct dirty remote close protects history without a queue cycle',
+    () async {
+      final h = await _Harness.create(deferPersistence: true);
+      final controller = h.controller;
+      expect(await controller.openNextcloudWorkspace(_accountId), isTrue);
+      await controller.flushPersistence();
+      final buffer = h.state.activeBuffer!;
+      controller.updateActiveText('discardable edit');
+      final closed = await controller
+          .closeDocumentBuffer(buffer.id, discard: true)
+          .timeout(const Duration(seconds: 4));
+      expect(closed, isTrue);
+      expect(h.state.documentBuffers, isEmpty);
+      expect((await h.repository.store.notes()).single.content, buffer.text);
+      final history = h.container.read(localHistoryStoreProvider);
+      final revisions = (await history.load()).revisions;
+      expect(
+        await Future.wait(
+          revisions.map(
+            (r) async => (await history.readRevision(r.id))!.source,
+          ),
+        ),
+        contains('discardable edit'),
+      );
+      await h.dispose();
+    },
+  );
+
+  for (final duringDiscard in [false, true]) {
+    test(
+      'remote discard adopts the current edit base (refresh during discard: $duringDiscard)',
+      () async {
+        var remote = serverNote(1, content: 'B', etag: 'base');
+        final history = _BlockingRestoreHistoryStore(
+          reason: LocalHistoryCaptureReason.beforeDiscard,
+        );
+        final h = await _Harness.create(
+          seedLocal: false,
+          deferPersistence: true,
+          historyStore: history,
+          client: MockClient(
+            (request) async => http.Response(
+              jsonEncode(request.url.path.endsWith('/1') ? remote : [remote]),
+              200,
+            ),
+          ),
+        );
+        addTearDown(h.dispose);
+        addTearDown(() {
+          if (!history.release.isCompleted) history.release.complete();
+        });
+        await h.repository.synchronize(_accountId, allowWrites: false);
+        await h.controller.openNextcloudWorkspace(_accountId);
+        await h.controller.refreshNextcloudNotes();
+        final before = h.state.activeBuffer!;
+        final id = before.remoteNote!.localId;
+        h.controller.updateActiveText('discardable local edit');
+        remote = serverNote(1, content: 'R', etag: 'refreshed');
+        if (!duringDiscard) await h.controller.refreshNextcloudNotes();
+        final discard = h.controller.discardActiveChanges();
+        await history.started.future;
+        if (duringDiscard) await h.controller.refreshNextcloudNotes();
+        expect(h.state.activeText, 'discardable local edit');
+        expect(h.repository.noteById(id)!.content, 'R');
+        history.release.complete();
+        expect(await discard, isTrue);
+        final adopted = h.state.activeBuffer!;
+        expect(adopted.opening, same(before.opening));
+        expect(adopted.text, 'R');
+        expect(adopted.remoteEditBase?.state?.etag, 'refreshed');
+        expect(
+          adopted.remoteEditBase?.generation,
+          h.repository.editorBase(id).generation,
+        );
+        h.controller.updateActiveText('R with another edit');
+        expect(await h.controller.saveActive(), isTrue);
+        final saved = (await h.repository.store.notes()).single;
+        expect(saved.syncState, NoteSyncState.pending);
+        expect(saved.base?.etag, 'refreshed');
+        expect(saved.content, 'R with another edit');
+      },
+    );
+  }
+
   test('immediate persistence cannot deadlock a remote save', () async {
     final harness = await _Harness.create(persistenceDelay: Duration.zero);
     addTearDown(harness.dispose);
@@ -1349,6 +1434,11 @@ class _GatedLocalOpenService extends WorkspaceService {
 }
 
 class _BlockingRestoreHistoryStore extends MemoryLocalHistoryStore {
+  _BlockingRestoreHistoryStore({
+    this.reason = LocalHistoryCaptureReason.beforeRestore,
+  });
+
+  final LocalHistoryCaptureReason reason;
   final started = Completer<void>();
   final release = Completer<void>();
 
@@ -1357,7 +1447,7 @@ class _BlockingRestoreHistoryStore extends MemoryLocalHistoryStore {
     LocalHistoryCaptureRequest request,
     LocalHistoryPolicy policy,
   ) async {
-    if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
+    if (request.reason == reason) {
       if (!started.isCompleted) started.complete();
       await release.future;
     }

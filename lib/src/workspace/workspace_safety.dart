@@ -487,23 +487,26 @@ Future<bool> _saveActiveWithOverwriteConfirmation(
   if (!context.mounted) {
     return false;
   }
+  final recreate = state.message?.saveConflict == WorkspaceSaveConflict.missing;
   final action = await showBusyMarkModalDialog<_OverwriteAction>(
     context,
     builder: (context) => BusyMarkAlert(
-      heading: context.l10n.fileChangedOnDisk,
+      heading: recreate
+          ? context.l10n.externalFileDeleted
+          : context.l10n.fileChangedOnDisk,
       responses: [
         BusyMarkAlertResponse(
           label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
         ),
         BusyMarkAlertResponse(
-          label: context.l10n.overwrite,
-          destructive: true,
+          label: recreate ? context.l10n.save : context.l10n.overwrite,
+          destructive: !recreate,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
         ),
       ],
       children: [
-        Text(context.l10n.fileChangedOnDiskMessage),
+        if (!recreate) Text(context.l10n.fileChangedOnDiskMessage),
         if (state.message?.error case final AtomicFileChangedException error
             when error.recoveryPath != null)
           Text(error.toString()),
@@ -514,7 +517,9 @@ Future<bool> _saveActiveWithOverwriteConfirmation(
     return false;
   }
   return controller.saveActive(
-    overwriteExternalChanges: true,
+    conflictResolution: recreate
+        ? FileSaveConflictResolution.recreate
+        : FileSaveConflictResolution.overwrite,
     target: operationTarget,
     mixedLineEndingNormalization: normalization,
   );
@@ -526,6 +531,7 @@ Future<bool> saveActiveToNewLocation(
 ) async {
   final container = _container(ref);
   final controller = container.read(workspaceControllerProvider.notifier);
+  if (!controller.propertyEdits.flush()) return false;
   final target = controller.captureActiveDocumentSaveTarget();
   if (target == null) {
     return false;

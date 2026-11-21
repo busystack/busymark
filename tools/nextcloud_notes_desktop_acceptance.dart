@@ -3530,9 +3530,14 @@ class _HarnessState extends ConsumerState<_Harness> {
         stderr.writeln('Desktop acceptance failed: $failure');
         exit(1);
       }
-      await ref
-          .read(workspaceControllerProvider.notifier)
-          .discardRecoveryForShutdown();
+      final workspace = ref.read(workspaceControllerProvider.notifier);
+      final reviewed = workspace.captureWindowCloseAuthorization();
+      if (!await workspace.discardRecoveryForShutdown(
+        reviewed,
+        beginClose: () async => workspace.freezeWindowClose(reviewed),
+      )) {
+        throw StateError('Could not settle fixture recovery for shutdown.');
+      }
       await SystemNavigator.pop();
     }
   }

@@ -281,7 +281,9 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       final saved = _savedVersion(baseline);
       workspace.updateActiveText(saved, sourceFilePath: buffer.filePath);
       _check(
-        await workspace.saveActive(overwriteExternalChanges: true),
+        await workspace.saveActive(
+          conflictResolution: FileSaveConflictResolution.overwrite,
+        ),
         'explicit save captured',
       );
       await _waitForRevisionSource(saved, null, 'saved source publication');
@@ -305,7 +307,9 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       workspace.updateActiveText(current, sourceFilePath: buffer.filePath);
       if (widget.realPolicyTimer) {
         _check(
-          await workspace.saveActive(overwriteExternalChanges: true),
+          await workspace.saveActive(
+            conflictResolution: FileSaveConflictResolution.overwrite,
+          ),
           'filtered explicit save captured',
         );
         await _waitForRevisionSource(
@@ -417,7 +421,13 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         }),
       );
       if (!passed) exitCode = 1;
-      await workspace.discardRecoveryForShutdown();
+      final reviewed = workspace.captureWindowCloseAuthorization();
+      if (!await workspace.discardRecoveryForShutdown(
+        reviewed,
+        beginClose: () async => workspace.freezeWindowClose(reviewed),
+      )) {
+        throw StateError('Could not settle fixture recovery for shutdown.');
+      }
       await Future<void>.delayed(const Duration(milliseconds: 300));
       await SystemNavigator.pop();
     } catch (error, stackTrace) {

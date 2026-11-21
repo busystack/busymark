@@ -22,6 +22,7 @@ import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -3400,6 +3401,44 @@ CommonMark paragraph.
     expect(controller.state.isDirty, isFalse);
   });
 
+  test('queued Save All cannot save to the former Save As source', () async {
+    final directory = await Directory.systemTemp.createTemp('save-all-rebind-');
+    addTearDown(() => directory.delete(recursive: true));
+    final a = File(p.join(directory.path, 'A.md'));
+    final b = File(p.join(directory.path, 'B.md'));
+    await a.writeAsString('S');
+    final service = _PublishedSaveAsGate();
+    final harness = await _createControllerHarness(service: service);
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller;
+    await controller.openPath(a.path);
+    final opening = controller.state.activeBuffer!.opening;
+
+    final saveAs = controller.saveActiveAs(b.path);
+    await service.published.future;
+    expect(await b.readAsString(), 'S');
+    expect(controller.state.activeBuffer!.filePath, a.path);
+    controller.updateActiveText('T');
+    final saveAll = controller.saveAll();
+    service.resume.complete();
+
+    expect(await saveAs, isTrue);
+    final outcome = await saveAll;
+    expect(await a.readAsString(), 'S');
+    expect(await b.readAsString(), 'S');
+    expect(outcome.succeeded, isFalse);
+    final rebound = controller.state.activeBuffer!;
+    expect(rebound.opening, same(opening));
+    expect(rebound.filePath, b.path);
+    expect(rebound.text, 'T');
+    expect(rebound.isDirty, isTrue);
+
+    await b.writeAsString('external');
+    expect((await controller.saveAll()).conflictBufferIds, [rebound.id]);
+    expect(await b.readAsString(), 'external');
+    expect(controller.state.activeBuffer!.isDirty, isTrue);
+  });
+
   test('Save As waits for an in-flight autosave of the same buffer', () async {
     final service = _AutosaveWorkspaceService(pauseFirstSave: true);
     final harness = await _createControllerHarness(service: service);
@@ -3513,6 +3552,34 @@ CommonMark paragraph.
       }
     });
   }
+
+  test(
+    'window close authorization survives a refresh of the saved revision',
+    () async {
+      final directory = await Directory.systemTemp.createTemp('close-refresh-');
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'document.md'));
+      await file.writeAsString('# Source\n');
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(directory.path);
+      await controller.openActiveFile(file.path);
+      final before = harness.controller.state.activeBuffer!;
+      final reviewed = controller.captureWindowCloseAuthorization();
+
+      expect(
+        await controller.refreshWorkspaceFromDiskPreservingOpenTabs(),
+        isTrue,
+      );
+      final refreshed = harness.controller.state.activeBuffer!;
+      expect(refreshed.opening, same(before.opening));
+      expect(refreshed.diskSnapshot, isNot(same(before.diskSnapshot)));
+      expect(controller.isWindowCloseAuthorizationCurrent(reviewed), isTrue);
+      controller.updateActiveText('# New edit\n');
+      expect(controller.isWindowCloseAuthorizationCurrent(reviewed), isFalse);
+    },
+  );
 
   test('clean shutdown waits for adopted recovery to be published', () async {
     final directory = await Directory.systemTemp.createTemp(
@@ -3683,7 +3750,9 @@ CommonMark paragraph.
       expect(await controller.saveActive(), isFalse);
       expect(await file.readAsString(), '# External\n');
       expect(
-        await controller.saveActive(overwriteExternalChanges: true),
+        await controller.saveActive(
+          conflictResolution: FileSaveConflictResolution.overwrite,
+        ),
         isTrue,
       );
       expect(await file.readAsString(), '# BusyMark\n');
@@ -4666,6 +4735,100 @@ CommonMark paragraph.
     expect(harness.controller.state.activeBuffer?.deletedOnDisk, isTrue);
   });
 
+  for (final action in ['overwrite', 'recreate', 'save as', 'appeared']) {
+    test(
+      'save recovered content with an unknown disk baseline: $action',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'save-recovered-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final file = File(p.join(directory.path, 'original.md'));
+        final copy = File(p.join(directory.path, 'copy.md'));
+        if (action == 'overwrite') await file.writeAsString('unrelated');
+        const content = 'recovered editor content';
+        const editor = DocumentEditorState();
+        final sessions = MemoryDocumentSessionStore()
+          ..value = WorkspaceSessionSnapshot(
+            workspacePath: file.path,
+            activeBufferId: 'recovered',
+            tabs: [
+              DocumentSessionEntry(
+                id: 'recovered',
+                filePath: file.path,
+                untitledName: null,
+                editorState: editor,
+              ),
+            ],
+          );
+        final recovery = MemoryDocumentRecoveryStore()
+          ..value = RecoverySnapshot(
+            cleanShutdown: false,
+            entries: [
+              DocumentRecoveryEntry(
+                id: 'recovered',
+                workspacePath: file.path,
+                filePath: file.path,
+                untitledName: null,
+                text: content,
+                lastSavedText: 'previous',
+                diskSnapshot: null,
+                format: TextFormatMetadata.utf8Lf,
+                editorState: editor,
+                revision: 2,
+              ),
+            ],
+          );
+        final service = WorkspaceService(
+          beforeNewFilePublish: (path) async {
+            if (action == 'appeared') {
+              await File(path).writeAsString('external');
+            }
+          },
+        );
+        final harness = await _createControllerHarness(
+          service: service,
+          sessionStore: sessions,
+          recoveryStore: recovery,
+        );
+        await harness.settingsController.setAutoSave(false);
+        final controller = harness.controller;
+        expect(await controller.restorePreviousSession(), isTrue);
+        expect(controller.state.activeBuffer!.diskSnapshot, isNull);
+        expect(controller.state.activeText, content);
+        expect(await controller.saveActive(), isFalse);
+        expect(
+          controller.state.message?.code,
+          WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+        );
+        expect(controller.state.isDirty, isTrue);
+        if (action == 'overwrite') {
+          expect(await file.readAsString(), 'unrelated');
+        } else {
+          expect(await file.exists(), isFalse);
+        }
+        if (action == 'save as') {
+          expect(await controller.saveActiveAs(copy.path), isTrue);
+          expect(await copy.readAsString(), content);
+          expect(await file.exists(), isFalse);
+        } else {
+          final saved = await controller.saveActive(
+            conflictResolution: action == 'overwrite'
+                ? FileSaveConflictResolution.overwrite
+                : FileSaveConflictResolution.recreate,
+          );
+          expect(saved, action != 'appeared');
+          expect(
+            await file.readAsString(),
+            action == 'appeared' ? 'external' : content,
+          );
+        }
+        expect(controller.state.isDirty, action == 'appeared');
+        expect(controller.state.activeText, content);
+      },
+    );
+  }
+
   test('restored standalone sessions retain a missing document', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-missing-standalone-session-',
@@ -5151,8 +5314,8 @@ class _WorkspaceControllerDriver {
     );
   }
 
-  Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
-      _notifier.saveActive(overwriteExternalChanges: overwriteExternalChanges);
+  Future<bool> saveActive({FileSaveConflictResolution? conflictResolution}) =>
+      _notifier.saveActive(conflictResolution: conflictResolution);
 
   Future<bool> saveActiveAs(String path, {bool overwriteExisting = false}) =>
       _notifier.saveActiveAs(path, overwriteExisting: overwriteExisting);
@@ -5301,6 +5464,27 @@ class _FailingDocumentSessionStore extends MemoryDocumentSessionStore {
       throw StateError('simulated session save failure');
     }
     return super.save(snapshot);
+  }
+}
+
+class _PublishedSaveAsGate extends WorkspaceService {
+  final published = Completer<void>();
+  final resume = Completer<void>();
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(
+    String path,
+    String text, {
+    Future<void> Function()? onPublished,
+  }) async {
+    final snapshot = await super.saveNewText(
+      path,
+      text,
+      onPublished: onPublished,
+    );
+    published.complete();
+    await resume.future;
+    return snapshot;
   }
 }
 

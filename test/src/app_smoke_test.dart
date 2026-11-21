@@ -18,6 +18,7 @@ import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
 import 'dart:async';
 import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
+import 'package:busymark/src/editor/wysiwyg/writerside_property_session.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -17155,6 +17156,112 @@ After break.
     expect(nativeWindow.closeCount, 0);
   });
 
+  for (final scenario in ['later edit', 'valid property', 'invalid property']) {
+    testWidgets('native window close protects $scenario', (tester) async {
+      final native = _FakeNativeWindowController();
+      final sessions = _WindowDiscardSessionGate();
+      final recovery = MemoryDocumentRecoveryStore();
+      final history = MemoryLocalHistoryStore();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          nativeWindowControllerProvider.overrideWithValue(native),
+          workspaceServiceProvider.overrideWithValue(
+            _StartupWorkspaceService(),
+          ),
+          documentSessionStoreProvider.overrideWithValue(sessions),
+          documentRecoveryStoreProvider.overrideWithValue(recovery),
+          localHistoryStoreProvider.overrideWithValue(history),
+          startupPathProvider.overrideWithValue(
+            'test/fixtures/markdown/basic.md',
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await pumpUntil(tester, () {
+        final state = container.read(workspaceControllerProvider);
+        return state.activeBuffer != null &&
+            !state.isLoading &&
+            native.listeners.isNotEmpty;
+      }, operation: 'open document');
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setAutoSave(false);
+      final controller = container.read(workspaceControllerProvider.notifier);
+      if (scenario == 'later edit') {
+        controller.updateActiveText('# Approved edit\n');
+        await controller.flushPersistence();
+      } else {
+        final session = controller.propertyEdits;
+        final field = session.bind('title', 'Original', (value) {
+          if (value.isEmpty) {
+            return session.reject(WritersidePropertyRejection.invalid);
+          }
+          controller.updateActiveText('# $value\n');
+          return true;
+        });
+        session.edit(
+          field,
+          scenario == 'valid property' ? 'Pending title' : '',
+        );
+        expect(container.read(workspaceControllerProvider).isDirty, isFalse);
+      }
+      native.listeners.single.onWindowClose();
+      await tester.pumpAndSettle();
+      if (scenario == 'invalid property') {
+        expect(native.closeCount, 0);
+        expect(
+          controller.propertyEdits.feedback,
+          WritersidePropertyRejection.invalid,
+        );
+        expect(controller.propertyEdits.hasPending, isTrue);
+        expect(find.text(l10n.closeUnsavedChangesTitle), findsNothing);
+      } else {
+        expect(find.text(l10n.closeUnsavedChangesTitle), findsOneWidget);
+        if (scenario == 'valid property') {
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            '# Pending title\n',
+          );
+          await tester.tap(find.text(l10n.closeUnsavedChangesSave));
+          await tester.pumpAndSettle();
+          expect(native.closeCount, 1);
+        } else {
+          sessions.arm = true;
+          await tester.tap(find.text(l10n.closeUnsavedChangesDiscard));
+          await pumpUntil(
+            tester,
+            () => sessions.started.isCompleted,
+            operation: 'wait for discard persistence',
+          );
+          controller.updateActiveText('# Edit after consent\n');
+          sessions.resume.complete();
+          await tester.pumpAndSettle();
+          expect(native.closeCount, 0);
+          await controller.flushPersistence();
+          final revisions = (await history.load()).revisions;
+          expect(
+            await Future.wait(
+              revisions.map(
+                (r) async => (await history.readRevision(r.id))!.source,
+              ),
+            ),
+            contains('# Approved edit\n'),
+          );
+          expect(recovery.value.entries.single.text, '# Edit after consent\n');
+        }
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   testWidgets('window close flushes autosave for saved files', (tester) async {
     final nativeWindow = _FakeNativeWindowController();
     final service = _StartupWorkspaceService();
@@ -24749,6 +24856,22 @@ class _GatedRecentSettingsStore extends _MemorySettingsStore {
       }
     }
     await super.save(json);
+  }
+}
+
+class _WindowDiscardSessionGate extends MemoryDocumentSessionStore {
+  bool arm = false;
+  final started = Completer<void>();
+  final resume = Completer<void>();
+
+  @override
+  Future<void> save(WorkspaceSessionSnapshot snapshot) async {
+    if (arm) {
+      arm = false;
+      started.complete();
+      await resume.future;
+    }
+    await super.save(snapshot);
   }
 }
 

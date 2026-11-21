@@ -747,6 +747,7 @@ class _BusyMarkWindowLifecycleState
   late final AppLifecycleListener _notesLifecycle;
   late final GoRouter _notesRouter;
   late final VoidCallback _unregisterMessageGuard;
+  bool _closing = false;
 
   @override
   void initState() {
@@ -789,7 +790,10 @@ class _BusyMarkWindowLifecycleState
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return AbsorbPointer(
+      absorbing: _closing,
+      child: ExcludeFocus(excluding: _closing, child: widget.child),
+    );
   }
 
   void _notesRouteChanged() {
@@ -814,7 +818,7 @@ class _BusyMarkWindowLifecycleState
 
   Future<void> _handleWindowClose() async {
     final context = rootNavigatorKey.currentContext ?? this.context;
-    if (!context.mounted) {
+    if (!context.mounted || _windowControlService.isClosing) {
       return;
     }
     final drafts = ref.read(busyMarkGitDraftFlushProvider);
@@ -839,41 +843,96 @@ class _BusyMarkWindowLifecycleState
         !context.mounted) {
       return;
     }
+    // The focused property often has not submitted on a native close event.
+    if (!controller.propertyEdits.flush()) return;
     final settings = ref.read(appSettingsControllerProvider);
     var workspace = ref.read(workspaceControllerProvider);
     if (settings.autoSave && workspace.hasUnsavedChanges) {
       await ref.read(workspaceControllerProvider.notifier).saveAll();
+      if (!mounted || !context.mounted || !controller.propertyEdits.flush()) {
+        return;
+      }
       workspace = ref.read(workspaceControllerProvider);
     }
-    await _windowControlService.handleCloseRequest(
-      hasUnsavedChanges: workspace.hasUnsavedChanges,
-      confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,
-      showCloseDialog: () => _showWindowCloseDialog(context),
-      saveChanges: () => _saveAllDirtyDocuments(context),
-      beforeClose: controller.markCleanShutdown,
-      discardChanges: controller.discardRecoveryForShutdown,
-      finalCloseGuard: () async {
-        // Document metadata can await I/O after the message discard consent.
-        // Drain later writes, then veto only newly unsaved message revisions.
-        await drafts.flush();
-        for (final session in drafts.liveSessions()) {
-          if (!session.hasUnpersistedMessageDrafts) continue;
-          final reviewed =
-              reviewedMessages[(
-                session.host.drafts,
-                session.repository.presentationKey,
-              )];
-          if (reviewed == null ||
-              !mapEquals(reviewed, session.messageDraftRevisions)) {
+    var reviewedDocuments = controller.captureWindowCloseAuthorization();
+    var settling = false;
+
+    bool messagesAreCurrent() {
+      for (final session in drafts.liveSessions()) {
+        if (!session.hasUnpersistedMessageDrafts) continue;
+        final reviewed =
+            reviewedMessages[(
+              session.host.drafts,
+              session.repository.presentationKey,
+            )];
+        if (reviewed == null ||
+            !mapEquals(reviewed, session.messageDraftRevisions)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    Future<bool> beginClose() async {
+      // Metadata can await I/O after consent. Veto newly unsaved message
+      // revisions as well as changes to the reviewed document openings.
+      await drafts.flush();
+      if (!mounted ||
+          !context.mounted ||
+          !messagesAreCurrent() ||
+          !controller.isWindowCloseAuthorizationCurrent(reviewedDocuments)) {
+        return false;
+      }
+      setState(() => _closing = true);
+      await WidgetsBinding.instance.endOfFrame;
+      return mounted &&
+          context.mounted &&
+          messagesAreCurrent() &&
+          controller.freezeWindowClose(reviewedDocuments);
+    }
+
+    try {
+      await _windowControlService.handleCloseRequest(
+        hasUnsavedChanges: workspace.hasUnsavedChanges,
+        confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,
+        showCloseDialog: () => _showWindowCloseDialog(context),
+        saveChanges: () async {
+          if (!mounted ||
+              !controller.isWindowCloseAuthorizationCurrent(
+                reviewedDocuments,
+              ) ||
+              !await _saveAllDirtyDocuments(context, reviewedDocuments)) {
             return false;
           }
-        }
-        return true;
-      },
-    );
+          reviewedDocuments = controller.captureWindowCloseAuthorization();
+          return true;
+        },
+        beforeClose: () async {
+          settling = true;
+          await controller.markCleanShutdown();
+        },
+        discardChanges: () {
+          settling = true;
+          return controller.discardRecoveryForShutdown(
+            reviewedDocuments,
+            beginClose: beginClose,
+          );
+        },
+        finalCloseGuard: () async => _closing || await beginClose(),
+      );
+    } finally {
+      if (mounted && !_windowControlService.isClosing && settling) {
+        if (_closing) setState(() => _closing = false);
+        controller.resumeAfterCancelledWindowClose();
+        await controller.flushPersistence();
+      }
+    }
   }
 
-  Future<bool> _saveAllDirtyDocuments(BuildContext context) async {
+  Future<bool> _saveAllDirtyDocuments(
+    BuildContext context,
+    WindowCloseAuthorization reviewed,
+  ) async {
     final controller = ref.read(workspaceControllerProvider.notifier);
     final dirtyIds = [
       for (final buffer
@@ -881,8 +940,10 @@ class _BusyMarkWindowLifecycleState
         if (buffer.isDirty) buffer.id,
     ];
     for (final bufferId in dirtyIds) {
-      if (!await controller.activateDocumentBuffer(bufferId) ||
+      if (!controller.isWindowCloseDocumentCurrent(reviewed, bufferId) ||
+          !await controller.activateDocumentBuffer(bufferId) ||
           !context.mounted ||
+          !controller.isWindowCloseDocumentCurrent(reviewed, bufferId) ||
           !await saveActiveWithOverwriteConfirmation(context, ref)) {
         return false;
       }

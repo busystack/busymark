@@ -2880,7 +2880,13 @@ pix.savev(sys.argv[1], 'png', [], [])
       // The native runner can return success after SystemNavigator.pop even
       // when Dart's exitCode was set by an unexpected framework error.
       if (exitCode != 0) exit(exitCode);
-      await workspace.discardRecoveryForShutdown();
+      final reviewed = workspace.captureWindowCloseAuthorization();
+      if (!await workspace.discardRecoveryForShutdown(
+        reviewed,
+        beginClose: () async => workspace.freezeWindowClose(reviewed),
+      )) {
+        throw StateError('Could not settle fixture recovery for shutdown.');
+      }
       if (exitCode != 0) exit(exitCode);
       await SystemNavigator.pop();
     } catch (error, stack) {
