@@ -131,6 +131,32 @@ protection. The restart regression reads a fresh on-disk session journal before
 retiring its original controller, then verifies both unresolved pre-traversal
 sources in Local History and the latest branch in dirty-document recovery.
 
+## Local file Save and crash recovery
+
+On supported Linux filesystems, a completed Save publishes flushed document
+bytes at the destination. Conditional replacement verifies the displaced
+entry and attempts rollback if another writer changed it. A failed rollback
+retains the displaced entry for recovery when possible. Save As to a new
+destination uses atomic no-replace publication. Batch saves exchange entries
+one at a time and roll back in reverse order on failure. Another process can
+observe intermediate files, and a process crash during the batch can interrupt
+rollback.
+
+After an acknowledged Save, application termination or an application crash
+does not undo the completed publication while the operating system remains
+running. The normal replacement, new-file and batch paths flush staged bytes
+without a final directory durability barrier. The recoverable fallback used
+when exchange is unavailable flushes directories around displacement and
+publication to protect that sequence. BusyMark has no uniform guarantee that
+the last acknowledged destination or a whole batch survives an operating-system
+crash or sudden power loss. A guarantee across those failures would require an
+explicit contract for supported filesystems, directory-barrier failures and
+restart behavior during partial publication.
+
+[Linux rename and exchange semantics](https://man7.org/linux/man-pages/man2/rename.2.html)
+and [Linux file and directory flush semantics](https://man7.org/linux/man-pages/man2/fsync.2.html)
+describe the underlying guarantees.
+
 ## Document-history regression cases
 
 The maintained suites exercise these state transitions through production
