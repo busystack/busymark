@@ -707,6 +707,50 @@ void main() {
     },
   );
 
+  for (final baseChanged in [false, true]) {
+    test(
+      'window close authorization checks provenance of an identical saved edit (server change: $baseChanged)',
+      () async {
+        var remote = serverNote(1, content: 'Original', etag: 'base');
+        final h = await _Harness.create(
+          seedLocal: false,
+          deferPersistence: true,
+          client: MockClient(
+            (_) async => http.Response(jsonEncode([remote]), 200),
+          ),
+        );
+        addTearDown(h.dispose);
+        await h.repository.synchronize(_accountId, allowWrites: false);
+        final controller = h.controller;
+        expect(await controller.openNextcloudWorkspace(_accountId), isTrue);
+        await controller.refreshNextcloudNotes();
+        final id = h.state.activeBuffer!.remoteNote!.localId;
+        controller.updateActiveText('Reviewed edit');
+        if (!baseChanged) {
+          // A local metadata edit can advance the repository revision while
+          // the editor still owns its original content revision.
+          await h.repository.save(id, content: 'Original', favorite: true);
+        }
+        final before = h.state.activeBuffer!;
+        final reviewed = controller.captureWindowCloseAuthorization();
+        if (baseChanged) {
+          remote = serverNote(1, content: 'Original', etag: 'changed');
+          await controller.refreshNextcloudNotes();
+        }
+        await controller.markCleanShutdown();
+
+        final live = h.state.activeBuffer!;
+        expect(live.text, before.text);
+        expect(live.isDirty, isFalse);
+        if (!baseChanged) expect(live.revision, greaterThan(before.revision));
+        expect(
+          controller.isWindowCloseAuthorizationCurrent(reviewed),
+          !baseChanged,
+        );
+      },
+    );
+  }
+
   for (final duringDiscard in [false, true]) {
     test(
       'remote discard adopts the current edit base (refresh during discard: $duringDiscard)',
@@ -1073,8 +1117,10 @@ void main() {
         addTearDown(subscription.close);
         if (explicitDelete) {
           expect(
-            await harness.controller.deleteNextcloudNote(first.localId),
-            isTrue,
+            (await harness.controller.deleteNextcloudNote(
+              first.localId,
+            )).status,
+            NotesBatchStatus.changed,
           );
         } else {
           remote.remove(1);

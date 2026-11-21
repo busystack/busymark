@@ -13,6 +13,7 @@ import 'package:http/testing.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -518,6 +519,100 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  for (final (action, laterEdit) in [
+    ('Save', false),
+    ('Discard', false),
+    ('Cancel', false),
+    ('Discard', true),
+    (null, false),
+  ]) {
+    testWidgets(
+      'window close during Notes persistence (${action ?? 'no confirmation'}, later edit: $laterEdit)',
+      (tester) async {
+        final native = _NotesNativeWindow();
+        final container = await pumpWelcome(
+          tester,
+          nativeWindow: native,
+          persistenceDelay: const Duration(hours: 1),
+          settings: _RecentReopenSettings(
+            failSave: false,
+            value: {
+              'autoSave': false,
+              'automaticSpelling': false,
+              'confirmCloseWithUnsavedChanges': action != null,
+            },
+          ),
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        expect(
+          await tester.runAsync(
+            () => controller.openNextcloudWorkspace(accountId),
+          ),
+          isTrue,
+        );
+        container.read(appRouterProvider).go('/workspace');
+        await settleStorage(tester);
+        final id = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .remoteNote!
+            .localId;
+        const reviewed = 'Reviewed offline edit';
+        controller.updateActiveText(reviewed);
+        expect(container.read(workspaceControllerProvider).isDirty, isTrue);
+        expect(repository.noteById(id)!.content, isNot(reviewed));
+        final close = container
+            .read(windowControlServiceProvider)
+            .requestClose();
+        var closeFinished = false;
+        unawaited(close.then((_) => closeFinished = true));
+        final dialog = find.widgetWithText(
+          BusyMarkDialogShell,
+          AppLocalizationsEn().closeUnsavedChangesTitle,
+        );
+        if (action != null) {
+          await settleStorage(tester);
+          expect(dialog, findsOneWidget);
+          final persistence = controller.flushPersistence();
+          var persisted = false;
+          unawaited(persistence.then((_) => persisted = true));
+          await pumpUntil(
+            tester,
+            () => persisted,
+            operation: 'persist the reviewed Notes edit',
+          );
+          await persistence;
+          expect(dialog, findsOneWidget);
+          expect(native.closeCount, 0);
+          expect(container.read(workspaceControllerProvider).isDirty, isFalse);
+          if (laterEdit) controller.updateActiveText('New edit after review');
+          await tester.tap(find.widgetWithText(BusyMarkDialogButton, action));
+        }
+        await pumpUntil(
+          tester,
+          () => closeFinished,
+          operation: 'finish the window close request',
+        );
+        await close;
+        await tester.pumpAndSettle();
+        expect(dialog, findsNothing);
+        expect(native.closeCount, action == 'Cancel' || laterEdit ? 0 : 1);
+        if (laterEdit) {
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            'New edit after review',
+          );
+        } else {
+          expect(repository.noteById(id)!.content, reviewed);
+          expect(container.read(workspaceControllerProvider).isDirty, isFalse);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+        await closeFixture(tester);
+      },
+    );
+  }
 
   testWidgets('native close protects a dirty or saving server settings draft', (
     tester,
@@ -2528,6 +2623,46 @@ void main() {
       },
     );
   }
+
+  testWidgets('single-note deletion explains a stale review without deleting', (
+    tester,
+  ) async {
+    const id = '223e4567-e89b-42d3-a456-426614174000';
+    final l10n = AppLocalizationsEn();
+    final menu = NativeMenuProbe(tester);
+    final container = await pumpWelcome(tester);
+    await tester.runAsync(() async {
+      expect(
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .openNextcloudWorkspace(accountId),
+        isTrue,
+      );
+    });
+    container.read(appRouterProvider).go('/workspace');
+    await settleStorage(tester);
+    final row = find.byKey(const ValueKey('nextcloud-note-$id'));
+    await tester.tap(row, buttons: kSecondaryMouseButton);
+    await tester.pump();
+    await menu.choose(l10n.nextcloudDeleteNote);
+    expect(
+      find.widgetWithText(BusyMarkDialogShell, l10n.nextcloudDeleteNote),
+      findsOneWidget,
+    );
+
+    await tester.runAsync(
+      () => repository.save(id, content: 'Changed after review'),
+    );
+    await settleStorage(tester);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
+    await settleStorage(tester);
+
+    expect(find.text(l10n.notesBatchReviewChanged), findsOneWidget);
+    expect(row, findsOneWidget);
+    expect(repository.noteById(id)!.content, 'Changed after review');
+    expect((repository as _CachedNotesRepository).deleteCalls, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('a selected Notes batch offers a reviewed deletion action', (
     tester,

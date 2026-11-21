@@ -14449,6 +14449,72 @@ code
     );
   }
 
+  for (final firstSave in [true, false]) {
+    testWidgets(
+      '${firstSave ? 'First Save' : 'Save As'} through a symlinked directory',
+      (tester) async {
+        final root = Directory.systemTemp.createTempSync('save-linked-parent-');
+        addTearDown(() => root.deleteSync(recursive: true));
+        final documents = Directory(p.join(root.path, 'documents'))
+          ..createSync();
+        final alias = Link(p.join(root.path, 'alias'))
+          ..createSync(documents.path);
+        final source = File(p.join(documents.path, 'source.md'))
+          ..writeAsStringSync('Original');
+        final destination = File(p.join(documents.path, 'saved.md'));
+        const chooser = MethodChannel('busymark/save_chooser');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        messenger.setMockMethodCallHandler(chooser, (call) async {
+          expect(call.method, 'save');
+          return SaveDestination.inspect(
+            p.join(alias.path, 'saved.md'),
+          ).chooserReview;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+
+        final container = await historyApp(
+          tester,
+          DocumentViewModePreference.source,
+          service: const WorkspaceService(),
+          fileMonitor: _SearchTestFileMonitor(),
+          startupPath: source.path,
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        if (firstSave) {
+          await tabOperation(tester, controller.createMarkdownFile);
+        }
+        final opening = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .opening;
+        controller.updateActiveText('Saved through directory alias');
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip(l10n.mainMenu));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.text(firstSave ? l10n.save : l10n.saveAsEllipsis),
+        );
+        await pumpUntil(
+          tester,
+          () =>
+              container
+                  .read(workspaceControllerProvider)
+                  .activeBuffer
+                  ?.filePath ==
+              destination.path,
+          operation: 'Save via the linked directory',
+        );
+        final saved = container.read(workspaceControllerProvider).activeBuffer!;
+        expect(saved.opening, same(opening));
+        expect(saved.isDirty, isFalse);
+        expect(destination.readAsStringSync(), 'Saved through directory alias');
+        expect(source.readAsStringSync(), 'Original');
+        await tabOperation(tester, controller.flushPersistence);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
   for (final autoSave in [false, true]) {
     testWidgets(
       'Main menu, Actions and shortcuts save with Auto Save $autoSave',

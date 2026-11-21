@@ -918,11 +918,15 @@ class _BusyMarkWindowLifecycleState
           if (!mounted ||
               !controller.isWindowCloseAuthorizationCurrent(
                 reviewedDocuments,
-              ) ||
-              !await _saveAllDirtyDocuments(context, reviewedDocuments)) {
+              )) {
             return false;
           }
-          reviewedDocuments = controller.captureWindowCloseAuthorization();
+          final saved = await _saveAllDirtyDocuments(
+            context,
+            reviewedDocuments,
+          );
+          if (saved == null) return false;
+          reviewedDocuments = saved;
           return true;
         },
         beforeClose: () async {
@@ -947,7 +951,7 @@ class _BusyMarkWindowLifecycleState
     }
   }
 
-  Future<bool> _saveAllDirtyDocuments(
+  Future<WindowCloseAuthorization?> _saveAllDirtyDocuments(
     BuildContext context,
     WindowCloseAuthorization reviewed,
   ) async {
@@ -963,8 +967,9 @@ class _BusyMarkWindowLifecycleState
           !await controller.activateDocumentBuffer(bufferId) ||
           !context.mounted ||
           !controller.isWindowCloseDocumentCurrent(authorization, bufferId)) {
-        return false;
+        return null;
       }
+      if (!ref.read(workspaceControllerProvider).isDirty) continue;
       final target = controller.captureActiveDocumentSaveTarget();
       if (target == null ||
           target.bufferId != bufferId ||
@@ -973,16 +978,19 @@ class _BusyMarkWindowLifecycleState
             ref,
             target: target,
           )) {
-        return false;
+        return null;
       }
       final continued = controller.windowCloseAuthorizationAfterSave(
         authorization,
         target,
       );
-      if (continued == null || !context.mounted) return false;
+      if (continued == null || !context.mounted) return null;
       authorization = continued;
     }
-    return !ref.read(workspaceControllerProvider).hasUnsavedChanges;
+    return !ref.read(workspaceControllerProvider).hasUnsavedChanges &&
+            controller.isWindowCloseAuthorizationCurrent(authorization)
+        ? authorization
+        : null;
   }
 
   Future<WindowCloseAction?> _showWindowCloseDialog(BuildContext context) {

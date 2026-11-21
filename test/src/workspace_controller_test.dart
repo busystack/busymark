@@ -2134,6 +2134,84 @@ code
     },
   );
 
+  for (final firstSave in [true, false]) {
+    test(
+      '${firstSave ? 'First Save' : 'Save As'} through a directory alias protects open and changed destinations',
+      () async {
+        final root = await Directory.systemTemp.createTemp(
+          'save-linked-owner-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final documents = await Directory(p.join(root.path, 'docs')).create();
+        final otherDirectory = await Directory(
+          p.join(root.path, 'other'),
+        ).create();
+        final source = await File(
+          p.join(documents.path, 'source.md'),
+        ).writeAsString('source');
+        final open = await File(
+          p.join(documents.path, 'open.md'),
+        ).writeAsString('open');
+        final replace = await File(
+          p.join(documents.path, 'replace.md'),
+        ).writeAsString('before review');
+        final alias = await Link(
+          p.join(root.path, 'alias'),
+        ).create(documents.path);
+        final linkedOpen = p.join(alias.path, 'open.md');
+        final linkedReplace = p.join(alias.path, 'replace.md');
+        final linkedNew = p.join(alias.path, 'new.md');
+        final harness = await _createControllerHarness(
+          service: WorkspaceService(
+            beforeNewFilePublish: (path) async {
+              if (p.basename(path) == 'new.md') {
+                await alias.update(otherDirectory.path);
+              }
+            },
+          ),
+        );
+        await harness.settingsController.setAutoSave(false);
+        final controller = harness.controller._notifier;
+        await controller.openPath(documents.path);
+        expect(await controller.openActiveFile(open.path), isTrue);
+        expect(await controller.openActiveFile(source.path), isTrue);
+        if (firstSave) expect(await controller.createMarkdownFile(), isTrue);
+        controller.updateActiveText('new content');
+        final opening = harness.controller.state.activeBuffer!.opening;
+        Future<bool> save(SaveDestination review) => controller.saveActiveAs(
+          review.path,
+          authorization: review,
+          intent: SaveAsIntent.markdown,
+        );
+
+        expect(await save(SaveDestination.inspect(linkedOpen)), isFalse);
+        expect(await open.readAsString(), 'open');
+        final stale = SaveDestination.inspect(linkedReplace);
+        await replace.writeAsString('changed after review');
+        expect(await save(stale), isFalse);
+        expect(await replace.readAsString(), 'changed after review');
+        expect(await save(SaveDestination.inspect(linkedReplace)), isTrue);
+        expect(await replace.readAsString(), 'new content');
+        expect(harness.controller.state.activeBuffer!.filePath, replace.path);
+
+        controller.updateActiveText('unpublished content');
+        expect(await save(SaveDestination.inspect(linkedNew)), isFalse);
+        expect(await alias.target(), otherDirectory.path);
+        for (final directory in [documents, otherDirectory]) {
+          expect(
+            await File(p.join(directory.path, 'new.md')).exists(),
+            isFalse,
+          );
+        }
+        final active = harness.controller.state.activeBuffer!;
+        expect(active.filePath, replace.path);
+        expect(active.opening, same(opening));
+        expect(active.text, 'unpublished content');
+        expect(active.isDirty, isTrue);
+      },
+    );
+  }
+
   test(
     'authorized Save As keeps a newer revision dirty against the new file',
     () async {
@@ -2413,36 +2491,54 @@ CommonMark paragraph.
     },
   );
 
-  test('save as explicit overwrite replaces the final symlink only', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'busymark-save-as-symlink-',
-    );
-    final target = File('${directory.path}/target.md');
-    final link = Link('${directory.path}/note.md');
-    await target.writeAsString('# Target\n');
-    await link.create(target.path);
-    final harness = await _createControllerHarness();
-    final settingsController = harness.settingsController;
-    final controller = harness.controller;
+  for (final linkedParent in [false, true]) {
+    test(
+      'save as explicit overwrite replaces the final symlink only (linked parent: $linkedParent)',
+      () async {
+        final root = await Directory.systemTemp.createTemp(
+          'busymark-save-as-symlink-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final directory = await Directory(p.join(root.path, 'docs')).create();
+        final target = File(p.join(directory.path, 'target.md'));
+        final link = Link(p.join(directory.path, 'note.md'));
+        await target.writeAsString('# Target\n');
+        await link.create(target.path);
+        final harness = await _createControllerHarness();
+        final controller = harness.controller._notifier;
+        await controller.createMarkdownFile();
+        controller.updateActiveText('# Draft\n');
 
-    await controller.createMarkdownFile();
-    controller.updateActiveText('# Draft\n');
-
-    expect(
-      await controller.saveActiveAs(link.path, overwriteExisting: true),
-      isTrue,
+        var path = link.path;
+        SaveDestination? authorization;
+        if (linkedParent) {
+          final alias = await Link(
+            p.join(root.path, 'alias'),
+          ).create(directory.path);
+          path = p.join(alias.path, 'note.md');
+          authorization = SaveDestination.inspect(
+            path,
+            kind: SaveDestinationKind.fileOrSymbolicLink,
+          );
+        }
+        expect(
+          await controller.saveActiveAs(
+            path,
+            overwriteExisting: true,
+            authorization: authorization,
+          ),
+          isTrue,
+        );
+        expect(
+          await FileSystemEntity.type(link.path, followLinks: false),
+          FileSystemEntityType.file,
+        );
+        expect(await File(link.path).readAsString(), '# Draft\n');
+        expect(await target.readAsString(), '# Target\n');
+      },
+      skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
     );
-    expect(
-      await FileSystemEntity.type(link.path, followLinks: false),
-      FileSystemEntityType.file,
-    );
-    expect(await File(link.path).readAsString(), '# Draft\n');
-    expect(await target.readAsString(), '# Target\n');
-
-    controller.dispose();
-    settingsController.dispose();
-    await directory.delete(recursive: true);
-  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
+  }
 
   test(
     'save as preserves source edits for an untitled Markdown file',

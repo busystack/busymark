@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../assets/asset_ingestion_service.dart';
 import '../../comparison/source_comparison.dart';
@@ -512,11 +513,19 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
         children: [Text(note.title)],
       ),
     );
-    return confirmed == true &&
-        mounted &&
-        await ref
-            .read(workspaceControllerProvider.notifier)
-            .deleteNextcloudNote(note.localId, reviewed: note);
+    if (confirmed != true || !mounted) return false;
+    final outcome = await ref
+        .read(workspaceControllerProvider.notifier)
+        .deleteNextcloudNote(note.localId, reviewed: note);
+    if (outcome.status == NotesBatchStatus.changed) return true;
+    if (mounted) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: localizeNotesBatchReason(context, outcome),
+        priority: BusyMarkToastPriority.high,
+      );
+    }
+    return false;
   }
 
   @override
