@@ -98,6 +98,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps save status and format at the trailing edge', (
+    tester,
+  ) async {
+    await _pumpStatusBar(
+      tester,
+      spellingLabel: 'English (Canada)',
+      onSpellingPressed: () {},
+      status: const DocumentSaveStatus('Saved'),
+    );
+    final bar = tester.getRect(
+      find.byKey(const ValueKey('document-status-bar')),
+    );
+    final status = tester.getRect(find.text('Saved'));
+    final format = tester.getRect(find.text('LF'));
+    expect(bar.right - format.right, lessThanOrEqualTo(2 * BusyMarkSpacing.xs));
+    expect(
+      format.left - status.right,
+      lessThanOrEqualTo(2 * BusyMarkSpacing.xs),
+    );
+  });
+
   testWidgets('keeps sync state legible in a narrow scaled status bar', (
     tester,
   ) async {

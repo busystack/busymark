@@ -13741,6 +13741,7 @@ code
     WidgetTester tester,
     DocumentViewModePreference mode, {
     WorkspaceService? service,
+    WorkspaceFileMonitor? fileMonitor,
     String startupPath = '/tmp/disposable-history.md',
     String initialSource = 'abc',
   }) async {
@@ -13767,6 +13768,8 @@ code
           MemoryDocumentRecoveryStore(),
         ),
         startupPathProvider.overrideWithValue(startupPath),
+        if (fileMonitor != null)
+          workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
       ],
     );
     addTearDown(container.dispose);
@@ -14477,6 +14480,7 @@ code
           tester,
           mode,
           service: const WorkspaceService(),
+          fileMonitor: _SearchTestFileMonitor(),
           startupPath: original.path,
         );
         await container
@@ -14501,6 +14505,11 @@ code
 
         final status = find.byKey(const ValueKey('document-save-status'));
         String? statusLabel() => tester.widget<Text>(status).data;
+        await pumpUntil(
+          tester,
+          () => status.evaluate().isNotEmpty,
+          operation: 'Mount the active document status',
+        );
         expect(statusLabel(), l10n.documentSaved);
 
         Future<void> openMenu() async {
@@ -14548,6 +14557,8 @@ code
           tester,
           () => !state().isDirty,
           operation: 'Save by shortcut',
+          diagnostics: () =>
+              'path=${state().activeBuffer?.filePath}, message=${state().message?.error}',
         );
         await tester.pump();
         expect(statusLabel(), l10n.documentSaved);
@@ -17441,6 +17452,9 @@ After break.
           tester,
           () => closeSettled,
           operation: 'settle the window close save request',
+          timeout: const Duration(seconds: 30),
+          diagnostics: () =>
+              'choosers=$chosenPaths, message=${workspace().message?.error}',
         );
         await closing;
 
@@ -23073,11 +23087,18 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
   testWidgets('Ctrl+S runs Save for the active workspace', (tester) async {
     final service = _StartupWorkspaceService();
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localSettingsStoreProvider.overrideWithValue(settings),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(
             'test/fixtures/markdown/basic.md',
@@ -23091,6 +23112,13 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    const editedText = '# Edited Markdown\n';
+    await tester.enterText(
+      historyField(DocumentViewModePreference.source),
+      editedText,
+    );
+    await tester.pump();
+
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyS);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyS);
@@ -23099,7 +23127,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
     expect(service.saveCount, 1);
     expect(service.savedPath, 'test/fixtures/markdown/basic.md');
-    expect(service.savedText, '# Basic Markdown\n');
+    expect(service.savedText, editedText);
   });
 
   testWidgets('Ctrl+S saves source edits from an untitled Markdown document', (
@@ -23176,7 +23204,11 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyS);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyS);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pumpAndSettle();
+    await pumpUntil(
+      tester,
+      () => service.saveCount == 1,
+      operation: 'Publish untitled Markdown after native destination review',
+    );
 
     expect(service.saveCount, 1);
     expect(service.savedPath, saveFile.path);

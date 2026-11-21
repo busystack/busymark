@@ -59,7 +59,14 @@ class BusyMarkDocumentStatusBar extends StatelessWidget {
               else
                 const Spacer(),
               if (saveStatus case final status?)
-                Flexible(flex: 3, child: _SaveStatusIndicator(status: status)),
+                Expanded(
+                  flex: 3,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    heightFactor: 1,
+                    child: _SaveStatusIndicator(status: status),
+                  ),
+                ),
               BusyMarkDocumentFormatIndicator(format: format),
             ],
           ),
