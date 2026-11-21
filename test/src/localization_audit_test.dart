@@ -1616,6 +1616,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitHostFetch',
   },
   'nl': {
+    'documentSaveConflict', // Conflict is also the ordinary Dutch noun.
     'wsElementSelector', // Element and module are also Dutch nouns.
     'wsModule',
     'aboutWebsite',
