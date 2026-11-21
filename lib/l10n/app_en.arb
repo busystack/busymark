@@ -257,7 +257,7 @@
   "@appSubtitle": {"description": "Short application description."},
   "aboutBusyMark": "About BusyMark",
   "@aboutBusyMark": {"description": "Menu item and tooltip for the About dialog."},
-  "aboutTagline": "Markdown and Writerside Editor",
+  "aboutTagline": "Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.",
   "@aboutTagline": {"description": "Short tagline shown under the app name in the About dialog."},
   "aboutLicenseLabel": "License",
   "@aboutLicenseLabel": {"description": "Label for the license row in the About dialog."},

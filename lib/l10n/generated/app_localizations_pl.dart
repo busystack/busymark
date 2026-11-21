@@ -503,7 +503,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aboutBusyMark => 'O aplikacji BusyMark';
 
   @override
-  String get aboutTagline => 'Edytor Markdown i Writerside';
+  String get aboutTagline =>
+      'Przestrzeń robocza dla dokumentów Markdown, Nextcloud Notes i projektów Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Licencja';

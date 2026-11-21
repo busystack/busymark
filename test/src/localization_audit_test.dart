@@ -92,82 +92,81 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
-  test('package metadata uses reviewed product wording in every locale', () {
+  test('package metadata and About dialog use matching product wording', () {
     final desktop = File(
       'linux/io.busystack.busymark.desktop',
-    ).readAsStringSync();
+    ).readAsStringSync().split('\n');
     final metainfo = File(
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
     const summaries = <String, String>{
-      'ar': 'محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside',
+      'en':
+          'Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.',
       'de':
-          'Editor für Markdown-Dateien und Writerside-kompatible '
-          'Dokumentationsprojekte',
+          'Arbeitsbereich für Markdown-Dokumente, Nextcloud Notes und Writerside-Projekte.',
       'nl':
-          'Editor voor Markdown-bestanden en Writerside-compatibele '
-          'documentatieprojecten',
-      'tr':
-          'Markdown dosyaları ve Writerside uyumlu dokümantasyon '
-          'projeleri için düzenleyici',
-      'es':
-          'Editor de archivos Markdown y proyectos de documentación '
-          'compatibles con Writerside',
+          'Werkruimte voor Markdown-documenten, Nextcloud Notes en Writerside-projecten.',
       'et':
-          'Markdowni failide ja Writerside’iga ühilduvate '
-          'dokumentatsiooniprojektide redaktor',
-      'fa':
-          'ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با '
-          'Writerside',
-      'fr':
-          'Éditeur de fichiers Markdown et de projets de documentation '
-          'compatibles avec Writerside',
-      'hi':
-          'Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का '
-          'संपादक',
-      'id':
-          'Editor untuk file Markdown dan proyek dokumentasi yang kompatibel '
-          'dengan Writerside',
-      'ja': 'Markdown ファイルおよび Writerside 互換のドキュメントプロジェクト用エディター',
-      'ko': 'Markdown 파일 및 Writerside 호환 문서 프로젝트용 편집기',
+          'Tööruum Markdowni dokumentide, Nextcloud Notesi ja Writerside’i projektide jaoks.',
       'it':
-          'Editor per file Markdown e progetti di documentazione compatibili '
-          'con Writerside',
+          'Spazio di lavoro per documenti Markdown, Nextcloud Notes e progetti Writerside.',
       'nb':
-          'Redigerer for Markdown-filer og Writerside-kompatible '
-          'dokumentasjonsprosjekter',
-      'pl':
-          'Edytor plików Markdown i projektów dokumentacji zgodnych z '
-          'Writerside',
-      'pt_BR':
-          'Editor de arquivos Markdown e projetos de documentação compatíveis '
-          'com o Writerside',
+          'Arbeidsområde for Markdown-dokumenter, Nextcloud Notes og Writerside-prosjekter.',
+      'fr':
+          'Espace de travail pour les documents Markdown, Nextcloud Notes et les projets Writerside.',
       'ru':
-          'Редактор файлов Markdown и проектов документации, совместимых с '
-          'Writerside',
+          'Рабочее пространство для документов Markdown, Nextcloud Notes и проектов Writerside.',
       'uk':
-          'Редактор файлів Markdown і проєктів документації, сумісних із '
-          'Writerside',
+          'Робочий простір для документів Markdown, Nextcloud Notes і проєктів Writerside.',
+      'pl':
+          'Przestrzeń robocza dla dokumentów Markdown, Nextcloud Notes i projektów Writerside.',
+      'es':
+          'Espacio de trabajo para documentos Markdown, Nextcloud Notes y proyectos de Writerside.',
+      'pt_BR':
+          'Espaço de trabalho para documentos Markdown, Nextcloud Notes e projetos do Writerside.',
+      'ar': 'مساحة عمل لمستندات Markdown وNextcloud Notes ومشاريع Writerside.',
+      'fa':
+          'فضای کاری برای اسناد Markdown، Nextcloud Notes و پروژه‌های Writerside.',
+      'hi':
+          'Markdown दस्तावेज़ों, Nextcloud Notes और Writerside प्रोजेक्टों के लिए कार्यक्षेत्र।',
+      'id':
+          'Ruang kerja untuk dokumen Markdown, Nextcloud Notes, dan proyek Writerside.',
+      'ja': 'Markdown ドキュメント、Nextcloud Notes、Writerside プロジェクトを扱うワークスペース。',
+      'ko': 'Markdown 문서, Nextcloud Notes, Writerside 프로젝트를 위한 작업 공간.',
       'vi':
-          'Trình biên tập tệp Markdown và các dự án tài liệu tương thích với '
-          'Writerside',
-      'zh-CN': 'Markdown 文件和兼容 Writerside 的文档项目编辑器',
+          'Không gian làm việc cho tài liệu Markdown, Nextcloud Notes và dự án Writerside.',
+      'zh': '用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。',
+      'zh_CN': '用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。',
+      'tr':
+          'Markdown belgeleri, Nextcloud Notes ve Writerside projeleri için çalışma alanı.',
     };
 
     for (final entry in summaries.entries) {
-      final desktopLocale = entry.key.replaceAll('-', '_');
-      final xmlLocale = entry.key.replaceAll('_', '-');
+      final locale = entry.key;
+      final desktopSuffix = locale == 'en' ? '' : '[$locale]';
+      final xmlLocale = locale.replaceAll('_', '-');
+      final xmlLanguage = locale == 'en' ? '' : ' xml:lang="$xmlLocale"';
       expect(
         desktop,
-        contains('Comment[$desktopLocale]=${entry.value}'),
-        reason: 'desktop ${entry.key}',
+        contains('Comment$desktopSuffix=${entry.value}'),
+        reason: 'desktop $locale',
       );
       expect(
         metainfo,
-        contains('<summary xml:lang="$xmlLocale">${entry.value}</summary>'),
-        reason: 'AppStream ${entry.key}',
+        contains('<summary$xmlLanguage>${entry.value}</summary>'),
+        reason: 'AppStream $locale',
+      );
+      expect(
+        _arbMessages(File('lib/l10n/app_$locale.arb'))['aboutTagline'],
+        entry.value,
+        reason: 'About dialog $locale',
       );
     }
+    expect(
+      _arbMessages(File('lib/l10n/app_pt.arb'))['aboutTagline'],
+      summaries['pt_BR'],
+      reason: 'About dialog pt',
+    );
   });
 
   test('duplicate JSON key scanning respects nested object scopes', () {

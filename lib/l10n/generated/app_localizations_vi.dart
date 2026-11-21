@@ -503,7 +503,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aboutBusyMark => 'Giới thiệu BusyMark';
 
   @override
-  String get aboutTagline => 'Trình biên tập Markdown và Writerside';
+  String get aboutTagline =>
+      'Không gian làm việc cho tài liệu Markdown, Nextcloud Notes và dự án Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Giấy phép';

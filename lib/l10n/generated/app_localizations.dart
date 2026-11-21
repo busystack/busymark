@@ -1000,7 +1000,7 @@ abstract class AppLocalizations {
   /// Short tagline shown under the app name in the About dialog.
   ///
   /// In en, this message translates to:
-  /// **'Markdown and Writerside Editor'**
+  /// **'Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.'**
   String get aboutTagline;
 
   /// Label for the license row in the About dialog.

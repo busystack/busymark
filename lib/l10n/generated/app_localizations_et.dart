@@ -502,7 +502,8 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aboutBusyMark => 'Teave BusyMarki kohta';
 
   @override
-  String get aboutTagline => 'Markdowni ja Writerside’i redaktor';
+  String get aboutTagline =>
+      'Tööruum Markdowni dokumentide, Nextcloud Notesi ja Writerside’i projektide jaoks.';
 
   @override
   String get aboutLicenseLabel => 'Litsents';

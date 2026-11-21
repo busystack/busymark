@@ -499,7 +499,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutBusyMark => 'حول BusyMark';
 
   @override
-  String get aboutTagline => 'محرر Markdown وWriterside';
+  String get aboutTagline =>
+      'مساحة عمل لمستندات Markdown وNextcloud Notes ومشاريع Writerside.';
 
   @override
   String get aboutLicenseLabel => 'الترخيص';

@@ -484,7 +484,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aboutBusyMark => 'BusyMark 소개';
 
   @override
-  String get aboutTagline => '마크다운 및 Writerside 편집기';
+  String get aboutTagline =>
+      'Markdown 문서, Nextcloud Notes, Writerside 프로젝트를 위한 작업 공간.';
 
   @override
   String get aboutLicenseLabel => '라이선스';

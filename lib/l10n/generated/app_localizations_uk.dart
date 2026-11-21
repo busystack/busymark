@@ -505,7 +505,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aboutBusyMark => 'Про BusyMark';
 
   @override
-  String get aboutTagline => 'Редактор Markdown і Writerside';
+  String get aboutTagline =>
+      'Робочий простір для документів Markdown, Nextcloud Notes і проєктів Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Ліцензія';

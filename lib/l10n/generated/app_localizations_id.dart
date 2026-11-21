@@ -505,7 +505,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get aboutTagline =>
-      'Editor untuk file Markdown dan proyek dokumentasi yang kompatibel dengan Writerside';
+      'Ruang kerja untuk dokumen Markdown, Nextcloud Notes, dan proyek Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Lisensi';

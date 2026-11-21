@@ -5579,7 +5579,9 @@ void main() {
     expect(find.text('Sidebar'), findsNothing);
   });
 
-  testWidgets('about dialog shows the BusyMark logo', (tester) async {
+  testWidgets('about dialog shows the BusyMark logo and description', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [..._smokeAccentOverrides],
@@ -5594,7 +5596,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.appTitle), findsWidgets);
-    expect(find.text(l10n.aboutTagline), findsOneWidget);
+    expect(
+      find.text(
+        'Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text(busyMarkAppVersion), findsOneWidget);
     expect(find.textContaining('Version'), findsNothing);
     final versionTag = find.byKey(const ValueKey('about-version-tag'));

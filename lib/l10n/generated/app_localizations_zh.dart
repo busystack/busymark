@@ -462,7 +462,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutBusyMark => '关于 BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown 和 Writerside 编辑器';
+  String get aboutTagline =>
+      '用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。';
 
   @override
   String get aboutLicenseLabel => '许可证';
@@ -9099,7 +9100,8 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get aboutBusyMark => '关于 BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown 和 Writerside 编辑器';
+  String get aboutTagline =>
+      '用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。';
 
   @override
   String get aboutLicenseLabel => '许可证';

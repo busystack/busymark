@@ -503,7 +503,8 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutBusyMark => 'دربارهٔ BusyMark';
 
   @override
-  String get aboutTagline => 'ویرایشگر Markdown و Writerside';
+  String get aboutTagline =>
+      'فضای کاری برای اسناد Markdown، Nextcloud Notes و پروژه‌های Writerside.';
 
   @override
   String get aboutLicenseLabel => 'مجوز';

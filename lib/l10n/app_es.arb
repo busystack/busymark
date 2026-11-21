@@ -219,7 +219,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Editor de Markdown y Writerside",
+  "aboutTagline": "Espacio de trabajo para documentos Markdown, Nextcloud Notes y proyectos de Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
