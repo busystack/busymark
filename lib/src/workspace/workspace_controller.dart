@@ -3054,6 +3054,48 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         _sameClosingSource(before, live);
   }
 
+  WindowCloseAuthorization? windowCloseAuthorizationAfterSave(
+    WindowCloseAuthorization reviewed,
+    ActiveDocumentSaveTarget saved,
+  ) {
+    if (!ref.mounted ||
+        saved.workspaceId != reviewed._workspaceId ||
+        saved.workspaceGeneration != reviewed._workspaceGeneration ||
+        _workspaceGeneration != reviewed._workspaceGeneration) {
+      return null;
+    }
+    final workspace = state.workspace;
+    if (workspace == null) return null;
+    if (workspace.id == reviewed._workspaceId) return reviewed;
+
+    // The approved first Save As promotes the untitled workspace without
+    // admitting a new workspace opening. Check the saved opening and keep
+    // the original consent for every other document.
+    if (saved.workspaceKind != WorkspaceKind.untitledMarkdown ||
+        !saved.needsSaveLocation ||
+        workspace.kind != WorkspaceKind.singleMarkdown) {
+      return null;
+    }
+    final promoted = state.documentBuffers
+        .where((buffer) => buffer.id == saved.bufferId)
+        .firstOrNull;
+    if (promoted == null ||
+        !identical(promoted.opening, saved.opening) ||
+        promoted.filePath == null ||
+        !workspace.openFilePaths.contains(promoted.filePath) ||
+        promoted.diskSnapshot == null ||
+        promoted.isDirty ||
+        promoted.revision != saved.editRevision ||
+        promoted.lastSavedText != saved.text) {
+      return null;
+    }
+    return WindowCloseAuthorization._(
+      workspace.id,
+      reviewed._workspaceGeneration,
+      reviewed._buffers,
+    );
+  }
+
   bool _sameWindowClosingSource(DocumentBuffer before, DocumentBuffer live) {
     if (before.isDirty || live.isDirty) return _sameClosingSource(before, live);
     // Disk refresh can rebuild a saved buffer's snapshot and format while

@@ -939,14 +939,30 @@ class _BusyMarkWindowLifecycleState
           in ref.read(workspaceControllerProvider).documentBuffers)
         if (buffer.isDirty) buffer.id,
     ];
+    var authorization = reviewed;
     for (final bufferId in dirtyIds) {
-      if (!controller.isWindowCloseDocumentCurrent(reviewed, bufferId) ||
+      if (!controller.isWindowCloseDocumentCurrent(authorization, bufferId) ||
           !await controller.activateDocumentBuffer(bufferId) ||
           !context.mounted ||
-          !controller.isWindowCloseDocumentCurrent(reviewed, bufferId) ||
-          !await saveActiveWithOverwriteConfirmation(context, ref)) {
+          !controller.isWindowCloseDocumentCurrent(authorization, bufferId)) {
         return false;
       }
+      final target = controller.captureActiveDocumentSaveTarget();
+      if (target == null ||
+          target.bufferId != bufferId ||
+          !await saveActiveWithOverwriteConfirmation(
+            context,
+            ref,
+            target: target,
+          )) {
+        return false;
+      }
+      final continued = controller.windowCloseAuthorizationAfterSave(
+        authorization,
+        target,
+      );
+      if (continued == null || !context.mounted) return false;
+      authorization = continued;
     }
     return !ref.read(workspaceControllerProvider).hasUnsavedChanges;
   }

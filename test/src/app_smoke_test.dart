@@ -17156,6 +17156,164 @@ After break.
     expect(nativeWindow.closeCount, 0);
   });
 
+  for (final editSecond in [false, true]) {
+    testWidgets(
+      'window close Save with two untitled documents (newer second edit: $editSecond)',
+      (tester) async {
+        final directory = Directory.systemTemp.createTempSync(
+          'close-untitled-',
+        );
+        addTearDown(() => directory.deleteSync(recursive: true));
+        final first = File('${directory.path}/first.md');
+        final second = File('${directory.path}/second.md');
+        const firstText = '# First draft\n';
+        const secondText = '# Second draft\n';
+        const newerText = '# Newer second draft\n';
+        final firstSaveStaged = Completer<void>();
+        final releaseFirstSave = Completer<void>();
+        final service = WorkspaceService(
+          beforeNewFilePublish: (path) async {
+            if (path == first.path) {
+              firstSaveStaged.complete();
+              await releaseFirstSave.future;
+            }
+          },
+        );
+        const chooser = MethodChannel('busymark/save_chooser');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        final destinations = [first.path, second.path];
+        final chosenPaths = <String>[];
+        final chooserMethods = <String>[];
+        messenger.setMockMethodCallHandler(chooser, (call) async {
+          chooserMethods.add(call.method);
+          final destination = destinations[chosenPaths.length];
+          chosenPaths.add(destination);
+          return SaveDestination.inspect(destination).chooserReview;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+        final native = _FakeNativeWindowController();
+        final settings = _MemorySettingsStore()
+          ..value = AppSettings.defaults().copyWith(autoSave: false).toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            localSettingsStoreProvider.overrideWithValue(settings),
+            workspaceServiceProvider.overrideWithValue(service),
+            nativeWindowControllerProvider.overrideWithValue(native),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.createMarkdownFile));
+        final controller = container.read(workspaceControllerProvider.notifier);
+        WorkspaceState workspace() =>
+            container.read(workspaceControllerProvider);
+        await pumpUntil(
+          tester,
+          () => workspace().activeBuffer?.isUntitled == true,
+          operation: 'create first draft from Welcome',
+        );
+        controller.updateActiveText(firstText);
+        bool? createdSecond;
+        final creatingSecond = controller.createMarkdownFile();
+        unawaited(creatingSecond.then((created) => createdSecond = created));
+        await pumpUntil(
+          tester,
+          () => createdSecond != null,
+          operation: 'create the second draft',
+        );
+        expect(createdSecond, isTrue);
+        controller.updateActiveText(secondText);
+        final secondDraft = workspace().activeBuffer!;
+        expect(workspace().workspace?.kind, WorkspaceKind.untitledMarkdown);
+        expect(workspace().dirtyBuffers.map((buffer) => buffer.text), [
+          firstText,
+          secondText,
+        ]);
+
+        native.listeners.single.onWindowClose();
+        var closeSettled = false;
+        final closing = container
+            .read(windowControlServiceProvider)
+            .requestClose()
+            .whenComplete(() => closeSettled = true);
+        await pumpUntil(
+          tester,
+          () => find.text(l10n.closeUnsavedChangesTitle).evaluate().isNotEmpty,
+          operation: 'show the window close decision',
+        );
+        await tester.tap(find.text(l10n.closeUnsavedChangesSave));
+        await pumpUntil(
+          tester,
+          () => firstSaveStaged.isCompleted || closeSettled,
+          operation: 'stage the approved first draft',
+          diagnostics: () =>
+              'choosers=$chosenPaths, active=${workspace().activeBuffer?.id}, message=${workspace().message?.error}',
+        );
+        expect(
+          firstSaveStaged.isCompleted,
+          isTrue,
+          reason:
+              'choosers=$chosenPaths, message=${workspace().message?.error}',
+        );
+        expect(chosenPaths, [first.path]);
+        expect(first.existsSync(), isFalse);
+        expect(native.closeCount, 0);
+        if (editSecond) {
+          expect(
+            controller.updateDocumentText(secondDraft.id, newerText),
+            isTrue,
+          );
+        }
+        releaseFirstSave.complete();
+        await pumpUntil(
+          tester,
+          () => closeSettled,
+          operation: 'settle the window close save request',
+        );
+        await closing;
+
+        expect(first.readAsStringSync(), firstText);
+        expect(chooserMethods, everyElement('save'));
+        expect(workspace().workspace?.kind, WorkspaceKind.singleMarkdown);
+        if (editSecond) {
+          expect(chosenPaths, [first.path]);
+          expect(second.existsSync(), isFalse);
+          expect(native.closeCount, 0);
+          expect(native.preventCloseValues.last, isTrue);
+          final remaining = workspace().documentBuffers.singleWhere(
+            (buffer) => buffer.id == secondDraft.id,
+          );
+          expect(remaining.opening, same(secondDraft.opening));
+          expect(remaining.text, newerText);
+          expect(remaining.isUntitled, isTrue);
+          expect(remaining.isDirty, isTrue);
+        } else {
+          expect(chosenPaths, destinations);
+          expect(second.readAsStringSync(), secondText);
+          expect(workspace().hasUnsavedChanges, isFalse);
+          expect(native.closeCount, 1);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
   for (final scenario in ['later edit', 'valid property', 'invalid property']) {
     testWidgets('native window close protects $scenario', (tester) async {
       final native = _FakeNativeWindowController();
