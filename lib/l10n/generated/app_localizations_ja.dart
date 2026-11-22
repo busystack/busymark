@@ -11,6 +11,48 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get saveAsEllipsis => '名前を付けて保存…';
+
+  @override
+  String get shortcutSaveAsDescription => '現在のMarkdown文書を別の場所に保存';
+
+  @override
+  String get documentSaved => '保存済み';
+
+  @override
+  String get documentModified => '変更あり';
+
+  @override
+  String get documentSaving => '保存中…';
+
+  @override
+  String get documentNotSaved => '未保存';
+
+  @override
+  String get documentSaveFailed => '保存に失敗';
+
+  @override
+  String get documentSaveConflict => '競合';
+
+  @override
+  String get documentFileMissing => 'ファイルが見つかりません';
+
+  @override
+  String get documentSaveUnverified => 'ファイルの状態が不明';
+
+  @override
+  String get documentSavedLocally => 'ローカルに保存済み';
+
+  @override
+  String get documentSyncPending => '同期保留中';
+
+  @override
+  String get documentSyncFailed => '同期に失敗';
+
+  @override
+  String get saveAsSeparateMarkdown => '開いていない別のMarkdownファイルを選択してください。';
+
+  @override
   String get notesNewFromRetainedText => '保持されたテキストから新規ノートを作成';
 
   @override
@@ -122,6 +164,18 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'ローカル保存に失敗しました。保存領域を確認してこの項目を再試行してください。成功した項目は保存済みです。';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark はノートを一件ずつ確認して削除します。サーバー上のノートを削除するには接続が必要です。';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark はノートをローカル履歴に保存できませんでした。ノートは保持されました。';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud から削除の確認が届きませんでした。再試行する前に、ノートを更新して内容を確認してください。';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -483,7 +537,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aboutBusyMark => 'BusyMark について';
 
   @override
-  String get aboutTagline => 'Markdown と Writerside のエディター';
+  String get aboutTagline =>
+      'Markdown ドキュメント、Nextcloud Notes、Writerside プロジェクトを扱うワークスペース。';
 
   @override
   String get aboutLicenseLabel => 'ライセンス';
@@ -5599,7 +5654,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      '外部メディアには接続が必要です。BusyMark が保持するのはノート本文と管理対象の添付ファイルのみです。';
+      '外部メディアには接続が必要です。BusyMark はノート本文と対応する Notes の添付ファイルを保持します。';
 
   @override
   String get notesEmptyAll => 'ノートはまだありません。新しく作成してください。';

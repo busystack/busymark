@@ -11,6 +11,50 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Simpan sebagai…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Simpan dokumen Markdown saat ini ke lokasi baru';
+
+  @override
+  String get documentSaved => 'Tersimpan';
+
+  @override
+  String get documentModified => 'Diubah';
+
+  @override
+  String get documentSaving => 'Menyimpan…';
+
+  @override
+  String get documentNotSaved => 'Belum disimpan';
+
+  @override
+  String get documentSaveFailed => 'Gagal menyimpan';
+
+  @override
+  String get documentSaveConflict => 'Konflik';
+
+  @override
+  String get documentFileMissing => 'Berkas tidak ditemukan';
+
+  @override
+  String get documentSaveUnverified => 'Status berkas tidak diketahui';
+
+  @override
+  String get documentSavedLocally => 'Disimpan secara lokal';
+
+  @override
+  String get documentSyncPending => 'Sinkronisasi tertunda';
+
+  @override
+  String get documentSyncFailed => 'Sinkronisasi gagal';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Pilih berkas Markdown lain yang belum terbuka.';
+
+  @override
   String get notesNewFromRetainedText => 'Catatan baru dari teks tersimpan';
 
   @override
@@ -127,6 +171,18 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Penyimpanan lokal gagal. Periksa penyimpanan dan coba item ini lagi; item yang berhasil tetap tersimpan.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark memeriksa dan menghapus setiap catatan satu per satu. Catatan yang sudah ada di server memerlukan koneksi.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark tidak dapat merekam catatan di Riwayat Lokal. Catatan tetap disimpan.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud tidak mengonfirmasi penghapusan. Segarkan dan tinjau catatan ini sebelum mencoba lagi.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -505,7 +561,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get aboutTagline =>
-      'Editor untuk file Markdown dan proyek dokumentasi yang kompatibel dengan Writerside';
+      'Ruang kerja untuk dokumen Markdown, Nextcloud Notes, dan proyek Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Lisensi';
@@ -5763,7 +5819,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Media eksternal memerlukan koneksi. BusyMark hanya menyimpan teks catatan dan lampiran terkelola.';
+      'Media eksternal memerlukan koneksi. BusyMark menyimpan teks catatan dan lampiran Notes yang didukung.';
 
   @override
   String get notesEmptyAll => 'Belum ada catatan. Buat catatan untuk memulai.';

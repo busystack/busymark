@@ -15,14 +15,16 @@ final class SaveDestination {
     this._parent,
     this._entry,
     this._linkTarget,
-    this._referent,
-  );
+    this._referent, {
+    String? reviewedPath,
+  }) : _reviewedPath = reviewedPath;
 
   final String path;
   final String _parent;
   final LinuxFileVersion? _entry;
   final String? _linkTarget;
   final LinuxFileVersion? _referent;
+  final String? _reviewedPath;
 
   bool get replacesExisting => _entry != null;
   bool get replacesRegularFile => (_entry?.mode ?? 0) & 0xf000 == 0x8000;
@@ -114,8 +116,26 @@ final class SaveDestination {
             '${version.modified.$1}:${version.modified.$2}/'
             '${version.changed.$1}:${version.changed.$2}';
 
+  /// Bind writes to the resolved directory while retaining the chooser's
+  /// review of the original pathname and entry.
+  SaveDestination withResolvedParent() {
+    final parent = Directory(p.dirname(path)).resolveSymbolicLinksSync();
+    if (p.equals(parent, p.dirname(path))) return this;
+    final resolved = SaveDestination._(
+      p.join(parent, p.basename(path)),
+      _parent,
+      _entry,
+      _linkTarget,
+      _referent,
+      reviewedPath: _reviewedPath ?? path,
+    );
+    resolved.requireCurrent(resolved.path);
+    return resolved;
+  }
+
   void requireCurrent(String destination) {
     if (!p.equals(path, p.normalize(p.absolute(destination))) ||
+        (_reviewedPath != null && !acceptsParent(p.dirname(_reviewedPath))) ||
         !_matches(path, displaced: false)) {
       throw AtomicFileChangedException(destination);
     }

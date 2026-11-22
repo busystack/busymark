@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "इस रूप में सहेजें…",
+  "shortcutSaveAsDescription": "मौजूदा Markdown दस्तावेज़ को नई जगह सहेजें",
+  "documentSaved": "सहेजा गया",
+  "documentModified": "संशोधित",
+  "documentSaving": "सहेजा जा रहा है…",
+  "documentNotSaved": "सहेजा नहीं गया",
+  "documentSaveFailed": "सहेजना विफल",
+  "documentSaveConflict": "टकराव",
+  "documentFileMissing": "फ़ाइल मौजूद नहीं है",
+  "documentSaveUnverified": "फ़ाइल की स्थिति अज्ञात है",
+  "documentSavedLocally": "स्थानीय रूप से सहेजा गया",
+  "documentSyncPending": "सिंक बाकी है",
+  "documentSyncFailed": "सिंक विफल",
+  "saveAsSeparateMarkdown": "ऐसी अलग Markdown फ़ाइल चुनें जो पहले से खुली न हो।",
   "notesNewFromRetainedText": "सहेजे गए पाठ से नया नोट",
   "notesAccountThrottled": "Nextcloud ने विराम माँगा है। फिर साइन इन शुरू करने से पहले प्रतीक्षा करें।",
   "notesSettingsRefreshing": "पुष्टि किए गए सेटिंग बदलाव के बाद Notes ताज़ा हो रहा है",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "समीक्षा के बाद नोट बदल गया। कार्य दोबारा लागू करने से पहले उसकी मौजूदा स्थिति की समीक्षा करें।",
   "notesBatchMissing": "यह नोट अब उपलब्ध नहीं है। सूची ताज़ा करके लक्ष्यों की समीक्षा करें।",
   "notesBatchStorage": "स्थानीय सहेजना विफल हुआ। संग्रहण जाँचकर इस आइटम पर फिर प्रयास करें; सफल आइटम सहेजे हुए हैं।",
+  "notesBatchDeleteHelp": "BusyMark हर नोट की अलग से जाँच करता है और उसे हटाता है। सर्वर पर मौजूद नोट हटाने के लिए कनेक्शन चाहिए।",
+  "notesBatchDeleteHistoryFailed": "BusyMark नोट को स्थानीय इतिहास में दर्ज नहीं कर सका। नोट सुरक्षित रखा गया है।",
+  "notesBatchDeleteUncertain": "Nextcloud ने हटाने की पुष्टि नहीं की। फिर से कोशिश करने से पहले नोट रीफ़्रेश करके उसकी समीक्षा करें।",
   "notesRemoteReviewChanged": "सर्वर का नोट बदल गया। आपका विलय मसौदा सुरक्षित है। नई तुलना की समीक्षा करें और समाधान फिर चुनें।",
   "notesReviewRemote": "मैंने सर्वर के मौजूदा संस्करण की समीक्षा की है",
   "wsModuleCapsNotPublished": "मॉड्यूल का अक्षर-शैली नियम प्रकाशित नहीं होता।",
@@ -219,7 +236,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Markdown और Writerside संपादक",
+  "aboutTagline": "Markdown दस्तावेज़ों, Nextcloud Notes और Writerside प्रोजेक्टों के लिए कार्यक्षेत्र।",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -3718,7 +3735,7 @@
   "notesSort": "नोट क्रमबद्ध करें",
   "notesOfflineRetentionHelp": "यह आवश्यकता हटाने से कैश की मौजूदा सामग्री नहीं हटती। श्रेणी या खाते की आवश्यकता अब भी यह नोट सुरक्षित रख सकती है।",
   "notesOfflineBroader": "यह नोट श्रेणी या खाते की आवश्यकता के कारण भी सुरक्षित है।",
-  "notesOfflineExternal": "बाहरी मीडिया को कनेक्शन चाहिए। BusyMark केवल नोट का पाठ और प्रबंधित संलग्नक सुरक्षित रखता है।",
+  "notesOfflineExternal": "बाहरी मीडिया को कनेक्शन चाहिए। BusyMark नोट का पाठ और समर्थित Notes संलग्नक सुरक्षित रखता है।",
   "notesOperationFailed": "कार्रवाई पूरी नहीं हुई। आपका मसौदा सुरक्षित है। सहेजने और विरोधों की जाँच करके फिर प्रयास करें।",
   "notesRemovedWarning": "स्थानीय Nextcloud खाता हटा दिया गया। ऐप पासवर्ड रद्द होने की पुष्टि नहीं हुई। Nextcloud की सुरक्षा सेटिंग में BusyMark का ऐप पासवर्ड हटाएँ।",
   "notesBuffersNotSaved": "सभी खुले नोट स्थानीय रूप से नहीं सहेजे जा सके। कार्यक्षेत्र में सहेजने, विरोधों या सामान्यीकरण की समीक्षा करें। स्थानीय बदलावों को अब भी Nextcloud से समन्वय की ज़रूरत हो सकती है।",

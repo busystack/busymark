@@ -108,6 +108,16 @@ class NotesException implements Exception {
   String toString() => message;
 }
 
+class NotesDeletionUncertain extends NotesException {
+  NotesDeletionUncertain(this.failure)
+    : super(failure.code, 'The server did not confirm the deletion.');
+
+  final NotesException failure;
+
+  @override
+  String toString() => '$message $failure';
+}
+
 /// Consent to resolve applies to the remote snapshot shown by the dialog.
 class NotesConflictReviewChanged extends NotesException {
   const NotesConflictReviewChanged(NoteState remote)
@@ -762,6 +772,7 @@ class NotesAttachment {
     this.remotePath,
     this.state = 'pending',
     this.validatedAt,
+    this.readCategory,
   });
 
   final String id;
@@ -771,6 +782,7 @@ class NotesAttachment {
   final String? remotePath;
   final String state;
   final DateTime? validatedAt;
+  final String? readCategory;
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -780,6 +792,7 @@ class NotesAttachment {
     'remotePath': remotePath,
     'state': state,
     'validatedAt': validatedAt?.toIso8601String(),
+    if (readCategory != null) 'readCategory': readCategory,
   };
 
   factory NotesAttachment.fromJson(Map<String, dynamic> json) =>
@@ -791,6 +804,7 @@ class NotesAttachment {
         remotePath: json['remotePath'] as String?,
         state: json['state'] as String,
         validatedAt: DateTime.tryParse(json['validatedAt'] as String? ?? ''),
+        readCategory: json['readCategory'] as String?,
       );
 }
 

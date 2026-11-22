@@ -19,11 +19,14 @@ enum WorkspaceMessageCode {
   recoveryDamaged,
 }
 
+enum WorkspaceSaveConflict { missing, unknownBaseline, changed }
+
 class WorkspaceMessage {
-  const WorkspaceMessage(this.code, {this.error});
+  const WorkspaceMessage(this.code, {this.error, this.saveConflict});
 
   final WorkspaceMessageCode code;
   final Object? error;
+  final WorkspaceSaveConflict? saveConflict;
 }
 
 String localizeWorkspaceMessage(
@@ -68,6 +71,7 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
   if (error is BusyMarkException) {
     String value(String key) => '${error.args[key] ?? ''}';
     return switch (error.code) {
+      'workspace.save-as-separate-markdown' => l10n.saveAsSeparateMarkdown,
       'workspace.path-does-not-exist' => l10n.errorPathDoesNotExist(
         value('path'),
       ),

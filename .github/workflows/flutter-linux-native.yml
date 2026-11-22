@@ -141,7 +141,8 @@ jobs:
             --output "${RUNNER_TEMP}/close-live-application" --cycles 3 --fresh-profile \
             --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so \
             --scenarios plain visualization pending-initialization \
-              dirty-save dirty-discard dirty-cancel video \
+              dirty-save dirty-discard dirty-cancel dirty-discard-newer \
+              property-save property-invalid video \
             --video test/fixtures/media/close-testsrc.mp4 -- \
             build/linux/x64/release/bundle/busymark
 

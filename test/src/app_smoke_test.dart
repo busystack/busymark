@@ -18,6 +18,7 @@ import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
 import 'dart:async';
 import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
+import 'package:busymark/src/editor/wysiwyg/writerside_property_session.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -2866,6 +2867,15 @@ void main() {
       isFalse,
     );
     expect(find.text(BusyMarkAppShortcuts.export.label), findsOneWidget);
+    for (final label in [l10n.save, l10n.saveAsEllipsis]) {
+      final item = tester.widget<BusyMarkPopupMenuItem<Object?>>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+        ),
+      );
+      expect(item.enabled, isFalse);
+    }
     for (final documentCommand in <String>{
       l10n.clipboardHistory,
       l10n.localHistory,
@@ -5579,7 +5589,9 @@ void main() {
     expect(find.text('Sidebar'), findsNothing);
   });
 
-  testWidgets('about dialog shows the BusyMark logo', (tester) async {
+  testWidgets('about dialog shows the BusyMark logo and description', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [..._smokeAccentOverrides],
@@ -5594,7 +5606,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.appTitle), findsWidgets);
-    expect(find.text(l10n.aboutTagline), findsOneWidget);
+    expect(
+      find.text(
+        'Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text(busyMarkAppVersion), findsOneWidget);
     expect(find.textContaining('Version'), findsNothing);
     final versionTag = find.byKey(const ValueKey('about-version-tag'));
@@ -13724,6 +13741,7 @@ code
     WidgetTester tester,
     DocumentViewModePreference mode, {
     WorkspaceService? service,
+    WorkspaceFileMonitor? fileMonitor,
     String startupPath = '/tmp/disposable-history.md',
     String initialSource = 'abc',
   }) async {
@@ -13750,6 +13768,8 @@ code
           MemoryDocumentRecoveryStore(),
         ),
         startupPathProvider.overrideWithValue(startupPath),
+        if (fileMonitor != null)
+          workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
       ],
     );
     addTearDown(container.dispose);
@@ -14425,6 +14445,227 @@ code
           tester.widget<TextField>(historyField(mode)).controller!.selection,
           const TextSelection.collapsed(offset: 2),
         );
+      },
+    );
+  }
+
+  for (final firstSave in [true, false]) {
+    testWidgets(
+      '${firstSave ? 'First Save' : 'Save As'} through a symlinked directory',
+      (tester) async {
+        final root = Directory.systemTemp.createTempSync('save-linked-parent-');
+        addTearDown(() => root.deleteSync(recursive: true));
+        final documents = Directory(p.join(root.path, 'documents'))
+          ..createSync();
+        final alias = Link(p.join(root.path, 'alias'))
+          ..createSync(documents.path);
+        final source = File(p.join(documents.path, 'source.md'))
+          ..writeAsStringSync('Original');
+        final destination = File(p.join(documents.path, 'saved.md'));
+        const chooser = MethodChannel('busymark/save_chooser');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        messenger.setMockMethodCallHandler(chooser, (call) async {
+          expect(call.method, 'save');
+          return SaveDestination.inspect(
+            p.join(alias.path, 'saved.md'),
+          ).chooserReview;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+
+        final container = await historyApp(
+          tester,
+          DocumentViewModePreference.source,
+          service: const WorkspaceService(),
+          fileMonitor: _SearchTestFileMonitor(),
+          startupPath: source.path,
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        if (firstSave) {
+          await tabOperation(tester, controller.createMarkdownFile);
+        }
+        final opening = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .opening;
+        controller.updateActiveText('Saved through directory alias');
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip(l10n.mainMenu));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.text(firstSave ? l10n.save : l10n.saveAsEllipsis),
+        );
+        await pumpUntil(
+          tester,
+          () =>
+              container
+                  .read(workspaceControllerProvider)
+                  .activeBuffer
+                  ?.filePath ==
+              destination.path,
+          operation: 'Save via the linked directory',
+        );
+        final saved = container.read(workspaceControllerProvider).activeBuffer!;
+        expect(saved.opening, same(opening));
+        expect(saved.isDirty, isFalse);
+        expect(destination.readAsStringSync(), 'Saved through directory alias');
+        expect(source.readAsStringSync(), 'Original');
+        await tabOperation(tester, controller.flushPersistence);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  for (final autoSave in [false, true]) {
+    testWidgets(
+      'Main menu, Actions and shortcuts save with Auto Save $autoSave',
+      (tester) async {
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-save-command-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        final original = File(p.join(root.path, 'original.md'))
+          ..writeAsStringSync('Original');
+        final destination = File(p.join(root.path, 'copy.md'));
+        final secondDestination = File(p.join(root.path, 'second.md'));
+        const chooser = MethodChannel('busymark/save_chooser');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        String? nextDestination;
+        var chooserCalls = 0;
+        messenger.setMockMethodCallHandler(chooser, (call) async {
+          expect(call.method, 'save');
+          chooserCalls++;
+          final path = nextDestination;
+          return path == null
+              ? null
+              : SaveDestination.inspect(path).chooserReview;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+
+        const mode = DocumentViewModePreference.source;
+        final container = await historyApp(
+          tester,
+          mode,
+          service: const WorkspaceService(),
+          fileMonitor: _SearchTestFileMonitor(),
+          startupPath: original.path,
+        );
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .setAutoSave(autoSave);
+        final controller = container.read(workspaceControllerProvider.notifier);
+        WorkspaceState state() => container.read(workspaceControllerProvider);
+        final opening = state().activeBuffer!.opening;
+        final keymap = container.read(keymapControllerProvider.notifier);
+        expect(
+          (await keymap.update(
+            BusyMarkCommandIds.saveAs,
+            const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+            expected: container
+                .read(appSettingsControllerProvider)
+                .shortcutOverrides,
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final status = find.byKey(const ValueKey('document-save-status'));
+        String? statusLabel() => tester.widget<Text>(status).data;
+        await pumpUntil(
+          tester,
+          () => status.evaluate().isNotEmpty,
+          operation: 'Mount the active document status',
+        );
+        expect(statusLabel(), l10n.documentSaved);
+
+        Future<void> openMenu() async {
+          await tester.tap(find.byTooltip(l10n.mainMenu));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 250));
+        }
+
+        BusyMarkPopupMenuItem<Object?> menuItem(String label) => tester.widget(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkPopupMenuItem<Object?> &&
+                widget.label == label,
+          ),
+        );
+
+        await openMenu();
+        expect(menuItem(l10n.save).enabled, isTrue);
+        expect(menuItem(l10n.saveAsEllipsis).enabled, isTrue);
+        expect(menuItem(l10n.saveAsEllipsis).shortcut, 'F8');
+        expect(
+          tester.getTopLeft(find.text(l10n.saveAsEllipsis)).dy,
+          lessThan(tester.getTopLeft(find.text(l10n.export)).dy),
+        );
+
+        nextDestination = destination.path;
+        await tester.tap(find.text(l10n.saveAsEllipsis));
+        await pumpUntil(
+          tester,
+          () => state().activeBuffer?.filePath == destination.path,
+          operation: 'Save As from Main menu',
+        );
+        await tester.pump();
+        expect(destination.readAsStringSync(), 'Original');
+        expect(state().activeBuffer!.opening, same(opening));
+        expect(state().documentBuffers, hasLength(1));
+
+        controller.updateActiveText('Save by shortcut');
+        await tester.pump();
+        expect(statusLabel(), l10n.documentModified);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => !state().isDirty,
+          operation: 'Save by shortcut',
+          diagnostics: () =>
+              'path=${state().activeBuffer?.filePath}, message=${state().message?.error}',
+        );
+        await tester.pump();
+        expect(statusLabel(), l10n.documentSaved);
+        expect(destination.readAsStringSync(), 'Save by shortcut');
+        expect(original.readAsStringSync(), 'Original');
+
+        nextDestination = null;
+        await tester.sendKeyEvent(LogicalKeyboardKey.f8);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+        expect(chooserCalls, 2);
+        expect(state().activeBuffer!.filePath, destination.path);
+        expect(statusLabel(), l10n.documentSaved);
+
+        nextDestination = secondDestination.path;
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+        final actions = find.descendant(
+          of: find.byKey(const ValueKey('shared-search-query')),
+          matching: find.byType(EditableText),
+        );
+        await tester.enterText(actions, 'Save As');
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+        await tester.tap(find.text(l10n.saveAsEllipsis).last);
+        await pumpUntil(
+          tester,
+          () => state().activeBuffer?.filePath == secondDestination.path,
+          operation: 'Save As from Actions',
+        );
+        expect(secondDestination.readAsStringSync(), 'Save by shortcut');
+        expect(state().activeBuffer!.opening, same(opening));
+        expect(chooserCalls, 3);
+        await tabOperation(tester, controller.flushPersistence);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 2));
       },
     );
   }
@@ -17147,6 +17388,273 @@ After break.
     expect(find.text(l10n.closeUnsavedChangesTitle), findsOneWidget);
     expect(nativeWindow.closeCount, 0);
   });
+
+  for (final editSecond in [false, true]) {
+    testWidgets(
+      'window close Save with two untitled documents (newer second edit: $editSecond)',
+      (tester) async {
+        final directory = Directory.systemTemp.createTempSync(
+          'close-untitled-',
+        );
+        addTearDown(() => directory.deleteSync(recursive: true));
+        final first = File('${directory.path}/first.md');
+        final second = File('${directory.path}/second.md');
+        const firstText = '# First draft\n';
+        const secondText = '# Second draft\n';
+        const newerText = '# Newer second draft\n';
+        final firstSaveStaged = Completer<void>();
+        final releaseFirstSave = Completer<void>();
+        final service = WorkspaceService(
+          beforeNewFilePublish: (path) async {
+            if (path == first.path) {
+              firstSaveStaged.complete();
+              await releaseFirstSave.future;
+            }
+          },
+        );
+        const chooser = MethodChannel('busymark/save_chooser');
+        final messenger = tester.binding.defaultBinaryMessenger;
+        final destinations = [first.path, second.path];
+        final chosenPaths = <String>[];
+        final chooserMethods = <String>[];
+        messenger.setMockMethodCallHandler(chooser, (call) async {
+          chooserMethods.add(call.method);
+          final destination = destinations[chosenPaths.length];
+          chosenPaths.add(destination);
+          return SaveDestination.inspect(destination).chooserReview;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(chooser, null));
+        final native = _FakeNativeWindowController();
+        final settings = _MemorySettingsStore()
+          ..value = AppSettings.defaults().copyWith(autoSave: false).toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            localSettingsStoreProvider.overrideWithValue(settings),
+            workspaceServiceProvider.overrideWithValue(service),
+            nativeWindowControllerProvider.overrideWithValue(native),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.createMarkdownFile));
+        final controller = container.read(workspaceControllerProvider.notifier);
+        WorkspaceState workspace() =>
+            container.read(workspaceControllerProvider);
+        await pumpUntil(
+          tester,
+          () => workspace().activeBuffer?.isUntitled == true,
+          operation: 'create first draft from Welcome',
+        );
+        controller.updateActiveText(firstText);
+        bool? createdSecond;
+        final creatingSecond = controller.createMarkdownFile();
+        unawaited(creatingSecond.then((created) => createdSecond = created));
+        await pumpUntil(
+          tester,
+          () => createdSecond != null,
+          operation: 'create the second draft',
+        );
+        expect(createdSecond, isTrue);
+        controller.updateActiveText(secondText);
+        final secondDraft = workspace().activeBuffer!;
+        expect(workspace().workspace?.kind, WorkspaceKind.untitledMarkdown);
+        expect(workspace().dirtyBuffers.map((buffer) => buffer.text), [
+          firstText,
+          secondText,
+        ]);
+
+        native.listeners.single.onWindowClose();
+        var closeSettled = false;
+        final closing = container
+            .read(windowControlServiceProvider)
+            .requestClose()
+            .whenComplete(() => closeSettled = true);
+        await pumpUntil(
+          tester,
+          () => find.text(l10n.closeUnsavedChangesTitle).evaluate().isNotEmpty,
+          operation: 'show the window close decision',
+        );
+        await tester.tap(find.text(l10n.closeUnsavedChangesSave));
+        await pumpUntil(
+          tester,
+          () => firstSaveStaged.isCompleted || closeSettled,
+          operation: 'stage the approved first draft',
+          diagnostics: () =>
+              'choosers=$chosenPaths, active=${workspace().activeBuffer?.id}, message=${workspace().message?.error}',
+        );
+        expect(
+          firstSaveStaged.isCompleted,
+          isTrue,
+          reason:
+              'choosers=$chosenPaths, message=${workspace().message?.error}',
+        );
+        expect(chosenPaths, [first.path]);
+        expect(first.existsSync(), isFalse);
+        expect(native.closeCount, 0);
+        if (editSecond) {
+          expect(
+            controller.updateDocumentText(secondDraft.id, newerText),
+            isTrue,
+          );
+        }
+        releaseFirstSave.complete();
+        await pumpUntil(
+          tester,
+          () => closeSettled,
+          operation: 'settle the window close save request',
+          timeout: const Duration(seconds: 30),
+          diagnostics: () =>
+              'choosers=$chosenPaths, message=${workspace().message?.error}',
+        );
+        await closing;
+
+        expect(first.readAsStringSync(), firstText);
+        expect(chooserMethods, everyElement('save'));
+        expect(workspace().workspace?.kind, WorkspaceKind.singleMarkdown);
+        if (editSecond) {
+          expect(chosenPaths, [first.path]);
+          expect(second.existsSync(), isFalse);
+          expect(native.closeCount, 0);
+          expect(native.preventCloseValues.last, isTrue);
+          final remaining = workspace().documentBuffers.singleWhere(
+            (buffer) => buffer.id == secondDraft.id,
+          );
+          expect(remaining.opening, same(secondDraft.opening));
+          expect(remaining.text, newerText);
+          expect(remaining.isUntitled, isTrue);
+          expect(remaining.isDirty, isTrue);
+        } else {
+          expect(chosenPaths, destinations);
+          expect(second.readAsStringSync(), secondText);
+          expect(workspace().hasUnsavedChanges, isFalse);
+          expect(native.closeCount, 1);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  for (final scenario in ['later edit', 'valid property', 'invalid property']) {
+    testWidgets('native window close protects $scenario', (tester) async {
+      final native = _FakeNativeWindowController();
+      final sessions = _WindowDiscardSessionGate();
+      final recovery = MemoryDocumentRecoveryStore();
+      final history = MemoryLocalHistoryStore();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          nativeWindowControllerProvider.overrideWithValue(native),
+          workspaceServiceProvider.overrideWithValue(
+            _StartupWorkspaceService(),
+          ),
+          documentSessionStoreProvider.overrideWithValue(sessions),
+          documentRecoveryStoreProvider.overrideWithValue(recovery),
+          localHistoryStoreProvider.overrideWithValue(history),
+          startupPathProvider.overrideWithValue(
+            'test/fixtures/markdown/basic.md',
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await pumpUntil(tester, () {
+        final state = container.read(workspaceControllerProvider);
+        return state.activeBuffer != null &&
+            !state.isLoading &&
+            native.listeners.isNotEmpty;
+      }, operation: 'open document');
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setAutoSave(false);
+      final controller = container.read(workspaceControllerProvider.notifier);
+      if (scenario == 'later edit') {
+        controller.updateActiveText('# Approved edit\n');
+        await controller.flushPersistence();
+      } else {
+        final session = controller.propertyEdits;
+        final field = session.bind('title', 'Original', (value) {
+          if (value.isEmpty) {
+            return session.reject(WritersidePropertyRejection.invalid);
+          }
+          controller.updateActiveText('# $value\n');
+          return true;
+        });
+        session.edit(
+          field,
+          scenario == 'valid property' ? 'Pending title' : '',
+        );
+        expect(container.read(workspaceControllerProvider).isDirty, isFalse);
+      }
+      native.listeners.single.onWindowClose();
+      await tester.pumpAndSettle();
+      if (scenario == 'invalid property') {
+        expect(native.closeCount, 0);
+        expect(
+          controller.propertyEdits.feedback,
+          WritersidePropertyRejection.invalid,
+        );
+        expect(controller.propertyEdits.hasPending, isTrue);
+        expect(find.text(l10n.closeUnsavedChangesTitle), findsNothing);
+      } else {
+        expect(find.text(l10n.closeUnsavedChangesTitle), findsOneWidget);
+        if (scenario == 'valid property') {
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            '# Pending title\n',
+          );
+          await tester.tap(find.text(l10n.closeUnsavedChangesSave));
+          await tester.pumpAndSettle();
+          expect(native.closeCount, 1);
+        } else {
+          sessions.arm = true;
+          await tester.tap(find.text(l10n.closeUnsavedChangesDiscard));
+          await pumpUntil(
+            tester,
+            () => sessions.started.isCompleted,
+            operation: 'wait for discard persistence',
+          );
+          controller.updateActiveText('# Edit after consent\n');
+          sessions.resume.complete();
+          await tester.pumpAndSettle();
+          expect(native.closeCount, 0);
+          await controller.flushPersistence();
+          final revisions = (await history.load()).revisions;
+          expect(
+            await Future.wait(
+              revisions.map(
+                (r) async => (await history.readRevision(r.id))!.source,
+              ),
+            ),
+            contains('# Approved edit\n'),
+          );
+          expect(recovery.value.entries.single.text, '# Edit after consent\n');
+        }
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets('window close flushes autosave for saved files', (tester) async {
     final nativeWindow = _FakeNativeWindowController();
@@ -22645,11 +23153,18 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
   testWidgets('Ctrl+S runs Save for the active workspace', (tester) async {
     final service = _StartupWorkspaceService();
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ..._smokeAccentOverrides,
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localSettingsStoreProvider.overrideWithValue(settings),
           workspaceServiceProvider.overrideWithValue(service),
           startupPathProvider.overrideWithValue(
             'test/fixtures/markdown/basic.md',
@@ -22663,6 +23178,13 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    const editedText = '# Edited Markdown\n';
+    await tester.enterText(
+      historyField(DocumentViewModePreference.source),
+      editedText,
+    );
+    await tester.pump();
+
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyS);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyS);
@@ -22671,7 +23193,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
     expect(service.saveCount, 1);
     expect(service.savedPath, 'test/fixtures/markdown/basic.md');
-    expect(service.savedText, '# Basic Markdown\n');
+    expect(service.savedText, editedText);
   });
 
   testWidgets('Ctrl+S saves source edits from an untitled Markdown document', (
@@ -22748,7 +23270,11 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyS);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyS);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pumpAndSettle();
+    await pumpUntil(
+      tester,
+      () => service.saveCount == 1,
+      operation: 'Publish untitled Markdown after native destination review',
+    );
 
     expect(service.saveCount, 1);
     expect(service.savedPath, saveFile.path);
@@ -24742,6 +25268,22 @@ class _GatedRecentSettingsStore extends _MemorySettingsStore {
       }
     }
     await super.save(json);
+  }
+}
+
+class _WindowDiscardSessionGate extends MemoryDocumentSessionStore {
+  bool arm = false;
+  final started = Completer<void>();
+  final resume = Completer<void>();
+
+  @override
+  Future<void> save(WorkspaceSessionSnapshot snapshot) async {
+    if (arm) {
+      arm = false;
+      started.complete();
+      await resume.future;
+    }
+    await super.save(snapshot);
   }
 }
 

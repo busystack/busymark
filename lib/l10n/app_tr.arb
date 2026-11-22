@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Farklı Kaydet…",
+  "shortcutSaveAsDescription": "Geçerli Markdown belgesini yeni bir konuma kaydet",
+  "documentSaved": "Kaydedildi",
+  "documentModified": "Değiştirildi",
+  "documentSaving": "Kaydediliyor…",
+  "documentNotSaved": "Kaydedilmedi",
+  "documentSaveFailed": "Kaydetme başarısız",
+  "documentSaveConflict": "Çakışma",
+  "documentFileMissing": "Dosya eksik",
+  "documentSaveUnverified": "Dosya durumu bilinmiyor",
+  "documentSavedLocally": "Yerel olarak kaydedildi",
+  "documentSyncPending": "Eşitleme bekliyor",
+  "documentSyncFailed": "Eşitleme başarısız",
+  "saveAsSeparateMarkdown": "Açık olmayan ayrı bir Markdown dosyası seçin.",
   "notesNewFromRetainedText": "Saklanan metinden yeni not",
   "notesAccountThrottled": "Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.",
   "notesSettingsRefreshing": "Onaylanan ayar güncellemesinden sonra Notes yenileniyor",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Bu not incelemeden sonra değişti. İşlemi yeniden uygulamadan önce güncel durumunu inceleyin.",
   "notesBatchMissing": "Bu not artık kullanılamıyor. Listeyi yenileyip hedefleri yeniden inceleyin.",
   "notesBatchStorage": "Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.",
+  "notesBatchDeleteHelp": "BusyMark her notu ayrı ayrı denetler ve siler. Sunucuda bulunan notları silmek için bağlantı gerekir.",
+  "notesBatchDeleteHistoryFailed": "BusyMark notu Yerel Geçmiş’e kaydedemedi. Not korundu.",
+  "notesBatchDeleteUncertain": "Nextcloud silme işlemini onaylamadı. Yeniden denemeden önce notu yenileyip gözden geçirin.",
   "notesRemoteReviewChanged": "Sunucu notu değişti. Birleştirme taslağınız korunuyor. Güncel karşılaştırmayı inceleyip çözümü yeniden seçin.",
   "notesReviewRemote": "Güncel sunucu sürümünü inceledim",
   "wsModuleCapsNotPublished": "Modülün harf biçimi yayımlanmaz.",
@@ -194,7 +211,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Markdown ve Writerside Düzenleyicisi",
+  "aboutTagline": "Markdown belgeleri, Nextcloud Notes ve Writerside projeleri için çalışma alanı.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -5248,7 +5265,7 @@
   "notesSort": "Notları sırala",
   "notesOfflineRetentionHelp": "Bu gereksinimin kaldırılması mevcut önbelleği silmez. Kategori veya hesap gereksinimi notu tutmaya devam edebilir.",
   "notesOfflineBroader": "Bu not bir kategori veya hesap gereksinimi nedeniyle de tutuluyor.",
-  "notesOfflineExternal": "Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.",
+  "notesOfflineExternal": "Harici medya bağlantı gerektirir. BusyMark not metnini ve desteklenen Notes eklerini saklar.",
   "notesOperationFailed": "İşlem tamamlanamadı. Taslağınız korunuyor. Kaydetmeyi ve çakışmaları inceleyip yeniden deneyin.",
   "notesRemovedWarning": "Yerel Nextcloud hesabı kaldırıldı. Uygulama parolasının iptali doğrulanamadı. Nextcloud Güvenlik ayarlarından BusyMark uygulama parolasını kaldırın.",
   "notesBuffersNotSaved": "Tüm açık notlar yerel olarak kaydedilemedi. Çalışma alanında kaydetmeyi, çakışmaları veya normalleştirmeyi inceleyin. Yerel değişikliklerin hâlâ Nextcloud ile eşitlenmesi gerekebilir.",

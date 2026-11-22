@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Enregistrer sous…",
+  "shortcutSaveAsDescription": "Enregistrer le document Markdown actuel dans un nouvel emplacement",
+  "documentSaved": "Enregistré",
+  "documentModified": "Modifié",
+  "documentSaving": "Enregistrement…",
+  "documentNotSaved": "Non enregistré",
+  "documentSaveFailed": "Échec de l’enregistrement",
+  "documentSaveConflict": "Conflit",
+  "documentFileMissing": "Fichier manquant",
+  "documentSaveUnverified": "État du fichier inconnu",
+  "documentSavedLocally": "Enregistré localement",
+  "documentSyncPending": "Synchronisation en attente",
+  "documentSyncFailed": "Échec de la synchronisation",
+  "saveAsSeparateMarkdown": "Choisissez un fichier Markdown distinct qui n’est pas déjà ouvert.",
   "notesNewFromRetainedText": "Nouvelle note à partir du texte conservé",
   "notesAccountThrottled": "Nextcloud demande une pause. Attendez avant de relancer la connexion.",
   "notesSettingsRefreshing": "Actualisation de Notes après confirmation des paramètres",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Cette note a changé depuis son examen. Examinez son état actuel avant de réappliquer l’action.",
   "notesBatchMissing": "Cette note n’est plus disponible. Actualisez la liste et vérifiez les cibles.",
   "notesBatchStorage": "Échec de l’enregistrement local. Vérifiez le stockage et réessayez cet élément ; les éléments réussis restent enregistrés.",
+  "notesBatchDeleteHelp": "BusyMark vérifie et supprime chaque note séparément. Les notes présentes sur le serveur nécessitent une connexion.",
+  "notesBatchDeleteHistoryFailed": "BusyMark n’a pas pu enregistrer la note dans l’historique local. La note a été conservée.",
+  "notesBatchDeleteUncertain": "Nextcloud n’a pas confirmé la suppression. Actualisez et vérifiez cette note avant de réessayer.",
   "notesRemoteReviewChanged": "La note du serveur a changé. Votre brouillon de fusion est conservé. Examinez la comparaison actualisée et choisissez à nouveau la résolution.",
   "notesReviewRemote": "J’ai examiné la version actuelle du serveur",
   "wsModuleCapsNotPublished": "La casse du module n’est pas publiée.",
@@ -219,7 +236,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Éditeur Markdown et Writerside",
+  "aboutTagline": "Espace de travail pour les documents Markdown, Nextcloud Notes et les projets Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -3718,7 +3735,7 @@
   "notesSort": "Trier les notes",
   "notesOfflineRetentionHelp": "Retirer cette exigence conserve le contenu en cache. Une exigence de catégorie ou de compte peut encore conserver cette note.",
   "notesOfflineBroader": "Cette note est aussi conservée par une exigence de catégorie ou de compte.",
-  "notesOfflineExternal": "Les médias externes nécessitent une connexion. BusyMark conserve uniquement le texte et les pièces jointes gérées.",
+  "notesOfflineExternal": "Les médias externes nécessitent une connexion. BusyMark conserve le texte des notes et les pièces jointes Notes prises en charge.",
   "notesOperationFailed": "L’opération a échoué. Votre brouillon est conservé. Vérifiez l’enregistrement et les conflits avant de réessayer.",
   "notesRemovedWarning": "Le compte Nextcloud local a été supprimé. La révocation du mot de passe d’application n’a pas été confirmée. Supprimez le mot de passe de BusyMark dans les paramètres de sécurité Nextcloud.",
   "notesBuffersNotSaved": "Toutes les notes ouvertes n’ont pas pu être enregistrées localement. Vérifiez l’enregistrement, les conflits ou la normalisation dans l’espace de travail. Des changements locaux peuvent encore nécessiter une synchronisation Nextcloud.",

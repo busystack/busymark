@@ -626,6 +626,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.save:
+      case BusyMarkMainMenuAction.saveAs:
+        break;
       case BusyMarkMainMenuAction.export:
         return;
       case BusyMarkMainMenuAction.fullScreen:

@@ -55,6 +55,22 @@ import 'linux/linux_window_host.dart';
 
 final _busyMarkDefaultCommandRegistryProvider =
     Provider<BusyMarkCommandRegistry>((ref) {
+      bool saveCommandAvailable({required bool saveAs}) {
+        if (!ref.read(searchSessionProvider.notifier).workspaceVisible) {
+          return false;
+        }
+        final state = ref.read(workspaceControllerProvider);
+        final workspace = state.workspace;
+        final buffer = state.activeBuffer;
+        if (workspace == null ||
+            buffer == null ||
+            ref.read(localHistoryControllerProvider).selectedRevision != null ||
+            ref.read(sharedGitReviewProvider)[workspace.id]?.activeId != null) {
+          return false;
+        }
+        return saveAs ? canSaveMarkdownAs(buffer) : !buffer.readonly;
+      }
+
       final commandIntents = <String, Intent>{
         for (final id in BusyMarkCommandCatalog.notesWorkspaceCommandIds)
           id: _NotesWorkspaceActionIntent(id),
@@ -64,7 +80,6 @@ final _busyMarkDefaultCommandRegistryProvider =
         BusyMarkCommandIds.browseNotes: const _NotesActionIntent(
           WelcomeNotesAction.browse,
         ),
-        BusyMarkCommandIds.save: const _SaveActiveIntent(),
         BusyMarkCommandIds.export: const _ExportIntent(),
         BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
         BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
@@ -93,6 +108,25 @@ final _busyMarkDefaultCommandRegistryProvider =
       };
       final defaults = BusyMarkCommandCatalog.create(
         executions: {
+          for (final (id, saveAs) in [
+            (BusyMarkCommandIds.save, false),
+            (BusyMarkCommandIds.saveAs, true),
+          ])
+            id: () async {
+              final context = rootNavigatorKey.currentContext;
+              if (context == null ||
+                  (rootNavigatorKey.currentState?.canPop() ?? false)) {
+                return;
+              }
+              bool current() =>
+                  ref.mounted && saveCommandAvailable(saveAs: saveAs);
+              await saveDocumentFromCommand(
+                context,
+                ref.container,
+                saveAs: saveAs,
+                isInScope: current,
+              );
+            },
           for (final id in BusyMarkResourceMenuButton.commandIds)
             id: () {
               if (!(rootNavigatorKey.currentState?.canPop() ?? false)) {
@@ -237,9 +271,8 @@ final _busyMarkDefaultCommandRegistryProvider =
                 .read(searchSessionProvider.notifier)
                 .categories
                 .contains(entry.value),
-          BusyMarkCommandIds.save: () =>
-              ref.read(searchSessionProvider.notifier).workspaceVisible &&
-              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.save: () => saveCommandAvailable(saveAs: false),
+          BusyMarkCommandIds.saveAs: () => saveCommandAvailable(saveAs: true),
           BusyMarkCommandIds.export: () =>
               ref.read(searchSessionProvider.notifier).workspaceVisible &&
               canExportWorkspace(ref.read(workspaceControllerProvider)),
@@ -413,21 +446,6 @@ class BusyMarkApp extends ConsumerWidget {
                         performWorkspaceResourceAction(
                           ref,
                           WorkspaceResourceAction.forNotes(intent.action),
-                        ),
-                      );
-                    }
-                    return null;
-                  },
-                ),
-                _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
-                  onInvoke: (intent) {
-                    final state = ref.read(workspaceControllerProvider);
-                    final navigatorContext = rootNavigatorKey.currentContext;
-                    if (state.workspace != null && navigatorContext != null) {
-                      unawaited(
-                        saveActiveWithOverwriteConfirmation(
-                          navigatorContext,
-                          ref,
                         ),
                       );
                     }
@@ -747,6 +765,7 @@ class _BusyMarkWindowLifecycleState
   late final AppLifecycleListener _notesLifecycle;
   late final GoRouter _notesRouter;
   late final VoidCallback _unregisterMessageGuard;
+  bool _closing = false;
 
   @override
   void initState() {
@@ -789,7 +808,10 @@ class _BusyMarkWindowLifecycleState
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return AbsorbPointer(
+      absorbing: _closing,
+      child: ExcludeFocus(excluding: _closing, child: widget.child),
+    );
   }
 
   void _notesRouteChanged() {
@@ -814,7 +836,7 @@ class _BusyMarkWindowLifecycleState
 
   Future<void> _handleWindowClose() async {
     final context = rootNavigatorKey.currentContext ?? this.context;
-    if (!context.mounted) {
+    if (!context.mounted || _windowControlService.isClosing) {
       return;
     }
     final drafts = ref.read(busyMarkGitDraftFlushProvider);
@@ -839,55 +861,136 @@ class _BusyMarkWindowLifecycleState
         !context.mounted) {
       return;
     }
+    // The focused property often has not submitted on a native close event.
+    if (!controller.propertyEdits.flush()) return;
     final settings = ref.read(appSettingsControllerProvider);
     var workspace = ref.read(workspaceControllerProvider);
     if (settings.autoSave && workspace.hasUnsavedChanges) {
       await ref.read(workspaceControllerProvider.notifier).saveAll();
+      if (!mounted || !context.mounted || !controller.propertyEdits.flush()) {
+        return;
+      }
       workspace = ref.read(workspaceControllerProvider);
     }
-    await _windowControlService.handleCloseRequest(
-      hasUnsavedChanges: workspace.hasUnsavedChanges,
-      confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,
-      showCloseDialog: () => _showWindowCloseDialog(context),
-      saveChanges: () => _saveAllDirtyDocuments(context),
-      beforeClose: controller.markCleanShutdown,
-      discardChanges: controller.discardRecoveryForShutdown,
-      finalCloseGuard: () async {
-        // Document metadata can await I/O after the message discard consent.
-        // Drain later writes, then veto only newly unsaved message revisions.
-        await drafts.flush();
-        for (final session in drafts.liveSessions()) {
-          if (!session.hasUnpersistedMessageDrafts) continue;
-          final reviewed =
-              reviewedMessages[(
-                session.host.drafts,
-                session.repository.presentationKey,
-              )];
-          if (reviewed == null ||
-              !mapEquals(reviewed, session.messageDraftRevisions)) {
+    var reviewedDocuments = controller.captureWindowCloseAuthorization();
+    var settling = false;
+
+    bool messagesAreCurrent() {
+      for (final session in drafts.liveSessions()) {
+        if (!session.hasUnpersistedMessageDrafts) continue;
+        final reviewed =
+            reviewedMessages[(
+              session.host.drafts,
+              session.repository.presentationKey,
+            )];
+        if (reviewed == null ||
+            !mapEquals(reviewed, session.messageDraftRevisions)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    Future<bool> beginClose() async {
+      // Metadata can await I/O after consent. Veto newly unsaved message
+      // revisions as well as changes to the reviewed document openings.
+      await drafts.flush();
+      if (!mounted ||
+          !context.mounted ||
+          !messagesAreCurrent() ||
+          !controller.isWindowCloseAuthorizationCurrent(reviewedDocuments)) {
+        return false;
+      }
+      setState(() => _closing = true);
+      await WidgetsBinding.instance.endOfFrame;
+      return mounted &&
+          context.mounted &&
+          messagesAreCurrent() &&
+          controller.freezeWindowClose(reviewedDocuments);
+    }
+
+    try {
+      await _windowControlService.handleCloseRequest(
+        hasUnsavedChanges: workspace.hasUnsavedChanges,
+        confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,
+        showCloseDialog: () => _showWindowCloseDialog(context),
+        saveChanges: () async {
+          if (!mounted ||
+              !controller.isWindowCloseAuthorizationCurrent(
+                reviewedDocuments,
+              )) {
             return false;
           }
-        }
-        return true;
-      },
-    );
+          final saved = await _saveAllDirtyDocuments(
+            context,
+            reviewedDocuments,
+          );
+          if (saved == null) return false;
+          reviewedDocuments = saved;
+          return true;
+        },
+        beforeClose: () async {
+          settling = true;
+          await controller.markCleanShutdown();
+        },
+        discardChanges: () {
+          settling = true;
+          return controller.discardRecoveryForShutdown(
+            reviewedDocuments,
+            beginClose: beginClose,
+          );
+        },
+        finalCloseGuard: () async => _closing || await beginClose(),
+      );
+    } finally {
+      if (mounted && !_windowControlService.isClosing && settling) {
+        if (_closing) setState(() => _closing = false);
+        controller.resumeAfterCancelledWindowClose();
+        await controller.flushPersistence();
+      }
+    }
   }
 
-  Future<bool> _saveAllDirtyDocuments(BuildContext context) async {
+  Future<WindowCloseAuthorization?> _saveAllDirtyDocuments(
+    BuildContext context,
+    WindowCloseAuthorization reviewed,
+  ) async {
     final controller = ref.read(workspaceControllerProvider.notifier);
     final dirtyIds = [
       for (final buffer
           in ref.read(workspaceControllerProvider).documentBuffers)
         if (buffer.isDirty) buffer.id,
     ];
+    var authorization = reviewed;
     for (final bufferId in dirtyIds) {
-      if (!await controller.activateDocumentBuffer(bufferId) ||
+      if (!controller.isWindowCloseDocumentCurrent(authorization, bufferId) ||
+          !await controller.activateDocumentBuffer(bufferId) ||
           !context.mounted ||
-          !await saveActiveWithOverwriteConfirmation(context, ref)) {
-        return false;
+          !controller.isWindowCloseDocumentCurrent(authorization, bufferId)) {
+        return null;
       }
+      if (!ref.read(workspaceControllerProvider).isDirty) continue;
+      final target = controller.captureActiveDocumentSaveTarget();
+      if (target == null ||
+          target.bufferId != bufferId ||
+          !await saveActiveWithOverwriteConfirmation(
+            context,
+            ref,
+            target: target,
+          )) {
+        return null;
+      }
+      final continued = controller.windowCloseAuthorizationAfterSave(
+        authorization,
+        target,
+      );
+      if (continued == null || !context.mounted) return null;
+      authorization = continued;
     }
-    return !ref.read(workspaceControllerProvider).hasUnsavedChanges;
+    return !ref.read(workspaceControllerProvider).hasUnsavedChanges &&
+            controller.isWindowCloseAuthorizationCurrent(authorization)
+        ? authorization
+        : null;
   }
 
   Future<WindowCloseAction?> _showWindowCloseDialog(BuildContext context) {
@@ -1081,10 +1184,6 @@ class _BusyMarkSearchShortcutHandlerState
       child: widget.child,
     );
   }
-}
-
-class _SaveActiveIntent extends Intent {
-  const _SaveActiveIntent();
 }
 
 class _ExportIntent extends Intent {

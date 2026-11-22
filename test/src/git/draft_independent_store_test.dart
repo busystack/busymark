@@ -355,7 +355,10 @@ void main() {
           showCloseDialog: () async => action,
           saveChanges: () async => true,
           beforeClose: registry.flush,
-          discardChanges: registry.flush,
+          discardChanges: () async {
+            await registry.flush();
+            return true;
+          },
         );
         await Future<void>.delayed(Duration.zero);
         expect(native.closes, 0);

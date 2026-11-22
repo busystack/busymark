@@ -1,1 +1,1 @@
-const busyMarkAppVersion = '0.7.2';
+const busyMarkAppVersion = 'v0.7.3';

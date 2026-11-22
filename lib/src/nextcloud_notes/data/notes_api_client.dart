@@ -274,7 +274,6 @@ class NotesApiClient {
     bool forceFull = false,
   }) async {
     final notes = <int, NoteState>{};
-    final ids = <int>{};
     final cursors = <String>{};
     String? cursor;
     String? modified;
@@ -307,6 +306,7 @@ class NotesApiClient {
           scope: NotesRequestScope.collection,
         );
       }
+      final ids = <int>{};
       for (final item in json) {
         if (item is! Map<String, dynamic> ||
             item['id'] is! int ||
@@ -332,8 +332,11 @@ class NotesApiClient {
       etag = header(response, 'ETag');
       cursor = header(response, 'X-Notes-Chunk-Cursor');
       if (cursor == null || cursor.isEmpty) {
+        // The final response enumerates the current collection, including
+        // pruned and already delivered notes. Earlier pages can contain notes
+        // that no longer exist when this inventory is sampled.
         return NotesListResult(
-          notes: notes.values.toList(),
+          notes: notes.values.where((note) => ids.contains(note.id)).toList(),
           ids: ids,
           etag: etag,
           lastModified: modified,
@@ -600,19 +603,14 @@ class NotesApiClient {
     int id,
     String path, {
     required File destination,
+    String category = '',
     NotesDownloadCancellation? cancellation,
   }) async {
-    if (!isSafeAttachmentPath(path)) {
+    final normalizedPath = _normalizedAttachmentReadPath(path, category);
+    if (normalizedPath == null) {
       throw const NotesException(
         NotesFailureCode.unsafeReference,
         'This attachment reference is unsafe.',
-      );
-    }
-    if (path.startsWith('.attachments.') &&
-        !path.startsWith('.attachments.$id/')) {
-      throw const NotesException(
-        NotesFailureCode.unsafeReference,
-        'This attachment belongs to a different Nextcloud note.',
       );
     }
     final cancel = cancellation ?? NotesDownloadCancellation();
@@ -620,7 +618,7 @@ class NotesApiClient {
     final request =
         http.AbortableRequest(
             'GET',
-            _endpoint('v1.4/attachment/$id', {'path': path}),
+            _endpoint('v1.4/attachment/$id', {'path': normalizedPath}),
             abortTrigger: Future.any([cancel.whenCancelled, abort.future]),
           )
           ..headers['Authorization'] = _authorization
@@ -765,7 +763,7 @@ class NotesApiClient {
         'Remote attachment cleanup is unavailable: it requires a verified Notes version of 6.1.0 or newer. Notes and attachment upload/download remain available.',
       );
     }
-    if (!isSafeAttachmentPath(path) || !path.startsWith('.attachments.$id/')) {
+    if (!isManagedNoteAttachmentPath(id, path)) {
       throw const NotesException(
         NotesFailureCode.unsafeReference,
         'Only this note’s managed attachments can be deleted.',
@@ -820,6 +818,50 @@ bool isSafeAttachmentPath(String path) {
 }
 
 String? canonicalAttachmentReference(String reference) {
+  final raw = _decodeAttachmentReference(reference);
+  return raw != null && isSafeAttachmentPath(raw) ? raw : null;
+}
+
+/// Resolves the traversal budget against the server category, leaving the raw
+/// path relative to that category for the Notes endpoint.
+String? canonicalAttachmentReadReference(String reference, String category) {
+  if (RegExp(r'%2f', caseSensitive: false).hasMatch(reference)) return null;
+  final raw = _decodeAttachmentReference(reference);
+  return raw == null ? null : _normalizedAttachmentReadPath(raw, category);
+}
+
+String? _normalizedAttachmentReadPath(String path, String category) {
+  final rawParts = path.split('/');
+  if (rawParts.any((part) => part.isEmpty) ||
+      path.contains('\\') ||
+      RegExp(r'[\x00-\x1f\x7f]').hasMatch(path) ||
+      rawParts.last == '.' ||
+      rawParts.last == '..') {
+    return null;
+  }
+  // Drop single-dot components before evaluating parent components. The
+  // server processes parent segments before the filesystem resolves dots.
+  final parts = rawParts.where((part) => part != '.').toList();
+  if (parts.first.contains(':')) return null;
+  final folders = category.isEmpty ? <String>[] : category.split('/');
+  if (folders.any((part) => part.isEmpty || part == '.' || part == '..') ||
+      category.contains('\\') ||
+      RegExp(r'[\x00-\x1f\x7f]').hasMatch(category)) {
+    return null;
+  }
+  var depth = folders.length;
+  for (final part in parts) {
+    if (part == '..') {
+      if (depth == 0) return null;
+      depth--;
+    } else {
+      depth++;
+    }
+  }
+  return parts.join('/');
+}
+
+String? _decodeAttachmentReference(String reference) {
   final uri = Uri.tryParse(reference);
   if (uri == null ||
       uri.hasScheme ||
@@ -838,8 +880,7 @@ String? canonicalAttachmentReference(String reference) {
       RegExp(r'[^\x00-\x7f]+'),
       (match) => Uri.encodeComponent(match[0]!),
     );
-    final raw = Uri.decodeComponent(encoded);
-    return isSafeAttachmentPath(raw) ? raw : null;
+    return Uri.decodeComponent(encoded);
   } on FormatException {
     return null;
   }
@@ -855,9 +896,13 @@ String attachmentMarkdownReference(String path) => path
     .join('/');
 
 bool isNoteAttachmentPath(int id, String path) =>
-    isSafeAttachmentPath(path) &&
-    (!path.contains('/') ||
-        (path.startsWith('.attachments.$id/') && path.split('/').length == 2));
+    !path.contains('/') && isSafeAttachmentPath(path) ||
+    isManagedNoteAttachmentPath(id, path);
+
+bool isManagedNoteAttachmentPath(int id, String path) =>
+    path.startsWith('.attachments.$id/') &&
+    path.split('/').length == 2 &&
+    isSafeAttachmentPath(path);
 
 /// RFC 9110: retain a server deadline, including long delays; never clamp earlier.
 DateTime? retryAfter(String? value, DateTime now) {

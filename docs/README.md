@@ -6,6 +6,7 @@ are intentionally independent so they can be referenced directly.
 
 ## Everyday workflows
 
+- [Saving documents](saving.md)
 - [Search and replace](search-and-replace.md)
 - [AI editing](local-ai.md)
 - [Clipboard History and Local History](history.md)

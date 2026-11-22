@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Зберегти як…",
+  "shortcutSaveAsDescription": "Зберегти поточний документ Markdown у новому місці",
+  "documentSaved": "Збережено",
+  "documentModified": "Змінено",
+  "documentSaving": "Збереження…",
+  "documentNotSaved": "Не збережено",
+  "documentSaveFailed": "Помилка збереження",
+  "documentSaveConflict": "Конфлікт",
+  "documentFileMissing": "Файл відсутній",
+  "documentSaveUnverified": "Стан файлу невідомий",
+  "documentSavedLocally": "Збережено локально",
+  "documentSyncPending": "Очікування синхронізації",
+  "documentSyncFailed": "Помилка синхронізації",
+  "saveAsSeparateMarkdown": "Виберіть окремий файл Markdown, який ще не відкрито.",
   "notesNewFromRetainedText": "Нова нотатка зі збереженого тексту",
   "notesAccountThrottled": "Nextcloud попросив зачекати. Зачекайте перед повторним входом.",
   "notesSettingsRefreshing": "Оновлення Notes після підтвердження налаштувань",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Нотатка змінилася після перевірки. Перевірте поточний стан перед повторенням дії.",
   "notesBatchMissing": "Нотатка більше недоступна. Оновіть список і перевірте вибрані елементи.",
   "notesBatchStorage": "Локальне збереження не вдалося. Перевірте сховище й повторіть цей елемент; успішні елементи збережено.",
+  "notesBatchDeleteHelp": "BusyMark перевіряє та видаляє кожну нотатку окремо. Для видалення нотаток із сервера потрібне з’єднання.",
+  "notesBatchDeleteHistoryFailed": "BusyMark не вдалося записати нотатку до локальної історії. Нотатку збережено.",
+  "notesBatchDeleteUncertain": "Nextcloud не підтвердив видалення. Оновіть і перевірте нотатку перед повторною спробою.",
   "notesRemoteReviewChanged": "Нотатка сервера змінилася. Чернетку злиття збережено. Перевірте нове порівняння й виберіть рішення знову.",
   "notesReviewRemote": "Я перевірив поточну версію сервера",
   "wsModuleCapsNotPublished": "Правило регістру модуля не публікується.",
@@ -219,7 +236,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Редактор Markdown і Writerside",
+  "aboutTagline": "Робочий простір для документів Markdown, Nextcloud Notes і проєктів Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -3744,7 +3761,7 @@
   "notesSort": "Сортування нотаток",
   "notesOfflineRetentionHelp": "Видалення вимоги не видаляє вміст кешу. Вимога категорії чи облікового запису може й надалі зберігати нотатку.",
   "notesOfflineBroader": "Ця нотатка також зберігається за вимогою категорії чи облікового запису.",
-  "notesOfflineExternal": "Зовнішні медіа потребують з’єднання. BusyMark зберігає лише текст і керовані вкладення.",
+  "notesOfflineExternal": "Зовнішні медіа потребують з’єднання. BusyMark зберігає текст нотаток і підтримувані вкладення Notes.",
   "notesOperationFailed": "Не вдалося завершити операцію. Чернетку збережено. Перевірте збереження та конфлікти й повторіть спробу.",
   "notesRemovedWarning": "Локальний обліковий запис Nextcloud видалено. Відкликання пароля застосунку не підтверджено. Видаліть пароль BusyMark у налаштуваннях безпеки Nextcloud.",
   "notesBuffersNotSaved": "Не вдалося зберегти всі відкриті нотатки локально. Перевірте збереження, конфлікти чи нормалізацію в робочому просторі. Локальні зміни можуть ще потребувати синхронізації з Nextcloud.",

@@ -83,6 +83,7 @@ class WindowControlService extends ChangeNotifier {
   var _fullScreenChangeInProgress = false;
 
   bool get isFullScreen => _fullScreen;
+  bool get isClosing => _closeInProgress;
 
   Future<void> initialize() async {
     if (_initialized || _disposed) {
@@ -132,10 +133,11 @@ class WindowControlService extends ChangeNotifier {
     required Future<WindowCloseAction?> Function() showCloseDialog,
     required Future<bool> Function() saveChanges,
     Future<void> Function()? beforeClose,
-    Future<void> Function()? discardChanges,
+    Future<bool> Function()? discardChanges,
     Future<bool> Function()? finalCloseGuard,
   }) async {
     Future<void> finish() async {
+      if (_disposed) return;
       if (finalCloseGuard != null && !await finalCloseGuard()) {
         await _nativeWindow.setPreventClose(true);
         return;
@@ -143,7 +145,7 @@ class WindowControlService extends ChangeNotifier {
       await closeWindow();
     }
 
-    if (_closeInProgress) {
+    if (_disposed || _closeInProgress) {
       return;
     }
     if (!hasUnsavedChanges || !confirmCloseWithUnsavedChanges) {
@@ -155,8 +157,11 @@ class WindowControlService extends ChangeNotifier {
     final action = await showCloseDialog();
     switch (action) {
       case WindowCloseAction.discard:
-        await discardChanges?.call();
-        await finish();
+        if (await discardChanges?.call() != false) {
+          await finish();
+        } else {
+          await _nativeWindow.setPreventClose(true);
+        }
       case WindowCloseAction.save:
         if (await saveChanges()) {
           await beforeClose?.call();
@@ -171,12 +176,18 @@ class WindowControlService extends ChangeNotifier {
   }
 
   Future<void> closeWindow() async {
-    if (_closeInProgress) {
+    if (_disposed || _closeInProgress) {
       return;
     }
     _closeInProgress = true;
-    await _nativeWindow.setPreventClose(false);
-    await _nativeWindow.close();
+    try {
+      await _nativeWindow.setPreventClose(false);
+      if (!_disposed) await _nativeWindow.close();
+    } on Object {
+      _closeInProgress = false;
+      if (!_disposed) await _nativeWindow.setPreventClose(true);
+      rethrow;
+    }
   }
 
   Future<void> requestClose() {

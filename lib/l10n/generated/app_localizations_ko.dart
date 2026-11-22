@@ -11,6 +11,48 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get saveAsEllipsis => '다른 이름으로 저장…';
+
+  @override
+  String get shortcutSaveAsDescription => '현재 Markdown 문서를 새 위치에 저장';
+
+  @override
+  String get documentSaved => '저장됨';
+
+  @override
+  String get documentModified => '수정됨';
+
+  @override
+  String get documentSaving => '저장 중…';
+
+  @override
+  String get documentNotSaved => '저장되지 않음';
+
+  @override
+  String get documentSaveFailed => '저장 실패';
+
+  @override
+  String get documentSaveConflict => '충돌';
+
+  @override
+  String get documentFileMissing => '파일 없음';
+
+  @override
+  String get documentSaveUnverified => '파일 상태를 알 수 없음';
+
+  @override
+  String get documentSavedLocally => '로컬에 저장됨';
+
+  @override
+  String get documentSyncPending => '동기화 대기 중';
+
+  @override
+  String get documentSyncFailed => '동기화 실패';
+
+  @override
+  String get saveAsSeparateMarkdown => '열려 있지 않은 다른 Markdown 파일을 선택하세요.';
+
+  @override
   String get notesNewFromRetainedText => '보관된 텍스트로 새 노트 만들기';
 
   @override
@@ -124,6 +166,18 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       '로컬 저장에 실패했습니다. 저장소를 확인하고 이 항목을 다시 시도하세요. 성공한 항목은 저장되어 있습니다.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark는 각 노트를 개별적으로 확인하고 삭제합니다. 서버에 있는 노트를 삭제하려면 연결이 필요합니다.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark가 노트를 로컬 기록에 남기지 못했습니다. 노트는 보관되었습니다.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud가 삭제를 확인하지 않았습니다. 다시 시도하기 전에 이 노트를 새로 고침하고 검토하세요.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -484,7 +538,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aboutBusyMark => 'BusyMark 소개';
 
   @override
-  String get aboutTagline => '마크다운 및 Writerside 편집기';
+  String get aboutTagline =>
+      'Markdown 문서, Nextcloud Notes, Writerside 프로젝트를 위한 작업 공간.';
 
   @override
   String get aboutLicenseLabel => '라이선스';
@@ -5599,7 +5654,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      '외부 미디어에는 연결이 필요합니다. BusyMark는 노트 텍스트와 관리되는 첨부 파일만 보관합니다.';
+      '외부 미디어에는 연결이 필요합니다. BusyMark는 노트 텍스트와 지원되는 Notes 첨부 파일을 보관합니다.';
 
   @override
   String get notesEmptyAll => '아직 노트가 없습니다. 새 노트를 만드세요.';

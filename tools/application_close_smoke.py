@@ -6,6 +6,7 @@ No successful path calls terminate(), kill(), Dart exit(), or gtk_main_quit().
 """
 import argparse
 import ctypes as C
+import fcntl
 import hashlib
 import json
 import math
@@ -21,6 +22,8 @@ import time
 
 
 import owned_processes as owned
+
+NATIVE_SAVE_SCENARIOS = ('dirty-discard-newer', 'property-save', 'property-invalid')
 
 
 class LoadedEngine:
@@ -305,6 +308,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
               "observationInterpreter": sys.executable, "exitCode": None,
               "applicationStarted": False}
     tracker = desktop = process = log = probe = temporary_alias = alias_identity = None
+    discard_lock = None
     phase = 'setup'
     def cleanup_error(stage, error):
         record.setdefault('cleanupErrors', []).append({'stage': stage, 'error': repr(error)})
@@ -354,7 +358,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         phase = 'observer initialization'
         probe = LoadedEngine(expected_engine) if expected_engine is not None else None
         tracker = owned.ChildTracker()
-        desktop = Desktop() if plain or scenario in ('video', 'window-controls') else None
+        desktop = Desktop() if plain or scenario in ('video', 'window-controls', *NATIVE_SAVE_SCENARIOS) else None
         phase = 'log opening'
         log = (folder / 'application.log').open('x')
         phase = 'process creation'
@@ -398,6 +402,27 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                     status = {}
                 if status.get("phase") == "failed":
                     raise RuntimeError(status.get("error", "Application probe failed"))
+                if status.get('phase') == 'awaiting-native-close' and not close_sent:
+                    w = desktop.window(process.pid)
+                    if w:
+                        desktop.close(w)
+                        close_sent = True
+                if status.get('phase') == 'awaiting-discard-lock':
+                    if discard_lock is None:
+                        lock_path = Path(status['applicationSupport']) / 'recovery.json.lock'
+                        discard_lock = lock_path.open('ab')
+                        fcntl.lockf(discard_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        Path(f'{report}.locked').touch()
+                    for fd in Path(f'/proc/{process.pid}/fd').iterdir():
+                        try:
+                            if fd.readlink() == lock_path:
+                                Path(f'{report}.settling').touch()
+                                break
+                        except FileNotFoundError:
+                            continue
+                if status.get('phase') == 'release-discard-lock' and discard_lock is not None:
+                    discard_lock.close()
+                    discard_lock = None
                 if status.get('phase') == 'awaiting-window-drag' and 'nativeDragDelta' not in record:
                     if scenario != 'window-controls' or not disposable_display:
                         raise RuntimeError('Unexpected pointer-injection request')
@@ -416,7 +441,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             raise TimeoutError("Natural application exit deadline expired")
         record["exitCode"] = process.returncode
 
-        if plain and not close_sent:
+        if (plain or scenario in NATIVE_SAVE_SCENARIOS) and not close_sent:
             raise RuntimeError("Process exited before a verified owned-window close request")
         log.flush()
         application_log = (folder / 'application.log').read_text(errors='replace')
@@ -438,6 +463,13 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             record["application"] = status
             if status.get("phase") != "close-requested":
                 raise RuntimeError("Missing normal-close application checkpoint")
+            required = {
+                'dirty-discard-newer': ('newerEditVetoedDiscard',),
+                'property-save': ('focusedPropertyDraft', 'propertyIncludedInCloseDecision'),
+                'property-invalid': ('focusedPropertyDraft', 'invalidPropertyVetoedClose', 'propertyIncludedInCloseDecision'),
+            }
+            if any(status.get(check) is not True for check in required.get(scenario, ())):
+                raise RuntimeError('Missing evidence for the native close scenario')
             if status.get("document") and status.get("expectedText") is not None:
                 if Path(status["document"]).read_text() != status["expectedText"]:
                     raise RuntimeError("Save/discard produced incorrect document content")
@@ -462,6 +494,8 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         if process is not None:
             record['exitCode'] = process.poll()
     finally:
+        if discard_lock is not None:
+            discard_lock.close()
         if tracker is not None:
             # Classify before cleanup. A successful cleanup cannot turn any
             # failed launch, fatal exit, hang or incomplete observation into a pass.
@@ -535,7 +569,7 @@ def main():
     parser.add_argument("--snap-instance", help="Owned disposable parallel instance, e.g. busymark_close")
     parser.add_argument("--snap-fixture", action="store_true", help="The disposable instance contains the compiled window_close_smoke target; require output in its common directory")
     parser.add_argument('--disposable-display', action='store_true', help='The caller owns the whole desktop; required for pointer injection in window-controls')
-    parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "window-controls"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
+    parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "window-controls", *NATIVE_SAVE_SCENARIOS], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
     parser.add_argument("--video", type=Path)
     parser.add_argument("--expected-engine", type=Path, help="Expected official engine ELF library; hash the actual mapped file after exit")
     parser.add_argument("command", nargs=argparse.REMAINDER)

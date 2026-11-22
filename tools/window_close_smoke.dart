@@ -21,6 +21,8 @@ import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/writerside_video_player_host.dart';
+import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/visualization/visualization_card.dart';
 import 'package:busymark/src/visualization/visualization_models.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
@@ -176,9 +178,81 @@ Future<void> main(List<String> args) async {
       }
     }
 
-    final fixture = File('${report.parent.path}/document.md');
+    final propertyCase = scenario.startsWith('property-');
+    final newerDiscard = scenario == 'dirty-discard-newer';
+    final nativeRequest = propertyCase || newerDiscard;
+    final fixture = File(
+      propertyCase
+          ? '${report.parent.path}/module/topics/document.topic'
+          : '${report.parent.path}/document.md',
+    );
     const original = '# Close fixture\n\nOriginal document.\n';
     const edited = '# Close fixture\n\nEdited before normal close.\n';
+    const newer = '# Close fixture\n\nNew edit after Discard consent.\n';
+    final controller = container.read(workspaceControllerProvider.notifier);
+    BusyMarkGroupedTextEntry? propertyField;
+    if (propertyCase) {
+      final module = fixture.parent.parent.path;
+      await fixture.parent.create(recursive: true);
+      await File('$module/writerside.cfg').writeAsString(
+        '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      await File('$module/guide.tree').writeAsString(
+        '<instance-profile id="guide" name="Guide" start-page="document.topic">'
+        '<toc-element topic="document.topic"/></instance-profile>',
+      );
+      const source =
+          '<topic id="document" title="Close fixture">'
+          '<p id="original">Paragraph.</p></topic>\n';
+      await fixture.writeAsString(source);
+      await settings.setDocumentViewMode(DocumentViewModePreference.editor);
+      await controller.openPath(module);
+      container.read(appRouterProvider).go('/workspace');
+      BusyMarkWysiwygEditor? editor;
+      await _until(() {
+        editor = _elements()
+            .map((e) => e.widget)
+            .whereType<BusyMarkWysiwygEditor>()
+            .where((w) => w.document.source == source)
+            .firstOrNull;
+        return editor != null;
+      });
+      final document = editor!.document;
+      final paragraph = document.blocks
+          .expand((block) => block.children)
+          .firstWhere((block) => block.kind == BusyBlockKind.paragraph);
+      editor!.onInspectElement!(document, paragraph.id, null, true, false);
+      editor!.onPropertiesRequested!();
+      await _until(() {
+        propertyField = _elements()
+            .map((e) => e.widget)
+            .whereType<BusyMarkGroupedTextEntry>()
+            .where(
+              (field) =>
+                  field.controller?.text == 'original' && !field.readOnly,
+            )
+            .firstOrNull;
+        return propertyField != null;
+      });
+      propertyField!.focusNode!.requestFocus();
+      await binding.endOfFrame;
+      propertyField!.controller!.text = scenario == 'property-invalid'
+          ? 'invalid id'
+          : 'accepted';
+      if (!propertyField!.focusNode!.hasFocus ||
+          !controller.propertyEdits.hasPending ||
+          container.read(workspaceControllerProvider).hasUnsavedChanges) {
+        throw StateError(
+          'Expected a focused property draft outside the buffer.',
+        );
+      }
+      checks['document'] = fixture.path;
+      checks['expectedText'] = source.replaceFirst(
+        'id="original"',
+        'id="accepted"',
+      );
+      checks['focusedPropertyDraft'] = true;
+    }
     String? reopenedText;
     if (scenario.startsWith('dirty-') ||
         scenario == 'visualization' ||
@@ -222,14 +296,13 @@ Future<void> main(List<String> args) async {
       checks['visualizationPublished'] = true;
     }
     if (scenario.startsWith('dirty-')) {
-      container
-          .read(workspaceControllerProvider.notifier)
-          .updateActiveText(edited);
+      controller.updateActiveText(edited);
       if (!container.read(workspaceControllerProvider).hasUnsavedChanges) {
         throw StateError('The fixture did not become dirty.');
       }
       checks['expectedText'] = scenario == 'dirty-save' ? edited : original;
       await _until(() => _editorPublished(fixture.path, edited));
+      if (newerDiscard) await controller.flushPersistence();
     }
     // FrameTiming establishes live build/raster execution, not presentation time.
     final frameAtReady = binding.platformDispatcher.frameData.frameNumber;
@@ -310,7 +383,7 @@ Future<void> main(List<String> args) async {
         throw StateError('The edited fixture changed before close.');
       }
     }
-    await publish('close-requested');
+    await publish(nativeRequest ? 'awaiting-native-close' : 'close-requested');
     // This enters the same prevent-close listener and save/discard/cancel flow
     // as a window-manager delete request. Never call exit() on the success path.
     if (scenario == 'window-controls') {
@@ -320,11 +393,11 @@ Future<void> main(List<String> args) async {
           .firstWhere((widget) => widget.type == YaruWindowControlType.close);
       if (control.onTap == null) throw StateError('Close control is disabled.');
       control.onTap!();
-    } else {
+    } else if (!nativeRequest) {
       await windowManager.close();
     }
-    if (scenario.startsWith('dirty-')) {
-      Future<void> choose(String action) async {
+    if (scenario.startsWith('dirty-') || propertyCase) {
+      Future<BusyMarkDialogButton> decision(String action) async {
         BusyMarkDialogButton? button;
         await _until(() {
           for (final e in _elements()) {
@@ -343,10 +416,83 @@ Future<void> main(List<String> args) async {
           }
           return false;
         });
-        button!.onPressed!();
+        return button!;
       }
 
-      if (scenario == 'dirty-cancel') {
+      Future<void> choose(String action) async =>
+          (await decision(action)).onPressed!();
+
+      if (propertyCase) {
+        if (scenario == 'property-invalid') {
+          await _until(() => controller.propertyEdits.feedback != null);
+          if (!await windowManager.isVisible() ||
+              !propertyField!.focusNode!.hasFocus ||
+              !controller.propertyEdits.hasPending ||
+              container.read(workspaceControllerProvider).hasUnsavedChanges) {
+            throw StateError(
+              'Invalid property closed the window or lost focus or draft.',
+            );
+          }
+          checks['invalidPropertyVetoedClose'] = true;
+          propertyField!.controller!.text = 'accepted';
+          await windowManager.close();
+        }
+        final save = await decision('save');
+        if (container.read(workspaceControllerProvider).activeText !=
+            checks['expectedText']) {
+          throw StateError('The close decision omitted the property edit.');
+        }
+        checks['propertyIncludedInCloseDecision'] = true;
+        await publish('close-requested');
+        save.onPressed!();
+      } else if (newerDiscard) {
+        final discard = await decision('discard');
+        // The observer holds BusyMark's real recovery-file lock across the
+        // decision and the late edit. Native close cannot finish settlement
+        // until that independent process releases the lock.
+        await publish('awaiting-discard-lock');
+        await _until(() => File('${report.path}.locked').existsSync());
+        final close = window.requestClose();
+        discard.onPressed!();
+        await _until(() => File('${report.path}.settling').existsSync());
+        controller.updateActiveText(newer);
+        await publish('release-discard-lock');
+        await close;
+        if (!await windowManager.isVisible() ||
+            container.read(workspaceControllerProvider).activeText != newer) {
+          throw StateError('Earlier consent did not preserve the newer edit.');
+        }
+        await controller.flushPersistence();
+        final recovery =
+            jsonDecode(
+                  await File(
+                    '${checks['applicationSupport']}/recovery.json',
+                  ).readAsString(),
+                )
+                as Map;
+        if (!(recovery['entries'] as List).any(
+          (entry) => entry['text'] == newer,
+        )) {
+          throw StateError(
+            'The vetoed close lost recovery for the newer edit.',
+          );
+        }
+        final history = container.read(localHistoryStoreProvider);
+        final revisions = (await history.load()).revisions;
+        final sources = await Future.wait(
+          revisions.map(
+            (revision) async =>
+                (await history.readRevision(revision.id))?.source,
+          ),
+        );
+        if (!sources.contains(edited)) {
+          throw StateError('The vetoed close lost protective Local History.');
+        }
+        checks['newerEditVetoedDiscard'] = true;
+        await publish('close-requested');
+        await windowManager.close();
+        await choose('discard');
+      } else if (scenario == 'dirty-cancel') {
         await choose('cancel');
         await binding.endOfFrame;
         if (!await windowManager.isVisible() ||

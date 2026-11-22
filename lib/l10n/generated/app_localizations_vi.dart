@@ -11,6 +11,49 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Lưu thành…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Lưu tài liệu Markdown hiện tại vào vị trí mới';
+
+  @override
+  String get documentSaved => 'Đã lưu';
+
+  @override
+  String get documentModified => 'Đã sửa đổi';
+
+  @override
+  String get documentSaving => 'Đang lưu…';
+
+  @override
+  String get documentNotSaved => 'Chưa lưu';
+
+  @override
+  String get documentSaveFailed => 'Không lưu được';
+
+  @override
+  String get documentSaveConflict => 'Xung đột';
+
+  @override
+  String get documentFileMissing => 'Thiếu tệp';
+
+  @override
+  String get documentSaveUnverified => 'Chưa rõ trạng thái tệp';
+
+  @override
+  String get documentSavedLocally => 'Đã lưu cục bộ';
+
+  @override
+  String get documentSyncPending => 'Đang chờ đồng bộ';
+
+  @override
+  String get documentSyncFailed => 'Đồng bộ thất bại';
+
+  @override
+  String get saveAsSeparateMarkdown => 'Chọn một tệp Markdown khác chưa mở.';
+
+  @override
   String get notesNewFromRetainedText => 'Ghi chú mới từ văn bản được giữ lại';
 
   @override
@@ -127,6 +170,18 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark kiểm tra và xóa từng ghi chú riêng lẻ. Ghi chú có trên máy chủ cần kết nối.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark không thể ghi ghi chú vào Lịch sử cục bộ. Ghi chú vẫn được giữ lại.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud chưa xác nhận việc xóa. Hãy làm mới và kiểm tra ghi chú trước khi thử lại.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -503,7 +558,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aboutBusyMark => 'Giới thiệu BusyMark';
 
   @override
-  String get aboutTagline => 'Trình biên tập Markdown và Writerside';
+  String get aboutTagline =>
+      'Không gian làm việc cho tài liệu Markdown, Nextcloud Notes và dự án Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Giấy phép';
@@ -5751,7 +5807,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.';
+      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark giữ văn bản ghi chú và tệp đính kèm Notes được hỗ trợ.';
 
   @override
   String get notesEmptyAll => 'Chưa có ghi chú. Hãy tạo ghi chú đầu tiên.';

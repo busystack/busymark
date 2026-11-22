@@ -1032,8 +1032,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   /// blocks the destructive replacement.
   Future<bool> captureBeforeLoss(
     LocalHistoryBufferSnapshot snapshot,
-    LocalHistoryCaptureReason reason,
-  ) async {
+    LocalHistoryCaptureReason reason, {
+    bool sourceAlreadyDurable = false,
+  }) async {
     snapshot = _acceptAtCurrentClearEpoch(snapshot);
     if (!policy.recordingEnabled || policy.excludes(snapshot.path)) return true;
     snapshot = snapshot.withCaptureId(
@@ -1052,7 +1053,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       expectedTarget: null,
       captureId: snapshot.captureId,
     );
-    await _persistDurableStateNow();
+    // A durable Notes source already survives a crash before capture. Its
+    // deletion still waits for this history write. A session flush would also
+    // try to save unrelated dirty editors and could prevent this capture.
+    if (!sourceAlreadyDurable) await _persistDurableStateNow();
     return _enqueue(
       snapshot.bufferId,
       () => _capture(
@@ -1065,6 +1069,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         acceptedHistoryGeneration: historyGeneration,
         acceptedBufferGeneration: bufferGeneration,
       ),
+      persistDurableState: !sourceAlreadyDurable,
     );
   }
 
@@ -5501,7 +5506,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
   }
 
-  Future<T> _enqueue<T>(String bufferId, Future<T> Function() operation) {
+  Future<T> _enqueue<T>(
+    String bufferId,
+    Future<T> Function() operation, {
+    bool persistDurableState = true,
+  }) {
     final prior = _bufferQueues[bufferId] ?? Future<void>.value();
     final result = prior.then((_) async {
       final durableBefore = _durableStateFingerprint();
@@ -5518,7 +5527,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
             )) {
           _retiredDurableWorkOwnerIds.add(bufferId);
         }
-        await _persistDurableStateIfChanged(durableBefore);
+        if (persistDurableState) {
+          await _persistDurableStateIfChanged(durableBefore);
+        } else if (durableBefore != _durableStateFingerprint()) {
+          _durableStateDirty = true;
+        }
       }
     });
     late final Future<void> tail;

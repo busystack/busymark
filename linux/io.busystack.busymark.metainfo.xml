@@ -28,28 +28,28 @@
   <name xml:lang="zh">BusyMark</name>
   <name xml:lang="zh-CN">BusyMark</name>
   <name xml:lang="tr">BusyMark</name>
-  <summary>Editor for Markdown files and Writerside-compatible documentation projects</summary>
-  <summary xml:lang="de">Editor für Markdown-Dateien und Writerside-kompatible Dokumentationsprojekte</summary>
-  <summary xml:lang="nl">Editor voor Markdown-bestanden en Writerside-compatibele documentatieprojecten</summary>
-  <summary xml:lang="et">Markdowni failide ja Writerside’iga ühilduvate dokumentatsiooniprojektide redaktor</summary>
-  <summary xml:lang="it">Editor per file Markdown e progetti di documentazione compatibili con Writerside</summary>
-  <summary xml:lang="nb">Redigerer for Markdown-filer og Writerside-kompatible dokumentasjonsprosjekter</summary>
-  <summary xml:lang="fr">Éditeur de fichiers Markdown et de projets de documentation compatibles avec Writerside</summary>
-  <summary xml:lang="ru">Редактор файлов Markdown и проектов документации, совместимых с Writerside</summary>
-  <summary xml:lang="uk">Редактор файлів Markdown і проєктів документації, сумісних із Writerside</summary>
-  <summary xml:lang="pl">Edytor plików Markdown i projektów dokumentacji zgodnych z Writerside</summary>
-  <summary xml:lang="es">Editor de archivos Markdown y proyectos de documentación compatibles con Writerside</summary>
-  <summary xml:lang="pt-BR">Editor de arquivos Markdown e projetos de documentação compatíveis com o Writerside</summary>
-  <summary xml:lang="ar">محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside</summary>
-  <summary xml:lang="fa">ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با Writerside</summary>
-  <summary xml:lang="hi">Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का संपादक</summary>
-  <summary xml:lang="id">Editor untuk file Markdown dan proyek dokumentasi yang kompatibel dengan Writerside</summary>
-  <summary xml:lang="ja">Markdown ファイルおよび Writerside 互換のドキュメントプロジェクト用エディター</summary>
-  <summary xml:lang="ko">Markdown 파일 및 Writerside 호환 문서 프로젝트용 편집기</summary>
-  <summary xml:lang="vi">Trình biên tập tệp Markdown và các dự án tài liệu tương thích với Writerside</summary>
-  <summary xml:lang="zh">Markdown 文件和兼容 Writerside 的文档项目编辑器</summary>
-  <summary xml:lang="zh-CN">Markdown 文件和兼容 Writerside 的文档项目编辑器</summary>
-  <summary xml:lang="tr">Markdown dosyaları ve Writerside uyumlu dokümantasyon projeleri için düzenleyici</summary>
+  <summary>Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.</summary>
+  <summary xml:lang="de">Arbeitsbereich für Markdown-Dokumente, Nextcloud Notes und Writerside-Projekte.</summary>
+  <summary xml:lang="nl">Werkruimte voor Markdown-documenten, Nextcloud Notes en Writerside-projecten.</summary>
+  <summary xml:lang="et">Tööruum Markdowni dokumentide, Nextcloud Notesi ja Writerside’i projektide jaoks.</summary>
+  <summary xml:lang="it">Spazio di lavoro per documenti Markdown, Nextcloud Notes e progetti Writerside.</summary>
+  <summary xml:lang="nb">Arbeidsområde for Markdown-dokumenter, Nextcloud Notes og Writerside-prosjekter.</summary>
+  <summary xml:lang="fr">Espace de travail pour les documents Markdown, Nextcloud Notes et les projets Writerside.</summary>
+  <summary xml:lang="ru">Рабочее пространство для документов Markdown, Nextcloud Notes и проектов Writerside.</summary>
+  <summary xml:lang="uk">Робочий простір для документів Markdown, Nextcloud Notes і проєктів Writerside.</summary>
+  <summary xml:lang="pl">Przestrzeń robocza dla dokumentów Markdown, Nextcloud Notes i projektów Writerside.</summary>
+  <summary xml:lang="es">Espacio de trabajo para documentos Markdown, Nextcloud Notes y proyectos de Writerside.</summary>
+  <summary xml:lang="pt-BR">Espaço de trabalho para documentos Markdown, Nextcloud Notes e projetos do Writerside.</summary>
+  <summary xml:lang="ar">مساحة عمل لمستندات Markdown وNextcloud Notes ومشاريع Writerside.</summary>
+  <summary xml:lang="fa">فضای کاری برای اسناد Markdown، Nextcloud Notes و پروژه‌های Writerside.</summary>
+  <summary xml:lang="hi">Markdown दस्तावेज़ों, Nextcloud Notes और Writerside प्रोजेक्टों के लिए कार्यक्षेत्र।</summary>
+  <summary xml:lang="id">Ruang kerja untuk dokumen Markdown, Nextcloud Notes, dan proyek Writerside.</summary>
+  <summary xml:lang="ja">Markdown ドキュメント、Nextcloud Notes、Writerside プロジェクトを扱うワークスペース。</summary>
+  <summary xml:lang="ko">Markdown 문서, Nextcloud Notes, Writerside 프로젝트를 위한 작업 공간.</summary>
+  <summary xml:lang="vi">Không gian làm việc cho tài liệu Markdown, Nextcloud Notes và dự án Writerside.</summary>
+  <summary xml:lang="zh">用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。</summary>
+  <summary xml:lang="zh-CN">用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。</summary>
+  <summary xml:lang="tr">Markdown belgeleri, Nextcloud Notes ve Writerside projeleri için çalışma alanı.</summary>
   <description>
     <p>BusyMark is a Linux editor for Markdown files and Writerside-compatible documentation projects.</p>
     <p>Connect Nextcloud Notes remote workspaces with offline-safe synchronization, categories, favorites, and attachments.</p>
@@ -88,6 +88,7 @@
   <url type="bugtracker">https://github.com/busystack/busymark/issues</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="v0.7.3" date="2026-11-20" />
     <release version="0.7.2" date="2026-11-14" />
     <release version="0.7.1" date="2026-11-14" />
     <release version="0.7.0" date="2026-10-22" />

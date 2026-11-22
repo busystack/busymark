@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../assets/asset_ingestion_service.dart';
 import '../../comparison/source_comparison.dart';
@@ -26,6 +27,7 @@ import 'notes_messages.dart';
 import '../application/attachment_markdown.dart';
 import '../domain/notes_models.dart';
 import '../domain/notes_conflict.dart';
+import '../data/notes_api_client.dart' show isManagedNoteAttachmentPath;
 import '../data/notes_attachment_references.dart';
 
 final nextcloudNotesChangesProvider = StreamProvider<int>((ref) async* {
@@ -59,7 +61,7 @@ String nextcloudSyncLabel(
 
 // Legacy response transitions may have left a transient/synchronized state
 // alongside durable review evidence. That evidence still takes precedence.
-bool _metadataNeedsReview(NextcloudNote note) =>
+bool nextcloudMetadataNeedsReview(NextcloudNote note) =>
     note.metadataConflict != null &&
     {
       NoteSyncState.synced,
@@ -383,6 +385,8 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
           enabled: !note.readonly && !note.error,
           label: context.l10n.notesMove,
         ),
+        if (targets.length > 1)
+          BusyMarkPopupMenuItem(value: 'delete', label: context.l10n.delete),
       ],
       if (targets.length == 1) ...[
         if (!recovery)
@@ -467,7 +471,17 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
       case 'copy':
         await _saveCopy(note);
       case 'delete':
-        await _deleteNote(note);
+        if (reviewed.length == 1) {
+          await _deleteNote(note);
+        } else {
+          await showNotesBatch(
+            context,
+            ref,
+            targets,
+            initialAction: 'delete',
+            reviewedTargets: reviewed,
+          );
+        }
     }
   }
 
@@ -499,11 +513,19 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
         children: [Text(note.title)],
       ),
     );
-    return confirmed == true &&
-        mounted &&
-        await ref
-            .read(workspaceControllerProvider.notifier)
-            .deleteNextcloudNote(note.localId);
+    if (confirmed != true || !mounted) return false;
+    final outcome = await ref
+        .read(workspaceControllerProvider.notifier)
+        .deleteNextcloudNote(note.localId, reviewed: note);
+    if (outcome.status == NotesBatchStatus.changed) return true;
+    if (mounted) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: localizeNotesBatchReason(context, outcome),
+        priority: BusyMarkToastPriority.high,
+      );
+    }
+    return false;
   }
 
   @override
@@ -886,7 +908,7 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                               ? YaruIcons.star_filled
                               : YaruIcons.document,
                           title: note.title,
-                          subtitle: _metadataNeedsReview(note)
+                          subtitle: nextcloudMetadataNeedsReview(note)
                               ? context.l10n.gitConflicts
                               : note.syncState != NoteSyncState.synced
                               ? nextcloudSyncLabel(context, note.syncState)
@@ -1132,6 +1154,16 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
   }
 }
 
+bool _hasActionableNoteStatus(NextcloudNote note) =>
+    nextcloudMetadataNeedsReview(note) ||
+    switch (note.syncState) {
+      NoteSyncState.synced ||
+      NoteSyncState.pending ||
+      NoteSyncState.syncing ||
+      NoteSyncState.offline => false,
+      _ => true,
+    };
+
 /// A durable note condition always takes precedence over account activity.
 String nextcloudNoteStatusLabel(
   BuildContext context,
@@ -1139,7 +1171,7 @@ String nextcloudNoteStatusLabel(
   bool unsaved = false,
 }) {
   if (unsaved) return context.l10n.closeUnsavedChangesTitle;
-  if (_metadataNeedsReview(note)) return context.l10n.gitConflicts;
+  if (nextcloudMetadataNeedsReview(note)) return context.l10n.gitConflicts;
   if (!{
     NoteSyncState.synced,
     NoteSyncState.pending,
@@ -1169,9 +1201,11 @@ class NextcloudNoteStatus extends ConsumerWidget {
     super.key,
     required this.localId,
     required this.unsaved,
+    this.showStatus = true,
   });
   final String localId;
   final bool unsaved;
+  final bool showStatus;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(nextcloudNotesChangesProvider);
@@ -1191,9 +1225,15 @@ class NextcloudNoteStatus extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  nextcloudNoteStatusLabel(context, note, unsaved: unsaved),
-                ),
+                child: showStatus || (unsaved && _hasActionableNoteStatus(note))
+                    ? Text(
+                        nextcloudNoteStatusLabel(
+                          context,
+                          note,
+                          unsaved: showStatus && unsaved,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
               if (note.readonly) Text(context.l10n.nextcloudReadOnly),
               if (note.syncState == NoteSyncState.reconnectRequired)
@@ -1250,11 +1290,10 @@ class NextcloudNoteStatus extends ConsumerWidget {
                 ),
             ],
           ),
-          if (repository.isSynchronizing(note.accountId) &&
-              {
-                NoteSyncState.syncing,
-                NoteSyncState.pending,
-              }.contains(note.syncState))
+          if (note.syncState == NoteSyncState.syncing ||
+              (showStatus &&
+                  note.syncState == NoteSyncState.pending &&
+                  repository.isSynchronizing(note.accountId)))
             const LinearProgressIndicator(),
           if (repository.accountById(note.accountId)?.lastServerCheck
               case final checked?)
@@ -1263,8 +1302,9 @@ class NextcloudNoteStatus extends ConsumerWidget {
                 '${MaterialLocalizations.of(context).formatShortDate(checked.toLocal())} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(checked.toLocal()))}',
               ),
             ),
-          if (note.errorMessage != null &&
-              !_metadataNeedsReview(note) &&
+          if (showStatus &&
+              note.errorMessage != null &&
+              !nextcloudMetadataNeedsReview(note) &&
               note.syncState != NoteSyncState.synced)
             Text(
               nextcloudSyncLabel(context, note.syncState),
@@ -1947,17 +1987,20 @@ class _ManagedAttachmentsState extends ConsumerState<_ManagedAttachments> {
               for (final attachment in attachments)
                 BusyMarkActionRow(
                   title: attachment.filename,
-                  subtitle:
-                      attachment.remotePath != null &&
-                          account?.supportsAttachmentDeletion != true
+                  subtitle: attachment.remotePath == null
+                      ? null
+                      : account?.supportsAttachmentDeletion != true
                       ? context.l10n.notesRemoteDeleteUnavailable
+                      : !_ownsRemoteAttachment(attachment)
+                      ? context.l10n.nextcloudReadOnly
                       : null,
                   trailing: BusyMarkCompactIconButton(
                     tooltip: context.l10n.delete,
                     icon: BusyMarkGlyphs.delete,
                     onPressed:
                         (attachment.remotePath != null &&
-                                account?.supportsAttachmentDeletion != true) ||
+                                (account?.supportsAttachmentDeletion != true ||
+                                    !_ownsRemoteAttachment(attachment))) ||
                             _busy ||
                             widget.note.readonly ||
                             widget.note.error ||
@@ -1980,6 +2023,13 @@ class _ManagedAttachmentsState extends ConsumerState<_ManagedAttachments> {
       );
     },
   );
+
+  bool _ownsRemoteAttachment(NotesAttachment attachment) =>
+      widget.note.serverId != null &&
+      isManagedNoteAttachmentPath(
+        widget.note.serverId!,
+        attachment.remotePath!,
+      );
 
   Future<void> _delete(NotesAttachment attachment) async {
     final confirmed = await showBusyMarkModalDialog<bool>(

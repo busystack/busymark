@@ -56,6 +56,7 @@ class NotesRepository {
   final _syncs = <String, Future<void>>{};
   final _removing = <String, Future<void>>{};
   final _creationResolutions = <String>{};
+  final _deletingNotes = <String>{};
   final _bindingCandidates = <String>{};
   final _creationBindingGuards = <bool Function(String, Set<String>)>{};
 
@@ -556,40 +557,53 @@ class NotesRepository {
     }
   }
 
+  // The endpoint resolves relative to the server's category, even when a local
+  // move is pending. The category is also part of downloaded bytes' provenance.
+  String _attachmentCategory(NextcloudNote note) =>
+      note.remote?.category ?? note.base?.category ?? note.category;
+
+  String? _attachmentReadPath(NextcloudNote note, String reference) =>
+      canonicalAttachmentReadReference(reference, _attachmentCategory(note));
+
+  bool _attachmentMatches(
+    NotesAttachment attachment,
+    String reference,
+    String? path,
+    String category,
+  ) =>
+      (attachment.readCategory == null ||
+          attachment.readCategory == category) &&
+      (reference.startsWith('busymark-attachment:')
+          ? attachment.reference == reference
+          : path != null &&
+                (attachment.reference == reference ||
+                    attachment.remotePath == path));
+
   Future<
     ({List<String> required, List<String> available, List<String> external})
   >
   attachmentAvailability(String localId, {String? source}) async {
     final note = _require(localId);
+    final category = _attachmentCategory(note);
     final known = await store.attachments(localId);
     final required = <String>{}, available = <String>{}, external = <String>{};
     for (final occurrence in await scanNotesAttachmentReferences(
       source ?? note.content,
     )) {
       final reference = occurrence.reference;
-      final canonical = canonicalAttachmentReference(reference);
+      final canonical = _attachmentReadPath(note, reference);
       final candidates = known
-          .where(
-            (a) =>
-                a.reference == reference ||
-                canonical != null && a.remotePath == canonical,
-          )
+          .where((a) => _attachmentMatches(a, reference, canonical, category))
           .toList();
       final attachment = _liveMediaAttachment(candidates);
       final pending = reference.startsWith('busymark-attachment:');
-      final own =
-          canonical?.startsWith('.attachments.${note.serverId}/') == true;
-      final foreign = canonical?.startsWith('.attachments.') == true && !own;
-      if (candidates.isNotEmpty ||
-          pending ||
-          own ||
-          occurrence.image && canonical != null && !foreign) {
+      if (candidates.isNotEmpty || pending || canonical != null) {
         required.add(reference);
         if (attachment != null &&
             await store.attachmentSize(attachment.id) != null) {
           available.add(reference);
         }
-      } else if (occurrence.image || foreign) {
+      } else if (occurrence.image) {
         external.add(reference);
       }
     }
@@ -1021,7 +1035,7 @@ class NotesRepository {
         continue;
       }
       final used = (await scanNotesAttachmentReferences(note.content))
-          .map((r) => canonicalAttachmentReference(r.reference))
+          .map((r) => _attachmentReadPath(note, r.reference))
           .whereType<String>()
           .toSet();
       final cached = (await store.attachments(id))
@@ -1054,6 +1068,19 @@ class NotesRepository {
         );
       }
     }
+  }
+
+  /// Includes queued deletion and legacy publication state that can outlive
+  /// the note revision that first queued the attachment.
+  Future<bool> hasPendingAttachmentWork(NextcloudNote note) async {
+    final attachments = await store.attachments(note.localId);
+    if (attachments.any((attachment) => attachment.state == 'deletePending')) {
+      return true;
+    }
+    if (!note.content.contains('busymark-attachment:')) return false;
+    return (await scanNotesAttachmentReferences(note.content)).any(
+      (reference) => reference.reference.startsWith('busymark-attachment:'),
+    );
   }
 
   Future<List<NotesAttachment>> attachments(String localId) =>
@@ -1439,6 +1466,12 @@ class NotesRepository {
         if (account == null || account.settingsAttempt != null) return;
       }
       client = await _clientForAccount(account);
+      final deletedBeforeList = {
+        for (final note in _notes.values)
+          if (note.accountId == accountId &&
+              note.deletionEvidence == 'deliberate')
+            note.localId,
+      };
       final list = await client.list(
         forceFull: _notes.values.any(
           (n) =>
@@ -1450,8 +1483,7 @@ class NotesRepository {
       );
       if (!_currentAccount(accountId, generation)) return;
       if (!list.notModified) {
-        await _applyList(account, list);
-        _listedIds[accountId] = list.ids;
+        await _applyList(accountId, generation, list, deletedBeforeList);
       }
       await _mutate(() async {
         if (!_currentAccount(accountId, generation)) return;
@@ -1489,6 +1521,7 @@ class NotesRepository {
       if (!_currentAccount(accountId, generation)) return;
       var note = _notes[id];
       if (note == null ||
+          _deletingNotes.contains(id) ||
           _isBlocked(note) ||
           !_writeEligible(note) ||
           (onlyFreshWrites &&
@@ -1574,24 +1607,23 @@ class NotesRepository {
           note.category != remote.category);
 
   Future<void> _applyList(
-    NextcloudAccount account,
+    String accountId,
+    int generation,
     NotesListResult list,
+    Set<String> deletedBeforeList,
   ) => _mutate(() async {
-    if (_removing.containsKey(account.id) ||
-        !_accounts.containsKey(account.id)) {
-      return;
-    }
+    if (!_currentAccount(accountId, generation)) return;
     final updated = <NextcloudNote>[];
     final existing = <int, NextcloudNote>{
       for (final n in _notes.values.where(
-        (n) => n.accountId == account.id && n.serverId != null,
+        (n) => n.accountId == accountId && n.serverId != null,
       ))
         n.serverId!: n,
     };
     final uncertain = _notes.values
         .where(
           (n) =>
-              n.accountId == account.id &&
+              n.accountId == accountId &&
               n.syncState == NoteSyncState.creationUncertain,
         )
         .toList();
@@ -1618,11 +1650,13 @@ class NotesRepository {
       );
     }
     for (final remote in list.notes) {
-      final reconciled = _reconcileServerNote(
-        account.id,
-        existing[remote.id],
-        remote,
-      );
+      final current = existing[remote.id];
+      // A list sampled before a successful DELETE can still carry that note.
+      if (current?.deletionEvidence == 'deliberate' &&
+          !deletedBeforeList.contains(current!.localId)) {
+        continue;
+      }
+      final reconciled = _reconcileServerNote(accountId, current, remote);
       if (reconciled != null) updated.add(reconciled);
     }
     // Only list()'s fully received final chunk may supply the complete ID set.
@@ -1641,7 +1675,7 @@ class NotesRepository {
     }
     for (final draft in _notes.values.where(
       (n) =>
-          n.accountId == account.id &&
+          n.accountId == accountId &&
           n.serverId == null &&
           n.syncState == NoteSyncState.deletedRemotely &&
           n.deletionEvidence == null &&
@@ -1661,15 +1695,21 @@ class NotesRepository {
     }
     // Reconnection may refresh app/capability metadata while this request is
     // in flight. Commit the checkpoint onto the current non-secret account.
-    final checkpoint = (_accounts[account.id] ?? account).withCheckpoint(
+    final checkpoint = _accounts[accountId]!.withCheckpoint(
       list.etag,
       list.lastModified,
     );
     await store.commit(accounts: [checkpoint], notes: updated);
-    _accounts[account.id] = checkpoint;
+    _accounts[accountId] = checkpoint;
+    _listedIds[accountId] = list.ids;
     for (final note in updated) {
-      if (note.etag != _notes[note.localId]?.etag) {
+      final previous = _notes[note.localId];
+      if (previous == null ||
+          note.etag != previous.etag ||
+          _attachmentCategory(note) != _attachmentCategory(previous)) {
         _invalidateMediaFreshness(note.localId);
+      }
+      if (note.etag != previous?.etag) {
         _baseGenerations[note.localId] =
             (_baseGenerations[note.localId] ?? 0) + 1;
       }
@@ -1861,8 +1901,12 @@ class NotesRepository {
       if (reconciled == null) return current!;
       await store.commit(notes: [reconciled]);
       _notes[reconciled.localId] = reconciled;
-      if (reconciled.etag != current?.etag) {
+      if (current == null ||
+          reconciled.etag != current.etag ||
+          _attachmentCategory(reconciled) != _attachmentCategory(current)) {
         _invalidateMediaFreshness(reconciled.localId);
+      }
+      if (reconciled.etag != current?.etag) {
         _baseGenerations[reconciled.localId] =
             (_baseGenerations[reconciled.localId] ?? 0) + 1;
       }
@@ -2087,6 +2131,9 @@ class NotesRepository {
       }
       await store.saveNote(acknowledged);
       _notes[sent.localId] = acknowledged;
+      if (_attachmentCategory(current) != _attachmentCategory(acknowledged)) {
+        _invalidateMediaFreshness(sent.localId);
+      }
       _acknowledgmentGenerations[sent.localId] =
           (_acknowledgmentGenerations[sent.localId] ?? 0) + 1;
     }
@@ -2230,27 +2277,27 @@ class NotesRepository {
     NotesApiClient? client;
     for (final occurrence in references) {
       final reference = occurrence.reference;
-      final canonical = canonicalAttachmentReference(reference);
+      final canonical = _attachmentReadPath(original, reference);
       final known = originals
           .where(
-            (a) =>
-                a.reference == reference ||
-                (canonical != null && a.remotePath == canonical),
+            (a) => _attachmentMatches(
+              a,
+              reference,
+              canonical,
+              _attachmentCategory(original),
+            ),
           )
           .firstOrNull;
       final pending = reference.startsWith('busymark-attachment:');
       final managed = canonical?.startsWith('.attachments.') == true;
-      final ownManaged =
-          original.serverId != null &&
-          canonical?.startsWith('.attachments.${original.serverId}/') == true;
-      if (pending && known == null || managed && !ownManaged && known == null) {
+      if (pending && known == null) {
         throw const NotesException(
           NotesFailureCode.unsafeReference,
           'This recovery snapshot contains an attachment owned by another note.',
         );
       }
       if (known == null &&
-          !ownManaged &&
+          !managed &&
           !(occurrence.image && canonical != null)) {
         continue;
       }
@@ -2261,9 +2308,7 @@ class NotesRepository {
         if (known != null) bytes = await store.attachmentBytes(known.id);
         if (bytes == null) {
           final remotePath = known?.remotePath ?? canonical;
-          if (original.serverId == null ||
-              remotePath == null ||
-              !isSafeAttachmentPath(remotePath)) {
+          if (original.serverId == null || remotePath == null) {
             throw const NotesException(
               NotesFailureCode.missing,
               'The original attachment bytes are unavailable. Restore them before recovering this note.',
@@ -2274,6 +2319,7 @@ class NotesRepository {
             client,
             original.serverId!,
             remotePath,
+            category: _attachmentCategory(original),
           );
         }
         final id = _uuid.v4();
@@ -2511,6 +2557,8 @@ class NotesRepository {
   }) async {
     return store.withRequestOwnership(_require(localId).accountId, () async {
       final original = _require(localId);
+      _assertMutableAccount(original.accountId);
+      final generation = accountGeneration(original.accountId);
       if (expectedRevision != null && original.revision != expectedRevision) {
         throw const NotesException(
           NotesFailureCode.conflict,
@@ -2570,7 +2618,13 @@ class NotesRepository {
         if (error.code == NotesFailureCode.missing &&
             original.syncState == NoteSyncState.deletedRemotely &&
             resolution == NoteConflictResolution.takeRemote) {
-          await _setDeleted(localId, expectedRevision: original.revision);
+          await _mutate(() async {
+            final current = _validateResolutionTarget(original, generation);
+            await _recordDeletion(
+              current,
+              acknowledgedRevision: original.revision,
+            );
+          });
           return;
         }
         rethrow;
@@ -2582,16 +2636,9 @@ class NotesRepository {
         );
       }
       await _mutate(() async {
-        final current = _require(localId);
-        if (current.revision != original.revision) {
-          throw const NotesException(
-            NotesFailureCode.conflict,
-            'New local edits appeared while resolving this note. Review them before applying the resolution.',
-          );
-        }
+        final current = _validateResolutionTarget(original, generation);
         final reviewed = reviewedRemote ?? original.remote;
-        if (reviewed != null &&
-            jsonEncode(fresh.toJson()) != jsonEncode(reviewed.toJson())) {
+        if (reviewed != null && !_sameServerNote(fresh, reviewed)) {
           final changedAgain = current.copyWith(
             remote: fresh,
             readonly: fresh.readonly,
@@ -2666,6 +2713,40 @@ class NotesRepository {
     });
   }
 
+  bool _sameServerNote(NoteState? a, NoteState? b) =>
+      identical(a, b) ||
+      (a != null &&
+          b != null &&
+          jsonEncode(a.toJson()) == jsonEncode(b.toJson()));
+
+  NextcloudNote _validateResolutionTarget(
+    NextcloudNote original,
+    int generation,
+  ) {
+    _assertMutableAccount(original.accountId);
+    final current = _notes[original.localId];
+    // Collection reads can change the remote alternative or deletion evidence
+    // without advancing the local revision or replacing the editor base.
+    if (!_currentAccount(original.accountId, generation) ||
+        current == null ||
+        current.accountId != original.accountId ||
+        current.serverId != original.serverId ||
+        current.revision != original.revision ||
+        current.ackRevision != original.ackRevision ||
+        current.syncState != original.syncState ||
+        current.deletionEvidence != original.deletionEvidence ||
+        current.readonly != original.readonly ||
+        current.error != original.error ||
+        !_sameServerNote(current.base, original.base) ||
+        !_sameServerNote(current.remote, original.remote)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'The note changed while resolving the conflict. Review it again.',
+      );
+    }
+    return current;
+  }
+
   Future<void> _resolveMetadataConflict(
     NextcloudNote original,
     NoteConflictResolution resolution, {
@@ -2686,21 +2767,7 @@ class NotesRepository {
       }
     }
     await _mutate(() async {
-      if (!_currentAccount(original.accountId, generation)) {
-        throw const NotesException(
-          NotesFailureCode.conflict,
-          'The account changed while reviewing these properties.',
-        );
-      }
-      _assertMutableAccount(original.accountId);
-      final current = _require(original.localId);
-      if (current.revision != original.revision ||
-          current.metadataConflict == null) {
-        throw const NotesException(
-          NotesFailureCode.conflict,
-          'New local edits appeared. Review the conflict again.',
-        );
-      }
+      final current = _validateResolutionTarget(original, generation);
       final merge = NotesConflictMerge.metadata(current);
       final alternative = current.metadataConflict!.alternative;
       final merging = resolution == NoteConflictResolution.merge;
@@ -2788,12 +2855,12 @@ class NotesRepository {
     _bindingCandidates.addAll(candidateIds);
     try {
       final account = _accounts[original.accountId];
+      final generation = accountGeneration(original.accountId);
       void validate() {
+        _assertMutableAccount(original.accountId);
         final current = _require(original.localId);
         if (account == null ||
-            _removing.containsKey(original.accountId) ||
-            _accounts[original.accountId]?.server != account.server ||
-            _accounts[original.accountId]?.loginName != account.loginName ||
+            !_currentAccount(original.accountId, generation) ||
             current.serverId != null ||
             current.syncState != NoteSyncState.creationUncertain ||
             review.localId != current.localId ||
@@ -2816,13 +2883,33 @@ class NotesRepository {
       final running = _syncs[original.accountId];
       if (running != null) await running;
       validate();
+      NextcloudNote? candidate() => _notes.values
+          .where(
+            (note) =>
+                note.accountId == original.accountId &&
+                note.serverId == review.candidate.id,
+          )
+          .firstOrNull;
+      final observed = candidate();
+      void validateObservation() {
+        validate();
+        if (observed != null) {
+          _validateResolutionTarget(observed, generation);
+        } else if (candidate() != null) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'The candidate appeared during review. Review it again before adoption.',
+          );
+        }
+      }
+
       final client = await _clientForAccount(account!);
       late NoteState fresh;
       try {
         fresh = await client.get(review.candidate.id);
       } on NotesException catch (error) {
         await _mutate(() async {
-          validate();
+          validateObservation();
           final current = _require(original.localId);
           final ids = {...current.creationAttempt!.candidateServerIds};
           if (error.code == NotesFailureCode.missing) {
@@ -2843,10 +2930,9 @@ class NotesRepository {
         rethrow;
       }
       await _mutate(() async {
-        validate();
+        validateObservation();
         final current = _require(original.localId);
-        if (jsonEncode(fresh.toJson()) !=
-                jsonEncode(review.candidate.toJson()) ||
+        if (!_sameServerNote(fresh, review.candidate) ||
             fresh.error ||
             fresh.readonly) {
           final unresolved = current.copyWith(
@@ -2891,7 +2977,7 @@ class NotesRepository {
             );
           }
         }
-        validate();
+        validateObservation();
         final ids = duplicates.map((n) => n.localId).toSet();
         if (_creationBindingGuards.any(
           (guard) => !guard(current.localId, ids),
@@ -2919,60 +3005,126 @@ class NotesRepository {
   }
 
   /// Online refresh plus explicit action only. The API has no atomic conditional DELETE.
-  Future<void> delete(String localId) async {
-    return store.withRequestOwnership(_require(localId).accountId, () async {
-      final original = _require(localId);
-      if (original.serverId == null) {
-        if (original.syncState == NoteSyncState.creationUncertain ||
-            original.syncState == NoteSyncState.syncing) {
-          throw const NotesException(
-            NotesFailureCode.conflict,
-            'Resolve the uncertain creation before deleting this note.',
-          );
-        }
-        await _setDeleted(localId, expectedRevision: original.revision);
-        return;
-      }
-      final running = _syncs[original.accountId];
-      if (running != null) await running;
-      final client = await _clientForAccount(_accounts[original.accountId]!);
-      final current = _require(localId);
-      final fresh = await client.get(current.serverId!);
-      if (fresh.etag != current.etag) {
-        await _setState(
-          localId,
-          NoteSyncState.conflict,
-          'The note changed on Nextcloud. Review the fresh version before deleting.',
-          remote: fresh,
+  Future<void> delete(
+    String localId, {
+    NextcloudNote? reviewed,
+    int? expectedAccountGeneration,
+    bool Function()? editorIsProtected,
+  }) async {
+    final original = reviewed ?? _require(localId);
+    if (original.localId != localId) {
+      throw ArgumentError('The reviewed note must match the deletion target.');
+    }
+    final accountId = original.accountId;
+    final generation =
+        expectedAccountGeneration ?? accountGeneration(accountId);
+    NextcloudNote validate() {
+      final current = _validateResolutionTarget(original, generation);
+      if (current.readonly || current.error) {
+        throw const NotesException(
+          NotesFailureCode.forbidden,
+          'This note is read-only.',
         );
-        throw NotesException(
+      }
+      if (current.syncState == NoteSyncState.deletedRemotely ||
+          current.syncState == NoteSyncState.creationUncertain ||
+          current.syncState == NoteSyncState.recoveryRequired ||
+          current.metadataConflict != null ||
+          (current.serverId == null && !current.creationNeverSent) ||
+          editorIsProtected?.call() == false) {
+        throw const NotesException(
           NotesFailureCode.conflict,
-          'The note changed on Nextcloud; deletion was cancelled.',
-          remote: fresh,
+          'The note needs review before it can be deleted.',
         );
       }
-      await client.delete(current.serverId!);
-      await _setDeleted(localId, expectedRevision: current.revision);
-    });
+      return current;
+    }
+
+    if (!_deletingNotes.add(localId)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'This note already has a deletion in progress.',
+      );
+    }
+    try {
+      return await store.withRequestOwnership(accountId, () async {
+        validate();
+        if (original.serverId == null) {
+          await _mutate(
+            () => _recordDeletion(
+              validate(),
+              acknowledgedRevision: original.revision,
+            ),
+          );
+          return;
+        }
+        final running = _syncs[accountId];
+        if (running != null) await running;
+        validate();
+        final client = await _clientForAccount(_accounts[accountId]!);
+        validate();
+        final fresh = await client.get(original.serverId!);
+        await _mutate(() async {
+          final current = validate();
+          if (fresh.readonly || fresh.error) {
+            throw const NotesException(
+              NotesFailureCode.forbidden,
+              'The server note is read-only or unavailable.',
+            );
+          }
+          if (fresh.etag == current.etag) return;
+          final conflict = current.copyWith(
+            syncState: NoteSyncState.conflict,
+            remote: fresh,
+            errorMessage:
+                'The note changed on Nextcloud. Review the fresh version before deleting.',
+          );
+          await store.saveNote(conflict);
+          _notes[localId] = conflict;
+          _notify();
+          throw NotesException(
+            NotesFailureCode.conflict,
+            'The note changed on Nextcloud; deletion was cancelled.',
+            remote: fresh,
+          );
+        });
+        validate();
+        try {
+          await client.delete(original.serverId!);
+        } on NotesException catch (error) {
+          if (error.possiblyExecuted) throw NotesDeletionUncertain(error);
+          rethrow;
+        }
+        // The server confirmed deletion. Retain any edits made during DELETE.
+        await _mutate(() async {
+          final current = _require(localId);
+          await _recordDeletion(
+            current,
+            acknowledgedRevision: original.revision,
+          );
+        });
+      });
+    } finally {
+      _deletingNotes.remove(localId);
+    }
   }
 
-  Future<void> _setDeleted(
-    String localId, {
-    required int expectedRevision,
-  }) => _mutate(() async {
-    final note = _require(localId);
+  Future<void> _recordDeletion(
+    NextcloudNote note, {
+    required int acknowledgedRevision,
+  }) async {
     final deleted = note.copyWith(
       syncState: NoteSyncState.deletedRemotely,
-      ackRevision: expectedRevision,
+      ackRevision: acknowledgedRevision,
       deletionEvidence: 'deliberate',
-      errorMessage: note.revision > expectedRevision
+      errorMessage: note.revision > acknowledgedRevision
           ? 'The remote note was deleted, but newer local edits are preserved for recovery.'
           : null,
     );
     await store.saveNote(deleted);
-    _notes[localId] = deleted;
+    _notes[note.localId] = deleted;
     _notify();
-  });
+  }
 
   Future<NotesAttachment> addAttachment(
     String localId, {
@@ -3134,8 +3286,11 @@ class NotesRepository {
     String localId,
     String reference,
   ) {
-    final canonical = canonicalAttachmentReference(reference);
-    final key = '$accountId:$localId:${canonical ?? reference}';
+    final note = _notes[localId];
+    final category = note == null ? '' : _attachmentCategory(note);
+    final canonical = canonicalAttachmentReadReference(reference, category);
+    final key =
+        '$accountId:$localId:${jsonEncode([category, canonical ?? reference])}';
     final existing = _mediaResolutions[key];
     if (existing != null) return existing;
     final future = _resolveMedia(accountId, localId, reference, canonical);
@@ -3151,13 +3306,16 @@ class NotesRepository {
     String accountId,
     String localId,
     String reference,
-  ) => _resolveMedia(
-    accountId,
-    localId,
-    reference,
-    canonicalAttachmentReference(reference),
-    allowDownload: false,
-  );
+  ) {
+    final note = _notes[localId];
+    return _resolveMedia(
+      accountId,
+      localId,
+      reference,
+      note == null ? null : _attachmentReadPath(note, reference),
+      allowDownload: false,
+    );
+  }
 
   Future<String?> _resolveMedia(
     String accountId,
@@ -3177,10 +3335,9 @@ class NotesRepository {
     }
     final accountGeneration = this.accountGeneration(accountId);
     final freshnessEpoch = _mediaFreshnessEpochs[localId] ?? 0;
+    final category = _attachmentCategory(note);
     bool matches(NotesAttachment candidate) =>
-        candidate.reference == reference ||
-        (canonicalReference != null &&
-            candidate.remotePath == canonicalReference);
+        _attachmentMatches(candidate, reference, canonicalReference, category);
     final initial = (await store.attachments(localId)).where(matches).toList();
     final initialAttachment = _liveMediaAttachment(initial);
     if (initial.isNotEmpty && initialAttachment == null) return null;
@@ -3194,7 +3351,7 @@ class NotesRepository {
                     (note.hasPendingChanges ||
                         !notesAttachmentReferences(note.content).any(
                           (r) =>
-                              canonicalAttachmentReference(r.reference) ==
+                              _attachmentReadPath(note, r.reference) ==
                               canonicalReference,
                         ))) &&
                 !reference.startsWith('busymark-attachment:') &&
@@ -3210,7 +3367,8 @@ class NotesRepository {
         (_validatedMediaEpochs[initialAttachment.id] ?? 0) < freshnessEpoch;
     if (allowDownload && downloadable && stale) {
       final cancellation = NotesDownloadCancellation();
-      final key = '$accountId:$localId:$canonicalReference';
+      final key =
+          '$accountId:$localId:${jsonEncode([category, canonicalReference])}';
       _downloads[key] = cancellation;
       try {
         if (!_currentAccount(accountId, accountGeneration)) return null;
@@ -3222,6 +3380,7 @@ class NotesRepository {
           client,
           note.serverId!,
           canonicalReference,
+          category: category,
           cancellation: cancellation,
         );
       } on NotesException catch (error) {
@@ -3240,10 +3399,13 @@ class NotesRepository {
         // Another context, publication or deletion may have committed during HTTP.
         // Never insert another owner for the same canonical destination or revive
         // a deletion tombstone. Network waits stay outside the durability queue.
+        final currentNote = _notes[localId];
         if (!_currentAccount(accountId, accountGeneration) ||
-            _notes[localId]?.accountId != accountId ||
-            _notes[localId]?.serverId != note.serverId ||
-            _notes[localId]?.category != note.category ||
+            currentNote == null ||
+            currentNote.accountId != accountId ||
+            currentNote.serverId != note.serverId ||
+            currentNote.category != note.category ||
+            _attachmentCategory(currentNote) != category ||
             (_mediaFreshnessEpochs[localId] ?? 0) != freshnessEpoch) {
           return null;
         }
@@ -3261,6 +3423,7 @@ class NotesRepository {
               reference: reference,
               remotePath: canonicalReference,
               state: 'cached',
+              readCategory: category,
             );
         if (fetched != null &&
             (liveAttachment == null ||
@@ -3273,6 +3436,7 @@ class NotesRepository {
             remotePath: attachment.remotePath,
             state: attachment.state,
             validatedAt: clock(),
+            readCategory: attachment.state == 'cached' ? category : null,
           );
           await store.saveAttachmentFile(attachment, fetched);
           _validatedMediaEpochs[attachment.id] = freshnessEpoch;
@@ -3355,6 +3519,7 @@ class NotesRepository {
     NotesApiClient client,
     int id,
     String path, {
+    required String category,
     NotesDownloadCancellation? cancellation,
   }) async {
     final root = Directory(p.join(p.dirname(store.path), 'downloads'));
@@ -3377,6 +3542,7 @@ class NotesRepository {
         id,
         path,
         destination: File(p.join(directory.path, 'complete')),
+        category: category,
         cancellation: cancellation,
       );
     } catch (_) {
@@ -3390,9 +3556,15 @@ class NotesRepository {
   Future<Uint8List> _fetchAttachmentBytes(
     NotesApiClient client,
     int id,
-    String path,
-  ) async {
-    final file = await _downloadAttachment(client, id, path);
+    String path, {
+    required String category,
+  }) async {
+    final file = await _downloadAttachment(
+      client,
+      id,
+      path,
+      category: category,
+    );
     try {
       return await file.readAsBytes();
     } finally {
@@ -3424,16 +3596,28 @@ class NotesRepository {
         );
       }
       final items = await store.attachments(localId);
+      final canonical = canonicalAttachmentReference(reference);
       final matching = items
           .where(
             (a) =>
                 a.reference == reference ||
-                (canonicalAttachmentReference(reference) != null &&
-                    a.remotePath == canonicalAttachmentReference(reference)),
+                (canonical != null && a.remotePath == canonical),
           )
           .toList();
       if (matching.isEmpty) return;
-      final attachment = matching.first;
+      final category = _attachmentCategory(note);
+      final attachment = matching
+          .where(
+            (item) =>
+                item.readCategory == null || item.readCategory == category,
+          )
+          .firstOrNull;
+      if (attachment == null) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'The attachment was cached in a different category. Review it again.',
+        );
+      }
       if (attachment.state == 'uploading' || attachment.state == 'uncertain') {
         throw const NotesException(
           NotesFailureCode.conflict,
@@ -3447,9 +3631,25 @@ class NotesRepository {
             'Remote attachment cleanup is unavailable: it requires a verified Notes version of 6.1.0 or newer. Notes and attachment upload/download remain available.',
           );
         }
-        if (note.serverId == null) return;
+        if (note.serverId == null ||
+            !isManagedNoteAttachmentPath(
+              note.serverId!,
+              attachment.remotePath!,
+            )) {
+          throw const NotesException(
+            NotesFailureCode.unsafeReference,
+            'Only this note’s managed attachments can be deleted.',
+          );
+        }
         await _mutate(() async {
           final current = _require(localId);
+          if (current.serverId != note.serverId ||
+              _attachmentCategory(current) != category) {
+            throw const NotesException(
+              NotesFailureCode.conflict,
+              'The attachment category changed. Review it again.',
+            );
+          }
           final pending = current.copyWith(
             revision: current.revision + 1,
             syncState: NoteSyncState.pending,
@@ -3492,6 +3692,7 @@ class NotesRepository {
         reference: attachment.reference,
         remotePath: attachment.remotePath,
         state: 'deleted',
+        readCategory: attachment.readCategory,
       ),
     );
     await _invalidateAttachmentMedia(attachment);
@@ -3582,6 +3783,7 @@ class NotesRepository {
       client,
       note.serverId!,
       remotePath,
+      category: _attachmentCategory(note),
     );
     if (expected == null ||
         sha256.convert(expected) != sha256.convert(actual)) {

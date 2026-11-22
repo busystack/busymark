@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Opslaan als…",
+  "shortcutSaveAsDescription": "Het huidige Markdown-document op een nieuwe locatie opslaan",
+  "documentSaved": "Opgeslagen",
+  "documentModified": "Gewijzigd",
+  "documentSaving": "Opslaan…",
+  "documentNotSaved": "Niet opgeslagen",
+  "documentSaveFailed": "Opslaan mislukt",
+  "documentSaveConflict": "Conflict",
+  "documentFileMissing": "Bestand ontbreekt",
+  "documentSaveUnverified": "Bestandsstatus onbekend",
+  "documentSavedLocally": "Lokaal opgeslagen",
+  "documentSyncPending": "Synchronisatie in afwachting",
+  "documentSyncFailed": "Synchronisatie mislukt",
+  "saveAsSeparateMarkdown": "Kies een ander Markdown-bestand dat nog niet geopend is.",
   "notesNewFromRetainedText": "Nieuwe notitie van bewaarde tekst",
   "notesAccountThrottled": "Nextcloud vraagt om een pauze. Wacht voordat u opnieuw aanmeldt.",
   "notesSettingsRefreshing": "Notes vernieuwen na de bevestigde instellingenwijziging",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Deze notitie is na beoordeling gewijzigd. Beoordeel de huidige staat voordat u de actie herhaalt.",
   "notesBatchMissing": "Deze notitie is niet meer beschikbaar. Vernieuw de lijst en beoordeel de doelen opnieuw.",
   "notesBatchStorage": "Lokaal opslaan is mislukt. Controleer de opslag en probeer dit item opnieuw; geslaagde items blijven opgeslagen.",
+  "notesBatchDeleteHelp": "BusyMark controleert en verwijdert elke notitie afzonderlijk. Notities op de server vereisen een verbinding.",
+  "notesBatchDeleteHistoryFailed": "BusyMark kon de notitie niet in de lokale geschiedenis vastleggen. De notitie is behouden.",
+  "notesBatchDeleteUncertain": "Nextcloud heeft de verwijdering niet bevestigd. Vernieuw en controleer deze notitie voordat je het opnieuw probeert.",
   "notesRemoteReviewChanged": "De servernotitie is gewijzigd. Uw samenvoegconcept blijft bewaard. Beoordeel de nieuwe vergelijking en kies opnieuw een oplossing.",
   "notesReviewRemote": "Ik heb de huidige serverversie beoordeeld",
   "wsModuleCapsNotPublished": "Hoofdlettergebruik van de module wordt niet gepubliceerd.",
@@ -194,7 +211,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Markdown en Writerside-editor",
+  "aboutTagline": "Werkruimte voor Markdown-documenten, Nextcloud Notes en Writerside-projecten.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -5248,7 +5265,7 @@
   "notesSort": "Notities sorteren",
   "notesOfflineRetentionHelp": "Het verwijderen van deze vereiste behoudt de cache. Een categorie- of accountvereiste kan de notitie nog steeds bewaren.",
   "notesOfflineBroader": "Deze notitie wordt ook bewaard door een categorie- of accountvereiste.",
-  "notesOfflineExternal": "Externe media vereisen een verbinding. BusyMark bewaart alleen notitietekst en beheerde bijlagen.",
+  "notesOfflineExternal": "Externe media vereisen een verbinding. BusyMark bewaart notitietekst en ondersteunde Notes-bijlagen.",
   "notesOperationFailed": "De bewerking kon niet worden voltooid. Uw concept blijft bewaard. Controleer opslaan en conflicten en probeer opnieuw.",
   "notesRemovedWarning": "Het lokale Nextcloud-account is verwijderd. Het intrekken van het app-wachtwoord is niet bevestigd. Verwijder het wachtwoord van BusyMark in de beveiligingsinstellingen van Nextcloud.",
   "notesBuffersNotSaved": "Niet alle open notities konden lokaal worden opgeslagen. Controleer opslaan, conflicten of normalisatie in de werkruimte. Lokale wijzigingen moeten mogelijk nog met Nextcloud synchroniseren.",

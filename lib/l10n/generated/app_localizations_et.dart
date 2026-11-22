@@ -11,6 +11,50 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Salvesta nimega…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Salvesta praegune Markdowni dokument uude asukohta';
+
+  @override
+  String get documentSaved => 'Salvestatud';
+
+  @override
+  String get documentModified => 'Muudetud';
+
+  @override
+  String get documentSaving => 'Salvestamine…';
+
+  @override
+  String get documentNotSaved => 'Salvestamata';
+
+  @override
+  String get documentSaveFailed => 'Salvestamine nurjus';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Fail puudub';
+
+  @override
+  String get documentSaveUnverified => 'Faili olek teadmata';
+
+  @override
+  String get documentSavedLocally => 'Kohalikult salvestatud';
+
+  @override
+  String get documentSyncPending => 'Sünkroonimine ootel';
+
+  @override
+  String get documentSyncFailed => 'Sünkroonimine nurjus';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Vali eraldi Markdowni fail, mis pole juba avatud.';
+
+  @override
   String get notesNewFromRetainedText => 'Uus märge säilitatud tekstist';
 
   @override
@@ -127,6 +171,18 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark kontrollib ja kustutab iga märkme eraldi. Serveris olevad märkmed vajavad ühendust.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark ei saanud märget paiksesse ajalukku salvestada. Märge jäeti alles.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud ei kinnitanud kustutamist. Enne uut katset värskenda märget ja vaata see üle.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -502,7 +558,8 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aboutBusyMark => 'Teave BusyMarki kohta';
 
   @override
-  String get aboutTagline => 'Markdowni ja Writerside’i redaktor';
+  String get aboutTagline =>
+      'Tööruum Markdowni dokumentide, Nextcloud Notesi ja Writerside’i projektide jaoks.';
 
   @override
   String get aboutLicenseLabel => 'Litsents';
@@ -5758,7 +5815,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.';
+      'Väline meedia vajab ühendust. BusyMark säilitab märkmete teksti ja toetatud Notesi manused.';
 
   @override
   String get notesEmptyAll => 'Märkmeid veel pole. Alustamiseks loo märge.';

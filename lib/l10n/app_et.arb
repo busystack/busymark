@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Salvesta nimega…",
+  "shortcutSaveAsDescription": "Salvesta praegune Markdowni dokument uude asukohta",
+  "documentSaved": "Salvestatud",
+  "documentModified": "Muudetud",
+  "documentSaving": "Salvestamine…",
+  "documentNotSaved": "Salvestamata",
+  "documentSaveFailed": "Salvestamine nurjus",
+  "documentSaveConflict": "Konflikt",
+  "documentFileMissing": "Fail puudub",
+  "documentSaveUnverified": "Faili olek teadmata",
+  "documentSavedLocally": "Kohalikult salvestatud",
+  "documentSyncPending": "Sünkroonimine ootel",
+  "documentSyncFailed": "Sünkroonimine nurjus",
+  "saveAsSeparateMarkdown": "Vali eraldi Markdowni fail, mis pole juba avatud.",
   "notesNewFromRetainedText": "Uus märge säilitatud tekstist",
   "notesAccountThrottled": "Nextcloud palus pausi. Oota enne uuesti sisselogimist.",
   "notesSettingsRefreshing": "Notes värskendamine pärast seadete kinnitamist",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Märge muutus pärast ülevaatust. Vaata selle praegune olek enne toimingu kordamist üle.",
   "notesBatchMissing": "Märge pole enam saadaval. Värskenda loendit ja vaata sihtkirjed uuesti üle.",
   "notesBatchStorage": "Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.",
+  "notesBatchDeleteHelp": "BusyMark kontrollib ja kustutab iga märkme eraldi. Serveris olevad märkmed vajavad ühendust.",
+  "notesBatchDeleteHistoryFailed": "BusyMark ei saanud märget paiksesse ajalukku salvestada. Märge jäeti alles.",
+  "notesBatchDeleteUncertain": "Nextcloud ei kinnitanud kustutamist. Enne uut katset värskenda märget ja vaata see üle.",
   "notesRemoteReviewChanged": "Serveri märge muutus. Liitmise mustand säilis. Vaata uus võrdlus üle ja vali lahendus uuesti.",
   "notesReviewRemote": "Olen serveri praeguse versiooni üle vaadanud",
   "wsModuleCapsNotPublished": "Mooduli suurtähereeglit ei avaldata.",
@@ -299,7 +316,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Markdowni ja Writerside’i redaktor",
+  "aboutTagline": "Tööruum Markdowni dokumentide, Nextcloud Notesi ja Writerside’i projektide jaoks.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -4178,7 +4195,7 @@
   "notesSort": "Sordi märkmeid",
   "notesOfflineRetentionHelp": "Selle nõude eemaldamine jätab vahemälu alles. Kategooria või konto nõue võib märget endiselt säilitada.",
   "notesOfflineBroader": "Seda märget säilitatakse ka kategooria või konto nõude tõttu.",
-  "notesOfflineExternal": "Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.",
+  "notesOfflineExternal": "Väline meedia vajab ühendust. BusyMark säilitab märkmete teksti ja toetatud Notesi manused.",
   "notesOperationFailed": "Toiming ei lõppenud. Mustand on alles. Kontrolli salvestamist ja konflikte ning proovi uuesti.",
   "notesRemovedWarning": "Kohalik Nextcloudi konto eemaldati. Rakenduse parooli tühistamist ei kinnitatud. Eemalda BusyMarki parool Nextcloudi turvaseadetest.",
   "notesBuffersNotSaved": "Kõiki avatud märkmeid ei saanud kohalikult salvestada. Kontrolli tööruumis salvestamist, konflikte või normaliseerimist. Kohalikud muudatused võivad veel vajada Nextcloudiga sünkroonimist.",

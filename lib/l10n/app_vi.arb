@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Lưu thành…",
+  "shortcutSaveAsDescription": "Lưu tài liệu Markdown hiện tại vào vị trí mới",
+  "documentSaved": "Đã lưu",
+  "documentModified": "Đã sửa đổi",
+  "documentSaving": "Đang lưu…",
+  "documentNotSaved": "Chưa lưu",
+  "documentSaveFailed": "Không lưu được",
+  "documentSaveConflict": "Xung đột",
+  "documentFileMissing": "Thiếu tệp",
+  "documentSaveUnverified": "Chưa rõ trạng thái tệp",
+  "documentSavedLocally": "Đã lưu cục bộ",
+  "documentSyncPending": "Đang chờ đồng bộ",
+  "documentSyncFailed": "Đồng bộ thất bại",
+  "saveAsSeparateMarkdown": "Chọn một tệp Markdown khác chưa mở.",
   "notesNewFromRetainedText": "Ghi chú mới từ văn bản được giữ lại",
   "notesAccountThrottled": "Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.",
   "notesSettingsRefreshing": "Đang làm mới Notes sau khi xác nhận cài đặt",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Ghi chú đã đổi sau khi xem xét. Xem xét trạng thái hiện tại trước khi thực hiện lại.",
   "notesBatchMissing": "Ghi chú không còn khả dụng. Làm mới danh sách rồi xem xét lại các mục đích.",
   "notesBatchStorage": "Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.",
+  "notesBatchDeleteHelp": "BusyMark kiểm tra và xóa từng ghi chú riêng lẻ. Ghi chú có trên máy chủ cần kết nối.",
+  "notesBatchDeleteHistoryFailed": "BusyMark không thể ghi ghi chú vào Lịch sử cục bộ. Ghi chú vẫn được giữ lại.",
+  "notesBatchDeleteUncertain": "Nextcloud chưa xác nhận việc xóa. Hãy làm mới và kiểm tra ghi chú trước khi thử lại.",
   "notesRemoteReviewChanged": "Ghi chú trên máy chủ đã đổi. Bản nháp hợp nhất được giữ. Xem xét so sánh mới rồi chọn lại cách giải quyết.",
   "notesReviewRemote": "Tôi đã xem xét phiên bản máy chủ hiện tại",
   "wsModuleCapsNotPublished": "Quy tắc viết hoa của mô-đun không được xuất bản.",
@@ -194,7 +211,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Trình biên tập Markdown và Writerside",
+  "aboutTagline": "Không gian làm việc cho tài liệu Markdown, Nextcloud Notes và dự án Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -5248,7 +5265,7 @@
   "notesSort": "Sắp xếp ghi chú",
   "notesOfflineRetentionHelp": "Bỏ yêu cầu này vẫn giữ nội dung đã lưu đệm. Yêu cầu của danh mục hoặc tài khoản có thể vẫn giữ ghi chú này.",
   "notesOfflineBroader": "Ghi chú này cũng được giữ theo yêu cầu của danh mục hoặc tài khoản.",
-  "notesOfflineExternal": "Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.",
+  "notesOfflineExternal": "Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark giữ văn bản ghi chú và tệp đính kèm Notes được hỗ trợ.",
   "notesOperationFailed": "Không thể hoàn tất thao tác. Bản nháp vẫn được giữ. Kiểm tra việc lưu và xung đột rồi thử lại.",
   "notesRemovedWarning": "Đã xóa tài khoản Nextcloud cục bộ. Chưa xác nhận thu hồi mật khẩu ứng dụng. Hãy xóa mật khẩu BusyMark trong cài đặt Bảo mật Nextcloud.",
   "notesBuffersNotSaved": "Không thể lưu cục bộ tất cả ghi chú đang mở. Kiểm tra việc lưu, xung đột hoặc chuẩn hóa trong không gian làm việc. Thay đổi cục bộ có thể vẫn cần đồng bộ với Nextcloud.",

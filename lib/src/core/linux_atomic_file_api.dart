@@ -139,7 +139,8 @@ final class LinuxAtomicFileApi {
 
   // O_PATH | O_NOFOLLOW keeps the directory entry's inode alive across rename,
   // including on filesystems that assign inode numbers in memory.
-  int pinEntry(String path) => _openEntry(path, 0x200000 | _noFollowFlag);
+  int pinEntry(String path, {bool followLinks = false}) =>
+      _openEntry(path, 0x200000 | (followLinks ? 0 : _noFollowFlag));
 
   int _openEntry(String path, int flags) {
     final native = path.toNativeUtf8();

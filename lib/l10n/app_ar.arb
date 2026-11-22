@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "حفظ باسم…",
+  "shortcutSaveAsDescription": "حفظ مستند ماركداون الحالي في موقع جديد",
+  "documentSaved": "تم الحفظ",
+  "documentModified": "معدّل",
+  "documentSaving": "جارٍ الحفظ…",
+  "documentNotSaved": "غير محفوظ",
+  "documentSaveFailed": "تعذّر الحفظ",
+  "documentSaveConflict": "تعارض",
+  "documentFileMissing": "الملف مفقود",
+  "documentSaveUnverified": "حالة الملف غير معروفة",
+  "documentSavedLocally": "محفوظ محليًا",
+  "documentSyncPending": "المزامنة معلّقة",
+  "documentSyncFailed": "تعذّرت المزامنة",
+  "saveAsSeparateMarkdown": "اختر ملف ماركداون منفصلًا ليس مفتوحًا بالفعل.",
   "notesNewFromRetainedText": "ملاحظة جديدة من النص المحتفَظ به",
   "notesAccountThrottled": "طلب Nextcloud التوقف مؤقتًا. انتظر قبل بدء تسجيل الدخول مجددًا.",
   "notesSettingsRefreshing": "جارٍ تحديث Notes بعد تأكيد الإعدادات",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "تغيرت هذه الملاحظة بعد المراجعة. راجع حالتها الحالية قبل تطبيق الإجراء مجددًا.",
   "notesBatchMissing": "لم تعد هذه الملاحظة متاحة. حدّث القائمة وراجع العناصر المستهدفة مجددًا.",
   "notesBatchStorage": "فشل الحفظ المحلي. تحقق من التخزين وأعد محاولة هذا العنصر؛ تبقى العناصر الناجحة محفوظة.",
+  "notesBatchDeleteHelp": "يفحص BusyMark كل ملاحظة ويحذفها على حدة. تتطلب ملاحظات الخادم الموجودة اتصالًا.",
+  "notesBatchDeleteHistoryFailed": "تعذّر على BusyMark تسجيل الملاحظة في السجل المحلي. تم الاحتفاظ بالملاحظة.",
+  "notesBatchDeleteUncertain": "لم يؤكد Nextcloud الحذف. حدّث الملاحظة وراجعها قبل المحاولة مجددًا.",
   "notesRemoteReviewChanged": "تغيرت ملاحظة الخادم. مسودة الدمج محفوظة. راجع المقارنة المحدثة واختر طريقة الحل مجددًا.",
   "notesReviewRemote": "راجعت إصدار الخادم الحالي",
   "wsModuleCapsNotPublished": "لا يُنشر تنسيق أحرف الوحدة.",
@@ -221,7 +238,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "محرر Markdown وWriterside",
+  "aboutTagline": "مساحة عمل لمستندات Markdown وNextcloud Notes ومشاريع Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -3730,7 +3747,7 @@
   "notesSort": "ترتيب الملاحظات",
   "notesOfflineRetentionHelp": "إزالة هذا المتطلب تبقي المحتوى المخزن مؤقتًا. قد يظل متطلب الفئة أو الحساب يحتفظ بالملاحظة.",
   "notesOfflineBroader": "تُحتفظ بهذه الملاحظة أيضًا بسبب متطلب الفئة أو الحساب.",
-  "notesOfflineExternal": "تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة والمرفقات المُدارة فقط.",
+  "notesOfflineExternal": "تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة ومرفقات Notes المدعومة.",
   "notesOperationFailed": "تعذر إكمال العملية. المسودة محفوظة. راجع الحفظ والتعارضات ثم أعد المحاولة.",
   "notesRemovedWarning": "أُزيل حساب Nextcloud المحلي. لم يُؤكد إبطال كلمة مرور التطبيق. احذف كلمة مرور BusyMark من إعدادات أمان Nextcloud.",
   "notesBuffersNotSaved": "تعذر حفظ جميع الملاحظات المفتوحة محليًا. راجع الحفظ والتعارضات أو التسوية في مساحة العمل. قد تظل التغييرات المحلية بحاجة إلى المزامنة مع Nextcloud.",

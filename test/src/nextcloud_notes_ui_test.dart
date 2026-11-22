@@ -13,6 +13,7 @@ import 'package:http/testing.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -35,7 +36,8 @@ import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_sidebar.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
-import 'package:busymark/src/workspace/document_origin.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/presentation/document_status_bar.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
@@ -517,6 +519,100 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  for (final (action, laterEdit) in [
+    ('Save', false),
+    ('Discard', false),
+    ('Cancel', false),
+    ('Discard', true),
+    (null, false),
+  ]) {
+    testWidgets(
+      'window close during Notes persistence (${action ?? 'no confirmation'}, later edit: $laterEdit)',
+      (tester) async {
+        final native = _NotesNativeWindow();
+        final container = await pumpWelcome(
+          tester,
+          nativeWindow: native,
+          persistenceDelay: const Duration(hours: 1),
+          settings: _RecentReopenSettings(
+            failSave: false,
+            value: {
+              'autoSave': false,
+              'automaticSpelling': false,
+              'confirmCloseWithUnsavedChanges': action != null,
+            },
+          ),
+        );
+        final controller = container.read(workspaceControllerProvider.notifier);
+        expect(
+          await tester.runAsync(
+            () => controller.openNextcloudWorkspace(accountId),
+          ),
+          isTrue,
+        );
+        container.read(appRouterProvider).go('/workspace');
+        await settleStorage(tester);
+        final id = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .remoteNote!
+            .localId;
+        const reviewed = 'Reviewed offline edit';
+        controller.updateActiveText(reviewed);
+        expect(container.read(workspaceControllerProvider).isDirty, isTrue);
+        expect(repository.noteById(id)!.content, isNot(reviewed));
+        final close = container
+            .read(windowControlServiceProvider)
+            .requestClose();
+        var closeFinished = false;
+        unawaited(close.then((_) => closeFinished = true));
+        final dialog = find.widgetWithText(
+          BusyMarkDialogShell,
+          AppLocalizationsEn().closeUnsavedChangesTitle,
+        );
+        if (action != null) {
+          await settleStorage(tester);
+          expect(dialog, findsOneWidget);
+          final persistence = controller.flushPersistence();
+          var persisted = false;
+          unawaited(persistence.then((_) => persisted = true));
+          await pumpUntil(
+            tester,
+            () => persisted,
+            operation: 'persist the reviewed Notes edit',
+          );
+          await persistence;
+          expect(dialog, findsOneWidget);
+          expect(native.closeCount, 0);
+          expect(container.read(workspaceControllerProvider).isDirty, isFalse);
+          if (laterEdit) controller.updateActiveText('New edit after review');
+          await tester.tap(find.widgetWithText(BusyMarkDialogButton, action));
+        }
+        await pumpUntil(
+          tester,
+          () => closeFinished,
+          operation: 'finish the window close request',
+        );
+        await close;
+        await tester.pumpAndSettle();
+        expect(dialog, findsNothing);
+        expect(native.closeCount, action == 'Cancel' || laterEdit ? 0 : 1);
+        if (laterEdit) {
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            'New edit after review',
+          );
+        } else {
+          expect(repository.noteById(id)!.content, reviewed);
+          expect(container.read(workspaceControllerProvider).isDirty, isFalse);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+        await closeFixture(tester);
+      },
+    );
+  }
 
   testWidgets('native close protects a dirty or saving server settings draft', (
     tester,
@@ -2220,7 +2316,10 @@ void main() {
 
       await keyboardOpen(beta);
       await menu.activate('Favorites');
-      await settleStorage(tester);
+      await settleStorage(
+        tester,
+        until: () => repository.noteById(beta.localId)?.favorite == true,
+      );
       expect(repository.noteById(beta.localId)!.favorite, isTrue);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
       await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
@@ -2229,7 +2328,10 @@ void main() {
       await tester.pumpAndSettle();
       await keyboardOpen(beta);
       await menu.activate('Remove favorite');
-      await settleStorage(tester);
+      await settleStorage(
+        tester,
+        until: () => repository.noteById(beta.localId)?.favorite == false,
+      );
       expect(repository.noteById(beta.localId)!.favorite, isFalse);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
       await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
@@ -2521,6 +2623,91 @@ void main() {
       },
     );
   }
+
+  testWidgets('single-note deletion explains a stale review without deleting', (
+    tester,
+  ) async {
+    const id = '223e4567-e89b-42d3-a456-426614174000';
+    final l10n = AppLocalizationsEn();
+    final menu = NativeMenuProbe(tester);
+    final container = await pumpWelcome(tester);
+    await tester.runAsync(() async {
+      expect(
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .openNextcloudWorkspace(accountId),
+        isTrue,
+      );
+    });
+    container.read(appRouterProvider).go('/workspace');
+    await settleStorage(tester);
+    final row = find.byKey(const ValueKey('nextcloud-note-$id'));
+    await tester.tap(row, buttons: kSecondaryMouseButton);
+    await tester.pump();
+    await menu.choose(l10n.nextcloudDeleteNote);
+    expect(
+      find.widgetWithText(BusyMarkDialogShell, l10n.nextcloudDeleteNote),
+      findsOneWidget,
+    );
+
+    await tester.runAsync(
+      () => repository.save(id, content: 'Changed after review'),
+    );
+    await settleStorage(tester);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
+    await settleStorage(tester);
+
+    expect(find.text(l10n.notesBatchReviewChanged), findsOneWidget);
+    expect(row, findsOneWidget);
+    expect(repository.noteById(id)!.content, 'Changed after review');
+    expect((repository as _CachedNotesRepository).deleteCalls, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a selected Notes batch offers a reviewed deletion action', (
+    tester,
+  ) async {
+    const ids = [
+      '223e4567-e89b-42d3-a456-426614174000',
+      '323e4567-e89b-42d3-a456-426614174000',
+    ];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (_) async => repository,
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                onPressed: () => showNotesBatch(context, ref, ids),
+                child: const Text('Review selected notes'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Review selected notes'));
+    await settleStorage(tester);
+    await tester.tap(find.byType(BusyMarkComboRow<String>));
+    await tester.pumpAndSettle();
+    final deleteOption = find.text('Delete');
+    expect(deleteOption, findsOneWidget);
+    await tester.tap(deleteOption);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(BusyMarkDialogButton, 'Delete'), findsOneWidget);
+    expect(find.widgetWithText(BusyMarkDialogButton, 'Cancel'), findsOneWidget);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    expect(repository.noteById(ids.first), isNotNull);
+    expect(repository.noteById(ids.last), isNotNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('mixed batch keeps each skipped and conflicted reason visible', (
     tester,
@@ -2839,12 +3026,28 @@ void main() {
   testWidgets(
     'attachment deletion warns about links and cancellation retains the file',
     (tester) async {
+      const localId = '223e4567-e89b-42d3-a456-426614174000';
+      await tester.runAsync(() async {
+        // This case needs a server note that owns the already uploaded file.
+        // Other cases use this note as a local draft.
+        final note = repository.noteById(localId)!;
+        final path = repository.store.path;
+        await repository.store.saveNote(
+          note.copyWith(
+            serverId: 1,
+            content: '${note.content}\n[Report](.attachments.1/report.pdf)',
+          ),
+        );
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(path: path),
+        );
+        await repository.initialize();
+      });
       await pump(tester);
       await openNativeNoteProperties(
         tester,
-        find.byKey(
-          const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
-        ),
+        find.byKey(const ValueKey('nextcloud-note-$localId')),
       );
       await settleStorage(tester);
       for (
@@ -3113,6 +3316,86 @@ void main() {
         },
       );
     }
+  }
+
+  for (final (syncState, pending, failure, dirty, label) in [
+    (NoteSyncState.synced, false, null, false, 'Synced'),
+    (NoteSyncState.synced, true, null, false, 'Saved locally · Sync pending'),
+    (NoteSyncState.offline, true, null, false, 'Saved locally · Offline'),
+    (
+      NoteSyncState.pending,
+      true,
+      NotesFailureCode.server,
+      false,
+      'Saved locally · Sync failed',
+    ),
+    (NoteSyncState.conflict, true, null, false, 'Conflict'),
+    (NoteSyncState.pending, true, null, true, 'Modified'),
+  ]) {
+    testWidgets('document save status represents Notes durability: $label', (
+      tester,
+    ) async {
+      const id = 'metadata-server';
+      final note = repository
+          .noteById(id)!
+          .copyWith(
+            revision: 4,
+            ackRevision: pending ? 3 : 4,
+            syncState: syncState,
+            failureCode: failure,
+          );
+      await tester.runAsync(() async {
+        await repository.store.saveNote(note);
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(
+            path: p.join(root.path, 'notes.sqlite3'),
+          ),
+        );
+        await repository.initialize();
+      });
+      final buffer = DocumentBuffer.nextcloud(
+        reference: NextcloudNoteReference(
+          accountId: note.accountId,
+          localId: id,
+        ),
+        title: note.title,
+        content: note.content,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) => BusyMarkDocumentStatusBar(
+                  format: buffer.format,
+                  saveStatus: DocumentSaveStatus.forBuffer(
+                    context,
+                    ref,
+                    dirty ? buffer.edited('Unstored edit') : buffer,
+                    pendingProperties: false,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await settleStorage(
+        tester,
+        until: () => find.text(label).evaluate().isNotEmpty,
+      );
+      expect(find.text(label), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   }
 
   for (final state in [NoteSyncState.pending, NoteSyncState.synced]) {
@@ -3465,9 +3748,19 @@ class _CachedNotesRepository extends NotesRepository {
 
   int deleteCalls = 0;
   @override
-  Future<void> delete(String localId) {
+  Future<void> delete(
+    String localId, {
+    NextcloudNote? reviewed,
+    int? expectedAccountGeneration,
+    bool Function()? editorIsProtected,
+  }) {
     deleteCalls++;
-    return super.delete(localId);
+    return super.delete(
+      localId,
+      reviewed: reviewed,
+      expectedAccountGeneration: expectedAccountGeneration,
+      editorIsProtected: editorIsProtected,
+    );
   }
 
   @override

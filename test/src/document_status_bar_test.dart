@@ -98,6 +98,60 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps save status and format at the trailing edge', (
+    tester,
+  ) async {
+    await _pumpStatusBar(
+      tester,
+      spellingLabel: 'English (Canada)',
+      onSpellingPressed: () {},
+      status: const DocumentSaveStatus('Saved'),
+    );
+    final bar = tester.getRect(
+      find.byKey(const ValueKey('document-status-bar')),
+    );
+    final status = tester.getRect(find.text('Saved'));
+    final format = tester.getRect(find.text('LF'));
+    expect(bar.right - format.right, lessThanOrEqualTo(2 * BusyMarkSpacing.xs));
+    expect(
+      format.left - status.right,
+      lessThanOrEqualTo(2 * BusyMarkSpacing.xs),
+    );
+  });
+
+  testWidgets('keeps sync state legible in a narrow scaled status bar', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    const status = DocumentSaveStatus(
+      'Enregistré localement · Hors connexion',
+      compactLabel: 'Hors connexion',
+      details: 'Synchronisation en attente',
+    );
+    await _pumpStatusBar(
+      tester,
+      width: 240,
+      textScaler: const TextScaler.linear(2),
+      spellingLabel: 'Français (Canada)',
+      onSpellingPressed: () {},
+      status: status,
+    );
+    expect(find.text('Hors connexion'), findsOneWidget);
+    expect(find.text('LF'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('document-spelling-language-status')),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        'Enregistré localement · Hors connexion · Synchronisation en attente',
+      ),
+      findsOneWidget,
+    );
+    semantics.dispose();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('uses directional start and end placement in RTL', (
     tester,
   ) async {
@@ -124,6 +178,8 @@ Future<void> _pumpStatusBar(
   required String? spellingLabel,
   VoidCallback? onSpellingPressed,
   double width = 500,
+  TextScaler textScaler = TextScaler.noScaling,
+  DocumentSaveStatus? status,
   TextDirection textDirection = TextDirection.ltr,
 }) {
   return tester.pumpWidget(
@@ -134,6 +190,10 @@ Future<void> _pumpStatusBar(
         brightness: Brightness.dark,
         accentColor: BusyMarkLinuxPalette.blueAccent,
       ),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+        child: child!,
+      ),
       home: Scaffold(
         body: Directionality(
           textDirection: textDirection,
@@ -143,6 +203,7 @@ Future<void> _pumpStatusBar(
               width: width,
               child: BusyMarkDocumentStatusBar(
                 format: _lfFormat,
+                saveStatus: status,
                 spellingLabel: spellingLabel,
                 spellingTooltip: spellingLabel == null
                     ? null

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
@@ -1156,9 +1157,7 @@ class WorkspaceService {
   }
 
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
-    final file = File(path);
-    final bytes = await file.readAsBytes();
-    final stat = await file.stat();
+    final (bytes, stat) = await _readRegularFile(path, followLinks: true);
     final snapshot = _snapshotFromBytes(stat, bytes);
     final DecodedUtf8Document decoded;
     try {
@@ -1174,10 +1173,39 @@ class WorkspaceService {
   }
 
   Future<WorkspaceFileSnapshot> fileSnapshot(String path) async {
-    final file = File(path);
-    final bytes = await file.readAsBytes();
-    final stat = await file.stat();
+    final (bytes, stat) = await _readRegularFile(path, followLinks: true);
     return _snapshotFromBytes(stat, bytes);
+  }
+
+  Future<(List<int>, FileStat)> _readRegularFile(
+    String path, {
+    required bool followLinks,
+  }) async {
+    final descriptor = Platform.isLinux
+        ? await Isolate.run(
+            () => LinuxAtomicFileApi.instance.pinEntry(
+              path,
+              followLinks: followLinks,
+            ),
+          )
+        : null;
+    try {
+      // O_PATH pins the entry without opening it for I/O. Stat and read the
+      // same inode so replacing the name cannot interpose a pipe or device.
+      final file = File(
+        descriptor == null ? path : '/proc/self/fd/$descriptor',
+      );
+      final stat = await file.stat();
+      if (stat.type != FileSystemEntityType.file ||
+          (Platform.isLinux && stat.mode & 0xf000 != 0x8000)) {
+        throw FileSystemException('Expected a regular file', path);
+      }
+      return (await file.readAsBytes(), await file.stat());
+    } finally {
+      if (descriptor != null) {
+        LinuxAtomicFileApi.instance.closeDescriptor(descriptor);
+      }
+    }
   }
 
   Future<bool> fileChangedSince(
@@ -1418,7 +1446,7 @@ class WorkspaceService {
           displacedType != FileSystemEntityType.file) {
         return false;
       }
-      return !(await fileSnapshot(path)).differsFrom(expectedSnapshot);
+      return await _regularFileMatchesSnapshot(path, expectedSnapshot);
     } on Object {
       return false;
     }
@@ -1538,8 +1566,10 @@ class WorkspaceService {
           throw ArgumentError('Duplicate batch write path: ${write.path}');
         }
         final target = File(savePath);
-        final originalBytes = await target.readAsBytes();
-        final originalStat = await target.stat();
+        final (originalBytes, originalStat) = await _readRegularFile(
+          target.path,
+          followLinks: false,
+        );
         final originalSnapshot = _snapshotFromBytes(
           originalStat,
           originalBytes,
@@ -1596,12 +1626,10 @@ class WorkspaceService {
           write.target.path,
           write.stagedFile.path,
         );
-        final displacedBytes = await write.stagedFile.readAsBytes();
-        final displacedSnapshot = _snapshotFromBytes(
-          await write.stagedFile.stat(),
-          displacedBytes,
-        );
-        if (displacedSnapshot.differsFrom(write.expectedSnapshot)) {
+        if (!await _regularFileMatchesSnapshot(
+          write.stagedFile.path,
+          write.expectedSnapshot,
+        )) {
           throw WorkspaceBatchWriteConflict(write.requestPath);
         }
         await _afterBatchFileCommit?.call(write.target.path, committed.length);
@@ -1690,14 +1718,22 @@ class WorkspaceService {
 
   Future<bool> _fileMatchesBytes(File file, List<int> expected) async {
     try {
-      final type = await FileSystemEntity.type(file.path, followLinks: false);
-      if (type != FileSystemEntityType.file) {
-        return false;
-      }
-      final actual = await file.readAsBytes();
+      final (actual, _) = await _readRegularFile(file.path, followLinks: false);
       return actual.length == expected.length &&
           crypto.sha256.convert(actual) == crypto.sha256.convert(expected);
     } on Object {
+      return false;
+    }
+  }
+
+  Future<bool> _regularFileMatchesSnapshot(
+    String path,
+    WorkspaceFileSnapshot expected,
+  ) async {
+    try {
+      final (bytes, stat) = await _readRegularFile(path, followLinks: false);
+      return !_snapshotFromBytes(stat, bytes).differsFrom(expected);
+    } on FileSystemException {
       return false;
     }
   }

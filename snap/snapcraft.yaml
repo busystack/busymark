@@ -1,7 +1,7 @@
 name: busymark
 title: BusyMark
-version: "0.7.2"
-summary: Markdown and Writerside documentation editor
+version: "v0.7.3"
+summary: Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
 description: |

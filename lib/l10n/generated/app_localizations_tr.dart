@@ -11,6 +11,50 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Farklı Kaydet…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Geçerli Markdown belgesini yeni bir konuma kaydet';
+
+  @override
+  String get documentSaved => 'Kaydedildi';
+
+  @override
+  String get documentModified => 'Değiştirildi';
+
+  @override
+  String get documentSaving => 'Kaydediliyor…';
+
+  @override
+  String get documentNotSaved => 'Kaydedilmedi';
+
+  @override
+  String get documentSaveFailed => 'Kaydetme başarısız';
+
+  @override
+  String get documentSaveConflict => 'Çakışma';
+
+  @override
+  String get documentFileMissing => 'Dosya eksik';
+
+  @override
+  String get documentSaveUnverified => 'Dosya durumu bilinmiyor';
+
+  @override
+  String get documentSavedLocally => 'Yerel olarak kaydedildi';
+
+  @override
+  String get documentSyncPending => 'Eşitleme bekliyor';
+
+  @override
+  String get documentSyncFailed => 'Eşitleme başarısız';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Açık olmayan ayrı bir Markdown dosyası seçin.';
+
+  @override
   String get notesNewFromRetainedText => 'Saklanan metinden yeni not';
 
   @override
@@ -127,6 +171,18 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark her notu ayrı ayrı denetler ve siler. Sunucuda bulunan notları silmek için bağlantı gerekir.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark notu Yerel Geçmiş’e kaydedemedi. Not korundu.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud silme işlemini onaylamadı. Yeniden denemeden önce notu yenileyip gözden geçirin.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -502,7 +558,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aboutBusyMark => 'BusyMark Hakkında';
 
   @override
-  String get aboutTagline => 'Markdown ve Writerside Düzenleyicisi';
+  String get aboutTagline =>
+      'Markdown belgeleri, Nextcloud Notes ve Writerside projeleri için çalışma alanı.';
 
   @override
   String get aboutLicenseLabel => 'Lisans';
@@ -5761,7 +5818,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.';
+      'Harici medya bağlantı gerektirir. BusyMark not metnini ve desteklenen Notes eklerini saklar.';
 
   @override
   String get notesEmptyAll => 'Henüz not yok. Başlamak için bir not oluşturun.';

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/busymark_exception.dart';
@@ -147,6 +148,90 @@ void main() {
         expect(await b.readAsString(), newerWriter ? 'external' : 'b');
         if (newerWriter) expect(await File(retained!).readAsString(), 'b');
       },
+    );
+  }
+
+  for (final newerWriter in [false, true]) {
+    test(
+      'batch rolls back a displaced FIFO without opening it (newer=$newerWriter)',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('batch-fifo-');
+        addTearDown(() => dir.delete(recursive: true));
+        final a = File(p.join(dir.path, 'a.md'));
+        final b = File(p.join(dir.path, 'b.md'));
+        await a.writeAsString('a');
+        await b.writeAsString('b');
+        final fifo = p.join(dir.path, 'fifo');
+        expect((await Process.run('mkfifo', [fifo])).exitCode, 0);
+        String? displaced;
+        var reportedSuccess = false;
+        final writer = WorkspaceService(
+          afterBatchFileCommit: (path, count) async {
+            if (count != 1) return;
+            expect(await a.readAsString(), 'A');
+            await File(fifo).rename(b.path);
+          },
+          beforeDisplacedValidation: (path, displacedPath) async {
+            if (path != b.path) return;
+            displaced = displacedPath;
+            if (newerWriter) await b.writeAsString('external');
+          },
+        );
+        final writes = [
+          for (final (file, text) in [(a, 'A'), (b, 'B')])
+            WorkspaceBatchTextWrite(
+              path: file.path,
+              text: text,
+              format: TextFormatMetadata.utf8Lf,
+              expectedSnapshot: await service.fileSnapshot(file.path),
+            ),
+        ];
+        final outcome = writer
+            .saveFormattedTextBatch(
+              writes,
+              onCommitted: (_) => reportedSuccess = true,
+            )
+            .then<Object>((result) => result, onError: (Object error) => error);
+        final result = await outcome.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () async {
+            // Unblock the original implementation so the regression leaves no
+            // worker stuck in open(2) when run against the broken code.
+            await Process.run('timeout', [
+              '2',
+              'sh',
+              '-c',
+              r'printf fifo > "$1"',
+              'unblock',
+              displaced!,
+            ]);
+            await outcome.timeout(const Duration(seconds: 3));
+            return TimeoutException('Batch opened the displaced FIFO');
+          },
+        );
+        expect(
+          result,
+          newerWriter
+              ? isA<WorkspaceBatchPartialApplicationConflict>()
+              : isA<WorkspaceBatchWriteConflict>(),
+        );
+        expect(reportedSuccess, isFalse);
+        expect(await a.readAsString(), 'a');
+        final fifoPath = newerWriter ? displaced! : b.path;
+        final type = await Process.run('stat', ['-c', '%F', fifoPath]);
+        expect(type.stdout.toString().trim(), 'fifo');
+        if (newerWriter) {
+          expect(
+            (result as WorkspaceBatchPartialApplicationConflict)
+                .files
+                .single
+                .preservedPath,
+            fifoPath,
+          );
+          expect(await b.readAsString(), 'external');
+        }
+      },
+      skip: !Platform.isLinux,
     );
   }
 

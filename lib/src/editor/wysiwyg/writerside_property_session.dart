@@ -34,9 +34,11 @@ class WritersidePropertySession extends ChangeNotifier {
   }
 
   void edit(WritersidePropertyDraft draft, String text) {
+    final wasPending = draft.pending;
     draft.text = text;
     draft.error = null;
     draft.detail = null;
+    if (draft.pending != wasPending) notifyListeners();
   }
 
   void revert(WritersidePropertyDraft draft) {

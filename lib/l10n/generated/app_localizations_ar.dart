@@ -11,6 +11,50 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'حفظ باسم…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'حفظ مستند ماركداون الحالي في موقع جديد';
+
+  @override
+  String get documentSaved => 'تم الحفظ';
+
+  @override
+  String get documentModified => 'معدّل';
+
+  @override
+  String get documentSaving => 'جارٍ الحفظ…';
+
+  @override
+  String get documentNotSaved => 'غير محفوظ';
+
+  @override
+  String get documentSaveFailed => 'تعذّر الحفظ';
+
+  @override
+  String get documentSaveConflict => 'تعارض';
+
+  @override
+  String get documentFileMissing => 'الملف مفقود';
+
+  @override
+  String get documentSaveUnverified => 'حالة الملف غير معروفة';
+
+  @override
+  String get documentSavedLocally => 'محفوظ محليًا';
+
+  @override
+  String get documentSyncPending => 'المزامنة معلّقة';
+
+  @override
+  String get documentSyncFailed => 'تعذّرت المزامنة';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'اختر ملف ماركداون منفصلًا ليس مفتوحًا بالفعل.';
+
+  @override
   String get notesNewFromRetainedText => 'ملاحظة جديدة من النص المحتفَظ به';
 
   @override
@@ -126,6 +170,18 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'فشل الحفظ المحلي. تحقق من التخزين وأعد محاولة هذا العنصر؛ تبقى العناصر الناجحة محفوظة.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'يفحص BusyMark كل ملاحظة ويحذفها على حدة. تتطلب ملاحظات الخادم الموجودة اتصالًا.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'تعذّر على BusyMark تسجيل الملاحظة في السجل المحلي. تم الاحتفاظ بالملاحظة.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'لم يؤكد Nextcloud الحذف. حدّث الملاحظة وراجعها قبل المحاولة مجددًا.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -499,7 +555,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutBusyMark => 'حول BusyMark';
 
   @override
-  String get aboutTagline => 'محرر Markdown وWriterside';
+  String get aboutTagline =>
+      'مساحة عمل لمستندات Markdown وNextcloud Notes ومشاريع Writerside.';
 
   @override
   String get aboutLicenseLabel => 'الترخيص';
@@ -5781,7 +5838,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة والمرفقات المُدارة فقط.';
+      'تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة ومرفقات Notes المدعومة.';
 
   @override
   String get notesEmptyAll => 'لا توجد ملاحظات بعد. أنشئ ملاحظة للبدء.';

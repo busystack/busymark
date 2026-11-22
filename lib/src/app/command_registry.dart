@@ -384,6 +384,7 @@ class BusyMarkCommandRegistry {
       const {
         BusyMarkCommandIds.search,
         BusyMarkCommandIds.save,
+        BusyMarkCommandIds.saveAs,
         BusyMarkCommandIds.export,
         BusyMarkCommandIds.closeTab,
         BusyMarkCommandIds.elementProperties,
@@ -481,6 +482,7 @@ abstract final class BusyMarkCommandIds {
   static const newDocument = 'file.newDocument';
   static const open = 'file.open';
   static const save = 'file.save';
+  static const saveAs = 'file.saveAs';
   static const export = 'file.export';
   static const fullScreen = 'view.fullScreen';
   static const home = 'navigation.home';
@@ -899,6 +901,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.newDocument => BusyMarkCommandIds.newDocument,
     BusyMarkAppShortcutAction.open => BusyMarkCommandIds.open,
     BusyMarkAppShortcutAction.save => BusyMarkCommandIds.save,
+    BusyMarkAppShortcutAction.saveAs => BusyMarkCommandIds.saveAs,
     BusyMarkAppShortcutAction.export => BusyMarkCommandIds.export,
     BusyMarkAppShortcutAction.fullScreen => BusyMarkCommandIds.fullScreen,
     BusyMarkAppShortcutAction.home => BusyMarkCommandIds.home,
@@ -930,6 +933,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.newDocument => context.l10n.shortcutNewDocument,
     BusyMarkAppShortcutAction.open => context.l10n.openMenu,
     BusyMarkAppShortcutAction.save => context.l10n.save,
+    BusyMarkAppShortcutAction.saveAs => context.l10n.saveAsEllipsis,
     BusyMarkAppShortcutAction.export => context.l10n.export,
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.home => context.l10n.home,
@@ -989,6 +993,7 @@ abstract final class BusyMarkCommandCatalog {
       context.l10n.shortcutNewDocumentDescription,
     BusyMarkAppShortcutAction.open => context.l10n.shortcutOpenDescription,
     BusyMarkAppShortcutAction.save => context.l10n.shortcutSaveDescription,
+    BusyMarkAppShortcutAction.saveAs => context.l10n.shortcutSaveAsDescription,
     BusyMarkAppShortcutAction.export => null,
     BusyMarkAppShortcutAction.search => context.l10n.shortcutSearchDescription,
     BusyMarkAppShortcutAction.keyboardShortcuts =>

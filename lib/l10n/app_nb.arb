@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Lagre som…",
+  "shortcutSaveAsDescription": "Lagre gjeldende Markdown-dokument på et nytt sted",
+  "documentSaved": "Lagret",
+  "documentModified": "Endret",
+  "documentSaving": "Lagrer …",
+  "documentNotSaved": "Ikke lagret",
+  "documentSaveFailed": "Lagring mislyktes",
+  "documentSaveConflict": "Konflikt",
+  "documentFileMissing": "Filen mangler",
+  "documentSaveUnverified": "Ukjent filstatus",
+  "documentSavedLocally": "Lagret lokalt",
+  "documentSyncPending": "Venter på synkronisering",
+  "documentSyncFailed": "Synkronisering mislyktes",
+  "saveAsSeparateMarkdown": "Velg en egen Markdown-fil som ikke allerede er åpen.",
   "notesNewFromRetainedText": "Nytt notat fra bevart tekst",
   "notesAccountThrottled": "Nextcloud ba om en pause. Vent før du starter innloggingen på nytt.",
   "notesSettingsRefreshing": "Oppdaterer Notes etter bekreftet innstillingsendring",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Notaten ble endret etter gjennomgang. Gjennomgå gjeldende tilstand før handlingen gjentas.",
   "notesBatchMissing": "Notaten er ikke lenger tilgjengelig. Oppdater listen og gjennomgå målene igjen.",
   "notesBatchStorage": "Lokal lagring mislyktes. Kontroller lagringsplassen og prøv dette elementet igjen; vellykkede elementer er lagret.",
+  "notesBatchDeleteHelp": "BusyMark kontrollerer og sletter hvert notat separat. Notater som ligger på serveren, krever en tilkobling.",
+  "notesBatchDeleteHistoryFailed": "BusyMark kunne ikke lagre notatet i lokal historie. Notatet ble beholdt.",
+  "notesBatchDeleteUncertain": "Nextcloud bekreftet ikke slettingen. Oppdater og se gjennom notatet før du prøver igjen.",
   "notesRemoteReviewChanged": "Servernotaten ble endret. Fletteutkastet er bevart. Gjennomgå den oppdaterte sammenligningen og velg løsning på nytt.",
   "notesReviewRemote": "Jeg har gjennomgått gjeldende serverversjon",
   "wsModuleCapsNotPublished": "Modulens bokstavstil publiseres ikke.",
@@ -219,7 +236,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Markdown- og Writerside-redigerer",
+  "aboutTagline": "Arbeidsområde for Markdown-dokumenter, Nextcloud Notes og Writerside-prosjekter.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -3718,7 +3735,7 @@
   "notesSort": "Sorter notater",
   "notesOfflineRetentionHelp": "Å fjerne dette kravet beholder eksisterende hurtigbuffer. Et kategori- eller kontokrav kan fortsatt beholde notatet.",
   "notesOfflineBroader": "Notatet beholdes også av et kategori- eller kontokrav.",
-  "notesOfflineExternal": "Eksterne medier krever en tilkobling. BusyMark beholder bare notattekst og administrerte vedlegg.",
+  "notesOfflineExternal": "Eksterne medier krever en tilkobling. BusyMark beholder notattekst og støttede Notes-vedlegg.",
   "notesOperationFailed": "Handlingen kunne ikke fullføres. Utkastet er beholdt. Kontroller lagring og konflikter, og prøv igjen.",
   "notesRemovedWarning": "Den lokale Nextcloud-kontoen er fjernet. Tilbakekalling av app-passordet er ikke bekreftet. Fjern BusyMarks passord i sikkerhetsinnstillingene i Nextcloud.",
   "notesBuffersNotSaved": "Ikke alle åpne notater kunne lagres lokalt. Kontroller lagring, konflikter eller normalisering i arbeidsområdet. Lokale endringer må kanskje fortsatt synkroniseres med Nextcloud.",

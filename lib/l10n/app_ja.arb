@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "名前を付けて保存…",
+  "shortcutSaveAsDescription": "現在のMarkdown文書を別の場所に保存",
+  "documentSaved": "保存済み",
+  "documentModified": "変更あり",
+  "documentSaving": "保存中…",
+  "documentNotSaved": "未保存",
+  "documentSaveFailed": "保存に失敗",
+  "documentSaveConflict": "競合",
+  "documentFileMissing": "ファイルが見つかりません",
+  "documentSaveUnverified": "ファイルの状態が不明",
+  "documentSavedLocally": "ローカルに保存済み",
+  "documentSyncPending": "同期保留中",
+  "documentSyncFailed": "同期に失敗",
+  "saveAsSeparateMarkdown": "開いていない別のMarkdownファイルを選択してください。",
   "notesNewFromRetainedText": "保持されたテキストから新規ノートを作成",
   "notesAccountThrottled": "Nextcloud が待機を求めています。しばらく待ってから再度ログインしてください。",
   "notesSettingsRefreshing": "確認済みの設定に基づいて Notes を更新中",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "確認後にノートが変わりました。現在の状態を確認してから操作をやり直してください。",
   "notesBatchMissing": "このノートは利用できなくなりました。一覧を更新して対象を再確認してください。",
   "notesBatchStorage": "ローカル保存に失敗しました。保存領域を確認してこの項目を再試行してください。成功した項目は保存済みです。",
+  "notesBatchDeleteHelp": "BusyMark はノートを一件ずつ確認して削除します。サーバー上のノートを削除するには接続が必要です。",
+  "notesBatchDeleteHistoryFailed": "BusyMark はノートをローカル履歴に保存できませんでした。ノートは保持されました。",
+  "notesBatchDeleteUncertain": "Nextcloud から削除の確認が届きませんでした。再試行する前に、ノートを更新して内容を確認してください。",
   "notesRemoteReviewChanged": "サーバーのノートが変わりました。マージの下書きは保持されています。更新された比較を確認し、解決方法を再度選んでください。",
   "notesReviewRemote": "現在のサーバーバージョンを確認しました",
   "wsModuleCapsNotPublished": "モジュールの大文字・小文字設定は公開されません。",
@@ -196,7 +213,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Markdown と Writerside のエディター",
+  "aboutTagline": "Markdown ドキュメント、Nextcloud Notes、Writerside プロジェクトを扱うワークスペース。",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -5260,7 +5277,7 @@
   "notesSort": "ノートの並べ替え",
   "notesOfflineRetentionHelp": "この要件を解除しても既存のキャッシュは削除されません。カテゴリやアカウントの要件により保持される場合があります。",
   "notesOfflineBroader": "このノートはカテゴリまたはアカウントの要件によっても保持されています。",
-  "notesOfflineExternal": "外部メディアには接続が必要です。BusyMark が保持するのはノート本文と管理対象の添付ファイルのみです。",
+  "notesOfflineExternal": "外部メディアには接続が必要です。BusyMark はノート本文と対応する Notes の添付ファイルを保持します。",
   "notesOperationFailed": "処理を完了できませんでした。下書きは保持されています。保存と競合を確認して再試行してください。",
   "notesRemovedWarning": "ローカルの Nextcloud アカウントを削除しました。アプリパスワードの失効は確認できませんでした。Nextcloud のセキュリティ設定で BusyMark のパスワードを削除してください。",
   "notesBuffersNotSaved": "開いているすべてのノートをローカルに保存できませんでした。ワークスペースで保存、競合、正規化を確認してください。ローカルの変更は Nextcloud との同期がまだ必要な場合があります。",

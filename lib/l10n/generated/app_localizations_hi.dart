@@ -11,6 +11,50 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'इस रूप में सहेजें…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'मौजूदा Markdown दस्तावेज़ को नई जगह सहेजें';
+
+  @override
+  String get documentSaved => 'सहेजा गया';
+
+  @override
+  String get documentModified => 'संशोधित';
+
+  @override
+  String get documentSaving => 'सहेजा जा रहा है…';
+
+  @override
+  String get documentNotSaved => 'सहेजा नहीं गया';
+
+  @override
+  String get documentSaveFailed => 'सहेजना विफल';
+
+  @override
+  String get documentSaveConflict => 'टकराव';
+
+  @override
+  String get documentFileMissing => 'फ़ाइल मौजूद नहीं है';
+
+  @override
+  String get documentSaveUnverified => 'फ़ाइल की स्थिति अज्ञात है';
+
+  @override
+  String get documentSavedLocally => 'स्थानीय रूप से सहेजा गया';
+
+  @override
+  String get documentSyncPending => 'सिंक बाकी है';
+
+  @override
+  String get documentSyncFailed => 'सिंक विफल';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'ऐसी अलग Markdown फ़ाइल चुनें जो पहले से खुली न हो।';
+
+  @override
   String get notesNewFromRetainedText => 'सहेजे गए पाठ से नया नोट';
 
   @override
@@ -127,6 +171,18 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'स्थानीय सहेजना विफल हुआ। संग्रहण जाँचकर इस आइटम पर फिर प्रयास करें; सफल आइटम सहेजे हुए हैं।';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark हर नोट की अलग से जाँच करता है और उसे हटाता है। सर्वर पर मौजूद नोट हटाने के लिए कनेक्शन चाहिए।';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark नोट को स्थानीय इतिहास में दर्ज नहीं कर सका। नोट सुरक्षित रखा गया है।';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud ने हटाने की पुष्टि नहीं की। फिर से कोशिश करने से पहले नोट रीफ़्रेश करके उसकी समीक्षा करें।';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -506,7 +562,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutBusyMark => 'BusyMark के बारे में';
 
   @override
-  String get aboutTagline => 'Markdown और Writerside संपादक';
+  String get aboutTagline =>
+      'Markdown दस्तावेज़ों, Nextcloud Notes और Writerside प्रोजेक्टों के लिए कार्यक्षेत्र।';
 
   @override
   String get aboutLicenseLabel => 'लाइसेंस';
@@ -5751,7 +5808,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'बाहरी मीडिया को कनेक्शन चाहिए। BusyMark केवल नोट का पाठ और प्रबंधित संलग्नक सुरक्षित रखता है।';
+      'बाहरी मीडिया को कनेक्शन चाहिए। BusyMark नोट का पाठ और समर्थित Notes संलग्नक सुरक्षित रखता है।';
 
   @override
   String get notesEmptyAll =>

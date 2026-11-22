@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Zapisz jako…",
+  "shortcutSaveAsDescription": "Zapisz bieżący dokument Markdown w nowej lokalizacji",
+  "documentSaved": "Zapisano",
+  "documentModified": "Zmieniono",
+  "documentSaving": "Zapisywanie…",
+  "documentNotSaved": "Nie zapisano",
+  "documentSaveFailed": "Zapis nie powiódł się",
+  "documentSaveConflict": "Konflikt",
+  "documentFileMissing": "Brak pliku",
+  "documentSaveUnverified": "Nieznany stan pliku",
+  "documentSavedLocally": "Zapisano lokalnie",
+  "documentSyncPending": "Oczekiwanie na synchronizację",
+  "documentSyncFailed": "Synchronizacja nie powiodła się",
+  "saveAsSeparateMarkdown": "Wybierz osobny plik Markdown, który nie jest otwarty.",
   "notesNewFromRetainedText": "Nowa notatka z zachowanego tekstu",
   "notesAccountThrottled": "Nextcloud prosi o przerwę. Zaczekaj przed ponownym logowaniem.",
   "notesSettingsRefreshing": "Odświeżanie Notes po potwierdzeniu ustawień",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Notatka zmieniła się po przeglądzie. Sprawdź jej aktualny stan przed ponowieniem działania.",
   "notesBatchMissing": "Notatka nie jest już dostępna. Odśwież listę i sprawdź wybrane elementy.",
   "notesBatchStorage": "Zapis lokalny nie powiódł się. Sprawdź pamięć i ponów ten element; udane elementy są zapisane.",
+  "notesBatchDeleteHelp": "BusyMark sprawdza i usuwa każdą notatkę osobno. Notatki znajdujące się na serwerze wymagają połączenia.",
+  "notesBatchDeleteHistoryFailed": "BusyMark nie mógł zapisać notatki w historii lokalnej. Notatka została zachowana.",
+  "notesBatchDeleteUncertain": "Nextcloud nie potwierdził usunięcia. Odśwież i sprawdź notatkę przed kolejną próbą.",
   "notesRemoteReviewChanged": "Notatka na serwerze się zmieniła. Wersja robocza scalania jest zachowana. Sprawdź nowe porównanie i ponownie wybierz rozwiązanie.",
   "notesReviewRemote": "Sprawdzono aktualną wersję na serwerze",
   "wsModuleCapsNotPublished": "Reguła wielkości liter modułu nie jest publikowana.",
@@ -219,7 +236,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Edytor Markdown i Writerside",
+  "aboutTagline": "Przestrzeń robocza dla dokumentów Markdown, Nextcloud Notes i projektów Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -3744,7 +3761,7 @@
   "notesSort": "Sortuj notatki",
   "notesOfflineRetentionHelp": "Usunięcie tego wymagania zachowuje zawartość pamięci podręcznej. Wymaganie kategorii lub konta może nadal zachowywać notatkę.",
   "notesOfflineBroader": "Ta notatka jest też zachowywana przez wymaganie kategorii lub konta.",
-  "notesOfflineExternal": "Zewnętrzne multimedia wymagają połączenia. BusyMark zachowuje tylko tekst i zarządzane załączniki.",
+  "notesOfflineExternal": "Zewnętrzne multimedia wymagają połączenia. BusyMark zachowuje tekst notatek i obsługiwane załączniki Notes.",
   "notesOperationFailed": "Operacja nie została ukończona. Szkic jest zachowany. Sprawdź zapisywanie i konflikty, a potem spróbuj ponownie.",
   "notesRemovedWarning": "Lokalne konto Nextcloud usunięto. Nie potwierdzono unieważnienia hasła aplikacji. Usuń hasło BusyMark w ustawieniach bezpieczeństwa Nextcloud.",
   "notesBuffersNotSaved": "Nie wszystkie otwarte notatki zapisano lokalnie. Sprawdź zapisywanie, konflikty lub normalizację w obszarze roboczym. Lokalne zmiany mogą nadal wymagać synchronizacji z Nextcloud.",

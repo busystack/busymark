@@ -11,6 +11,50 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Speichern unter…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Aktuelles Markdown-Dokument an einem neuen Ort speichern';
+
+  @override
+  String get documentSaved => 'Gespeichert';
+
+  @override
+  String get documentModified => 'Geändert';
+
+  @override
+  String get documentSaving => 'Wird gespeichert…';
+
+  @override
+  String get documentNotSaved => 'Nicht gespeichert';
+
+  @override
+  String get documentSaveFailed => 'Speichern fehlgeschlagen';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Datei fehlt';
+
+  @override
+  String get documentSaveUnverified => 'Dateistatus unbekannt';
+
+  @override
+  String get documentSavedLocally => 'Lokal gespeichert';
+
+  @override
+  String get documentSyncPending => 'Synchronisierung ausstehend';
+
+  @override
+  String get documentSyncFailed => 'Synchronisierung fehlgeschlagen';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Wählen Sie eine separate Markdown-Datei, die noch nicht geöffnet ist.';
+
+  @override
   String get notesNewFromRetainedText => 'Neue Notiz aus aufbewahrtem Text';
 
   @override
@@ -128,6 +172,18 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Lokales Speichern fehlgeschlagen. Speicher prüfen und diesen Eintrag erneut versuchen; erfolgreiche Einträge bleiben gespeichert.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark prüft und löscht jede Notiz einzeln. Für vorhandene Servernotizen ist eine Verbindung erforderlich.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark konnte die Notiz nicht in der lokalen Historie sichern. Die Notiz wurde beibehalten.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud hat das Löschen nicht bestätigt. Aktualisiere und prüfe diese Notiz vor einem erneuten Versuch.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -509,7 +565,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aboutBusyMark => 'Über BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown- und Writerside-Editor';
+  String get aboutTagline =>
+      'Arbeitsbereich für Markdown-Dokumente, Nextcloud Notes und Writerside-Projekte.';
 
   @override
   String get aboutLicenseLabel => 'Lizenz';
@@ -5813,7 +5870,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Externe Medien benötigen eine Verbindung. BusyMark bewahrt nur Notiztext und verwaltete Anhänge auf.';
+      'Externe Medien benötigen eine Verbindung. BusyMark bewahrt Notiztext und unterstützte Notes-Anhänge auf.';
 
   @override
   String get notesEmptyAll => 'Noch keine Notizen. Erstellen Sie eine Notiz.';

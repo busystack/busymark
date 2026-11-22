@@ -11,6 +11,50 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Lagre som…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Lagre gjeldende Markdown-dokument på et nytt sted';
+
+  @override
+  String get documentSaved => 'Lagret';
+
+  @override
+  String get documentModified => 'Endret';
+
+  @override
+  String get documentSaving => 'Lagrer …';
+
+  @override
+  String get documentNotSaved => 'Ikke lagret';
+
+  @override
+  String get documentSaveFailed => 'Lagring mislyktes';
+
+  @override
+  String get documentSaveConflict => 'Konflikt';
+
+  @override
+  String get documentFileMissing => 'Filen mangler';
+
+  @override
+  String get documentSaveUnverified => 'Ukjent filstatus';
+
+  @override
+  String get documentSavedLocally => 'Lagret lokalt';
+
+  @override
+  String get documentSyncPending => 'Venter på synkronisering';
+
+  @override
+  String get documentSyncFailed => 'Synkronisering mislyktes';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Velg en egen Markdown-fil som ikke allerede er åpen.';
+
+  @override
   String get notesNewFromRetainedText => 'Nytt notat fra bevart tekst';
 
   @override
@@ -127,6 +171,18 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Lokal lagring mislyktes. Kontroller lagringsplassen og prøv dette elementet igjen; vellykkede elementer er lagret.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark kontrollerer og sletter hvert notat separat. Notater som ligger på serveren, krever en tilkobling.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark kunne ikke lagre notatet i lokal historie. Notatet ble beholdt.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud bekreftet ikke slettingen. Oppdater og se gjennom notatet før du prøver igjen.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -507,7 +563,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aboutBusyMark => 'Om BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown- og Writerside-redigerer';
+  String get aboutTagline =>
+      'Arbeidsområde for Markdown-dokumenter, Nextcloud Notes og Writerside-prosjekter.';
 
   @override
   String get aboutLicenseLabel => 'Lisens';
@@ -5767,7 +5824,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'Eksterne medier krever en tilkobling. BusyMark beholder bare notattekst og administrerte vedlegg.';
+      'Eksterne medier krever en tilkobling. BusyMark beholder notattekst og støttede Notes-vedlegg.';
 
   @override
   String get notesEmptyAll =>

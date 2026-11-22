@@ -440,16 +440,21 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   BuildContext context,
   WidgetRef ref, {
   ActiveDocumentSaveTarget? target,
+  bool Function()? isInScope,
 }) => _saveActiveWithOverwriteConfirmation(
   context,
   _container(ref),
   target: target,
+  isInScope: isInScope,
 );
 
 Future<bool> _saveActiveWithOverwriteConfirmation(
   BuildContext context,
   ProviderContainer container, {
   ActiveDocumentSaveTarget? target,
+  bool Function()? isInScope,
+  LineEndingNormalization? reviewedNormalization,
+  SaveAsIntent firstSaveIntent = SaveAsIntent.relocate,
 }) async {
   final controller = container.read(workspaceControllerProvider.notifier);
   if (!controller.propertyEdits.flush()) return false;
@@ -460,15 +465,21 @@ Future<bool> _saveActiveWithOverwriteConfirmation(
     return false;
   }
   if (operationTarget.needsSaveLocation) {
-    return _saveActiveAs(context, container, operationTarget);
+    return _saveActiveAs(
+      context,
+      container,
+      operationTarget,
+      intent: firstSaveIntent,
+      isInScope: isInScope,
+    );
   }
-  final normalization = await _chooseMixedLineEndingNormalization(
-    context,
-    operationTarget,
-  );
+  final normalization =
+      reviewedNormalization ??
+      await _chooseMixedLineEndingNormalization(context, operationTarget);
   if (operationTarget.format.hasMixedLineEndings && normalization == null) {
     return false;
   }
+  if (!context.mounted || isInScope?.call() == false) return false;
   // The controller owns both the disk check and save serialization so a
   // separate preflight cannot race an already-running write.
   final saved = await controller.saveActive(
@@ -478,70 +489,108 @@ Future<bool> _saveActiveWithOverwriteConfirmation(
   if (saved) {
     return true;
   }
-  final state = container.read(workspaceControllerProvider);
-  if (!controller.isActiveDocumentSaveTargetCurrent(operationTarget) ||
-      state.message?.code !=
-          WorkspaceMessageCode.saveBlockedFileChangedOnDisk) {
+  if (!context.mounted ||
+      isInScope?.call() == false ||
+      !controller.isActiveDocumentSaveTargetCurrent(operationTarget)) {
     return false;
   }
-  if (!context.mounted) {
-    return false;
-  }
+  final conflict = controller.saveConflictFor(operationTarget);
+  if (conflict == null) return false;
+  final recreate = conflict.saveConflict == WorkspaceSaveConflict.missing;
   final action = await showBusyMarkModalDialog<_OverwriteAction>(
     context,
     builder: (context) => BusyMarkAlert(
-      heading: context.l10n.fileChangedOnDisk,
+      heading: recreate
+          ? context.l10n.externalFileDeleted
+          : context.l10n.fileChangedOnDisk,
       responses: [
         BusyMarkAlertResponse(
           label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
         ),
         BusyMarkAlertResponse(
-          label: context.l10n.overwrite,
-          destructive: true,
+          label: recreate ? context.l10n.save : context.l10n.overwrite,
+          destructive: !recreate,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
         ),
       ],
       children: [
-        Text(context.l10n.fileChangedOnDiskMessage),
-        if (state.message?.error case final AtomicFileChangedException error
+        if (!recreate) Text(context.l10n.fileChangedOnDiskMessage),
+        if (conflict.error case final AtomicFileChangedException error
             when error.recoveryPath != null)
           Text(error.toString()),
       ],
     ),
   );
-  if (action != _OverwriteAction.overwrite) {
+  if (action != _OverwriteAction.overwrite ||
+      !context.mounted ||
+      isInScope?.call() == false) {
     return false;
   }
   return controller.saveActive(
-    overwriteExternalChanges: true,
+    conflictResolution: recreate
+        ? FileSaveConflictResolution.recreate
+        : FileSaveConflictResolution.overwrite,
     target: operationTarget,
     mixedLineEndingNormalization: normalization,
   );
 }
 
-Future<bool> saveActiveToNewLocation(
+Future<bool> saveDocumentFromCommand(
   BuildContext context,
-  WidgetRef ref,
-) async {
-  final container = _container(ref);
+  ProviderContainer container, {
+  required bool saveAs,
+  required bool Function() isInScope,
+}) => saveAs
+    ? _saveActiveToNewLocation(
+        context,
+        container,
+        intent: SaveAsIntent.markdown,
+        isInScope: isInScope,
+      )
+    : _saveActiveWithOverwriteConfirmation(
+        context,
+        container,
+        firstSaveIntent: SaveAsIntent.markdown,
+        isInScope: isInScope,
+      );
+
+Future<bool> saveActiveToNewLocation(BuildContext context, WidgetRef ref) =>
+    _saveActiveToNewLocation(context, _container(ref));
+
+Future<bool> _saveActiveToNewLocation(
+  BuildContext context,
+  ProviderContainer container, {
+  SaveAsIntent intent = SaveAsIntent.relocate,
+  bool Function()? isInScope,
+}) async {
   final controller = container.read(workspaceControllerProvider.notifier);
-  final target = controller.captureActiveDocumentSaveTarget();
-  if (target == null) {
+  if (!controller.propertyEdits.flush() || isInScope?.call() == false) {
     return false;
   }
-  return _saveActiveAs(context, container, target);
+  final target = controller.captureActiveDocumentSaveTarget();
+  if (target == null) return false;
+  return _saveActiveAs(
+    context,
+    container,
+    target,
+    intent: intent,
+    isInScope: isInScope,
+  );
 }
 
 Future<bool> _saveActiveAs(
   BuildContext context,
   ProviderContainer container,
-  ActiveDocumentSaveTarget target,
-) async {
+  ActiveDocumentSaveTarget target, {
+  SaveAsIntent intent = SaveAsIntent.relocate,
+  bool Function()? isInScope,
+}) async {
   final controller = container.read(workspaceControllerProvider.notifier);
-  if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
-    return false;
-  }
+  bool current() =>
+      controller.isActiveDocumentSaveTargetCurrent(target) &&
+      isInScope?.call() != false;
+  if (!current()) return false;
   final normalization = await _chooseMixedLineEndingNormalization(
     context,
     target,
@@ -549,15 +598,13 @@ Future<bool> _saveActiveAs(
   if (target.format.hasMixedLineEndings && normalization == null) {
     return false;
   }
-  if (!context.mounted) {
-    return false;
-  }
+  if (!context.mounted || !current()) return false;
   final activePath = target.path;
   final destination = await pickSaveDestination(
     context,
-    suggestedName: activePath == null || activePath.isEmpty
-        ? context.l10n.untitledMarkdownFileName
-        : p.basename(activePath),
+    suggestedName: activePath != null
+        ? p.basename(activePath)
+        : context.l10n.untitledMarkdownFileName,
     initialDirectory: activePath == null || activePath.isEmpty
         ? null
         : p.dirname(activePath),
@@ -569,17 +616,27 @@ Future<bool> _saveActiveAs(
     kind: target.workspaceKind == WorkspaceKind.nextcloudNotes
         ? SaveDestinationKind.file
         : SaveDestinationKind.fileOrSymbolicLink,
-    isCurrent: () => controller.isActiveDocumentSaveTargetCurrent(target),
+    isCurrent: current,
   );
-  if (destination == null ||
-      !controller.isActiveDocumentSaveTargetCurrent(target)) {
-    return false;
+  if (destination == null || !context.mounted || !current()) return false;
+  if (intent == SaveAsIntent.markdown &&
+      target.path == destination.path &&
+      target.workspaceKind != WorkspaceKind.writersideModule) {
+    return _saveActiveWithOverwriteConfirmation(
+      context,
+      container,
+      target: target,
+      isInScope: isInScope,
+      reviewedNormalization: normalization,
+    );
   }
   return controller.saveActiveAs(
     destination.path,
     target: target,
     overwriteExisting: destination.replacesExisting,
     authorization: destination,
+    intent: intent,
+    isInScope: isInScope,
     mixedLineEndingNormalization: normalization,
   );
 }

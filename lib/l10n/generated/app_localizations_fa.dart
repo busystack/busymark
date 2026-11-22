@@ -11,6 +11,50 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'ذخیره با نام…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'ذخیرهٔ سند مارک‌داون کنونی در مکانی جدید';
+
+  @override
+  String get documentSaved => 'ذخیره شد';
+
+  @override
+  String get documentModified => 'تغییریافته';
+
+  @override
+  String get documentSaving => 'در حال ذخیره…';
+
+  @override
+  String get documentNotSaved => 'ذخیره نشده';
+
+  @override
+  String get documentSaveFailed => 'ذخیره ناموفق بود';
+
+  @override
+  String get documentSaveConflict => 'تداخل';
+
+  @override
+  String get documentFileMissing => 'پرونده یافت نشد';
+
+  @override
+  String get documentSaveUnverified => 'وضعیت پرونده نامشخص است';
+
+  @override
+  String get documentSavedLocally => 'ذخیره‌شده در دستگاه';
+
+  @override
+  String get documentSyncPending => 'در انتظار همگام‌سازی';
+
+  @override
+  String get documentSyncFailed => 'همگام‌سازی ناموفق بود';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'پروندهٔ مارک‌داون دیگری را انتخاب کنید که باز نباشد.';
+
+  @override
   String get notesNewFromRetainedText => 'یادداشت جدید از متن نگه‌داری‌شده';
 
   @override
@@ -127,6 +171,18 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'ذخیرهٔ محلی شکست خورد. فضای ذخیره‌سازی را بررسی و این مورد را تکرار کنید؛ موارد موفق ذخیره می‌مانند.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark هر یادداشت را جداگانه بررسی و حذف می‌کند. یادداشت‌های موجود روی سرور به اتصال نیاز دارند.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark نتوانست یادداشت را در تاریخچهٔ محلی ثبت کند. یادداشت حفظ شد.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud حذف را تأیید نکرد. پیش از تلاش دوباره، یادداشت را تازه‌سازی و بررسی کنید.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -503,7 +559,8 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutBusyMark => 'دربارهٔ BusyMark';
 
   @override
-  String get aboutTagline => 'ویرایشگر Markdown و Writerside';
+  String get aboutTagline =>
+      'فضای کاری برای اسناد Markdown، Nextcloud Notes و پروژه‌های Writerside.';
 
   @override
   String get aboutLicenseLabel => 'مجوز';
@@ -5795,7 +5852,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'رسانهٔ خارجی به اتصال نیاز دارد. BusyMark فقط متن یادداشت و پیوست‌های مدیریت‌شده را نگه می‌دارد.';
+      'رسانهٔ خارجی به اتصال نیاز دارد. BusyMark متن یادداشت و پیوست‌های پشتیبانی‌شدهٔ Notes را نگه می‌دارد.';
 
   @override
   String get notesEmptyAll => 'هنوز یادداشتی نیست. یک یادداشت بسازید.';

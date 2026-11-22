@@ -1,4 +1,18 @@
 {
+  "saveAsEllipsis": "Simpan sebagai…",
+  "shortcutSaveAsDescription": "Simpan dokumen Markdown saat ini ke lokasi baru",
+  "documentSaved": "Tersimpan",
+  "documentModified": "Diubah",
+  "documentSaving": "Menyimpan…",
+  "documentNotSaved": "Belum disimpan",
+  "documentSaveFailed": "Gagal menyimpan",
+  "documentSaveConflict": "Konflik",
+  "documentFileMissing": "Berkas tidak ditemukan",
+  "documentSaveUnverified": "Status berkas tidak diketahui",
+  "documentSavedLocally": "Disimpan secara lokal",
+  "documentSyncPending": "Sinkronisasi tertunda",
+  "documentSyncFailed": "Sinkronisasi gagal",
+  "saveAsSeparateMarkdown": "Pilih berkas Markdown lain yang belum terbuka.",
   "notesNewFromRetainedText": "Catatan baru dari teks tersimpan",
   "notesAccountThrottled": "Nextcloud meminta jeda. Tunggu sebelum mulai masuk lagi.",
   "notesSettingsRefreshing": "Menyegarkan Notes setelah pembaruan pengaturan dikonfirmasi",
@@ -29,6 +43,9 @@
   "notesBatchReviewChanged": "Catatan berubah setelah ditinjau. Tinjau keadaan saat ini sebelum menerapkan tindakan lagi.",
   "notesBatchMissing": "Catatan ini tidak lagi tersedia. Segarkan daftar dan tinjau sasaran lagi.",
   "notesBatchStorage": "Penyimpanan lokal gagal. Periksa penyimpanan dan coba item ini lagi; item yang berhasil tetap tersimpan.",
+  "notesBatchDeleteHelp": "BusyMark memeriksa dan menghapus setiap catatan satu per satu. Catatan yang sudah ada di server memerlukan koneksi.",
+  "notesBatchDeleteHistoryFailed": "BusyMark tidak dapat merekam catatan di Riwayat Lokal. Catatan tetap disimpan.",
+  "notesBatchDeleteUncertain": "Nextcloud tidak mengonfirmasi penghapusan. Segarkan dan tinjau catatan ini sebelum mencoba lagi.",
   "notesRemoteReviewChanged": "Catatan server berubah. Draf penggabungan Anda dipertahankan. Tinjau perbandingan terbaru dan pilih penyelesaian lagi.",
   "notesReviewRemote": "Saya telah meninjau versi server saat ini",
   "wsModuleCapsNotPublished": "Kapitalisasi modul tidak diterbitkan.",
@@ -194,7 +211,7 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Editor untuk file Markdown dan proyek dokumentasi yang kompatibel dengan Writerside",
+  "aboutTagline": "Ruang kerja untuk dokumen Markdown, Nextcloud Notes, dan proyek Writerside.",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
@@ -5248,7 +5265,7 @@
   "notesSort": "Urutkan catatan",
   "notesOfflineRetentionHelp": "Menghapus persyaratan ini mempertahankan cache yang ada. Persyaratan kategori atau akun mungkin masih menyimpan catatan ini.",
   "notesOfflineBroader": "Catatan ini juga disimpan oleh persyaratan kategori atau akun.",
-  "notesOfflineExternal": "Media eksternal memerlukan koneksi. BusyMark hanya menyimpan teks catatan dan lampiran terkelola.",
+  "notesOfflineExternal": "Media eksternal memerlukan koneksi. BusyMark menyimpan teks catatan dan lampiran Notes yang didukung.",
   "notesOperationFailed": "Operasi tidak dapat diselesaikan. Draf Anda tetap disimpan. Tinjau penyimpanan dan konflik, lalu coba lagi.",
   "notesRemovedWarning": "Akun Nextcloud lokal telah dihapus. Pencabutan kata sandi aplikasi tidak dikonfirmasi. Hapus kata sandi BusyMark di pengaturan Keamanan Nextcloud.",
   "notesBuffersNotSaved": "Tidak semua catatan terbuka dapat disimpan secara lokal. Tinjau penyimpanan, konflik, atau normalisasi di ruang kerja. Perubahan lokal mungkin masih perlu disinkronkan dengan Nextcloud.",

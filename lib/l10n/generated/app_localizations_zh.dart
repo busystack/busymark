@@ -11,6 +11,48 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get saveAsEllipsis => '另存为…';
+
+  @override
+  String get shortcutSaveAsDescription => '将当前 Markdown 文档保存到新位置';
+
+  @override
+  String get documentSaved => '已保存';
+
+  @override
+  String get documentModified => '已修改';
+
+  @override
+  String get documentSaving => '正在保存…';
+
+  @override
+  String get documentNotSaved => '未保存';
+
+  @override
+  String get documentSaveFailed => '保存失败';
+
+  @override
+  String get documentSaveConflict => '冲突';
+
+  @override
+  String get documentFileMissing => '文件缺失';
+
+  @override
+  String get documentSaveUnverified => '文件状态未知';
+
+  @override
+  String get documentSavedLocally => '已保存到本地';
+
+  @override
+  String get documentSyncPending => '等待同步';
+
+  @override
+  String get documentSyncFailed => '同步失败';
+
+  @override
+  String get saveAsSeparateMarkdown => '请选择另一个尚未打开的 Markdown 文件。';
+
+  @override
   String get notesNewFromRetainedText => '从保留的文本新建笔记';
 
   @override
@@ -106,6 +148,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
+
+  @override
+  String get notesBatchDeleteHelp => 'BusyMark 会逐条检查并删除笔记。删除服务器上的现有笔记需要网络连接。';
+
+  @override
+  String get notesBatchDeleteHistoryFailed => 'BusyMark 无法将笔记记录到本地历史。该笔记已保留。';
+
+  @override
+  String get notesBatchDeleteUncertain => 'Nextcloud 未确认删除。请刷新并检查此笔记，然后重试。';
 
   @override
   String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
@@ -462,7 +513,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutBusyMark => '关于 BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown 和 Writerside 编辑器';
+  String get aboutTagline =>
+      '用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。';
 
   @override
   String get aboutLicenseLabel => '许可证';
@@ -5497,7 +5549,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
 
   @override
-  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+  String get notesOfflineExternal =>
+      '外部媒体需要网络连接。BusyMark 会保留笔记文本和受支持的 Notes 附件。';
 
   @override
   String get notesEmptyAll => '还没有笔记。请新建一条笔记。';
@@ -8648,6 +8701,48 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
 
   @override
+  String get saveAsEllipsis => '另存为…';
+
+  @override
+  String get shortcutSaveAsDescription => '将当前 Markdown 文档保存到新位置';
+
+  @override
+  String get documentSaved => '已保存';
+
+  @override
+  String get documentModified => '已修改';
+
+  @override
+  String get documentSaving => '正在保存…';
+
+  @override
+  String get documentNotSaved => '未保存';
+
+  @override
+  String get documentSaveFailed => '保存失败';
+
+  @override
+  String get documentSaveConflict => '冲突';
+
+  @override
+  String get documentFileMissing => '文件缺失';
+
+  @override
+  String get documentSaveUnverified => '文件状态未知';
+
+  @override
+  String get documentSavedLocally => '已保存到本地';
+
+  @override
+  String get documentSyncPending => '等待同步';
+
+  @override
+  String get documentSyncFailed => '同步失败';
+
+  @override
+  String get saveAsSeparateMarkdown => '请选择另一个尚未打开的 Markdown 文件。';
+
+  @override
   String get notesNewFromRetainedText => '从保留的文本新建笔记';
 
   @override
@@ -8743,6 +8838,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
+
+  @override
+  String get notesBatchDeleteHelp => 'BusyMark 会逐条检查并删除笔记。删除服务器上的现有笔记需要网络连接。';
+
+  @override
+  String get notesBatchDeleteHistoryFailed => 'BusyMark 无法将笔记记录到本地历史。该笔记已保留。';
+
+  @override
+  String get notesBatchDeleteUncertain => 'Nextcloud 未确认删除。请刷新并检查此笔记，然后重试。';
 
   @override
   String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
@@ -9099,7 +9203,8 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get aboutBusyMark => '关于 BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown 和 Writerside 编辑器';
+  String get aboutTagline =>
+      '用于处理 Markdown 文档、Nextcloud Notes 和 Writerside 项目的工作区。';
 
   @override
   String get aboutLicenseLabel => '许可证';
@@ -14134,7 +14239,8 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
 
   @override
-  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+  String get notesOfflineExternal =>
+      '外部媒体需要网络连接。BusyMark 会保留笔记文本和受支持的 Notes 附件。';
 
   @override
   String get notesEmptyAll => '还没有笔记。请新建一条笔记。';

@@ -157,6 +157,8 @@ enum NotesBatchReason {
   missing,
   storage,
   editorNotSaved,
+  historyNotSaved,
+  deletionUncertain,
   unavailable,
 }
 

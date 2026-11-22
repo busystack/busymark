@@ -11,6 +11,50 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get saveAsEllipsis => 'Guardar como…';
+
+  @override
+  String get shortcutSaveAsDescription =>
+      'Guardar el documento Markdown actual en otra ubicación';
+
+  @override
+  String get documentSaved => 'Guardado';
+
+  @override
+  String get documentModified => 'Modificado';
+
+  @override
+  String get documentSaving => 'Guardando…';
+
+  @override
+  String get documentNotSaved => 'Sin guardar';
+
+  @override
+  String get documentSaveFailed => 'Error al guardar';
+
+  @override
+  String get documentSaveConflict => 'Conflicto';
+
+  @override
+  String get documentFileMissing => 'Archivo no encontrado';
+
+  @override
+  String get documentSaveUnverified => 'Estado del archivo desconocido';
+
+  @override
+  String get documentSavedLocally => 'Guardado localmente';
+
+  @override
+  String get documentSyncPending => 'Sincronización pendiente';
+
+  @override
+  String get documentSyncFailed => 'Error de sincronización';
+
+  @override
+  String get saveAsSeparateMarkdown =>
+      'Elige un archivo Markdown distinto que no esté abierto.';
+
+  @override
   String get notesNewFromRetainedText => 'Nueva nota del texto conservado';
 
   @override
@@ -128,6 +172,18 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get notesBatchStorage =>
       'Falló el guardado local. Compruebe el almacenamiento y reintente este elemento; los correctos siguen guardados.';
+
+  @override
+  String get notesBatchDeleteHelp =>
+      'BusyMark comprueba y elimina cada nota por separado. Las notas existentes en el servidor requieren una conexión.';
+
+  @override
+  String get notesBatchDeleteHistoryFailed =>
+      'BusyMark no pudo guardar la nota en el Historial Local. La nota se conservó.';
+
+  @override
+  String get notesBatchDeleteUncertain =>
+      'Nextcloud no confirmó la eliminación. Actualice y revise esta nota antes de reintentar.';
 
   @override
   String get notesRemoteReviewChanged =>
@@ -506,7 +562,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aboutBusyMark => 'Acerca de BusyMark';
 
   @override
-  String get aboutTagline => 'Editor de Markdown y Writerside';
+  String get aboutTagline =>
+      'Espacio de trabajo para documentos Markdown, Nextcloud Notes y proyectos de Writerside.';
 
   @override
   String get aboutLicenseLabel => 'Licencia';
@@ -5816,7 +5873,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notesOfflineExternal =>
-      'El contenido multimedia externo necesita conexión. BusyMark solo conserva el texto y los adjuntos gestionados.';
+      'El contenido multimedia externo necesita conexión. BusyMark conserva el texto de las notas y los adjuntos de Notes compatibles.';
 
   @override
   String get notesEmptyAll => 'Aún no hay notas. Cree una para empezar.';

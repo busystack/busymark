@@ -32,6 +32,19 @@ content before closing. Frame callbacks confirm raster activity; video checks
 require changing decoded frames. The pending-initialization case requires
 `visualization-shutdown initPending=1`, using a harness that withholds readiness.
 
+The Save command and status regressions in `test/src/app_smoke_test.dart`
+exercise the effective keymap, Main menu, Actions, destination authorization
+and both Auto Save settings. The window-close cases hold the first publication
+to verify that the same close attempt saves two untitled documents and that a
+later edit to the second draft vetoes that attempt.
+
+Save progress and failure are scoped to the buffer opening, captured revision,
+format and destination observation. The status bar reads those observations
+with the existing disk baseline, property session and Notes repository.
+Public Save As uses the relocation path for standalone Markdown, publishes a
+separate file for Writerside Markdown and uses the managed attachment exporter
+for Notes. The chooser and recovery flows retain their original save intent.
+
 The `window-controls` scenario also tests Yaru maximize, restore, minimize, close
 and titlebar dragging. It requires a window manager and the explicit
 `--disposable-display` option because it injects pointer input.
