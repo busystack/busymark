@@ -114,6 +114,15 @@ import '../support/spelling_test_bundle.dart';
 import '../support/widget_async.dart';
 import '../support/shared_git_read_fixture.dart';
 
+// Flutter's byTooltip only checks the SDK Tooltip when semantics are excluded.
+Finder _findExcludedTooltip(String message) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Tooltip &&
+      widget.excludeFromSemantics == true &&
+      widget.message == message,
+  description: 'Tooltip with excluded semantics and message "$message"',
+);
+
 void main() {
   final l10n = AppLocalizationsEn();
 
@@ -3663,7 +3672,7 @@ void main() {
       l10n.settingsMebibytesValue(512),
     );
 
-    await tester.tap(find.byTooltip(l10n.settingsHistoryCheckpoint));
+    await tester.tap(_findExcludedTooltip(l10n.settingsHistoryCheckpoint));
     await tester.pumpAndSettle();
     for (final choice in [30, 60, 120, 300, 600]) {
       expect(find.text(l10n.settingsSecondsValue(choice)), findsWidgets);
@@ -20022,7 +20031,10 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       expect(find.textContaining(source), findsNothing);
       expect(tester.getSize(image).height, lessThan(60));
       expect(find.byIcon(BusyMarkGlyphs.downArrow), findsNothing);
-      expect(find.byTooltip(l10n.remoteImageBlockedTooltip), findsOneWidget);
+      expect(
+        _findExcludedTooltip(l10n.remoteImageBlockedTooltip),
+        findsOneWidget,
+      );
       expect(
         find.bySemanticsLabel('${l10n.remoteImageBlocked}\n$alt\n$source'),
         findsOneWidget,
