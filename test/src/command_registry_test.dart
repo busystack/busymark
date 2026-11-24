@@ -6,8 +6,8 @@ import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/search/search_session.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:busymark/src/app/localization.dart';
 
 void main() {
   testWidgets(
@@ -16,7 +16,7 @@ void main() {
       late BuildContext context;
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Builder(
             builder: (c) {

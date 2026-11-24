@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/save_destination.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -16,7 +16,7 @@ import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
 import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -382,7 +382,7 @@ Widget _harness(
       writersidePdfExportServiceProvider.overrideWithValue(writerside),
   ],
   child: MaterialApp(
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: busyMarkLocalizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     theme: buildBusyMarkTheme(
       brightness: Brightness.light,

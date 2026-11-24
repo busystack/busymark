@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
@@ -18,7 +18,7 @@ Widget harness(
   Brightness brightness = Brightness.light,
 }) => MaterialApp(
   locale: Locale(locale),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: busyMarkLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   theme: buildBusyMarkTheme(
     brightness: brightness,

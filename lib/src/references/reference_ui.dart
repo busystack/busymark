@@ -3,7 +3,7 @@ import 'package:yaru/yaru.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../app/busymark_native_controls.dart';
 import '../editor/link_destination.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 

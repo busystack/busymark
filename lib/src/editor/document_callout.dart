@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';

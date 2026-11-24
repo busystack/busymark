@@ -12,15 +12,13 @@ import '../core/debug_log.dart';
 import '../editor/editor_text_context_menu.dart';
 
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ubuntu_localizations/ubuntu_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 
-import '../../l10n/generated/app_localizations.dart';
+import 'localization.dart';
 import '../export/workspace_export_ui.dart';
 import '../clipboard/clipboard_history_controller.dart';
 import '../git/application/git_controller.dart';
@@ -359,13 +357,7 @@ class BusyMarkApp extends ConsumerWidget {
       themeMode: settings.themeMode,
       locale: settings.locale,
       localeListResolutionCallback: resolveBusyMarkLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        ...GlobalUbuntuLocalizations.delegates,
-      ],
+      localizationsDelegates: busyMarkLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
         final commandRegistry = ref.watch(busyMarkCommandRegistryProvider);

@@ -2,7 +2,7 @@
 // Flutter's traditional highlight mode includes mouse input. Track modality
 // separately without changing focus ownership, traversal, or global strategy.
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 

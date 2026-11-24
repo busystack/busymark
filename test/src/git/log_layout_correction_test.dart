@@ -5,7 +5,7 @@ import 'package:busymark/src/app/linux/linux_header_style.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'package:busystack_git_flutter/src/historical_change_tree.dart'
     show GitHistoricalChangeTree;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import '../../../../busystack_git_flutter/test/support/presentation_fixture.dart'
     show FixtureClient;

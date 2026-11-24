@@ -2,7 +2,7 @@ import 'dart:async';
 
 import '../app/git_dismissal.dart';
 import '../git/application/shared_git_tabs.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../local_history/local_history_controller.dart';

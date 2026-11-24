@@ -5,7 +5,7 @@ import 'package:busymark/src/app/linux/linux_header_style.dart';
 import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/app/linux/linux_window_host.dart';
 import 'package:busymark/src/platform/gtk_window_preferences_service.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 

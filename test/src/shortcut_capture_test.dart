@@ -1,6 +1,6 @@
 import 'package:busymark/src/app/shortcut_binding.dart';
 import 'package:busymark/src/app/shortcut_capture.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 

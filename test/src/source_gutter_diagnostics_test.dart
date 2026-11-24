@@ -6,7 +6,7 @@ import 'package:busymark/src/editor/source/source_gutter.dart';
 import 'package:busymark/src/editor/source/source_hidden_ranges.dart';
 import 'package:busymark/src/editor/source_highlighter.dart';
 import 'package:busymark/src/editor/source_folding.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

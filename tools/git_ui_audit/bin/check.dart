@@ -133,9 +133,16 @@ class _NativeReferences extends RecursiveAstVisitor<void> {
                         element.name != 'native'))) {
       violations[node.offset] = 'Git requires the native menu path: $name';
     }
-    if (!library.startsWith('package:flutter/') && library != 'dart:ui') return;
+    final fromMaterial =
+        library.startsWith('package:material_ui/') ||
+        library.startsWith('package:flutter/src/material/');
+    if (!fromMaterial &&
+        !library.startsWith('package:flutter/') &&
+        library != 'dart:ui') {
+      return;
+    }
     final materialWidget =
-        library.startsWith('package:flutter/src/material/') &&
+        fromMaterial &&
         owner is InterfaceElement &&
         owner.allSupertypes.any(
           (type) =>
@@ -221,8 +228,9 @@ Future<void> selfTest(Directory mark) async {
   final temp = Directory.systemTemp.createTempSync('git-workspace-audit-');
   try {
     Directory('${temp.path}/.dart_tool').createSync();
-    File('${temp.path}/.dart_tool/package_config.json')
-        .writeAsStringSync(jsonEncode(config));
+    File(
+      '${temp.path}/.dart_tool/package_config.json',
+    ).writeAsStringSync(jsonEncode(config));
     final design = File('${temp.path}/lib/src/app/busymark_design.dart');
     design.parent.createSync(recursive: true);
     design.writeAsStringSync('''
@@ -235,31 +243,35 @@ class BusyMarkCompactIconButton { const BusyMarkCompactIconButton(); }
 ''');
     final examples = <(String, bool)>[
       (
+        "import 'package:flutter/material.dart' as legacy; Object makeGit() => legacy.TextField();",
+        false,
+      ),
+      (
         "import 'lib/src/app/busymark_design.dart' as native; typedef Hidden = native.BusyMarkCompactIconButton; Object makeGit() => Hidden.new;",
         false,
       ),
       (
-        "import 'package:flutter/material.dart' as m; Object makeGit() => m.showDialog;",
+        "import 'package:material_ui/material_ui.dart' as m; Object makeGit() => m.showDialog;",
         false,
       ),
       (
-        "import 'package:flutter/material.dart' as m; Object makeGit() => m.TextField();",
+        "import 'package:material_ui/material_ui.dart' as m; Object makeGit() => m.TextField();",
         false,
       ),
       (
-        "import 'package:flutter/material.dart' as m; typedef Hidden = m.FilledButton; Object makeGit() => Hidden.new;",
+        "import 'package:material_ui/material_ui.dart' as m; typedef Hidden = m.FilledButton; Object makeGit() => Hidden.new;",
         false,
       ),
       (
-        "import 'package:flutter/material.dart' as m; Object makeGit() => m.Colors.purple;",
+        "import 'package:material_ui/material_ui.dart' as m; Object makeGit() => m.Colors.purple;",
         false,
       ),
       (
-        "import 'package:flutter/material.dart' as m; enum _SidebarTab {git, files} Object mixed(_SidebarTab t) => t == _SidebarTab.git ? m.Checkbox(value:false,onChanged:(_){}) : m.Text('legacy');",
+        "import 'package:material_ui/material_ui.dart' as m; enum _SidebarTab {git, files} Object mixed(_SidebarTab t) => t == _SidebarTab.git ? m.Checkbox(value:false,onChanged:(_){}) : m.Text('legacy');",
         false,
       ),
       (
-        "import 'package:flutter/material.dart' as m; enum WorkspaceTabKind {gitDiff, file} Object mixed(WorkspaceTabKind t) { return switch(t) {WorkspaceTabKind.gitDiff => m.SearchBar(), _=>m.Text('legacy')}; }",
+        "import 'package:material_ui/material_ui.dart' as m; enum WorkspaceTabKind {gitDiff, file} Object mixed(WorkspaceTabKind t) { return switch(t) {WorkspaceTabKind.gitDiff => m.SearchBar(), _=>m.Text('legacy')}; }",
         false,
       ),
       (
@@ -275,7 +287,7 @@ class BusyMarkCompactIconButton { const BusyMarkCompactIconButton(); }
         true,
       ),
       (
-        "import 'package:flutter/material.dart' as m; enum _SidebarTab {git, files} Object mixed(_SidebarTab t) => t == _SidebarTab.git ? m.Text('native text') : m.TextField();",
+        "import 'package:material_ui/material_ui.dart' as m; enum _SidebarTab {git, files} Object mixed(_SidebarTab t) => t == _SidebarTab.git ? m.Text('native text') : m.TextField();",
         true,
       ),
     ];

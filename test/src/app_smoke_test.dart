@@ -22,7 +22,7 @@ import 'package:busymark/src/editor/wysiwyg/writerside_property_session.dart';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -100,7 +100,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19954,7 +19954,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
@@ -19988,7 +19988,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     try {
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Align(
@@ -20065,7 +20065,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
@@ -20111,7 +20111,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
@@ -20163,7 +20163,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(
             body: MarkdownImageView(
@@ -20203,7 +20203,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
@@ -20247,7 +20247,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
@@ -20297,7 +20297,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
@@ -20374,7 +20374,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: DefaultTextStyle.merge(

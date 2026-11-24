@@ -249,7 +249,7 @@ Future<void> selfTest(Directory mark) async {
           ? 'class _BusyMarkSidebarRecordRowState extends StatelessWidget { @override Widget build(BuildContext context) => ${entry.value.$1}; }'
           : 'Widget probe(BuildContext context) => ${entry.value.$1};';
       file.writeAsStringSync(
-        "import 'package:flutter/material.dart' show PopupMenuEntry; import 'package:flutter/widgets.dart'; import 'package:busymark/src/app/busymark_design.dart' as native; import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git; typedef Action = native.BusyMarkCompactIconButton; const nativeIcon = IconData(1,fontFamily:'YaruIcons'); $declaration",
+        "import 'package:material_ui/material_ui.dart' show PopupMenuEntry; import 'package:flutter/widgets.dart'; import 'package:busymark/src/app/busymark_design.dart' as native; import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git; typedef Action = native.BusyMarkCompactIconButton; const nativeIcon = IconData(1,fontFamily:'YaruIcons'); $declaration",
       );
       files.add(file);
     }
@@ -284,12 +284,14 @@ Future<void> selfTest(Directory mark) async {
 Future<void> main(List<String> args) async {
   final mark = args.contains('--root')
       ? Directory(
-          Directory(args[args.indexOf('--root') + 1])
-              .resolveSymbolicLinksSync(),
+          Directory(
+            args[args.indexOf('--root') + 1],
+          ).resolveSymbolicLinksSync(),
         )
       : Directory(
-          Directory.fromUri(Platform.script.resolve('../../../'))
-              .resolveSymbolicLinksSync(),
+          Directory.fromUri(
+            Platform.script.resolve('../../../'),
+          ).resolveSymbolicLinksSync(),
         );
   if (args.contains('--self-test')) return selfTest(mark);
   final shared = Directory('${mark.parent.path}/busystack_git_flutter');

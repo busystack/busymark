@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
@@ -7,7 +7,7 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/export/export_options.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,7 +19,7 @@ void main() {
     late BuildContext hostContext;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.light,
@@ -57,7 +57,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const Scaffold(
           body: ExportOptionsDialog(
@@ -100,7 +100,7 @@ void main() {
                 localSettingsStoreProvider.overrideWithValue(settings),
               ],
               child: MaterialApp(
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                localizationsDelegates: busyMarkLocalizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
                 theme: buildBusyMarkTheme(
                   brightness: Brightness.light,
@@ -225,7 +225,7 @@ void main() {
       ProviderScope(
         overrides: [localSettingsStoreProvider.overrideWithValue(settings)],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -276,7 +276,7 @@ void main() {
       var value = const PdfExportOptions();
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: StatefulBuilder(
@@ -341,7 +341,7 @@ void main() {
       ProviderScope(
         overrides: [localSettingsStoreProvider.overrideWithValue(settings)],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Consumer(
