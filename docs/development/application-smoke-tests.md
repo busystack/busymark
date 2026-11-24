@@ -54,6 +54,18 @@ machine through its ordinary strict launcher and enforced AppArmor label. Use
 the normal systemd user-session bus. Standalone checks can use a private D-Bus
 session. Keep WebKit sandboxing and ordinary graphics settings enabled.
 
+Complete ordinary strict Snap product checks before enabling experimental
+parallel installations. If the setting was changed after a snap ran, restart
+the disposable machine to recreate the mount namespaces.
+For a local package, verify the artifact checksum, install with
+`sudo snap install --dangerous /path/to/busymark.snap`, and compare the installed
+runner, `libapp.so` and engine to the package. Run `tools/snap_product_smoke.py`
+from the disposable desktop session with the instance name, smoke kind, backend,
+a fresh result directory under the instance's `common` data, and
+`--expected-engine` pointing to the official release SDK library. The receipt
+records the observed paths and checks device and inode against the installed
+instance because snapd remaps paths inside parallel instances.
+
 `tools/owned_processes.py` and `tools/run_owned_fixture.py` are also used by
 History and browser regressions. Each supervisor owns a dedicated child tree;
 PID/start-time checks and held descriptors prevent signalling reused or unrelated

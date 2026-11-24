@@ -681,6 +681,13 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
         self.assertEqual(len(setup), 1, 'Parallel-instance setup must be a shared step')
         setup = setup[0]
         self.assertNotIn('continue-on-error', setup)
+        ordinary = [
+            step for step in steps
+            if re.search(r'\bsnap run (?:--shell )?busymark\b(?!_)', step.get('run', ''))
+        ]
+        self.assertTrue(ordinary)
+        for step in ordinary:
+            self.assertLess(steps.index(step), steps.index(setup), step['name'])
         prerequisite = f"steps.{setup['id']}.outcome == 'success'"
         installs = [step for step in steps
                     if re.search(r'\bsnap install\b[^\n]*--name=', step.get('run', ''))]
