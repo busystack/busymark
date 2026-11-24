@@ -726,6 +726,7 @@ def main():
             except subprocess.TimeoutExpired:
                 process.terminate()
                 process.wait(timeout=10)
+        receipt['exitCode'] = process.returncode
         if daemon is not None:
             if daemon.poll() is None: daemon.terminate()
             receipt['daemonExitCode'] = daemon.wait(timeout=15)

@@ -1,6 +1,11 @@
 # Linux development with official Flutter
 
-Use the official Flutter SDK pinned in `pubspec.yaml` (3.47.5) on `PATH`.
+Use the official Flutter 3.50.1 SDK with Dart 3.14.0, as pinned in
+`pubspec.yaml`, on `PATH`. The framework revision is
+`ae9b586f34a8443573f82ef57c3bf914a908cbf7` and the engine revision is
+`4d35714800b9266b6693a58e1225ecd7e9e45ed7`.
+The Flutter pin selects the bundled Dart toolchain. The minimum Dart constraint
+in `pubspec.yaml` preserves BusyMark's Dart 3.12 language version.
 BusyMark does not build or select a custom engine or GTK runtime.
 
 ```sh
@@ -47,6 +52,13 @@ generated plugin build. No local plugin source preparation is required.
 Compiled window, document and media checks exercise the actual application;
 runtime shutdown failures still fail native release acceptance. A disappearing
 window or forced cleanup is not successful natural shutdown.
+
+The v0.7.4 release investigation reproduced
+`g_mutex_clear() called on uninitialised or locked mutex` on the official
+Flutter 3.50.1 Linux release engine under X11. The debugger captured `SIGABRT`
+from the engine's call to `g_mutex_clear()`. The mapped engine SHA-256 was
+`8fc5c4ee6a20215f54c332c7b8910c482434247e451f24cfd7d3225f0a28066b`.
+The shutdown failure remains a release blocker.
 
 Startup resolves the GTK accent or its portal fallback before building the UI,
 using the existing readiness deadline. A valid GTK accent does not wait for the

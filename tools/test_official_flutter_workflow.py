@@ -32,6 +32,8 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         self.assertEqual((url.scheme, url.netloc), ('https', 'storage.googleapis.com'))
         match = re.fullmatch(r'/flutter_infra_release/releases/stable/linux/flutter_linux_(\d+\.\d+\.\d+)-stable.tar.xz', url.path)
         self.assertIsNotNone(match)
+        project = yaml.safe_load((ROOT / 'pubspec.yaml').read_text())
+        self.assertEqual(project['environment']['flutter'], match[1])
         self.assertRegex(sdk['source-checksum'], r'^sha256/[a-f0-9]{64}$')
         selections = [s['with'] for workflow in [self.workflow, self.native] for job in workflow['jobs'].values()
                       for s in job.get('steps', []) if s.get('uses', '').startswith('subosito/flutter-action@')]
@@ -165,7 +167,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 env = {key: value for key, value in os.environ.items()
                        if not key.startswith('BUSYMARK_')}
                 env.update(PATH=str(spy.parent) + ':/usr/bin:/bin', HOME=str(root),
-                           BUILD_CALLS=str(calls), SPY_VERSION='0.0.0' if case == 'wrong-version' else '3.47.5',
+                           BUILD_CALLS=str(calls), SPY_VERSION='0.0.0' if case == 'wrong-version' else '3.50.1',
                            BUSYMARK_BUILD_TMP_ROOT=str(root / 'tmp'))
                 if case != 'default':
                     env['BUSYMARK_FLUTTER_BIN'] = {
@@ -182,7 +184,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 if case in ['missing', 'nonexecutable', 'wrong-version']:
                     self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
                     self.assertEqual(observed, [['--version', '--machine']] if case == 'wrong-version' else [])
-                    self.assertIn('official Flutter 3.47.5', result.stderr)
+                    self.assertIn('official Flutter 3.50.1', result.stderr)
                 else:
                     self.assertEqual(result.returncode, 77, result.stdout + result.stderr)
                     self.assertEqual(observed, [['--version', '--machine'], ['pub', 'get', '--enforce-lockfile']])

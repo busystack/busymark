@@ -44,8 +44,8 @@ for filesystem and Git-integration details.
 
 ## Run from source
 
-BusyMark currently uses Flutter 3.47.5. Install the Linux packages required by
-Flutter and BusyMark's CMake configuration:
+BusyMark uses Flutter 3.50.1 with its bundled Dart 3.14.0. Install the Linux
+packages required by Flutter and BusyMark's CMake configuration:
 
 ```bash
 sudo apt-get install -y \
@@ -144,7 +144,7 @@ import to match exactly.
 checks catalog coverage and named values without translating repository data.
 
 Linux development and packaging use the official Flutter SDK version pinned in
-`pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
+`pubspec.yaml` (currently 3.50.1).
 See [Linux development](docs/development/linux-engine.md) for build modes and
 [compiled application checks](docs/development/application-smoke-tests.md) for
 native and document regression commands. A successful widget suite or build

@@ -106,7 +106,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.47.5'
+          flutter-version: '3.50.1'
           cache: true
 
       - name: Enable Linux desktop
@@ -137,6 +137,12 @@ jobs:
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         working-directory: ../busystack_git_flutter
         run: |
+          # Keep the archive shared with other consumers intact. Only this
+          # SDK's standalone test resolution needs the two lockfile changes.
+          original_lock=$(mktemp)
+          cp pubspec.lock "$original_lock"
+          trap 'mv -- "$original_lock" pubspec.lock' EXIT
+          patch --batch --forward --fuzz=0 pubspec.lock "$GITHUB_WORKSPACE/tool/shared_git_flutter_sdk_lock.patch"
           flutter pub get --enforce-lockfile
           dart run tool/test_native_presentation_audit.dart
           dart run tool/check_native_presentation.dart lib/src ../busymark/lib/src/git \
