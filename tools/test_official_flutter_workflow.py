@@ -10,6 +10,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from urllib.parse import urlparse
@@ -17,6 +18,8 @@ from urllib.parse import urlparse
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / 'tools'))
+from native_shutdown import FLUTTER_VERSION, XFAIL_FLAG
 
 
 class OfficialFlutterWorkflowTest(unittest.TestCase):
@@ -54,6 +57,21 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             library.write_bytes(b'\x7fELFowned official-payload control')
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
+
+    def test_shutdown_exception_requires_reassessment_on_flutter_upgrade(self):
+        jobs = [job for workflow in (self.workflow, self.native) for job in workflow['jobs'].values()]
+        opted_in = [step for job in jobs for step in job.get('steps', [])
+                    if XFAIL_FLAG in step.get('run', '')]
+        self.assertEqual(len(opted_in), 5)
+        for step in opted_in:
+            script = step['run']
+            self.assertTrue(any(tool in script for tool in (
+                'tools/application_close_smoke.py', 'tools/git_native_smoke.py')))
+            self.assertNotIn('matrix.mode', script)
+            self.assertNotIn('continue-on-error', step)
+        project = yaml.safe_load((ROOT / 'pubspec.yaml').read_text())
+        self.assertEqual(project['environment']['flutter'], FLUTTER_VERSION,
+                         'Reassess the BusyMark Linux shutdown exception on every Flutter upgrade')
 
     def test_snap_declares_both_packaged_pinentry_frontends(self):
         packages = set(self.recipe['parts']['busymark']['stage-packages'])

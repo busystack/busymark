@@ -3,12 +3,16 @@
 Use the official pinned Flutter SDK and a disposable desktop with isolated
 profiles. Never install test builds over an existing application.
 
-`tools/application_close_smoke.py` requires natural process exit, durable clean
-shutdown and verified descendant retirement. A Dart checkpoint, disappearing
-window or forced cleanup does not pass. It identifies only the launched
+`tools/application_close_smoke.py` checks the native exit status, durable clean
+shutdown and verified descendant retirement. It identifies only the launched
 application's window and records failed prerequisites and native exits.
 `--expected-engine` accepts the actual official `libflutter_linux_gtk.so` and
 verifies its mapped inode, device and bytes through retained descriptors.
+Release CI enables the [Flutter 3.50.1 shutdown exception](linux-engine.md).
+Local runs can opt in with `--xfail-flutter-3.50.1-shutdown` and the verified
+release engine. Each matrix writes the PASS, XFAIL and FAIL totals to
+`summary.json` and the GitHub Actions step summary. Individual case receipts
+retain process status, and the application logs remain in their case directories.
 
 ```sh
 python3 tools/application_close_smoke.py \

@@ -225,7 +225,10 @@ jobs:
 
       - name: Capture production Git native presentation matrix
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: /usr/bin/python3 tools/git_native_smoke.py build/linux/x64/release/bundle/busymark build/git-native-acceptance
+        run: |
+          /usr/bin/python3 tools/git_native_smoke.py \
+            build/linux/x64/release/bundle/busymark build/git-native-acceptance \
+            --xfail-flutter-3.50.1-shutdown
 
       - name: Preserve native Git acceptance evidence
         if: always()

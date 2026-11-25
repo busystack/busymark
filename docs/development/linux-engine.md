@@ -50,15 +50,32 @@ A widget-suite pass does not validate the GTK embedder.
 Yaru uses the unmodified dependencies in `pubspec.lock` through Flutter's
 generated plugin build. No local plugin source preparation is required.
 Compiled window, document and media checks exercise the actual application;
-runtime shutdown failures still fail native release acceptance. A disappearing
-window or forced cleanup is not successful natural shutdown.
+the native runners report PASS, XFAIL and FAIL separately.
 
 The v0.7.4 release investigation reproduced
 `g_mutex_clear() called on uninitialised or locked mutex` on the official
 Flutter 3.50.1 Linux release engine under X11. The debugger captured `SIGABRT`
 from the engine's call to `g_mutex_clear()`. The mapped engine SHA-256 was
 `8fc5c4ee6a20215f54c332c7b8910c482434247e451f24cfd7d3225f0a28066b`.
-The shutdown failure remains a release blocker.
+See the [related Linux shutdown report in Flutter issue #189379](https://github.com/flutter/flutter/issues/189379).
+
+BusyMark Linux x64 acceptance can explicitly enable
+`--xfail-flutter-3.50.1-shutdown` for this release engine. XFAIL requires a
+verified BusyMark process, all scenario assertions, a normal close request,
+a fresh durable clean-shutdown checkpoint, and the exact diagnostic in the
+case's application log. The process must report SIGABRT with wait status
+`-6`. Integrity, confinement where applicable, process observation, and
+cleanup must all succeed without a timeout or forced termination. The receipt
+preserves the exit status and sets `naturalExit` to false. The matrix continues,
+including required document-reopen runs. Missing evidence, other signals, and
+other diagnostics fail the gate.
+
+Debug and profile builds, BusyFiles, and the product probes that use Dart
+`exit()` retain their strict checks. CI checks the version pin and the exact
+engine hash. On every Flutter upgrade, explicitly reassess the exception using
+the affected native shutdown cases with the flag disabled. Remove the flag and
+policy when the official replacement passes those cases. Any exception for a
+different artifact requires separate evidence and review.
 
 Startup resolves the GTK accent or its portal fallback before building the UI,
 using the existing readiness deadline. A valid GTK accent does not wait for the

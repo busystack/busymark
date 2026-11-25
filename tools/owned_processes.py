@@ -162,9 +162,17 @@ class ChildTracker:
     Linux subreaper state changes only this observer. No other child may exist
     at entry, so children adopted after the application starts belong to this
     case. This closes the parent-exits-between-polls observation gap.
+    A dedicated X server may already be a child, with its identity verified.
     """
-    def __init__(self):
-        if process_children(os.getpid()):
+    def __init__(self, *, desktop_server=None):
+        existing = process_children(os.getpid())
+        self.desktop_server = None
+        if desktop_server is not None and desktop_server in existing:
+            stamp = identity(desktop_server)
+            if stamp is not None:
+                self.desktop_server = (desktop_server, stamp)
+                existing = [pid for pid in existing if pid != desktop_server]
+        if existing or (desktop_server is not None and self.desktop_server is None):
             raise ObservationIncomplete('Observer already has children; ownership would be ambiguous')
         self.libc = C.CDLL(None, use_errno=True)
         previous = C.c_int()
@@ -186,7 +194,12 @@ class ChildTracker:
         # A successful read here discovers descendants even if their parent
         # exited before its first snapshot or a helper started a new session.
         try:
-            pending.extend((pid, os.getpid(), None) for pid in process_children(os.getpid()))
+            for pid in process_children(os.getpid()):
+                if self.desktop_server and pid == self.desktop_server[0]:
+                    if identity(pid) != self.desktop_server[1]:
+                        self.errors.append('Desktop server identity changed during application observation')
+                    continue
+                pending.append((pid, os.getpid(), None))
         except ObservationIncomplete as error:
             self.errors.append(str(error))
         visited = set()

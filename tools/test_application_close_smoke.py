@@ -1,6 +1,8 @@
 import json
 import hashlib
 import os
+import shutil
+import signal
 import subprocess
 from pathlib import Path
 import re
@@ -16,8 +18,50 @@ import ctypes as C
 
 sys.path.insert(0, str(Path(__file__).parent))
 from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, accepted, run_case, snap_command
+from native_shutdown import DIAGNOSTIC, RELEASE_ENGINE_SHA256, XFAIL_FLAG, classify
 from owned_processes import ObservationIncomplete, ProcessHandle, process_children, signal_owned
 import owned_processes as owned
+
+
+class ShutdownOutcomeTest(unittest.TestCase):
+    def test_only_verified_busy_mark_shutdown_is_expected(self):
+        evidence = {
+            'exitCode': -signal.SIGABRT, 'forcedTermination': False, 'timedOut': False,
+            'normalShutdownRequested': True, 'verifiedApplicationProcess': True,
+            'functionalChecksPassed': True, 'durableCleanShutdown': True,
+            'loadedEngine': {'sha256': RELEASE_ENGINE_SHA256, 'expectedSHA256': RELEASE_ENGINE_SHA256},
+        }
+        arguments = dict(enabled=True, host='busymark', checks_passed=True,
+                         application_log=f'GTK output\n{DIAGNOSTIC}\n')
+        record = dict(evidence)
+        self.assertEqual(classify(record, **arguments), 'XFAIL')
+        self.assertFalse(record['naturalExit'])
+        self.assertEqual(record['exitCode'], -signal.SIGABRT)
+
+        for field, value in [
+            ('exitCode', -signal.SIGSEGV), ('exitCode', 134), ('exitCode', None),
+            ('normalShutdownRequested', None), ('verifiedApplicationProcess', None),
+            ('functionalChecksPassed', False), ('durableCleanShutdown', None),
+            ('forcedTermination', True), ('forcedTermination', None), ('timedOut', True),
+            ('loadedEngine', {}), ('loadedEngine', {'sha256': 'bad', 'expectedSHA256': 'bad'}),
+            ('loadedEngine', {'sha256': RELEASE_ENGINE_SHA256, 'expectedSHA256': 'bad'}),
+        ]:
+            with self.subTest(field=field, value=value):
+                record = dict(evidence, **{field: value})
+                self.assertEqual(classify(record, **arguments), 'FAIL')
+                self.assertFalse(record['naturalExit'])
+        for change in [
+            {'enabled': False}, {'host': 'busyfiles'}, {'checks_passed': False},
+            {'application_log': ''}, {'application_log': f'quoted {DIAGNOSTIC}'},
+            {'application_log': f'{DIAGNOSTIC} but then something else'},
+        ]:
+            with self.subTest(change=change):
+                self.assertEqual(classify(dict(evidence), **(arguments | change)), 'FAIL')
+
+        record = dict(evidence, exitCode=0)
+        self.assertEqual(classify(record, **arguments), 'PASS')
+        self.assertTrue(record['naturalExit'])
+        self.assertNotIn('expectedFailure', record)
 
 
 class LaunchLifetimeTest(unittest.TestCase):
@@ -306,6 +350,85 @@ class LoadedEngineAcceptanceTest(unittest.TestCase):
             probe.finish({'exitCode': 0}, errors)
             self.assertIn('incomplete', errors[0])
 
+    def test_matrix_keeps_reopen_and_later_case_and_rejects_other_signals(self):
+        import application_close_smoke as smoke
+
+        source = r"""
+import ctypes, json, os, pathlib, resource, signal, sys, time
+resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+ctypes.CDLL(sys.argv[1])
+report, scenario = pathlib.Path(sys.argv[4]), sys.argv[5]
+mode = sys.argv[3]
+support = pathlib.Path(os.environ['XDG_DATA_HOME']) / 'io.busystack.busymark'
+support.mkdir(parents=True, exist_ok=True)
+checks = dict(phase='close-requested', scenario=scenario, pid=os.getpid(),
+              readyFrameNumber=0, timedFrameNumbersAfterReady=[1, 2],
+              applicationSupport=str(support))
+if scenario == 'dirty-save':
+    doc = support / 'saved.md'
+    doc.write_text('persisted edit')
+    checks.update(document=str(doc), expectedText='persisted edit', editedTextActiveBeforeClose=True)
+    if mode == 'incomplete-function':
+        del checks['editedTextActiveBeforeClose']
+elif scenario == 'reopen':
+    doc = pathlib.Path(sys.argv[6])
+    checks.update(document=str(doc), reopenedContentVerified=doc.read_text() == 'persisted edit')
+    if mode == 'broken-reopen':
+        doc.write_text('lost edit after reopening')
+if scenario != 'dirty-save' or mode != 'missing-recovery':
+    (support / 'recovery.json').write_text(json.dumps({'cleanShutdown': True}))
+report.write_text(json.dumps(checks))
+time.sleep(.3)
+if scenario == 'dirty-save':
+    def crash(number):
+        print(sys.argv[2], flush=True)
+        ctypes.CDLL(None).prctl(4, 0, 0, 0, 0)
+        os.kill(os.getpid(), number)
+    if mode == 'forced':
+        signal.signal(signal.SIGTERM, lambda *_: crash(signal.SIGABRT))
+        time.sleep(30)
+    crash(signal.SIGSEGV if mode == 'SIGSEGV' else signal.SIGABRT)
+"""
+        for mode, expected in [
+            ('SIGABRT', ['XFAIL', 'PASS', 'PASS']),
+            ('SIGSEGV', ['FAIL', 'PASS']),
+            ('missing-recovery', ['FAIL', 'PASS']),
+            ('incomplete-function', ['FAIL', 'PASS']),
+            ('forced', ['FAIL', 'PASS']),
+            ('broken-reopen', ['XFAIL', 'FAIL', 'PASS']),
+        ]:
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                library = root / 'libflutter_linux_gtk.so'
+                library.write_bytes(self.library_bytes)
+                app = root / 'busymark'
+                shutil.copy2(Path(sys.executable).resolve(), app)
+                cli = ['application_close_smoke.py', '--output', str(root / 'matrix'),
+                       '--timeout', '5',
+                       '--scenarios', 'dirty-save', 'plain', '--expected-engine', str(library),
+                       XFAIL_FLAG, '--', str(app), '-c', source, str(library), DIAGNOSTIC, mode]
+                step_summary = root / 'ci-summary.md'
+                with (
+                    patch.object(sys, 'argv', cli),
+                    patch.dict(os.environ, GITHUB_STEP_SUMMARY=str(step_summary)),
+                    patch('native_shutdown.RELEASE_ENGINE_SHA256',
+                          hashlib.sha256(self.library_bytes).hexdigest()),
+                ):
+                    self.assertEqual(smoke.main(), int('FAIL' in expected))
+                summary = json.loads((root / 'matrix/summary.json').read_text())
+                self.assertEqual([r['outcome'] for r in summary['records']], expected)
+                closed = summary['records'][0]
+                self.assertEqual(closed['exitCode'], -signal.SIGSEGV if mode == 'SIGSEGV' else -signal.SIGABRT)
+                self.assertFalse(closed['naturalExit'])
+                self.assertIs(closed['forcedTermination'], mode == 'forced')
+                self.assertIn(f"{expected.count('XFAIL')} XFAIL", step_summary.read_text())
+                self.assertIn(f"{expected.count('FAIL')} FAIL", step_summary.read_text())
+                if mode == 'SIGABRT':
+                    self.assertEqual(summary['records'][1]['scenario'], 'reopen')
+                    self.assertTrue(summary['records'][1]['application']['reopenedContentVerified'])
+                if mode == 'broken-reopen':
+                    self.assertIn('differs from the verified saved file', summary['records'][1]['error'])
+
 
 class NaturalExitAcceptanceTest(unittest.TestCase):
     def test_confined_fixture_keeps_optin_after_launcher_environment_reset(self):
@@ -565,7 +688,8 @@ os._exit(0)
         import application_close_smoke
         with tempfile.TemporaryDirectory(prefix='bm-close-stop-') as tmp:
             output = str(Path(tmp) / 'evidence')
-            record = {'exitCode': 0, 'unresolvedSurvivors': [{'pid': 123, 'status': 'unavailable'}]}
+            record = {'exitCode': 0, 'outcome': 'FAIL',
+                      'unresolvedSurvivors': [{'pid': 123, 'status': 'unavailable'}]}
             with patch.object(sys, 'argv', ['close', '--output', output, '--cycles', '2', '--scenarios', 'plain', '--', 'unused']), patch.object(application_close_smoke, 'run_case', return_value=record) as run:
                 self.assertEqual(application_close_smoke.main(), 1)
                 self.assertEqual(run.call_count, 1)
@@ -580,7 +704,9 @@ os._exit(0)
             home = Path(tmp)
             root = home / 'snap/busymark_fixture/common/close'
             document = str(root.parent / 'document.md')
-            records = [{'exitCode': 0, 'application': {'document': document}}, {'exitCode': 0}]
+            records = [{'exitCode': 0, 'outcome': 'PASS',
+                        'application': {'document': document, 'expectedText': 'saved'}},
+                       {'exitCode': 0, 'outcome': 'PASS'}]
             args = ['close', '--output', str(root), '--scenarios', 'dirty-save',
                     '--snap-instance', 'busymark_fixture', '--snap-fixture',
                     '--expected-engine', str(home / 'libflutter_linux_gtk.so')]
@@ -596,7 +722,9 @@ os._exit(0)
 
     def test_hang_is_rejected_and_cleanup_is_explicit(self):
         record = self.run_inferior("time.sleep(30)", timeout=.3)
-        self.assertIsNone(record["exitCode"])
+        self.assertEqual(record['exitCode'], -signal.SIGTERM)
+        self.assertTrue(record['timedOut'])
+        self.assertTrue(record['forcedTermination'])
         self.assertIn("deadline", record["error"])
         self.assertTrue(record["cleanupRequired"])
         self.assertFalse(accepted(record))
