@@ -284,14 +284,12 @@ Future<void> selfTest(Directory mark) async {
 Future<void> main(List<String> args) async {
   final mark = args.contains('--root')
       ? Directory(
-          Directory(
-            args[args.indexOf('--root') + 1],
-          ).resolveSymbolicLinksSync(),
+          Directory(args[args.indexOf('--root') + 1])
+              .resolveSymbolicLinksSync(),
         )
       : Directory(
-          Directory.fromUri(
-            Platform.script.resolve('../../../'),
-          ).resolveSymbolicLinksSync(),
+          Directory.fromUri(Platform.script.resolve('../../../'))
+              .resolveSymbolicLinksSync(),
         );
   if (args.contains('--self-test')) return selfTest(mark);
   final shared = Directory('${mark.parent.path}/busystack_git_flutter');
