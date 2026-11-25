@@ -23,7 +23,9 @@ class TableGrid<T> {
     List<List<T>> rows,
     Map<String, String> Function(T) attributes,
   ) {
-    final occupied = <(int, int)>{};
+    // A span occupies a column until its last row. Keep one entry per column
+    // rather than allocating a Cartesian product of span coordinates.
+    final occupiedUntil = <int, int>{};
     final cells = <TableGridCell<T>>[];
     var columns = 0;
     for (var row = 0; row < rows.length; row++) {
@@ -40,15 +42,13 @@ class TableGrid<T> {
         );
         while (List.generate(
           colspan,
-          (index) => (row, column + index),
-        ).any(occupied.contains)) {
+          (index) => occupiedUntil[column + index] ?? 0,
+        ).any((end) => row < end)) {
           column++;
         }
         cells.add(TableGridCell(value, row, column, rowspan, colspan));
-        for (var y = row; y < row + rowspan; y++) {
-          for (var x = column; x < column + colspan; x++) {
-            occupied.add((y, x));
-          }
+        for (var x = column; x < column + colspan; x++) {
+          occupiedUntil[x] = row + rowspan;
         }
         column += colspan;
         if (column > columns) columns = column;

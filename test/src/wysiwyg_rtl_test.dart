@@ -95,6 +95,82 @@ void main() {
     expect(autoText.textDirection, TextDirection.rtl);
   });
 
+  testWidgets('raw HTML list text and markers render in DOM order', (
+    tester,
+  ) async {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              '<ul dir="auto"><li>Before<ul><li>Nested</li></ul>After</li></ul>'
+              '\n\n<ol type="A" reversed start="5"><li>Fifth</li>'
+              '<li value="2">Second</li><li>First</li></ol>',
+        )
+        .busyDocument;
+    final preview = const BusyMarkPreviewBuilder().buildBlocks(document);
+    expect(preview.first.children.single.children.map((b) => b.text), [
+      'Nested',
+      'After',
+    ]);
+    expect(preview.last.children.map((b) => b.attributes['marker']), [
+      'E.',
+      'B.',
+      'A.',
+    ]);
+    await _pumpEditor(tester, document);
+    final before = tester.getTopLeft(find.text('Before')).dy;
+    final nested = tester.getTopLeft(find.text('Nested')).dy;
+    final after = tester.getTopLeft(find.text('After')).dy;
+    expect(before, lessThan(nested));
+    expect(nested, lessThan(after));
+    for (final marker in ['E.', 'B.', 'A.']) {
+      expect(find.text(marker), findsOneWidget);
+    }
+  });
+
+  testWidgets('raw HTML table spans keep visible cell associations', (
+    tester,
+  ) async {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              '<table><tr><th colspan="2">Both</th></tr>'
+              '<tr><td rowspan="2">A</td><td>B</td></tr>'
+              '<tr><td>C</td></tr></table>',
+        )
+        .busyDocument;
+    await _pumpEditor(tester, document);
+    final both = tester.getRect(find.text('Both'));
+    final a = tester.getRect(find.text('A'));
+    final b = tester.getRect(find.text('B'));
+    final c = tester.getRect(find.text('C'));
+    expect(b.left, c.left);
+    expect(a.left, lessThan(c.left));
+    expect(b.top, lessThan(c.top));
+    expect(both.width, greaterThan(b.width));
+  });
+
+  testWidgets('neutral auto and isolated inline scope override inherited RTL', (
+    tester,
+  ) async {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              '<div dir="rtl"><p dir="auto">123</p>'
+              '<p><span dir="ltr">ABC !</span> אבג</p></div>',
+        )
+        .busyDocument;
+    await _pumpEditor(tester, document);
+    expect(
+      tester.widget<Text>(find.text('123')).textDirection,
+      TextDirection.ltr,
+    );
+    final inline = tester.widget<Text>(find.text('\u2066ABC !\u2069 אבג'));
+    expect(inline.textDirection, TextDirection.rtl);
+  });
+
   testWidgets('nested WYSIWYG blocks indent from the RTL start edge', (
     tester,
   ) async {

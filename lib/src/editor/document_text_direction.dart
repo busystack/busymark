@@ -31,3 +31,25 @@ TextDirection? _firstStrongTextDirection(String text) {
   }
   return null;
 }
+
+/// Inline HTML direction establishes a separate bidi scope inside a paragraph.
+({String open, String close})? busyMarkInlineDirectionControls(
+  Map<String, String> attributes,
+) {
+  final direction = attributes['dir'];
+  if (attributes['htmlTag'] == null || direction == null) return null;
+  if (attributes['htmlTag'] == 'bdo' && direction != 'auto') {
+    return (
+      open: direction == 'rtl' ? '\u2067\u202e' : '\u2066\u202d',
+      close: '\u202c\u2069',
+    );
+  }
+  return (
+    open: switch (direction) {
+      'ltr' => '\u2066',
+      'rtl' => '\u2067',
+      _ => '\u2068',
+    },
+    close: '\u2069',
+  );
+}

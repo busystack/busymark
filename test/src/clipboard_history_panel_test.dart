@@ -786,7 +786,8 @@ class _EmptyClipboard extends RichClipboardService {
     : super(channel: const MethodChannel('busymark.test/panel-clipboard'));
 
   @override
-  Future<RichClipboardData> read() async => const RichClipboardData();
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async =>
+      const RichClipboardData();
 }
 
 class _PanelClipboard extends RichClipboardService {
@@ -799,7 +800,7 @@ class _PanelClipboard extends RichClipboardService {
   int readCalls = 0;
 
   @override
-  Future<RichClipboardData> read() async {
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async {
     readCalls++;
     return value;
   }

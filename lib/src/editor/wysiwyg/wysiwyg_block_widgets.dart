@@ -18,6 +18,8 @@ import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
 import '../writerside_video_view.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/table_grid.dart';
+import '../../writerside/writerside_table_view.dart';
 import '../../math/math_widget.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
@@ -1062,9 +1064,13 @@ class _RenderedHtmlBlock extends StatelessWidget {
         ),
         child: _RenderedHtmlInlineText(
           block: block,
-          style: textTheme.bodyMedium?.copyWith(
-            height: BusyMarkTypography.bodyLineHeight,
-          ),
+          style:
+              (block.attributes['htmlTag'] == 'figcaption'
+                      ? textTheme.bodySmall?.copyWith(
+                          color: colors.mutedForeground,
+                        )
+                      : textTheme.bodyMedium)
+                  ?.copyWith(height: BusyMarkTypography.bodyLineHeight),
         ),
       ),
       BusyBlockKind.image => Padding(
@@ -1116,7 +1122,18 @@ class _RenderedHtmlBlock extends StatelessWidget {
                 allowRemoteImages: allowRemoteImages,
               ),
       ),
-      BusyBlockKind.table => _RenderedHtmlTable(block: block, first: first),
+      BusyBlockKind.table => _RenderedHtmlTable(
+        block: block,
+        first: first,
+        renderBlocks: (blocks) => _RenderedHtmlBlocks(
+          blocks: blocks,
+          documentFilePath: documentFilePath,
+          workspaceRoot: workspaceRoot,
+          writersideRoot: writersideRoot,
+          imagesDir: imagesDir,
+          allowRemoteImages: allowRemoteImages,
+        ),
+      ),
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
       BusyBlockKind.taskListItem => _RenderedHtmlListItem(
@@ -1129,16 +1146,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
         first: first,
       ),
       BusyBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
-      BusyBlockKind.htmlBlock when block.attributes['htmlTag'] == 'figure' =>
-        _RenderedHtmlFigure(
-          block: block,
-          documentFilePath: documentFilePath,
-          workspaceRoot: workspaceRoot,
-          writersideRoot: writersideRoot,
-          imagesDir: imagesDir,
-          allowRemoteImages: allowRemoteImages,
-          first: first,
-        ),
       BusyBlockKind.htmlBlock => _RenderedHtmlBlocks(
         blocks: block.children,
         documentFilePath: documentFilePath,
@@ -1163,74 +1170,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
     return blockDirection == inheritedDirection
         ? content
         : Directionality(textDirection: blockDirection, child: content);
-  }
-}
-
-class _RenderedHtmlFigure extends StatelessWidget {
-  const _RenderedHtmlFigure({
-    required this.block,
-    required this.documentFilePath,
-    required this.workspaceRoot,
-    required this.writersideRoot,
-    required this.imagesDir,
-    required this.allowRemoteImages,
-    required this.first,
-  });
-
-  final BusyBlock block;
-  final String documentFilePath;
-  final String? workspaceRoot;
-  final String? writersideRoot;
-  final String imagesDir;
-  final bool allowRemoteImages;
-  final bool first;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final contentBlocks = block.children
-        .where((child) => child.attributes['htmlTag'] != 'figcaption')
-        .toList();
-    final captionBlocks = block.children
-        .where((child) => child.attributes['htmlTag'] == 'figcaption')
-        .toList();
-    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: colors.mutedForeground,
-      height: BusyMarkTypography.bodyLineHeight,
-    );
-    return Padding(
-      padding: EdgeInsets.only(
-        top: first ? 0 : BusyMarkSpacing.xs,
-        bottom: BusyMarkSpacing.xs,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _RenderedHtmlBlocks(
-            blocks: contentBlocks,
-            documentFilePath: documentFilePath,
-            workspaceRoot: workspaceRoot,
-            writersideRoot: writersideRoot,
-            imagesDir: imagesDir,
-            allowRemoteImages: allowRemoteImages,
-          ),
-          if (captionBlocks.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: BusyMarkSpacing.xs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final caption in captionBlocks)
-                    _RenderedHtmlInlineText(
-                      block: caption,
-                      style: captionStyle,
-                    ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
   }
 }
 
@@ -1298,89 +1237,65 @@ class _RenderedHtmlListItem extends StatelessWidget {
 }
 
 class _RenderedHtmlTable extends StatelessWidget {
-  const _RenderedHtmlTable({required this.block, required this.first});
+  const _RenderedHtmlTable({
+    required this.block,
+    required this.first,
+    required this.renderBlocks,
+  });
 
   final BusyBlock block;
   final bool first;
+  final Widget Function(List<BusyBlock>) renderBlocks;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final rows = block.children;
-    final columnCount = _columnCount(rows);
+    final grid = TableGrid.place([
+      for (final row in rows) row.children,
+    ], (cell) => cell.attributes);
     return Padding(
       padding: EdgeInsets.only(
         top: first ? 0 : BusyMarkSpacing.xs,
         bottom: BusyMarkSpacing.sm,
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: BusyMarkSizes.tableMinWidth,
-          ),
-          child: Table(
-            border: TableBorder.all(
-              color: colors.subtleBorder,
-              borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+      child: DocumentTableGridLayout<BusyBlock>(
+        grid: grid,
+        fixed: true,
+        children: [
+          for (final cell in grid.cells)
+            _cell(
+              context,
+              cell.value,
+              cell.value.attributes['header'] == 'true' ||
+                  rows[cell.row].attributes['header'] == 'true',
+              colors,
             ),
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              for (final (rowIndex, row) in rows.indexed)
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: _isHeaderRow(row, rowIndex)
-                        ? colors.controlHover
-                        : BusyMarkLinuxPalette.transparent,
-                  ),
-                  children: [
-                    for (var column = 0; column < columnCount; column++)
-                      _RenderedHtmlTableCell(
-                        cell: column < row.children.length
-                            ? row.children[column]
-                            : null,
-                        header: _isHeaderRow(row, rowIndex),
-                      ),
-                  ],
-                ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  int _columnCount(List<BusyBlock> rows) {
-    var count = 1;
-    for (final row in rows) {
-      if (row.children.length > count) {
-        count = row.children.length;
-      }
-    }
-    return count;
-  }
-
-  bool _isHeaderRow(BusyBlock row, int index) {
-    return index == 0 || row.attributes['header'] == 'true';
-  }
-}
-
-class _RenderedHtmlTableCell extends StatelessWidget {
-  const _RenderedHtmlTableCell({required this.cell, required this.header});
-
-  final BusyBlock? cell;
-  final bool header;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _cell(
+    BuildContext context,
+    BusyBlock cell,
+    bool header,
+    BusyMarkSurfaceColors colors,
+  ) {
     final style = busyMarkDocumentBodyTextStyle(
       context,
     ).copyWith(fontWeight: header ? FontWeight.w700 : FontWeight.w400);
-    return Padding(
-      padding: BusyMarkInsets.documentTableCell,
-      child: cell == null
-          ? const SizedBox.shrink()
-          : _RenderedHtmlInlineText(block: cell!, style: style),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: header ? colors.controlHover : null,
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: Padding(
+        padding: BusyMarkInsets.documentTableCell,
+        child: cell.children.isEmpty
+            ? _RenderedHtmlInlineText(block: cell, style: style)
+            : renderBlocks(cell.children),
+      ),
     );
   }
 }
@@ -1428,6 +1343,17 @@ class _RenderedHtmlInlineText extends StatelessWidget {
     BusyInline inline,
     TextStyle? baseStyle,
   ) {
+    if (busyMarkInlineDirectionControls(inline.attributes)
+        case final controls?) {
+      return TextSpan(
+        children: [
+          TextSpan(text: controls.open),
+          for (final child in inline.children)
+            _spanForInline(context, child, baseStyle),
+          TextSpan(text: controls.close),
+        ],
+      );
+    }
     final scheme = Theme.of(context).colorScheme;
     final childBaseStyle = _styleForInline(context, inline, baseStyle);
     if (inline.kind == BusyInlineKind.image) {

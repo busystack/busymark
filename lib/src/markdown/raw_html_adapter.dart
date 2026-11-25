@@ -1,5 +1,6 @@
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
+import 'package:intl/intl.dart' show Bidi;
 // The public parser does not expose authored closing-tag spans. Its tokenizer
 // is the parser's own location-aware boundary source, not a second HTML parser.
 // ignore: implementation_imports
@@ -91,6 +92,16 @@ class RawHtmlAdapter {
       safe: true,
       blocks: importClipboardLists ? _separateClipboardLists(blocks) : blocks,
     );
+  }
+
+  /// A bounded DOM for operations that must keep the authored HTML structure.
+  html.DocumentFragment? parseSafeRawHtml(String source) {
+    if (!_mayContainHtml(source)) return null;
+    final fragment = _parseFragment(source);
+    if (fragment == null || !_isSafeFragment(fragment, inlineOnly: false)) {
+      return null;
+    }
+    return fragment;
   }
 
   List<BusyInline>? parseRawHtmlInlineFragment(String text) {
@@ -377,26 +388,33 @@ class RawHtmlAdapter {
   ) {
     final blocks = <BusyBlock>[];
     final inlineBuffer = <BusyInline>[];
+    final inlineNodes = <html.Node>[];
 
     void flushInlineBuffer() {
       final inlines = _trimInlineEdges(inlineBuffer);
       inlineBuffer.clear();
-      if (inlines.isEmpty) {
-        return;
-      }
-      blocks.add(
-        BusyBlock(
+      if (inlines.isNotEmpty) {
+        final paragraph = BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.paragraph,
           inlines: inlines,
-        ),
-      );
+        );
+        if (importClipboardLists && inlineNodes.any(_inlineNeedsHtml)) {
+          final wrapper = html.Element.tag('p')
+            ..nodes.addAll(inlineNodes.map((node) => node.clone(true)));
+          blocks.add(_importedHtmlBlock(wrapper, [paragraph], nextId));
+        } else {
+          blocks.add(paragraph);
+        }
+      }
+      inlineNodes.clear();
     }
 
     for (final node in nodes) {
       if (node is html.Text) {
         if (node.data.trim().isNotEmpty || preserveInlineWhitespace) {
           _appendInlineText(inlineBuffer, _collapseHtmlWhitespace(node.data));
+          inlineNodes.add(node);
         }
         continue;
       }
@@ -411,6 +429,7 @@ class RawHtmlAdapter {
       }
       if (isSafeInlineHtmlTag(tag) && !isSafeBlockHtmlTag(tag)) {
         inlineBuffer.addAll(_inlineFromElement(node));
+        inlineNodes.add(node);
         continue;
       }
       flushInlineBuffer();
@@ -426,6 +445,11 @@ class RawHtmlAdapter {
   ) {
     final tag = element.localName?.toLowerCase() ?? '';
     final attributes = sanitizeHtmlAttributes(tag, element.attributes) ?? {};
+    final direction = _elementDirection(element);
+    if (attributes.containsKey('dir')) {
+      attributes.remove('dir');
+      if (direction != null) attributes['dir'] = direction;
+    }
     final children = element.nodes;
     final text = _plainTextFromNodes(children).trim();
 
@@ -443,8 +467,8 @@ class RawHtmlAdapter {
             'generatedId': '${attributes['id'] == null}',
           },
         ),
-      ], attributes['dir']);
-      return _preserveClipboardDirection(element, heading, nextId);
+      ], direction);
+      return _preserveClipboardHtml(element, heading, nextId);
     }
 
     final List<BusyBlock> blocks = switch (tag) {
@@ -457,7 +481,9 @@ class RawHtmlAdapter {
       'main' ||
       'nav' ||
       'details' => _blocksFromNodes(children, nextId),
-      'figure' => _figureBlocksFromElement(attributes, children, nextId),
+      'figure' => [
+        _importedHtmlBlock(element, _blocksFromNodes(children, nextId), nextId),
+      ],
       'p' || 'address' || 'figcaption' || 'summary' || 'caption' => [
         BusyBlock(
           id: nextId(),
@@ -520,25 +546,50 @@ class RawHtmlAdapter {
               ]
             : const [],
     };
-    return _preserveClipboardDirection(
+    return _preserveClipboardHtml(
       element,
-      _applyHtmlDirection(blocks, attributes['dir']),
+      _applyHtmlDirection(blocks, direction),
       nextId,
     );
   }
 
-  List<BusyBlock> _preserveClipboardDirection(
+  List<BusyBlock> _preserveClipboardHtml(
     html.Element element,
     List<BusyBlock> blocks,
     String Function() nextId,
   ) {
+    final tag = element.localName!;
     if (!importClipboardLists ||
-        blocks.isEmpty ||
-        _normalizedHtmlDirection(element.attributes['dir']) == null ||
-        blocks.singleOrNull?.rawSource != null) {
+        const {'ol', 'ul', 'table', 'figure'}.contains(tag)) {
       return blocks;
     }
-    return [_importedHtmlBlock(element, blocks, nextId)];
+    final needsHtml =
+        element.attributes.keys.any(
+          (key) => switch (tag) {
+            'img' => !const {'src', 'alt', 'title'}.contains(key),
+            'pre' => key != 'class',
+            _ => true,
+          },
+        ) ||
+        element.nodes.any(_inlineNeedsHtml) ||
+        const {'dl', 'details', 'address'}.contains(tag);
+    return needsHtml ? [_importedHtmlBlock(element, blocks, nextId)] : blocks;
+  }
+
+  bool _inlineNeedsHtml(html.Node node) {
+    if (node is! html.Element) return false;
+    final tag = node.localName!;
+    if (isSafeBlockHtmlTag(tag)) return false;
+    if (tag == 'bdo' || tag == 'bdi') return true;
+    return node.attributes.keys.any(
+          (key) => switch (tag) {
+            'a' => key != 'href' && key != 'title',
+            'img' => !const {'src', 'alt', 'title'}.contains(key),
+            'code' => key != 'class',
+            _ => true,
+          },
+        ) ||
+        node.nodes.any(_inlineNeedsHtml);
   }
 
   BusyBlock _importedHtmlBlock(
@@ -553,21 +604,45 @@ class RawHtmlAdapter {
     attributes: {
       'sourceFormat': 'html',
       'htmlTag': element.localName!,
-      if (element.attributes['dir'] case final direction?) 'dir': direction,
+      if (_elementDirection(element) case final direction?) 'dir': direction,
     },
+    preserveRaw: true,
   );
+
+  String? _elementDirection(html.Element element) {
+    final direction =
+        busyMarkHtmlDirection(element.attributes['dir']) ??
+        (element.localName == 'bdi' ? 'auto' : null);
+    if (direction != 'auto') return direction;
+    final text = StringBuffer();
+    void append(html.Node node) {
+      if (node is html.Text) {
+        text.write(node.data);
+      } else if (node is html.Element &&
+          node.localName != 'bdi' &&
+          busyMarkHtmlDirection(node.attributes['dir']) == null) {
+        node.nodes.forEach(append);
+      }
+    }
+
+    element.nodes.forEach(append);
+    final value = text.toString();
+    return Bidi.startsWithRtl(value) ? 'rtl' : 'ltr';
+  }
 
   List<BusyBlock> _applyHtmlDirection(
     List<BusyBlock> blocks,
     String? inheritedDirection,
   ) {
-    final normalizedDirection = _normalizedHtmlDirection(inheritedDirection);
+    final normalizedDirection = busyMarkHtmlDirection(inheritedDirection);
     if (normalizedDirection == null) {
       return blocks;
     }
     BusyBlock visit(BusyBlock block, String direction) {
-      final blockDirection =
-          _normalizedHtmlDirection(block.attributes['dir']) ?? direction;
+      final ownDirection = busyMarkHtmlDirection(block.attributes['dir']);
+      final blockDirection = ownDirection == 'auto'
+          ? direction
+          : ownDirection ?? direction;
       return block.copyWith(
         attributes: {...block.attributes, 'dir': blockDirection},
         children: [
@@ -579,47 +654,26 @@ class RawHtmlAdapter {
     return [for (final block in blocks) visit(block, normalizedDirection)];
   }
 
-  String? _normalizedHtmlDirection(String? value) {
-    final normalized = value?.trim().toLowerCase();
-    return switch (normalized) {
-      'ltr' || 'rtl' || 'auto' => normalized,
-      _ => null,
-    };
-  }
-
-  List<BusyBlock> _figureBlocksFromElement(
-    Map<String, String> attributes,
-    Iterable<html.Node> children,
-    String Function() nextId,
-  ) {
-    final childBlocks = _blocksFromNodes(children, nextId);
-    if (childBlocks.isEmpty) {
-      return const [];
-    }
-    return [
-      BusyBlock(
-        id: nextId(),
-        kind: BusyBlockKind.htmlBlock,
-        children: childBlocks,
-        attributes: {
-          'sourceFormat': 'html',
-          'htmlTag': 'figure',
-          ...attributes,
-        },
-      ),
-    ];
-  }
-
   BusyBlock _codeBlockFromPre(
     html.Element element,
     Map<String, String> attributes,
     String Function() nextId,
   ) {
-    final code = element.children.firstWhere(
-      (child) => child.localName?.toLowerCase() == 'code',
-      orElse: () => element,
-    );
-    final className = code.attributes['class'] ?? attributes['class'] ?? '';
+    final code = element.children.where((child) => child.localName == 'code');
+    final className =
+        code.firstOrNull?.attributes['class'] ?? attributes['class'] ?? '';
+    final text = StringBuffer();
+    void append(html.Node node) {
+      if (node is html.Text) {
+        text.write(node.data);
+      } else if (node is html.Element && node.localName == 'br') {
+        text.writeln();
+      } else {
+        node.nodes.forEach(append);
+      }
+    }
+
+    element.nodes.forEach(append);
     final language = className
         .split(RegExp(r'\s+'))
         .where((name) => name.startsWith('language-'))
@@ -628,7 +682,7 @@ class RawHtmlAdapter {
     return BusyBlock(
       id: nextId(),
       kind: BusyBlockKind.codeBlock,
-      inlines: [BusyInline(kind: BusyInlineKind.text, text: code.text)],
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: text.toString())],
       attributes: {
         ...attributes,
         if (language != null && language.isNotEmpty) 'language': language,
@@ -648,23 +702,24 @@ class RawHtmlAdapter {
     final reversed = attributes.containsKey('reversed');
     final start =
         int.tryParse(attributes['start'] ?? '') ??
-        (importClipboardLists && reversed ? items.length : 1);
+        (reversed ? items.length : 1);
     var number = start;
     final blocks = <BusyBlock>[];
     for (final child in items) {
-      if (importClipboardLists && ordered) {
+      if (ordered) {
         number = int.tryParse(child.attributes['value'] ?? '') ?? number;
       }
       blocks.add(
         _listItemFromElement(
           child,
           ordered: ordered,
-          marker: ordered ? '$number.' : '-',
+          marker: ordered
+              ? _htmlOrderedMarker(number, attributes['type'])
+              : '-',
           nextId: nextId,
-          parentAttributes: attributes,
         ),
       );
-      if (ordered) number += importClipboardLists && reversed ? -1 : 1;
+      if (ordered) number += reversed ? -1 : 1;
     }
     if (!importClipboardLists || blocks.isEmpty) return blocks;
     final loose = items.any(
@@ -677,10 +732,21 @@ class RawHtmlAdapter {
             (reversed ||
                 (attributes['type'] ?? '1') != '1' ||
                 start < 0 ||
-                start + blocks.length - 1 > 999999999 ||
+                start > 999999999 - blocks.length + 1 ||
                 items.any((item) => item.attributes.containsKey('value')))) ||
+        items.any(
+          (item) =>
+              item.attributes.keys.any((name) => name != 'value') ||
+              item.nodes.any(_inlineNeedsHtml),
+        ) ||
         (loose && blocks.length == 1 && blocks.single.children.isEmpty)) {
-      return [_importedHtmlBlock(element, blocks, nextId)];
+      return [
+        _importedHtmlBlock(
+          element,
+          _applyHtmlDirection(blocks, _elementDirection(element)),
+          nextId,
+        ),
+      ];
     }
     final last = blocks.length - 1;
     return [
@@ -746,60 +812,28 @@ class RawHtmlAdapter {
     required bool ordered,
     required String marker,
     required String Function() nextId,
-    Map<String, String> parentAttributes = const {},
   }) {
     final attributes = sanitizeHtmlAttributes('li', element.attributes) ?? {};
-    if (importClipboardLists) {
-      final children = _blocksFromNodes(element.nodes, nextId);
-      final first = children.firstOrNull;
-      final inlines =
-          first?.kind == BusyBlockKind.paragraph &&
-              first!.attributes.keys.every((key) => key == 'htmlTag')
-          ? children.removeAt(0).inlines
-          : const <BusyInline>[];
-      return BusyBlock(
-        id: nextId(),
-        kind: ordered
-            ? BusyBlockKind.orderedListItem
-            : BusyBlockKind.unorderedListItem,
-        inlines: inlines,
-        children: children,
-        attributes: {...attributes, 'ordered': '$ordered', 'marker': marker},
-      );
-    }
-    final inlines = <BusyInline>[];
-    final nestedBlocks = <BusyBlock>[];
-    for (final child in element.nodes) {
-      if (child is html.Text) {
-        if (child.data.trim().isNotEmpty || preserveInlineWhitespace) {
-          _appendInlineText(inlines, _collapseHtmlWhitespace(child.data));
-        }
-        continue;
-      }
-      if (child is! html.Element) {
-        continue;
-      }
-      final tag = child.localName?.toLowerCase() ?? '';
-      if (isSafeInlineHtmlTag(tag) && !isSafeBlockHtmlTag(tag)) {
-        inlines.addAll(_inlineFromElement(child));
-      } else if (tag == 'p' && inlines.isEmpty && nestedBlocks.isEmpty) {
-        inlines.addAll(_inlinesFromNodes(child.nodes));
-      } else {
-        nestedBlocks.addAll(_blocksFromElement(child, nextId));
-      }
-    }
+    final children = _blocksFromNodes(element.nodes, nextId);
+    final first = children.firstOrNull;
+    final inlines =
+        first?.kind == BusyBlockKind.paragraph &&
+            first!.attributes.keys.every((key) => key == 'htmlTag')
+        ? children.removeAt(0).inlines
+        : const <BusyInline>[];
+    final direction = _elementDirection(element);
     return BusyBlock(
       id: nextId(),
       kind: ordered
           ? BusyBlockKind.orderedListItem
           : BusyBlockKind.unorderedListItem,
-      inlines: _trimInlineEdges(inlines),
-      children: nestedBlocks,
+      inlines: inlines,
+      children: _applyHtmlDirection(children, direction),
       attributes: {
-        ...parentAttributes,
-        ...attributes,
+        ...attributes..remove('dir'),
+        if (direction != null) 'dir': direction,
         'ordered': '$ordered',
-        'marker': attributes['value'] ?? marker,
+        'marker': marker,
       },
     );
   }
@@ -843,7 +877,114 @@ class RawHtmlAdapter {
         attributes: attributes,
       ),
     );
+    if (importClipboardLists &&
+        !_canSerializeMarkdownTable(table, blocks.last)) {
+      return [
+        _importedHtmlBlock(
+          table,
+          _applyHtmlDirection(blocks, _elementDirection(table)),
+          nextId,
+        ),
+      ];
+    }
     return blocks;
+  }
+
+  bool _canSerializeMarkdownTable(html.Element table, BusyBlock adapted) {
+    final rows = adapted.children;
+    if (rows.isEmpty) return false;
+    final firstHeaderCount = rows.first.children
+        .where((cell) => cell.attributes['cell'] == 'th')
+        .length;
+    if (firstHeaderCount != 0 &&
+        firstHeaderCount != rows.first.children.length) {
+      return false;
+    }
+    final width = rows.first.children.length;
+    if (rows.any((row) => row.children.length != width) ||
+        rows
+            .skip(1)
+            .any(
+              (row) =>
+                  row.children.any((cell) => cell.attributes['cell'] == 'th'),
+            )) {
+      return false;
+    }
+    for (var column = 0; column < width; column++) {
+      final alignments = {
+        for (final row in rows)
+          if (row.children[column].attributes['align'] case final alignment?)
+            alignment,
+      };
+      if (alignments.length > 1) return false;
+    }
+
+    bool representable(html.Element element) {
+      final tag = element.localName!;
+      final attrs = element.attributes;
+      if (_inlineNeedsHtml(element)) return false;
+      if (tag == 'td' || tag == 'th') {
+        return attrs.keys.every((key) => key == 'align') &&
+            element.children.every(_isTableCellFlow);
+      }
+      return const {'table', 'thead', 'tbody', 'tr'}.contains(tag) &&
+          attrs.isEmpty &&
+          element.children.every(representable);
+    }
+
+    return representable(table);
+  }
+
+  bool _isTableCellFlow(html.Element element) {
+    if (!isSafeBlockHtmlTag(element.localName!)) {
+      return !_inlineNeedsHtml(element);
+    }
+    return const {
+          'p',
+          'div',
+          'section',
+          'article',
+        }.contains(element.localName) &&
+        element.attributes.isEmpty &&
+        element.children.every(_isTableCellFlow);
+  }
+
+  List<BusyInline> _tableCellInlines(html.Element cell) {
+    final result = <BusyInline>[];
+    var flow = <BusyInline>[];
+    void flush() {
+      final inlines = _trimInlineEdges(flow);
+      flow = [];
+      if (inlines.every(
+        (inline) =>
+            inline.plainText.trim().isEmpty &&
+            inline.kind == BusyInlineKind.text,
+      )) {
+        return;
+      }
+      if (result.isNotEmpty &&
+          result.last.kind != BusyInlineKind.hardBreak &&
+          inlines.first.kind != BusyInlineKind.hardBreak) {
+        result.add(
+          const BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'),
+        );
+      }
+      result.addAll(inlines);
+    }
+
+    void append(html.Node node) {
+      if (node is html.Element && isSafeBlockHtmlTag(node.localName!)) {
+        flush();
+        node.nodes.forEach(append);
+        flush();
+      } else {
+        flow.addAll(_inlineFromNode(node));
+      }
+    }
+
+    cell.nodes.forEach(append);
+    flush();
+    return result;
   }
 
   List<BusyBlock> _tableRows(html.Element table, String Function() nextId) {
@@ -851,6 +992,7 @@ class RawHtmlAdapter {
     void addRow(
       html.Element row, {
       required bool sectionHeader,
+      required int remainingRows,
       String? inheritedDirection,
     }) {
       final cells = row.children.where((child) {
@@ -863,10 +1005,7 @@ class RawHtmlAdapter {
       final allHeaderCells = cells.every(
         (cell) => cell.localName?.toLowerCase() == 'th',
       );
-      final rowAttributes =
-          sanitizeHtmlAttributes('tr', row.attributes) ?? const {};
-      final rowDirection =
-          _normalizedHtmlDirection(rowAttributes['dir']) ?? inheritedDirection;
+      final rowDirection = _elementDirection(row) ?? inheritedDirection;
       final rowBlock = BusyBlock(
         id: nextId(),
         kind: BusyBlockKind.table,
@@ -876,12 +1015,7 @@ class RawHtmlAdapter {
         },
         children: [
           for (final cell in cells)
-            BusyBlock(
-              id: nextId(),
-              kind: BusyBlockKind.paragraph,
-              inlines: _trimInlineEdges(_inlinesFromNodes(cell.nodes)),
-              attributes: _tableCellAttributes(cell),
-            ),
+            _tableCellFromElement(cell, nextId, remainingRows),
         ],
       );
       rows.add(
@@ -894,19 +1028,17 @@ class RawHtmlAdapter {
     for (final child in table.children) {
       final tag = child.localName?.toLowerCase();
       if (tag == 'tr') {
-        addRow(child, sectionHeader: false);
+        addRow(child, sectionHeader: false, remainingRows: 1);
       } else if (tag == 'thead' || tag == 'tbody' || tag == 'tfoot') {
-        final sectionAttributes =
-            sanitizeHtmlAttributes(tag ?? '', child.attributes) ?? const {};
-        final sectionDirection = _normalizedHtmlDirection(
-          sectionAttributes['dir'],
-        );
-        for (final row in child.children.where(
-          (candidate) => candidate.localName?.toLowerCase() == 'tr',
-        )) {
+        final sectionDirection = _elementDirection(child);
+        final sectionRows = child.children
+            .where((candidate) => candidate.localName == 'tr')
+            .toList();
+        for (final (index, row) in sectionRows.indexed) {
           addRow(
             row,
             sectionHeader: tag == 'thead',
+            remainingRows: sectionRows.length - index,
             inheritedDirection: sectionDirection,
           );
         }
@@ -915,13 +1047,43 @@ class RawHtmlAdapter {
     return rows;
   }
 
-  Map<String, String> _tableCellAttributes(html.Element cell) {
+  BusyBlock _tableCellFromElement(
+    html.Element cell,
+    String Function() nextId,
+    int remainingRows,
+  ) {
+    final useBlocks = cell.children.any(
+      (child) =>
+          isSafeBlockHtmlTag(child.localName!) && !_isTableCellFlow(child),
+    );
+    final direction = _elementDirection(cell);
+    return BusyBlock(
+      id: nextId(),
+      kind: BusyBlockKind.paragraph,
+      inlines: useBlocks ? const [] : _tableCellInlines(cell),
+      children: useBlocks
+          ? _applyHtmlDirection(_blocksFromNodes(cell.nodes, nextId), direction)
+          : const [],
+      attributes: _tableCellAttributes(cell, remainingRows),
+    );
+  }
+
+  Map<String, String> _tableCellAttributes(
+    html.Element cell,
+    int remainingRows,
+  ) {
     final tag = cell.localName?.toLowerCase() ?? 'td';
     final sanitized = sanitizeHtmlAttributes(tag, cell.attributes) ?? {};
+    final rowspan = int.tryParse(sanitized['rowspan'] ?? '');
     return {
       'cell': tag,
-      for (final name in ['align', 'colspan', 'rowspan', 'scope', 'dir'])
+      if (tag == 'th') 'header': 'true',
+      for (final name in ['align', 'colspan', 'scope'])
         if (sanitized[name] case final value?) name: value,
+      if (rowspan != null && rowspan >= 0)
+        'rowspan':
+            '${rowspan == 0 ? remainingRows : rowspan.clamp(1, remainingRows)}',
+      if (_elementDirection(cell) case final direction?) 'dir': direction,
     };
   }
 
@@ -1082,6 +1244,17 @@ class RawHtmlAdapter {
               ]
             : children,
     };
+    final direction = _elementDirection(element);
+    if (mapping == null && direction != null) {
+      return [
+        BusyInline(
+          kind: BusyInlineKind.html,
+          text: _plainText(result),
+          children: result,
+          attributes: {'dir': direction, 'htmlTag': tag},
+        ),
+      ];
+    }
     final span = element.sourceSpan;
     if (mapping != null && span != null && result.length == 1) {
       final normalizedStart = span.start.offset;
@@ -1469,4 +1642,41 @@ class _HtmlElementScanState {
     nodes += 1;
     return true;
   }
+}
+
+String _htmlOrderedMarker(int number, String? type) {
+  if (number < 1) return '$number.';
+  if (type == 'a' || type == 'A') {
+    var letters = '';
+    for (var n = number; n > 0; n = (n - 1) ~/ 26) {
+      letters = String.fromCharCode(65 + (n - 1) % 26) + letters;
+    }
+    return type == 'a' ? '${letters.toLowerCase()}.' : '$letters.';
+  }
+  if ((type == 'i' || type == 'I') && number <= 3999) {
+    const digits = [
+      (1000, 'M'),
+      (900, 'CM'),
+      (500, 'D'),
+      (400, 'CD'),
+      (100, 'C'),
+      (90, 'XC'),
+      (50, 'L'),
+      (40, 'XL'),
+      (10, 'X'),
+      (9, 'IX'),
+      (5, 'V'),
+      (4, 'IV'),
+      (1, 'I'),
+    ];
+    final roman = StringBuffer();
+    for (final (value, symbol) in digits) {
+      while (number >= value) {
+        roman.write(symbol);
+        number -= value;
+      }
+    }
+    return type == 'i' ? '${roman.toString().toLowerCase()}.' : '$roman.';
+  }
+  return '$number.';
 }

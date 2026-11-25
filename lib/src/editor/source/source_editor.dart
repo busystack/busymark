@@ -2605,7 +2605,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (_hasActiveComposition) return ClipboardPasteResult.staleTarget;
     final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
-    final data = await _clipboard.read();
+    final data = await _clipboard.read(
+      plainTextOnly: mode == BusyMarkPasteMode.plainText,
+    );
     if (!_isClipboardTargetCurrent(target)) {
       return ClipboardPasteResult.staleTarget;
     }

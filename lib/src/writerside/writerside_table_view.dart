@@ -72,7 +72,9 @@ class _WritersideTableViewState extends State<WritersideTableView> {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: _TableLayout(
+      child: DocumentTableGridLayout<PreviewBlock>(
+        cellWidth: (cell) => double.tryParse(cell.attributes['width'] ?? ''),
+        cellTextLength: (cell) => cell.text.length,
         grid: grid,
         fixed:
             widget.block.attributes['element'] != 'table' ||
@@ -143,50 +145,50 @@ class _WritersideTableViewState extends State<WritersideTableView> {
   }
 }
 
-class _TableLayout extends MultiChildRenderObjectWidget {
-  const _TableLayout({
+class DocumentTableGridLayout<T> extends MultiChildRenderObjectWidget {
+  const DocumentTableGridLayout({
+    super.key,
+    this.cellWidth,
+    this.cellTextLength,
     required this.grid,
     required this.fixed,
-    required this.sticky,
-    required this.scrollPosition,
+    this.sticky = false,
+    this.scrollPosition,
     required super.children,
   });
-  final TableGrid<PreviewBlock> grid;
+  final TableGrid<T> grid;
+  final double? Function(T)? cellWidth;
+  final int Function(T)? cellTextLength;
   final bool fixed;
   final bool sticky;
   final ScrollPosition? scrollPosition;
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderTable(grid, fixed, sticky, scrollPosition);
+      _RenderTable<T>(this, Directionality.of(context));
   @override
-  void updateRenderObject(BuildContext context, _RenderTable renderObject) {
-    renderObject.update(grid, fixed, sticky, scrollPosition);
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
+    (renderObject as _RenderTable<T>).update(this, Directionality.of(context));
   }
 }
 
 class _CellParentData extends ContainerBoxParentData<RenderBox> {}
 
-class _RenderTable extends RenderBox
+class _RenderTable<T> extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _CellParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _CellParentData> {
-  _RenderTable(this.grid, this.fixed, this.sticky, this.position);
-  TableGrid<PreviewBlock> grid;
-  bool fixed;
-  bool sticky;
-  ScrollPosition? position;
+  _RenderTable(this.configuration, this.textDirection);
+  DocumentTableGridLayout<T> configuration;
+  TextDirection textDirection;
+  TableGrid<T> get grid => configuration.grid;
+  ScrollPosition? get position => configuration.scrollPosition;
+  bool get sticky => configuration.sticky;
   List<double> rowHeights = [];
-  void update(
-    TableGrid<PreviewBlock> value,
-    bool fixedWidth,
-    bool stickyHeader,
-    ScrollPosition? scroll,
-  ) {
+
+  void update(DocumentTableGridLayout<T> value, TextDirection direction) {
     if (attached) position?.removeListener(_scrolled);
-    grid = value;
-    fixed = fixedWidth;
-    sticky = stickyHeader;
-    position = scroll;
+    configuration = value;
+    textDirection = direction;
     if (attached) position?.addListener(_scrolled);
     markNeedsLayout();
   }
@@ -228,12 +230,13 @@ class _RenderTable extends RenderBox
     for (var i = 0; i < grid.cells.length; i++) {
       final cell = grid.cells[i];
       if (cell.colspan != 1) continue;
-      final specified = double.tryParse(cell.value.attributes['width'] ?? '');
+      final specified = configuration.cellWidth?.call(cell.value);
       if (specified != null && specified > 0) explicit[cell.column] = specified;
-      if (!fixed) {
+      if (!configuration.fixed) {
+        final length = configuration.cellTextLength?.call(cell.value) ?? 0;
         widths[cell.column] = math.max(
           widths[cell.column],
-          (cell.value.text.length * 7.0 + 20).clamp(40, 400),
+          (length * 7.0 + 20).clamp(40, 400),
         );
       }
     }
@@ -288,8 +291,12 @@ class _RenderTable extends RenderBox
           ),
         ),
       );
+      final start = sum(widths, 0, cell.column);
+      final x = textDirection == TextDirection.ltr
+          ? start
+          : width - start - children[i].size.width;
       (children[i].parentData! as _CellParentData).offset = Offset(
-        sum(widths, 0, cell.column),
+        x,
         sum(rowHeights, 0, cell.row),
       );
     }

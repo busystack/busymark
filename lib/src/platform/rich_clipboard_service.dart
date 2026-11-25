@@ -130,17 +130,23 @@ class RichClipboardService {
     }
   }
 
-  Future<RichClipboardData> read() async {
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async {
     await _pendingWrite;
     try {
       final value = await _channel
-          .invokeMapMethod<String, dynamic>('read')
+          .invokeMapMethod<String, dynamic>(
+            'read',
+            plainTextOnly ? const {'plainTextOnly': true} : null,
+          )
           .timeout(const Duration(seconds: 5));
       String? field(String name) =>
           value?[name] is String ? value![name] as String : null;
       final generation = value?['generation'] is int
           ? value!['generation'] as int
           : null;
+      if (plainTextOnly) {
+        return RichClipboardData(text: field('text'), generation: generation);
+      }
       final token = field('token');
       final known = token == null ? null : _knownPayloads[token]?.data;
       if (known == null) {
@@ -204,9 +210,14 @@ class RichClipboardService {
   Future<String?> readPlainText() async {
     await _pendingWrite;
     try {
-      return (await Clipboard.getData(
+      final text = (await Clipboard.getData(
         Clipboard.kTextPlain,
       ).timeout(const Duration(seconds: 5)))?.text;
+      return text != null &&
+              text.length <= maxRichClipboardBytes &&
+              utf8.encode(text).length <= maxRichClipboardBytes
+          ? text
+          : null;
     } on PlatformException {
       return null;
     } on MissingPluginException {

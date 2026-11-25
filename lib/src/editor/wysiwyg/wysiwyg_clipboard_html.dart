@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html;
+import 'package:intl/intl.dart' show Bidi;
 import 'package:path/path.dart' as p;
 
 import '../../markdown/busymark_document.dart';
@@ -35,18 +36,17 @@ class WysiwygClipboardHtml {
       return null;
     }
     try {
-      final start = source.indexOf('<!--StartFragment-->');
-      final end = source.indexOf('<!--EndFragment-->');
-      final content = start >= 0 && end > start
-          ? source.substring(start + '<!--StartFragment-->'.length, end)
-          : source;
-      // Fragment parsing retains leading text that document parsing consumes
-      // before an inferred <body>. Full clipboard documents are accepted too.
-      final body = html.parseFragment(content);
+      // Fragment parsing retains leading text even without an explicit body.
+      final body = html.parseFragment(source);
+      final selected = _clipboardFragmentNodes(source, body);
+      if (selected == null) return null;
       final normalizer = _HtmlNormalizer(external: external);
       final clean = dom.Element.tag('div')
-        ..nodes.addAll(normalizer.nodes(body.nodes, 0, const {}));
-      if (external) _normalizeBrowserParagraphs(clean);
+        ..nodes.addAll(normalizer.nodes(selected, 0, const {}));
+      if (external) {
+        _normalizeClipboardSemantics(clean);
+        _normalizeBrowserParagraphs(clean);
+      }
       var id = 0;
       final parsed = RawHtmlAdapter(
         preserveInlineWhitespace: true,
@@ -116,6 +116,50 @@ class WysiwygClipboardHtml {
   }
 }
 
+List<dom.Node>? _clipboardFragmentNodes(
+  String source,
+  dom.DocumentFragment fragment,
+) {
+  if (!source.contains('<!--StartFragment-->') ||
+      !source.contains('<!--EndFragment-->')) {
+    return fragment.nodes;
+  }
+
+  // A marker may sit inside a selected wrapper. Keep only nodes between
+  // the markers and the ancestor shells that carry their inherited semantics.
+  var started = false;
+  var ended = false;
+  var count = 0;
+  List<dom.Node> visit(List<dom.Node> nodes, int depth) {
+    if (depth > maxRawHtmlDepth) {
+      throw const FormatException('Clipboard HTML nesting limit');
+    }
+    final selected = <dom.Node>[];
+    for (final node in nodes) {
+      if (ended) break;
+      if (++count > maxRawHtmlNodes) {
+        throw const FormatException('Clipboard HTML node limit');
+      }
+      if (node is dom.Comment) {
+        if (node.data == 'StartFragment') started = true;
+        if (node.data == 'EndFragment' && started) ended = true;
+      } else if (node is dom.Element) {
+        final inside = started;
+        final children = visit(node.nodes, depth + 1);
+        if (children.isNotEmpty || inside && !ended) {
+          selected.add(node.clone(false)..nodes.addAll(children));
+        }
+      } else if (started) {
+        selected.add(node.clone(false));
+      }
+    }
+    return selected;
+  }
+
+  final selected = visit(fragment.nodes, 0);
+  return ended ? selected : null;
+}
+
 dom.Element _element(
   String tag,
   Iterable<dom.Node> children, [
@@ -147,7 +191,7 @@ class _HtmlWriter {
     if (uri == null) return null;
     if (uri.scheme == 'file') return uri.toString();
     if (!isSafeHtmlUrlAttribute(tag, attribute, value)) return null;
-    return !uri.hasScheme && sourcePath.isNotEmpty
+    return !uri.hasScheme && !value.startsWith('#') && sourcePath.isNotEmpty
         ? Uri.file(p.absolute(sourcePath)).resolveUri(uri).toString()
         : value;
   }
@@ -264,12 +308,14 @@ class _HtmlWriter {
             ]),
           );
         case BusyBlockKind.htmlBlock:
-          final adapted = const RawHtmlAdapter().parseRawHtmlBlock(
+          final fragment = const RawHtmlAdapter().parseSafeRawHtml(
             b.rawSource ?? '',
-            () => 'html-export-${count++}',
           );
-          if (adapted != null && adapted.safe && adapted.blocks.isNotEmpty) {
-            out.addAll(blocks(adapted.blocks, depth + 1));
+          if (fragment != null) {
+            for (final node in fragment.nodes) {
+              _prepareRawNode(node, depth + 1);
+            }
+            out.addAll(fragment.nodes.toList());
           } else {
             out.add(_element('pre', [dom.Text(b.rawSource ?? b.plainText)]));
           }
@@ -286,6 +332,24 @@ class _HtmlWriter {
     return out;
   }
 
+  void _prepareRawNode(dom.Node node, int depth) {
+    visit(depth);
+    if (node is dom.Element) {
+      final tag = node.localName!;
+      final attributes = sanitizeHtmlAttributes(tag, node.attributes)!;
+      node.attributes.clear();
+      for (final entry in attributes.entries) {
+        final value = const {'href', 'src', 'cite'}.contains(entry.key)
+            ? url(entry.value, tag, entry.key)
+            : entry.value;
+        if (value != null) node.attributes[entry.key] = value;
+      }
+    }
+    for (final child in node.nodes) {
+      _prepareRawNode(child, depth + 1);
+    }
+  }
+
   bool _isList(BusyBlock b) => {
     BusyBlockKind.unorderedListItem,
     BusyBlockKind.orderedListItem,
@@ -294,11 +358,15 @@ class _HtmlWriter {
   bool _ordered(BusyBlock b) =>
       b.kind == BusyBlockKind.orderedListItem ||
       b.attributes['ordered'] == 'true';
-  dom.Node image(String? src, String alt) {
+  dom.Node image(String? src, String alt, [String? title]) {
     final resolved = url(src, 'img', 'src');
     return resolved == null
         ? dom.Text(alt)
-        : _element('img', [], {'src': resolved, 'alt': alt});
+        : _element('img', [], {
+            'src': resolved,
+            'alt': alt,
+            if (title != null) 'title': title,
+          });
   }
 
   List<dom.Node> inlines(List<BusyInline> values, int depth) {
@@ -324,10 +392,17 @@ class _HtmlWriter {
         case BusyInlineKind.softBreak:
           out.add(dom.Text('\n'));
         case BusyInlineKind.image:
-          out.add(image(value.destination, value.text));
+          out.add(
+            image(value.destination, value.text, value.attributes['title']),
+          );
         case BusyInlineKind.link:
           final href = url(value.destination, 'a', 'href');
-          out.add(_element('a', children(), {if (href != null) 'href': href}));
+          out.add(
+            _element('a', children(), {
+              if (href != null) 'href': href,
+              if (value.attributes['title'] case final title?) 'title': title,
+            }),
+          );
         default:
           out.addAll(children());
       }
@@ -413,7 +488,10 @@ class _HtmlNormalizer {
       }
       if (node is! dom.Element) continue;
       var tag = node.localName ?? '';
-      if (_discard.contains(tag)) continue;
+      if (_discard.contains(tag) ||
+          (external && node.attributes.containsKey('hidden'))) {
+        continue;
+      }
       if (tag == 'input') {
         if (node.attributes['type']?.toLowerCase() == 'checkbox') {
           out.add(
@@ -432,6 +510,7 @@ class _HtmlNormalizer {
       // Semantic tags and CSS contribute to the same set. Wrapping both
       // produces duplicate emphasis (e.g. ******title******) after paste.
       final inherited = {...styles, if (_formattingTags.contains(tag)) tag};
+      var hidden = false;
       for (final declaration in (node.attributes['style'] ?? '').split(';')) {
         final colon = declaration.indexOf(':');
         if (colon < 0) continue;
@@ -441,7 +520,9 @@ class _HtmlNormalizer {
             .replaceAll('!important', '')
             .trim()
             .toLowerCase();
-        if (name == 'font-weight') {
+        if (name == 'display') {
+          hidden = value == 'none';
+        } else if (name == 'font-weight') {
           if (value == 'bold' || (int.tryParse(value) ?? 0) >= 600) {
             inherited.add('strong');
           } else if (value == 'normal' || (int.tryParse(value) ?? 600) < 600) {
@@ -464,6 +545,7 @@ class _HtmlNormalizer {
           }
         }
       }
+      if (external && hidden) continue;
       final children = nodes(
         node.nodes,
         depth + 1,
@@ -480,8 +562,7 @@ class _HtmlNormalizer {
       for (final entry in node.attributes.entries) {
         final name = entry.key.toString().toLowerCase();
         if (name == 'style' || name.startsWith('on')) continue;
-        // IDs from another document must not collide with destination anchors.
-        if (name == 'id') continue;
+        if (external && name.startsWith('data-')) continue;
         if (external && name == 'class') {
           if (tag == 'pre' || tag == 'code') {
             final languages = entry.value
@@ -525,12 +606,17 @@ class _HtmlNormalizer {
           );
         }
       }
-      if (external && tag == 'a' && !_hasImportedAnchorContent(normalized)) {
+      if (external &&
+          tag == 'a' &&
+          !normalized.attributes.containsKey('id') &&
+          !_hasImportedAnchorContent(normalized)) {
         // Keep its spacing and any breaks for the paragraph boundary pass.
         out.addAll(normalized.nodes.toList());
       } else if (tag == 'span' && normalized.attributes.isEmpty) {
         out.addAll(normalized.nodes.toList());
-      } else if (tag == 'table' && _isLayoutTable(normalized, node)) {
+      } else if (external &&
+          tag == 'table' &&
+          _isLayoutTable(normalized, node)) {
         // Web pages often use a one-column table to wrap an entire article.
         // Sending that wrapper to the table adapter flattens its headings,
         // paragraphs, lists and nested data tables into inline cell text.
@@ -633,6 +719,175 @@ class _HtmlNormalizer {
   }
 }
 
+void _normalizeClipboardSemantics(dom.Element root) {
+  final referencedIds = <String>{};
+  for (final anchor in root.querySelectorAll('a[href]')) {
+    final href = anchor.attributes['href']!;
+    if (href.startsWith('#')) {
+      final target = Uri.tryParse(href)?.fragment;
+      if (target != null && target.isNotEmpty) referencedIds.add(target);
+    }
+  }
+
+  for (final attribute in const [
+    'aria-labelledby',
+    'aria-describedby',
+    'aria-details',
+  ]) {
+    for (final element in root.querySelectorAll('[$attribute]')) {
+      referencedIds.addAll(
+        element.attributes[attribute]!.split(RegExp(r'\s+')),
+      );
+    }
+  }
+
+  void visit(dom.Element element, String? inheritedDirection) {
+    final tag = element.localName!;
+    final attrs = element.attributes;
+    final direction = busyMarkHtmlDirection(attrs['dir']);
+    if (direction == null ||
+        (inheritedDirection != 'rtl' &&
+            (direction == 'ltr' || direction == 'auto') &&
+            isSafeBlockHtmlTag(tag) &&
+            _hasOnlyLtrFlow(element))) {
+      attrs.remove('dir');
+    } else {
+      attrs['dir'] = direction;
+    }
+
+    // Preserve destinations referenced within the selection. Other site IDs
+    // can collide with the destination document's anchors.
+    if (tag != 'a' && !referencedIds.contains(attrs['id'])) {
+      attrs.remove('id');
+    }
+    if (tag == 'a' && attrs['aria-label']?.trim() == element.text.trim()) {
+      attrs.remove('aria-label');
+    }
+    final role = attrs['role']?.trim().toLowerCase();
+    if (role == 'link' &&
+        !attrs.containsKey('href') &&
+        const {'a', 'div', 'p', 'span'}.contains(tag) &&
+        element.querySelector('a[href]') == null) {
+      attrs.remove('role');
+      attrs.remove('aria-label');
+      _unwrapWholeLabel(element, 'u');
+    }
+    final headingLevel = const {
+      'h1': 1,
+      'h2': 2,
+      'h3': 3,
+      'h4': 4,
+      'h5': 5,
+      'h6': 6,
+    }[tag];
+    final ariaLevel = int.tryParse(attrs['aria-level'] ?? '');
+    final roleHeadingLevel =
+        role == 'heading' && (attrs['aria-level'] == null || ariaLevel != null)
+        ? ariaLevel ?? 2
+        : null;
+    if (headingLevel != null &&
+        (role == null || role == 'heading') &&
+        (attrs['aria-level'] == null || ariaLevel == headingLevel)) {
+      attrs.remove('role');
+      attrs.remove('aria-level');
+    } else if (headingLevel == null &&
+        roleHeadingLevel != null &&
+        roleHeadingLevel >= 1 &&
+        roleHeadingLevel <= 6 &&
+        const {'div', 'p'}.contains(tag) &&
+        element.children.every(
+          (child) => !isSafeBlockHtmlTag(child.localName!),
+        )) {
+      attrs.remove('role');
+      attrs.remove('aria-level');
+      final heading = _element(
+        'h$roleHeadingLevel',
+        element.nodes.toList(),
+        attrs.cast<String, String>(),
+      );
+      element.replaceWith(heading);
+      visit(heading, inheritedDirection);
+      return;
+    } else if (role != null &&
+        role ==
+            const {
+              'p': 'paragraph',
+              'ol': 'list',
+              'ul': 'list',
+              'li': 'listitem',
+              'a': 'link',
+              'img': 'img',
+              'table': 'table',
+              'tr': 'row',
+              'td': 'cell',
+            }[tag]) {
+      attrs.remove('role');
+    }
+
+    if (headingLevel != null) _unwrapWholeLabel(element, 'strong');
+    for (final child in element.children.toList()) {
+      visit(child, direction ?? inheritedDirection);
+    }
+  }
+
+  visit(root, null);
+}
+
+// Markdown resolves each visible block from its own first strong character.
+// A neutral, mixed, or independently scoped descendant can make removing a
+// browser direction change the result even if the wrapper starts with Latin.
+bool _hasOnlyLtrFlow(dom.Element element) {
+  var text = StringBuffer();
+  var hasStrongText = false;
+  bool flush() {
+    final value = text.toString();
+    text = StringBuffer();
+    if (value.trim().isEmpty) return true;
+    hasStrongText = Bidi.startsWithLtr(value) && !Bidi.hasAnyRtl(value);
+    return hasStrongText;
+  }
+
+  for (final node in element.nodes) {
+    if (node is dom.Text) {
+      text.write(node.data);
+    } else if (node is dom.Element) {
+      final tag = node.localName!;
+      final direction = busyMarkHtmlDirection(node.attributes['dir']);
+      if (isSafeBlockHtmlTag(tag)) {
+        if (direction == 'rtl' || !flush() || !_hasOnlyLtrFlow(node)) {
+          return false;
+        }
+        hasStrongText = true;
+      } else {
+        if (tag == 'bdi' ||
+            tag == 'bdo' ||
+            tag == 'img' ||
+            direction != null ||
+            node.querySelector('[dir], bdi, bdo, img') != null) {
+          return false;
+        }
+        text.write(node.text);
+      }
+    }
+  }
+  return flush() && hasStrongText;
+}
+
+void _unwrapWholeLabel(dom.Element element, String tag) {
+  final label = element.children.singleOrNull;
+  if (label?.localName != tag ||
+      label!.attributes.isNotEmpty ||
+      element.nodes.any(
+        (node) => node is dom.Text && node.data.trim().isNotEmpty,
+      )) {
+    return;
+  }
+  final index = element.nodes.indexOf(label);
+  final content = label.nodes.toList();
+  element.nodes.removeAt(index);
+  element.nodes.insertAll(index, content);
+}
+
 // Only line-break runs in paragraph flow are browser spacing. A single break,
 // preformatted content, and breaks between words of a link label stay intact.
 void _normalizeBrowserParagraphs(dom.Element container) {
@@ -659,7 +914,11 @@ void _normalizeBrowserParagraphs(dom.Element container) {
       _normalizeBrowserParagraphs(child);
     }
   }
-  if (!flow.contains(tag)) return;
+  if (!flow.contains(tag) ||
+      container.attributes.isNotEmpty ||
+      container.querySelector('[dir], [id], [lang], bdi, bdo') != null) {
+    return;
+  }
 
   // A stream across wrapper boundaries, retaining the original DOM nodes so
   // only participating breaks are removed when the wrappers are split.

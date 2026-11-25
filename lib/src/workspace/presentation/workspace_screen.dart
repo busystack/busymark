@@ -13996,6 +13996,11 @@ class _PreviewInlineText extends ConsumerWidget {
           ],
         ),
         textAlign: textAlign,
+        textDirection: busyMarkDocumentTextDirection(
+          text: _previewDirectionalText(block),
+          fallback: Directionality.of(context),
+          explicitDirection: block.attributes['dir'],
+        ),
       ),
     );
   }
@@ -14673,11 +14678,19 @@ InlineSpan _previewInlineSpan(
   }
 
   return switch (inline.kind) {
-    PreviewInlineKind.text => span(
-      text: inline.text,
-      children: null,
-      style: mergeStyle(null),
-    ),
+    PreviewInlineKind.text => switch (busyMarkInlineDirectionControls(
+      inline.attributes,
+    )) {
+      final controls? => TextSpan(
+        children: [
+          TextSpan(text: controls.open),
+          for (final child in inline.children)
+            childSpan(child, mergeStyle(null)),
+          TextSpan(text: controls.close),
+        ],
+      ),
+      null => span(text: inline.text, children: null, style: mergeStyle(null)),
+    },
     PreviewInlineKind.strong => span(
       text: inline.children.isEmpty ? inline.text : null,
       children: inline.children.isEmpty

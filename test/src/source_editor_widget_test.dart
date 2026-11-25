@@ -9537,6 +9537,91 @@ void main() {
     );
   });
 
+  testWidgets('Source history persists raw HTML links and ingested assets', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-source-raw-media-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final origin = Directory('${root.path}/origin')..createSync();
+    final destination = Directory('${root.path}/destination')..createSync();
+    final target = File('${destination.path}/target.md');
+    final guide = File('${origin.path}/guide one.md')
+      ..writeAsStringSync('# Guide');
+    const authored =
+        '<div><a href="guide%20one.md?q=a%26b#guide">Guide</a>'
+        '<img src="diagram.svg" alt="Diagram"></div>\n';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '${origin.path}/old.md',
+          source: authored,
+          mode: MarkdownMode.gfm,
+        )
+        .busyDocument;
+    final block = document.blocks.single;
+    final fragment = WysiwygClipboardFragment(
+      sourcePath: document.filePath,
+      mode: document.mode,
+      mediaPaths: {'diagram.svg': '${origin.path}/diagram.svg'},
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: const [],
+          completeBlock: busyMarkWysiwygImmutableBlockSnapshot(block),
+        ),
+      ],
+    );
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    String? output;
+    await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target\n',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: target.path,
+      workspaceRoot: root.path,
+      assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      onChanged: (value, _) => output = value,
+    );
+    final bytes = Uint8List.fromList(
+      utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      ),
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'source-raw-html-media',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.richText,
+      text: 'Guide',
+      sourceText: authored,
+      richFragment: fragment.encode(),
+      mediaBytes: {'diagram.svg': bytes},
+    );
+    expect(
+      await tester.runAsync(() => registry.paste(payload)),
+      ClipboardPasteResult.inserted,
+    );
+    target.writeAsStringSync(output!);
+    final raw = const MarkdownParser()
+        .parse(filePath: target.path, source: target.readAsStringSync())
+        .busyDocument
+        .blocks
+        .singleWhere((value) => value.kind == BusyBlockKind.htmlBlock);
+    expect(
+      raw.rawSource,
+      contains('href="../origin/guide%20one.md?q=a%26b#guide"'),
+    );
+    expect(raw.rawSource, contains('src="../images/diagram.svg"'));
+    expect(
+      Uri.file(target.path).resolve('../origin/guide%20one.md').toFilePath(),
+      guide.path,
+    );
+    expect(File('${root.path}/images/diagram.svg').readAsBytesSync(), bytes);
+  });
+
   testWidgets('structured history restores a local video into Source', (
     tester,
   ) async {
@@ -10339,7 +10424,7 @@ class _SourceTestClipboard extends RichClipboardService {
   }
 
   @override
-  Future<RichClipboardData> read() async {
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async {
     reads++;
     if (!readStarted.isCompleted) readStarted.complete();
     if (delayRead) await _readRelease.future;

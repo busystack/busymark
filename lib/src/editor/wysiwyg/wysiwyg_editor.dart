@@ -6239,7 +6239,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
-    final data = await _clipboard.read();
+    final data = await _clipboard.read(
+      plainTextOnly: mode == BusyMarkPasteMode.plainText,
+    );
     if (!_isClipboardTargetCurrent(target)) {
       return ClipboardPasteResult.staleTarget;
     }
@@ -8819,8 +8821,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _collapseInactiveFieldSelections(extent.blockId);
   }
 
-  bool _deleteBlockSelection() {
-    final ranges = _selectedTextRanges(null, true);
+  bool _deleteBlockSelection([List<_SelectedTextRange>? capturedRanges]) {
+    final ranges = capturedRanges ?? _selectedTextRanges(null, true);
     if (ranges.isEmpty) {
       return false;
     }
@@ -8979,7 +8981,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         onWritten: () {
           if (!cut || !_isClipboardTargetCurrent(target)) return;
           if (documentSelection) {
-            _deleteBlockSelection();
+            _deleteBlockSelection(ranges);
           } else {
             _deleteActiveTextSelection(ranges.single);
           }
@@ -9365,8 +9367,6 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   ) {
     var start = 0;
     var end = ranges.length;
-    // Tables have no block-local inline text: their document range denotes
-    // the complete structured block, including all child rows and cells.
     while (start < end && ranges[start].isEmpty) {
       start++;
     }
@@ -9477,8 +9477,25 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             ? text
             : (block.attributes['src'] ?? block.rawSource ?? ''),
       BusyBlockKind.video => block.attributes['src'] ?? block.rawSource ?? '',
+      BusyBlockKind.htmlBlock when block.children.isNotEmpty =>
+        block.children.map(_copyTextForHtmlChild).join('\n\n'),
+      BusyBlockKind.table =>
+        block.children
+            .map((row) => row.children.map(_copyTextForHtmlChild).join('\t'))
+            .join('\n'),
       _ => text.isNotEmpty ? text : (block.rawSource ?? ''),
     };
+  }
+
+  String _copyTextForHtmlChild(BusyBlock block) {
+    if (block.kind == BusyBlockKind.htmlBlock ||
+        block.kind == BusyBlockKind.table) {
+      return _copyTextForBlock(block);
+    }
+    return [
+      _copyTextForBlock(block),
+      ...block.children.map(_copyTextForHtmlChild),
+    ].where((text) => text.isNotEmpty).join('\n\n');
   }
 
   String _copyTextForRange(_SelectedTextRange range) {
@@ -9682,9 +9699,13 @@ class _SelectedTextRange {
   final int start;
   final int end;
 
-  // A document table range owns its rows/cells, even though the container has
-  // no inline text. Cell-local and ordinary collapsed ranges remain empty.
-  bool get isEmpty => start == end && block.kind != BusyBlockKind.table;
+  // Atomic document blocks can have content without any field-local offsets.
+  bool get isEmpty =>
+      start == end &&
+      !(block.plainText.isEmpty &&
+          ((block.preserveRaw && block.rawSource?.isNotEmpty == true) ||
+              block.kind == BusyBlockKind.table ||
+              block.kind == BusyBlockKind.thematicBreak));
 
   bool get coversWholeBlock => start <= 0 && end >= block.plainText.length;
 }

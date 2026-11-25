@@ -1152,8 +1152,8 @@ class _RuntimeExternalClipboardService extends RichClipboardService {
   }
 
   @override
-  Future<RichClipboardData> read() async {
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async {
     final external = _externalRead;
-    return external ?? await _native.read();
+    return external ?? await _native.read(plainTextOnly: plainTextOnly);
   }
 }

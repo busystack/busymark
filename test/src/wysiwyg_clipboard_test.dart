@@ -3360,6 +3360,108 @@ void main() {
       },
     );
 
+    for (final source in [
+      '<div dir="auto">Keep me</div>\n\nAfter\n',
+      'Before\n\n<div dir="auto">Keep me</div>\n\nAfter\n',
+      'Before\n\n<div dir="auto">Keep me</div>\n',
+    ]) {
+      testWidgets('whole-document Copy and Cut include raw HTML in $source', (
+        tester,
+      ) async {
+        var result = source;
+        await mount(tester, 'origin', source, (value) => result = value);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        final copied = systemData['html'];
+        expect(copied, contains('Keep me'));
+        expect(systemData['text'], contains('Keep me'));
+        expect(result, source);
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(systemData['html'], copied);
+        expect(result.trim(), isEmpty);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+      });
+    }
+
+    for (final reverse in [false, true]) {
+      testWidgets('Cut excludes collapsed text endpoints (reverse=$reverse)', (
+        tester,
+      ) async {
+        const source = 'Before\n\n<div>Keep me</div>\n\nAfter\n';
+        var result = source;
+        await mount(
+          tester,
+          'origin',
+          source,
+          (value) => result = value,
+          focusFirstField: false,
+          initialSessionFor: (document) {
+            final first = document.blocks.first;
+            final last = document.blocks.last;
+            return WysiwygEditorSessionState(
+              activeBlockId: reverse ? first.id : last.id,
+              anchorBlockId: reverse ? last.id : first.id,
+              anchorOffset: reverse ? 0 : first.plainText.length,
+              extentBlockId: reverse ? first.id : last.id,
+              extentOffset: reverse ? first.plainText.length : 0,
+            );
+          },
+        );
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(systemData['text'], 'Keep me');
+        expect(systemData['html'], contains('<div>Keep me</div>'));
+        expect(
+          _parser
+              .parse(filePath: '/cut.md', source: result)
+              .busyDocument
+              .blocks
+              .map((block) => block.plainText),
+          ['Before', 'After'],
+        );
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+      });
+    }
+
+    testWidgets(
+      'whole-document Copy publishes semantic HTML without the native token',
+      (tester) async {
+        const source =
+            'Before\n\n'
+            '<ol type="A" reversed start="5"><li dir="rtl">Fifth</li>'
+            '<li value="2">Second</li><li><a href="https://example.test" title="Guide">First</a></li></ol>'
+            '\n\nAfter\n';
+        await copyAll(tester, source: source);
+        final published = html.parseFragment(systemData['html'] as String);
+        expect(
+          published.querySelector('ol[type=A][reversed][start="5"]'),
+          isNotNull,
+        );
+        expect(published.querySelector('li[dir=rtl]')!.text, 'Fifth');
+        expect(published.querySelector('li[value="2"]')!.text, 'Second');
+        expect(published.querySelector('a[title=Guide]')!.text, 'First');
+        expect(
+          systemData['text'],
+          'Before\n\nE. Fifth\n\nB. Second\n\nA. First\n\nAfter',
+        );
+
+        systemData.remove('token');
+        var result = '';
+        await mount(
+          tester,
+          'other-editor',
+          'Target\n',
+          (value) => result = value,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyV);
+        expect(result, contains('<ol type="A" reversed="" start="5">'));
+        expect(result, contains('title="Guide"'));
+      },
+    );
+
     testWidgets('cut transfers formatting before deleting the selection', (
       tester,
     ) async {
@@ -3934,6 +4036,103 @@ void main() {
       expect(entries.single.kind, BusyMarkClipboardContentKind.image);
       expect(entries.single.text, sourceFile.path);
       expect(entries.single.imageBytes, original);
+    });
+
+    testWidgets('raw HTML links and retained images survive history paste', (
+      tester,
+    ) async {
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-raw-html-media-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final sourceDir = Directory('${root.path}/source')..createSync();
+      final destinationDir = Directory('${root.path}/destination')
+        ..createSync();
+      final guide = File('${sourceDir.path}/guide with space.md')
+        ..writeAsStringSync('# Guide');
+      final sourcePath = '${sourceDir.path}/origin.md';
+      final target = File('${destinationDir.path}/target.md');
+      final image = File('${sourceDir.path}/diagram.svg');
+      final bytes = utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      );
+      image.writeAsBytesSync(bytes);
+      const authored =
+          'Before\n\n<div><a href="guide%20with%20space.md#guide">'
+          'Guide</a><img src="diagram.svg" alt="Diagram"></div>\n\nAfter\n';
+      final captures = <BusyMarkClipboardCapture>[];
+      await mount(
+        tester,
+        'raw-html-origin',
+        authored,
+        (_) {},
+        filePath: sourcePath,
+        workspaceRoot: root.path,
+        onCaptured: captures.add,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      for (var attempt = 0; attempt < 100 && captures.isEmpty; attempt++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
+
+      final capture = captures.single;
+      expect(capture.mediaBytes['diagram.svg'], bytes);
+      final payload = BusyMarkClipboardPayload(
+        id: 'wysiwyg-raw-html-history',
+        acquiredAt: DateTime.utc(2026),
+        kind: capture.kind,
+        text: capture.text,
+        html: capture.html,
+        sourceText: capture.sourceText,
+        richFragment: capture.richFragment,
+        mediaBytes: capture.mediaBytes,
+        mediaComplete: capture.mediaComplete,
+      );
+      // The retained clipboard must be sufficient after the original image disappears.
+      image.deleteSync();
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      var output = 'Target\n';
+      await mount(
+        tester,
+        'raw-html-target',
+        output,
+        (value) => output = value,
+        filePath: target.path,
+        workspaceRoot: root.path,
+        registry: registry,
+        assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      expect(
+        await tester.runAsync(() => registry.paste(payload)),
+        ClipboardPasteResult.inserted,
+      );
+      target.writeAsStringSync(output);
+
+      final reopened = _parser
+          .parse(filePath: target.path, source: target.readAsStringSync())
+          .busyDocument;
+      final raw = reopened.blocks.singleWhere(
+        (b) => b.kind == BusyBlockKind.htmlBlock,
+      );
+      expect(
+        raw.rawSource,
+        contains('href="../source/guide%20with%20space.md#guide"'),
+      );
+      expect(raw.rawSource, contains('src="../images/diagram.svg"'));
+      expect(
+        Uri.file(
+          target.path,
+        ).resolve('../source/guide%20with%20space.md').toFilePath(),
+        guide.path,
+      );
+      expect(File('${root.path}/images/diagram.svg').readAsBytesSync(), bytes);
     });
 
     testWidgets('copied local video can be pasted from history in Editor', (
@@ -5074,7 +5273,7 @@ class _WysiwygHistoryClipboard extends RichClipboardService {
   RichClipboardData value;
 
   @override
-  Future<RichClipboardData> read() async => value;
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async => value;
 }
 
 class _ClipboardMathHost implements WebRenderHost {

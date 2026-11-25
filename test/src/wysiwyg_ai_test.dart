@@ -358,7 +358,7 @@ class _AiClipboard extends RichClipboardService {
   _AiClipboard() : super(channel: const MethodChannel('busymark.test/ai'));
 
   @override
-  Future<RichClipboardData> read() async =>
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async =>
       const RichClipboardData(text: 'Paste', generation: 1);
 }
 

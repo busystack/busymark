@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/raw_html_adapter.dart';
+import '../../markdown/raw_html_policy.dart';
 import '../../platform/rich_clipboard_service.dart';
 import '../inline_semantics.dart';
 import 'wysiwyg_document_controller.dart';
@@ -224,22 +226,29 @@ class WysiwygClipboardFragment {
     if (!rebaseRelativeReferences && mediaDestinations.isEmpty) {
       return this;
     }
-    String? destination(String? value, {bool media = false}) {
+    String? destination(
+      String? value, {
+      bool media = false,
+      bool rawHtml = false,
+    }) {
       if (value == null || value.isEmpty) return value;
-      if (media) {
-        final retained = mediaDestinations[value];
-        if (retained != null) return retained;
-        final resolved = mediaPaths[value];
-        if (resolved != null && p.isAbsolute(resolved)) {
-          return Uri(path: resolved).toString();
-        }
-      }
+      final retained = media ? mediaDestinations[value] : null;
+      if (retained != null) return retained;
       if (!rebaseRelativeReferences) return value;
       final uri = Uri.tryParse(value);
       if (uri == null || uri.hasScheme || uri.hasAuthority) return value;
-      final resolved = Uri.file(p.absolute(sourcePath)).resolveUri(uri);
+      final mediaPath = media ? mediaPaths[value] : null;
+      if (!rawHtml && mediaPath != null && p.isAbsolute(mediaPath)) {
+        return Uri(path: mediaPath).toString();
+      }
+      final resolvedPath = mediaPath != null && p.isAbsolute(mediaPath)
+          ? mediaPath
+          : Uri(
+              scheme: 'file',
+              path: Uri.file(p.absolute(sourcePath)).resolveUri(uri).path,
+            ).toFilePath();
       final path = p.relative(
-        Uri(scheme: 'file', path: resolved.path).toFilePath(),
+        resolvedPath,
         from: p.dirname(p.absolute(targetPath)),
       );
       return Uri(
@@ -249,25 +258,64 @@ class WysiwygClipboardFragment {
       ).toString();
     }
 
-    Map<String, String> attributes(Map<String, String> values) => {
+    Map<String, String> attributes(
+      Map<String, String> values, {
+      bool rawHtml = false,
+    }) => {
       for (final entry in values.entries)
-        entry.key: {'src', 'href', 'destination'}.contains(entry.key)
-            ? destination(entry.value, media: entry.key == 'src') ?? entry.value
+        entry.key: {'src', 'href', 'destination', 'cite'}.contains(entry.key)
+            ? destination(
+                    entry.value,
+                    media: entry.key == 'src',
+                    rawHtml: rawHtml,
+                  ) ??
+                  entry.value
             : entry.value,
     };
-    BusyInline inline(BusyInline value) => BusyInline(
+    BusyInline inline(BusyInline value, bool rawHtml) => BusyInline(
       kind: value.kind,
       text: value.text,
       destination: destination(
         value.destination,
         media: value.kind == BusyInlineKind.image,
+        rawHtml: rawHtml,
       ),
-      attributes: attributes(value.attributes),
-      children: [for (final child in value.children) inline(child)],
+      attributes: attributes(value.attributes, rawHtml: rawHtml),
+      children: [for (final child in value.children) inline(child, rawHtml)],
     );
-    BusyBlock block(BusyBlock value) {
-      final rebasedAttributes = attributes(value.attributes);
-      final rebasedInlines = [for (final child in value.inlines) inline(child)];
+    String? rebaseHtml(String? source) {
+      if (source == null) return null;
+      final fragment = const RawHtmlAdapter().parseSafeRawHtml(source);
+      if (fragment == null) return source;
+      var changed = false;
+      for (final element in fragment.querySelectorAll(
+        '[href], [src], [cite]',
+      )) {
+        final tag = element.localName!;
+        final allowed = sanitizeHtmlAttributes(tag, element.attributes)!;
+        for (final attribute in const ['href', 'src', 'cite']) {
+          final previous = allowed[attribute];
+          if (previous == null) continue;
+          final updated = destination(
+            previous,
+            media: tag == 'img' && attribute == 'src',
+            rawHtml: true,
+          );
+          if (updated != null && updated != previous) {
+            element.attributes[attribute] = updated;
+            changed = true;
+          }
+        }
+      }
+      return changed ? fragment.outerHtml : source;
+    }
+
+    BusyBlock block(BusyBlock value, {bool withinRawHtml = false}) {
+      final rawHtml = withinRawHtml || value.kind == BusyBlockKind.htmlBlock;
+      final rebasedAttributes = attributes(value.attributes, rawHtml: rawHtml);
+      final rebasedInlines = [
+        for (final child in value.inlines) inline(child, rawHtml),
+      ];
       bool referencesChanged(BusyInline before, BusyInline after) =>
           before.destination != after.destination ||
           !mapEquals(before.attributes, after.attributes) ||
@@ -275,18 +323,23 @@ class WysiwygClipboardFragment {
             for (var i = 0; i < before.children.length; i++)
               referencesChanged(before.children[i], after.children[i]),
           ].any((v) => v);
-      final rawSource = value.kind == BusyBlockKind.video
-          ? _rebaseVideoRawSource(
-              value.rawSource,
-              originalSource: value.attributes['src'],
-              rebasedSource: rebasedAttributes['src'],
-            )
-          : value.rawSource;
+      final rawSource = switch (value.kind) {
+        BusyBlockKind.video => _rebaseVideoRawSource(
+          value.rawSource,
+          originalSource: value.attributes['src'],
+          rebasedSource: rebasedAttributes['src'],
+        ),
+        BusyBlockKind.htmlBlock => rebaseHtml(value.rawSource),
+        _ => value.rawSource,
+      };
       return BusyBlock(
         id: value.id,
         kind: value.kind,
         inlines: rebasedInlines,
-        children: [for (final child in value.children) block(child)],
+        children: [
+          for (final child in value.children)
+            block(child, withinRawHtml: rawHtml),
+        ],
         attributes: rebasedAttributes,
         rawSource: rawSource,
         preserveRaw: value.preserveRaw,
@@ -295,6 +348,7 @@ class WysiwygClipboardFragment {
         isSourceProtected: value.isSourceProtected,
         dirty:
             value.dirty ||
+            rawSource != value.rawSource ||
             !mapEquals(value.attributes, rebasedAttributes) ||
             [
               for (var i = 0; i < value.inlines.length; i++)
@@ -319,7 +373,7 @@ class WysiwygClipboardFragment {
                   start: range.start,
                   end: range.end,
                   kind: range.kind,
-                  attributes: range.attributes,
+                  attributes: attributes(range.attributes),
                   destination: destination(
                     range.destination,
                     media: range.kind == BusyInlineKind.image,

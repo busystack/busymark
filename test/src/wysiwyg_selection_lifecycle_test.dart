@@ -52,7 +52,7 @@ class _DelayedClipboard extends MemoryRichClipboard {
   int writes = 0;
 
   @override
-  Future<RichClipboardData> read() async {
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async {
     reads++;
     await readGate?.future;
     return readFails ? const RichClipboardData() : data;

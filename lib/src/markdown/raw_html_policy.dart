@@ -159,6 +159,14 @@ const perTagAllowedAttributes = <String, Set<String>>{
   'pre': {'class'},
 };
 
+String? busyMarkHtmlDirection(String? value) =>
+    switch (value?.trim().toLowerCase()) {
+      'ltr' => 'ltr',
+      'rtl' => 'rtl',
+      'auto' => 'auto',
+      _ => null,
+    };
+
 bool isSafeHtmlTag(String tag) {
   final normalized = _normalizeName(tag);
   return safeHtmlTags.contains(normalized) && !isUnsafeHtmlTag(normalized);
