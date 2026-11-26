@@ -10,6 +10,7 @@ import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
+import '../document_html_inline.dart';
 import '../document_list_marker.dart';
 import '../document_surface.dart';
 import '../document_text_geometry.dart';
@@ -1194,10 +1195,18 @@ class _RenderedHtmlListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firstParagraph =
+        block.inlines.isEmpty &&
+            block.children.firstOrNull?.kind == BusyBlockKind.paragraph
+        ? block.children.first
+        : null;
+    final children = firstParagraph == null
+        ? block.children
+        : block.children.sublist(1);
     return Padding(
       padding: EdgeInsets.only(
         top: first ? 0 : BusyMarkSpacing.xs,
-        bottom: block.children.isEmpty ? BusyMarkSpacing.xs : 0,
+        bottom: children.isEmpty ? BusyMarkSpacing.xs : 0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1213,16 +1222,18 @@ class _RenderedHtmlListItem extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
-              Expanded(child: _RenderedHtmlInlineText(block: block)),
+              Expanded(
+                child: _RenderedHtmlInlineText(block: firstParagraph ?? block),
+              ),
             ],
           ),
-          if (block.children.isNotEmpty)
+          if (children.isNotEmpty)
             Padding(
               padding: const EdgeInsetsDirectional.only(
                 start: BusyMarkSizes.documentListIndent,
               ),
               child: _RenderedHtmlBlocks(
-                blocks: block.children,
+                blocks: children,
                 documentFilePath: documentFilePath,
                 workspaceRoot: workspaceRoot,
                 writersideRoot: writersideRoot,
@@ -1343,16 +1354,18 @@ class _RenderedHtmlInlineText extends StatelessWidget {
     BusyInline inline,
     TextStyle? baseStyle,
   ) {
-    if (busyMarkInlineDirectionControls(inline.attributes)
-        case final controls?) {
-      return TextSpan(
-        children: [
-          TextSpan(text: controls.open),
-          for (final child in inline.children)
-            _spanForInline(context, child, baseStyle),
-          TextSpan(text: controls.close),
-        ],
-      );
+    if (busyMarkRenderedHtmlInline(
+          context,
+          inline.attributes,
+          baseStyle,
+          (style) => [
+            if (inline.children.isEmpty) TextSpan(text: inline.text),
+            for (final child in inline.children)
+              _spanForInline(context, child, style),
+          ],
+        )
+        case final semantic?) {
+      return semantic;
     }
     final scheme = Theme.of(context).colorScheme;
     final childBaseStyle = _styleForInline(context, inline, baseStyle);

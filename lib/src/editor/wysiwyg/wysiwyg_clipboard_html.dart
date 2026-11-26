@@ -5,10 +5,13 @@ import 'package:html/parser.dart' as html;
 import 'package:intl/intl.dart' show Bidi;
 import 'package:path/path.dart' as p;
 
+import '../../core/uri_utils.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_list_source.dart';
 import '../../markdown/raw_html_adapter.dart';
 import '../../markdown/raw_html_policy.dart';
+import '../../markdown/semantic_html_inline.dart';
 import '../../platform/rich_clipboard_service.dart';
 import 'wysiwyg_clipboard_fragment.dart';
 import 'wysiwyg_document_controller.dart';
@@ -147,7 +150,17 @@ List<dom.Node>? _clipboardFragmentNodes(
         final inside = started;
         final children = visit(node.nodes, depth + 1);
         if (children.isNotEmpty || inside && !ended) {
-          selected.add(node.clone(false)..nodes.addAll(children));
+          final clone = node.clone(false)..nodes.addAll(children);
+          if ((!inside || ended) &&
+              (busyMarkHtmlDirection(node.attributes['dir']) == 'auto' ||
+                  node.localName == 'bdi' && node.attributes['dir'] == null)) {
+            final originalDirection = busyMarkResolvedHtmlDirection(node);
+            if (originalDirection != null &&
+                originalDirection != busyMarkResolvedHtmlDirection(clone)) {
+              clone.attributes['dir'] = originalDirection;
+            }
+          }
+          selected.add(clone);
         }
       } else if (started) {
         selected.add(node.clone(false));
@@ -184,11 +197,12 @@ class _HtmlWriter {
 
   String? url(String? value, String tag, String attribute) {
     if (value == null || value.isEmpty) return null;
-    if (attribute == 'src' && mediaPaths[value] != null) {
-      return Uri.file(mediaPaths[value]!).toString();
-    }
     final uri = Uri.tryParse(value);
     if (uri == null) return null;
+    final mediaPath = attribute == 'src' ? mediaPaths[value] : null;
+    if (mediaPath != null) {
+      return withReferenceSuffix(Uri.file(mediaPath), uri).toString();
+    }
     if (uri.scheme == 'file') return uri.toString();
     if (!isSafeHtmlUrlAttribute(tag, attribute, value)) return null;
     return !uri.hasScheme && !value.startsWith('#') && sourcePath.isNotEmpty
@@ -204,6 +218,7 @@ class _HtmlWriter {
       if (b.isSourceOnly || b.kind == BusyBlockKind.frontMatter) continue;
       if (_isList(b)) {
         final ordered = _ordered(b);
+        final firstIndex = i;
         final list = dom.Element.tag(ordered ? 'ol' : 'ul');
         final start = int.tryParse(
           (b.attributes['marker'] ?? '').replaceAll(RegExp(r'\D'), ''),
@@ -213,7 +228,10 @@ class _HtmlWriter {
         }
         while (i < values.length &&
             _isList(values[i]) &&
-            _ordered(values[i]) == ordered) {
+            _ordered(values[i]) == ordered &&
+            (i == firstIndex ||
+                !ordered ||
+                !busyMarkStartsSeparateOrderedList(values[i - 1], values[i]))) {
           final item = values[i++];
           final li = dom.Element.tag('li');
           if (item.kind == BusyBlockKind.taskListItem) {
@@ -387,6 +405,17 @@ class _HtmlWriter {
           out.add(_element('del', children()));
         case BusyInlineKind.code:
           out.add(_element('code', [dom.Text(value.text)]));
+        case BusyInlineKind.html:
+          final element = semanticHtmlInlineElement(value);
+          if (element != null) {
+            if (element.attributes.remove('cite') case final cite?) {
+              final resolved = url(cite, element.localName!, 'cite');
+              if (resolved != null) element.attributes['cite'] = resolved;
+            }
+            out.add(element..nodes.addAll(children()));
+          } else {
+            out.addAll(children());
+          }
         case BusyInlineKind.hardBreak:
           out.add(dom.Element.tag('br'));
         case BusyInlineKind.softBreak:
@@ -621,28 +650,7 @@ class _HtmlNormalizer {
         // Sending that wrapper to the table adapter flattens its headings,
         // paragraphs, lists and nested data tables into inline cell text.
         // Keep each cell as a block container and retain real tables inside it.
-        out.add(
-          _element(
-            'div',
-            [
-              for (final caption in normalized.children.where(
-                (child) => child.localName == 'caption',
-              ))
-                _element('div', caption.nodes.toList()),
-              for (final row in _tableRows(normalized))
-                for (final cell in row.children)
-                  if (cell.localName == 'td' || cell.localName == 'th')
-                    _element('div', cell.nodes.toList(), {
-                      if (cell.attributes['dir'] case final direction?)
-                        'dir': direction,
-                    }),
-            ],
-            {
-              if (normalized.attributes['dir'] case final direction?)
-                'dir': direction,
-            },
-          ),
-        );
+        out.addAll(_layoutContainers(normalized));
       } else {
         out.add(normalized);
       }
@@ -673,6 +681,25 @@ class _HtmlNormalizer {
     return result;
   }
 
+  List<dom.Node> _layoutContainers(dom.Element element) {
+    final tag = element.localName!;
+    final attributes =
+        sanitizeHtmlAttributes('div', element.attributes) ?? <String, String>{};
+    if (tag == 'table' &&
+        const {'none', 'presentation'}.contains(attributes['role'])) {
+      attributes.remove('role');
+    }
+    final leaf = const {'caption', 'td', 'th'}.contains(tag);
+    final children = leaf
+        ? element.nodes.toList()
+        : [for (final child in element.children) ..._layoutContainers(child)];
+    // Cells and captions delimit flows. Structural shells only need a
+    // replacement element when they carry semantics of their own.
+    return leaf || attributes.isNotEmpty
+        ? [_element('div', children, attributes)]
+        : children;
+  }
+
   Iterable<dom.Element> _tableRows(dom.Element table) sync* {
     for (final child in table.children) {
       if (child.localName == 'tr') {
@@ -685,6 +712,19 @@ class _HtmlNormalizer {
 
   bool _isLayoutTable(dom.Element table, dom.Element original) {
     final normalizedRole = original.attributes['role']?.trim().toLowerCase();
+    final rows = _tableRows(table).toList();
+    if (table.attributes.containsKey('summary') ||
+        table.children.any((child) => child.localName == 'colgroup') ||
+        rows
+            .expand((row) => row.children)
+            .any(
+              (cell) =>
+                  cell.localName == 'th' ||
+                  cell.attributes.containsKey('rowspan') ||
+                  cell.attributes.containsKey('colspan'),
+            )) {
+      return false;
+    }
     if (normalizedRole == 'presentation' || normalizedRole == 'none') {
       return true;
     }
@@ -695,7 +735,6 @@ class _HtmlNormalizer {
         )) {
       return false;
     }
-    final rows = _tableRows(table).toList();
     if (rows.isEmpty) return false;
     var hasDocumentContent = false;
     for (final row in rows) {
@@ -741,12 +780,17 @@ void _normalizeClipboardSemantics(dom.Element root) {
     }
   }
 
-  void visit(dom.Element element, String? inheritedDirection) {
+  void visit(
+    dom.Element element,
+    String? inheritedDirection,
+    bool inheritedAuto,
+  ) {
     final tag = element.localName!;
     final attrs = element.attributes;
     final direction = busyMarkHtmlDirection(attrs['dir']);
     if (direction == null ||
-        (inheritedDirection != 'rtl' &&
+        (!inheritedAuto &&
+            inheritedDirection != 'rtl' &&
             (direction == 'ltr' || direction == 'auto') &&
             isSafeBlockHtmlTag(tag) &&
             _hasOnlyLtrFlow(element))) {
@@ -806,7 +850,7 @@ void _normalizeClipboardSemantics(dom.Element root) {
         attrs.cast<String, String>(),
       );
       element.replaceWith(heading);
-      visit(heading, inheritedDirection);
+      visit(heading, inheritedDirection, inheritedAuto);
       return;
     } else if (role != null &&
         role ==
@@ -825,12 +869,17 @@ void _normalizeClipboardSemantics(dom.Element root) {
     }
 
     if (headingLevel != null) _unwrapWholeLabel(element, 'strong');
+    final effectiveDirection = busyMarkResolvedHtmlDirection(element);
+    final automaticScope =
+        attrs['dir'] == 'auto' ||
+        tag == 'bdi' && attrs['dir'] == null ||
+        effectiveDirection == null && inheritedAuto;
     for (final child in element.children.toList()) {
-      visit(child, direction ?? inheritedDirection);
+      visit(child, effectiveDirection ?? inheritedDirection, automaticScope);
     }
   }
 
-  visit(root, null);
+  visit(root, null, false);
 }
 
 // Markdown resolves each visible block from its own first strong character.

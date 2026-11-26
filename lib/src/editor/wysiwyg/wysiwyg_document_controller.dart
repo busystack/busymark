@@ -9,6 +9,8 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_list_source.dart';
+import '../../markdown/semantic_html_inline.dart';
 import '../../markdown/markdown_source_map.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_front_matter.dart';
@@ -3601,7 +3603,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             !result.last.isSourceProtected) {
           final parent = result.removeLast();
           final indented = _numberIndentedListItem(
-            updated.copyWith(dirty: true),
+            _moveOrderedListItem(
+              updated.copyWith(dirty: true),
+              parent.children.lastOrNull,
+            ),
             parent.children,
           );
           result.add(
@@ -3659,7 +3664,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           changed = true;
         } else {
           kept.add(updated);
-          kept.addAll(childResult.outdented);
+          kept.addAll(
+            childResult.outdented.map(
+              (item) => _moveOrderedListItem(item, updated),
+            ),
+          );
         }
       }
       return _OutdentResult(kept: kept, outdented: outdented);
@@ -3678,7 +3687,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           dirty: childResult.outdented.isEmpty ? block.dirty : true,
         ),
       );
-      result.addAll(childResult.outdented);
+      result.addAll(
+        childResult.outdented.map((item) => _moveOrderedListItem(item, block)),
+      );
     }
     if (!changed) {
       return false;
@@ -4545,6 +4556,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required List<BusyWysiwygStyledBlock> blocks,
     required bool replaceDestinationStructure,
   }) {
+    blocks = _localizeClipboardListOwners(blocks);
     if (_isBlockContentContainer(block.kind) && !replaceDestinationStructure) {
       return _insertCompleteBlocksInsideContainer(
         block: block,
@@ -4621,7 +4633,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       focusOffset = 0;
     }
     _document = _document.copyWith(
-      blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
+      blocks: busyMarkDistinguishAdjacentOrderedLists(
+        _replaceBlockWithMany(_document.blocks, blockId, replacements),
+        markDirty: true,
+      ),
     );
     notifyListeners();
     return BusyWysiwygTextSplitResult(
@@ -4712,7 +4727,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       dirty: true,
     );
     _document = _document.copyWith(
-      blocks: _replaceBlockWithMany(_document.blocks, blockId, [updated]),
+      blocks: busyMarkDistinguishAdjacentOrderedLists(
+        _replaceBlockWithMany(_document.blocks, blockId, [updated]),
+        markDirty: true,
+      ),
     );
     notifyListeners();
     final focus = trailing ?? inserted.last;
@@ -5130,8 +5148,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         block.isSourceOnly ||
         block.isGenerated ||
         block.isSourceProtected ||
-        block.kind == BusyBlockKind.table ||
-        block.kind == BusyBlockKind.thematicBreak;
+        block.isAtomicSelectionBlock;
   }
 
   String _nextGeneratedBlockId(String prefix) {
@@ -5166,6 +5183,43 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       preserveRaw: false,
       dirty: true,
     );
+  }
+
+  List<BusyWysiwygStyledBlock> _localizeClipboardListOwners(
+    List<BusyWysiwygStyledBlock> blocks,
+  ) {
+    final owners = <String, String>{};
+    BusyBlock localize(BusyBlock block) {
+      final owner = block.attributes['listId'];
+      final children = block.children.map(localize).toList(growable: false);
+      if (owner == null && listEquals(children, block.children)) return block;
+      return block.copyWith(
+        children: children,
+        attributes: owner == null
+            ? block.attributes
+            : {
+                ...block.attributes,
+                'listId': owners.putIfAbsent(
+                  owner,
+                  () => _nextGeneratedBlockId('clipboard-list'),
+                ),
+              },
+      );
+    }
+
+    return [
+      for (final block in blocks)
+        if (block.completeBlock case final complete?)
+          BusyWysiwygStyledBlock(
+            kind: block.kind,
+            text: block.text,
+            ranges: block.ranges,
+            attributes: block.attributes,
+            completeBlock: localize(complete),
+          )
+        else
+          block,
+    ];
   }
 
   BusyBlock _cloneClipboardBlock(BusyBlock block, {String? rootId}) {
@@ -6431,6 +6485,54 @@ BusyInline _refreshBareUrlChildren(BusyInline inline) {
   return inline.copyWith(children: children);
 }
 
+bool _hasModeledHtmlInlines(List<BusyInline> inlines) => inlines.any(
+  (inline) =>
+      inline.kind == BusyInlineKind.html &&
+          semanticHtmlInlineTag(inline.attributes) != null ||
+      _hasModeledHtmlInlines(inline.children),
+);
+
+List<BusyInline> _editModeledInlineTree(
+  List<BusyInline> original,
+  int start,
+  int end,
+  List<BusyInline> inserted,
+) {
+  var offset = 0;
+  for (final (index, inline) in original.indexed) {
+    final length = inline.plainText.length;
+    final localStart = start - offset;
+    final localEnd = end - offset;
+    if (inline.children.isNotEmpty &&
+        localStart >= 0 &&
+        localEnd <= length &&
+        (localStart < localEnd || localStart > 0 && localEnd < length)) {
+      final edited = _editModeledInlineTree(
+        inline.children,
+        localStart,
+        localEnd,
+        _withoutInlineContext(inserted, inline),
+      );
+      return [
+        ...original.take(index),
+        if (edited.isNotEmpty)
+          inline.copyWith(
+            text: edited.map((child) => child.plainText).join(),
+            children: edited,
+          ),
+        ...original.skip(index + 1),
+      ];
+    }
+    offset += length;
+  }
+  final preserved = _partitionInlinesForReplacement(original, start, end);
+  return _mergeAdjacentInlineStyles([
+    ...preserved.before,
+    ...inserted,
+    ...preserved.after,
+  ]);
+}
+
 BusyBlock _blockWithEditedText(
   BusyBlock block,
   String nextText, {
@@ -6457,21 +6559,31 @@ BusyBlock _blockWithEditedText(
     nextText,
     nextRanges,
   );
-  var inlines = _restoreSemanticInlineAnchors(
-    originalInlines: block.inlines,
-    oldText: oldText,
-    newText: nextText,
-    rebuiltInlines: rebuiltInlines,
-    leadingAnchorsAfterEdit: leadingAnchorsAfterEdit,
-  );
+  final prefix = _commonPrefixLength(oldText, nextText);
+  final suffix = _commonSuffixLength(oldText, nextText, prefix);
+  final newEditEnd = nextText.length - suffix;
+  var inlines = _hasModeledHtmlInlines(block.inlines)
+      // Style ranges describe the visible formatting, but cannot reconstruct
+      // nested semantic wrappers. Keep the original tree around the edit.
+      ? _editModeledInlineTree(
+          block.inlines,
+          prefix,
+          oldText.length - suffix,
+          busyMarkWysiwygClipboardInlineSlice(
+            rebuiltInlines,
+            prefix,
+            newEditEnd,
+          ),
+        )
+      : _restoreSemanticInlineAnchors(
+          originalInlines: block.inlines,
+          oldText: oldText,
+          newText: nextText,
+          rebuiltInlines: rebuiltInlines,
+          leadingAnchorsAfterEdit: leadingAnchorsAfterEdit,
+        );
   if (normalizePastedFormatting) {
-    final prefix = _commonPrefixLength(oldText, nextText);
-    final suffix = _commonSuffixLength(oldText, nextText, prefix);
-    inlines = _normalizePastedFormatting(
-      inlines,
-      prefix,
-      nextText.length - suffix,
-    );
+    inlines = _normalizePastedFormatting(inlines, prefix, newEditEnd);
   }
   return block.copyWith(
     inlines: inlines,
@@ -6707,6 +6819,22 @@ BusyBlock _blockWithStructureForKind(
   return block;
 }
 
+BusyBlock _moveOrderedListItem(BusyBlock block, BusyBlock? sibling) {
+  if (!_isOrderedListBlock(block)) return block;
+  final continuesList = sibling != null && _isOrderedListBlock(sibling);
+  final owner = continuesList
+      ? sibling.attributes['listId']
+      : 'list-${block.id}';
+  final suffix = continuesList
+      ? _orderedMarkerParts(sibling.attributes['marker'])?.suffix ?? '.'
+      : '.';
+  final number = _orderedMarkerParts(block.attributes['marker'])?.number ?? 1;
+  final attributes = {...block.attributes, 'marker': '$number$suffix'}
+    ..remove('listId');
+  if (owner != null) attributes['listId'] = owner;
+  return block.copyWith(attributes: attributes);
+}
+
 BusyBlock _numberIndentedListItem(
   BusyBlock block,
   List<BusyBlock> existingSiblings,
@@ -6728,6 +6856,7 @@ List<BusyBlock> _normalizeOrderedListMarkers(List<BusyBlock> blocks) {
   var changed = false;
   var nextNumber = 0;
   var suffix = '.';
+  BusyBlock? previous;
   final result = <BusyBlock>[];
   for (final block in blocks) {
     var updated = block;
@@ -6740,16 +6869,24 @@ List<BusyBlock> _normalizeOrderedListMarkers(List<BusyBlock> blocks) {
     }
     if (updated.preserveRaw || updated.isSourceProtected) {
       nextNumber = 0;
+      previous = null;
       suffix = '.';
       result.add(updated);
       continue;
     }
     if (_isOrderedListBlock(updated)) {
-      if (nextNumber == 0) {
+      final separate =
+          previous != null &&
+          busyMarkStartsSeparateOrderedList(previous, updated);
+      if (previous == null || separate) {
         final firstMarker = _orderedMarkerParts(updated.attributes['marker']);
         nextNumber = firstMarker?.number ?? 1;
-        suffix = firstMarker?.suffix ?? '.';
+        final proposed = firstMarker?.suffix ?? '.';
+        suffix = separate && proposed == suffix
+            ? (suffix == '.' ? ')' : '.')
+            : proposed;
       }
+      previous = updated;
       final marker = '$nextNumber$suffix';
       if (updated.attributes['marker'] != marker ||
           updated.attributes['ordered'] != 'true') {
@@ -6759,6 +6896,7 @@ List<BusyBlock> _normalizeOrderedListMarkers(List<BusyBlock> blocks) {
       nextNumber += 1;
     } else {
       nextNumber = 0;
+      previous = null;
       suffix = '.';
     }
     result.add(updated);

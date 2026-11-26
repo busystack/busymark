@@ -4098,6 +4098,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     }
     if (blocks.isEmpty) {
+      final first = _editableBlocks(
+        _documentController.document.blocks,
+      ).firstOrNull;
+      if (first != null) {
+        _activeBlockId = first.id;
+        _activeCellId = null;
+        _selectionFocusNode.requestFocus();
+      }
       return;
     }
     final content =
@@ -4188,7 +4196,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       event,
       keyboard,
     )) {
-      _selectAllForBlock(blockId);
+      _selectAllForActiveBlock();
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
@@ -4965,7 +4973,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final blocks = _editableBlocks(_documentController.document.blocks)
         .where(
           (block) =>
-              _isFocusableTextBlock(block) || block.kind == BusyBlockKind.table,
+              _isFocusableTextBlock(block) ||
+              block.kind == BusyBlockKind.image ||
+              block.kind == BusyBlockKind.table,
         )
         .toList();
     final index = blocks.indexWhere((block) => block.id == blockId);
@@ -5024,7 +5034,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     if (anchor.blockId == extent.blockId &&
-        extentBlock.kind != BusyBlockKind.table) {
+        _isFocusableTextBlock(extentBlock)) {
       final controller = _textControllerFor(extentBlock);
       final focusNode = _focusNodeFor(extentBlock);
       if (_documentSelection != null) {
@@ -5041,7 +5051,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     setState(() => _documentSelection = nextSelection);
-    if (extentBlock.kind == BusyBlockKind.table) {
+    if (!_isFocusableTextBlock(extentBlock)) {
       _focusDocumentSelectionExtent();
     } else {
       final controller = _textControllerFor(extentBlock);
@@ -5233,6 +5243,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           'video',
           'show-structure',
         }.contains(block.attributes['element']) &&
+        block.kind != BusyBlockKind.image &&
         block.kind != BusyBlockKind.thematicBreak &&
         block.kind != BusyBlockKind.table;
   }
@@ -5425,8 +5436,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       final blockFocusNode = activeBlockId == null
           ? null
           : _focusNodes[activeBlockId];
-      if (blockFocusNode != null) {
-        blockFocusNode.requestFocus();
+      if (blockFocusNode?.context != null) {
+        blockFocusNode!.requestFocus();
         return;
       }
       _focusActiveOrFirstBlock();
@@ -8700,7 +8711,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final target = _activeTextTarget();
     if (target == null) {
       final blocks = _focusableBlocks();
-      if (blocks.isNotEmpty) {
+      if (blocks.isEmpty) {
+        _selectWholeDocumentText();
+      } else {
         _selectAllForBlock(blocks.first.id);
       }
       return;
@@ -9702,10 +9715,7 @@ class _SelectedTextRange {
   // Atomic document blocks can have content without any field-local offsets.
   bool get isEmpty =>
       start == end &&
-      !(block.plainText.isEmpty &&
-          ((block.preserveRaw && block.rawSource?.isNotEmpty == true) ||
-              block.kind == BusyBlockKind.table ||
-              block.kind == BusyBlockKind.thematicBreak));
+      !(block.plainText.isEmpty && block.isAtomicSelectionBlock);
 
   bool get coversWholeBlock => start <= 0 && end >= block.plainText.length;
 }

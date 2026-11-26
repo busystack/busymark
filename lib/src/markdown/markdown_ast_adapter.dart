@@ -11,6 +11,7 @@ import 'busymark_document.dart';
 import 'markdown_fence.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
+import 'markdown_list_source.dart';
 import 'markdown_source_map.dart';
 import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
@@ -431,7 +432,7 @@ class MarkdownAstAdapter {
     ];
     return mode == MarkdownMode.writersideMarkdown
         ? _attachWritersideCodeAttributes(blocks)
-        : blocks;
+        : busyMarkDistinguishAdjacentOrderedLists(blocks, markDirty: false);
   }
 
   List<BusyBlock> _blocksFromNode(
@@ -899,6 +900,7 @@ class MarkdownAstAdapter {
         ) ??
         const Iterable<md.Element>.empty();
     var number = int.tryParse(node.attributes['start'] ?? '') ?? 1;
+    String? listId;
     for (final item in items) {
       final itemChildren = item.children ?? const <md.Node>[];
       final checked = _taskChecked(itemChildren);
@@ -938,14 +940,19 @@ class MarkdownAstAdapter {
           hasPrimaryContent = true;
         }
       }
+      final id = nextId();
+      if (ordered && mode != MarkdownMode.writersideMarkdown) {
+        listId ??= 'list-$id';
+      }
       final attributes = {
         'ordered': '$ordered',
         'marker': ordered ? '$number.' : '-',
+        if (listId != null) 'listId': listId,
         if (checked != null) 'task': '$checked',
       };
       result.add(
         BusyBlock(
-          id: nextId(),
+          id: id,
           kind: checked == null
               ? ordered
                     ? BusyBlockKind.orderedListItem

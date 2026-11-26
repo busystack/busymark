@@ -3462,6 +3462,73 @@ void main() {
       },
     );
 
+    testWidgets('whole-document Copy and Cut include empty-alt images', (
+      tester,
+    ) async {
+      const source =
+          '![](https://example.test/first.png)\n\nMiddle\n\n'
+          '![](https://example.test/last.png)\n';
+      var result = source;
+      await mount(
+        tester,
+        'origin',
+        source,
+        (value) => result = value,
+        focusFirstField: false,
+      );
+      tester
+          .state<BusyMarkWysiwygEditorState>(find.byType(BusyMarkWysiwygEditor))
+          .restoreEditingFocus();
+      await tester.pumpAndSettle();
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      final copied = html.parseFragment(systemData['html'] as String);
+      expect(
+        copied.querySelectorAll('img').map((image) => image.attributes['src']),
+        ['https://example.test/first.png', 'https://example.test/last.png'],
+      );
+      await key(tester, LogicalKeyboardKey.keyX);
+      expect(
+        html
+            .parseFragment(systemData['html'] as String)
+            .querySelectorAll('img'),
+        hasLength(2),
+      );
+      expect(result.trim(), isEmpty);
+      await key(tester, LogicalKeyboardKey.keyZ);
+      expect(result, source);
+    });
+
+    testWidgets(
+      'Select All and Cut work in a document containing only an image',
+      (tester) async {
+        const source = '![](https://example.test/only.png)\n';
+        var result = source;
+        await mount(
+          tester,
+          'image-only',
+          source,
+          (value) => result = value,
+          focusFirstField: false,
+        );
+        await tester.tapAt(const Offset(400, 400));
+        await tester.pumpAndSettle();
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(
+          html
+              .parseFragment(systemData['html'] as String)
+              .querySelector('img')
+              ?.attributes['src'],
+          'https://example.test/only.png',
+        );
+        expect(result.trim(), isEmpty);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+      },
+    );
+
     testWidgets('cut transfers formatting before deleting the selection', (
       tester,
     ) async {
@@ -4059,7 +4126,7 @@ void main() {
       image.writeAsBytesSync(bytes);
       const authored =
           'Before\n\n<div><a href="guide%20with%20space.md#guide">'
-          'Guide</a><img src="diagram.svg" alt="Diagram"></div>\n\nAfter\n';
+          'Guide</a><img src="diagram.svg?v=a%26b#detail%202" alt="Diagram"></div>\n\nAfter\n';
       final captures = <BusyMarkClipboardCapture>[];
       await mount(
         tester,
@@ -4081,7 +4148,7 @@ void main() {
       }
 
       final capture = captures.single;
-      expect(capture.mediaBytes['diagram.svg'], bytes);
+      expect(capture.mediaBytes['diagram.svg?v=a%26b#detail%202'], bytes);
       final payload = BusyMarkClipboardPayload(
         id: 'wysiwyg-raw-html-history',
         acquiredAt: DateTime.utc(2026),
@@ -4125,7 +4192,10 @@ void main() {
         raw.rawSource,
         contains('href="../source/guide%20with%20space.md#guide"'),
       );
-      expect(raw.rawSource, contains('src="../images/diagram.svg"'));
+      expect(
+        raw.rawSource,
+        contains('src="../images/diagram.svg?v=a%26b#detail%202"'),
+      );
       expect(
         Uri.file(
           target.path,

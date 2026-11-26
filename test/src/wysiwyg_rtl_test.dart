@@ -171,6 +171,31 @@ void main() {
     expect(inline.textDirection, TextDirection.rtl);
   });
 
+  testWidgets('raw list marker shares the attributed first paragraph row', (
+    tester,
+  ) async {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              '<ol start="5"><li><p dir="rtl" title="Kept">First paragraph</p>'
+              '<p>Second paragraph</p></li></ol>',
+        )
+        .busyDocument;
+    await _pumpEditor(tester, document);
+    final marker = tester.getRect(find.text('5.'));
+    final caption = tester.getRect(find.text('First paragraph'));
+    expect(caption.top, closeTo(marker.top, 3));
+    expect(
+      tester.widget<Text>(find.text('First paragraph')).textDirection,
+      TextDirection.rtl,
+    );
+    expect(
+      tester.getTopLeft(find.text('Second paragraph')).dy,
+      greaterThanOrEqualTo(caption.bottom),
+    );
+  });
+
   testWidgets('nested WYSIWYG blocks indent from the RTL start edge', (
     tester,
   ) async {

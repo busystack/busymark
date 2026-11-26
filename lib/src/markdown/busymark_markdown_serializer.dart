@@ -1,3 +1,5 @@
+import 'package:html/dom.dart' as dom;
+
 import '../core/source_span.dart';
 import '../writerside/writerside_schema.dart';
 import '../writerside/writerside_document.dart';
@@ -9,6 +11,8 @@ import '../editor/wysiwyg/writerside_editing_adapter.dart';
 import 'math_syntax.dart';
 import 'markdown_model.dart';
 import 'markdown_list_source.dart';
+import 'raw_html_policy.dart';
+import 'semantic_html_inline.dart';
 
 class BusyMarkSerializedInlineFragment {
   const BusyMarkSerializedInlineFragment({
@@ -1318,6 +1322,112 @@ class BusyMarkMarkdownSerializer {
     );
   }
 
+  _InlineSerialization _semanticHtmlInline(
+    BusyInline inline,
+    dom.Element root,
+    Set<int> offsets,
+    List<int> path,
+    int textBase,
+  ) {
+    final output = StringBuffer();
+    final sourceOffsets = <int, int>{};
+    final breaks = <int, int>{};
+    final atoms = <BusyMarkSerializedTextAtom>[];
+    var consumed = 0;
+
+    void emit(BusyInline value, List<int> inlinePath, [dom.Element? wrapper]) {
+      final tag = switch (value.kind) {
+        BusyInlineKind.strong || BusyInlineKind.writersideControl => 'strong',
+        BusyInlineKind.emphasis => 'em',
+        BusyInlineKind.underline => 'u',
+        BusyInlineKind.strikethrough => 'del',
+        BusyInlineKind.code => 'code',
+        BusyInlineKind.image => 'img',
+        BusyInlineKind.link => 'a',
+        BusyInlineKind.hardBreak => 'br',
+        _ => null,
+      };
+      final element =
+          wrapper ??
+          semanticHtmlInlineElement(value) ??
+          (tag == null ? null : dom.Element.tag(tag));
+      if (element != null && wrapper == null && tag != null) {
+        final attributes = <String, String>{
+          ...value.attributes,
+          if (tag == 'a' && value.destination != null)
+            'href': value.destination!,
+          if (tag == 'img') 'alt': value.text,
+          if (tag == 'img' && value.destination != null)
+            'src': value.destination!,
+        };
+        element.attributes.addAll(
+          sanitizeHtmlAttributes(tag, attributes) ?? const {},
+        );
+      }
+      final closing =
+          element == null || voidHtmlTags.contains(element.localName)
+          ? ''
+          : '</${element.localName}>';
+      final start = output.length;
+      if (element != null) {
+        final shell = element.outerHtml;
+        output.write(shell.substring(0, shell.length - closing.length));
+      }
+      if (element != null && closing.isEmpty) {
+        if (value.kind == BusyInlineKind.hardBreak) {
+          breaks[consumed + value.plainText.length] = start;
+        }
+        consumed += value.plainText.length;
+      } else if (value.children.isNotEmpty) {
+        for (var i = 0; i < value.children.length; i++) {
+          emit(value.children[i], [...inlinePath, i]);
+        }
+      } else {
+        for (final rune in value.text.runes) {
+          final char = String.fromCharCode(rune);
+          final start = output.length;
+          // Raw HTML spans are still scanned for Markdown inline delimiters.
+          // Encode those delimiters (including table pipes) at the text leaf.
+          final encoded = '&<>"*_~`[]!|\\\$'.contains(char) ? '&#$rune;' : char;
+          output.write(encoded);
+          if (offsets.contains(consumed)) sourceOffsets[consumed] = start;
+          if (offsets.contains(consumed + char.length)) {
+            sourceOffsets[consumed + char.length] = output.length;
+          }
+          atoms.add(
+            BusyMarkSerializedTextAtom(
+              inlinePath: inlinePath,
+              text: char,
+              textStart: textBase + consumed,
+              textEnd: textBase + consumed + char.length,
+              sourceStart: start,
+              sourceEnd: output.length,
+              escaped: char != encoded,
+            ),
+          );
+          consumed += char.length;
+        }
+      }
+      output.write(closing);
+    }
+
+    emit(inline, path, root);
+    final length = inline.plainText.length;
+    return _InlineSerialization(
+      source: output.toString(),
+      sourceOffsets: {
+        for (final offset in offsets)
+          offset: offset <= 0
+              ? 0
+              : offset >= length
+              ? output.length
+              : sourceOffsets[offset] ?? output.length,
+      },
+      textAtoms: atoms,
+      lineBreakSourceOffsets: breaks,
+    );
+  }
+
   _InlineSerialization _inlineAtTextOffsets(
     BusyInline inline, {
     required Set<int> textOffsets,
@@ -1337,6 +1447,15 @@ class BusyMarkMarkdownSerializer {
     required bool insideLinkLabel,
     required Set<int> entityOffsets,
   }) {
+    if (semanticHtmlInlineElement(inline) case final element?) {
+      return _semanticHtmlInline(
+        inline,
+        element,
+        textOffsets,
+        inlinePath,
+        textBase,
+      );
+    }
     final bareUrl = _canEmitBareUrl(inline) && !forceExplicitBareUrl;
     final formattedLinkLabel =
         inline.kind == BusyInlineKind.link &&

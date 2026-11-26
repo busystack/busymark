@@ -257,11 +257,12 @@ bool _isWithinAnyRoot(String candidate, Iterable<String> roots) {
 }
 
 String _decodeImageDestination(String value) {
-  final withoutFragment = value.split('#').first;
+  final suffix = value.indexOf(RegExp(r'[?#]'));
+  final path = suffix == -1 ? value : value.substring(0, suffix);
   try {
-    return Uri.decodeComponent(withoutFragment);
+    return Uri.decodeComponent(path);
   } on FormatException {
-    return withoutFragment;
+    return path;
   }
 }
 

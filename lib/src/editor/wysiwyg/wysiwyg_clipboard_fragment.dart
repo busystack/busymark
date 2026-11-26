@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/uri_utils.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
@@ -232,14 +233,18 @@ class WysiwygClipboardFragment {
       bool rawHtml = false,
     }) {
       if (value == null || value.isEmpty) return value;
-      final retained = media ? mediaDestinations[value] : null;
-      if (retained != null) return retained;
-      if (!rebaseRelativeReferences) return value;
       final uri = Uri.tryParse(value);
-      if (uri == null || uri.hasScheme || uri.hasAuthority) return value;
+      if (uri == null) return value;
+      final retained = media ? mediaDestinations[value] : null;
+      if (retained != null) {
+        return withReferenceSuffix(Uri.parse(retained), uri).toString();
+      }
+      if (!rebaseRelativeReferences || uri.hasScheme || uri.hasAuthority) {
+        return value;
+      }
       final mediaPath = media ? mediaPaths[value] : null;
       if (!rawHtml && mediaPath != null && p.isAbsolute(mediaPath)) {
-        return Uri(path: mediaPath).toString();
+        return withReferenceSuffix(Uri(path: mediaPath), uri).toString();
       }
       final resolvedPath = mediaPath != null && p.isAbsolute(mediaPath)
           ? mediaPath
@@ -251,11 +256,7 @@ class WysiwygClipboardFragment {
         resolvedPath,
         from: p.dirname(p.absolute(targetPath)),
       );
-      return Uri(
-        path: path,
-        query: uri.hasQuery ? uri.query : null,
-        fragment: uri.hasFragment ? uri.fragment : null,
-      ).toString();
+      return withReferenceSuffix(Uri(path: path), uri).toString();
     }
 
     Map<String, String> attributes(
@@ -282,6 +283,7 @@ class WysiwygClipboardFragment {
       ),
       attributes: attributes(value.attributes, rawHtml: rawHtml),
       children: [for (final child in value.children) inline(child, rawHtml)],
+      imageSpan: value.imageSpan,
     );
     String? rebaseHtml(String? source) {
       if (source == null) return null;

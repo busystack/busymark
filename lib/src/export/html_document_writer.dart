@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../markdown/busymark_document.dart';
 import '../core/path_utils.dart';
 import '../markdown/raw_html_policy.dart';
+import '../markdown/semantic_html_inline.dart';
 import '../visualization/visualization_models.dart';
 import '../writerside/writerside_document.dart';
 import 'html_export_links.dart';
@@ -919,8 +920,12 @@ class HtmlDocumentWriter {
         case BusyInlineKind.math:
           node = await _math(value.text, false, block);
         case BusyInlineKind.html:
-          out.addAll(await _raw(value.text, block));
-          continue;
+          final element = semanticHtmlInlineElement(value);
+          if (element == null) {
+            out.addAll(await _raw(value.text, block));
+            continue;
+          }
+          node = element..nodes.addAll(nodes);
         case BusyInlineKind.writersideVariable:
         case BusyInlineKind.unknown:
           _warn(
@@ -1090,6 +1095,27 @@ class HtmlDocumentWriter {
           if (!element.children.any((e) => e.localName == 'summary')) {
             element.nodes.insert(0, _el('summary', text: disclosureLabel));
           }
+        }
+        if (tag == 'ol') {
+          if (const {'1', 'a', 'A', 'i', 'I'}.contains(attrs['type'])) {
+            element.attributes['type'] = attrs['type']!;
+          }
+          if (attrs.containsKey('reversed')) {
+            element.attributes['reversed'] = '';
+          }
+        }
+        if (tag == 'data' && attrs['value'] != null) {
+          element.attributes['value'] = attrs['value']!;
+        }
+        final cite = attrs['cite'];
+        if (cite != null &&
+            const {'q', 'ins', 'del'}.contains(tag) &&
+            isSafeHtmlUrlAttribute(tag, 'cite', cite)) {
+          element.attributes['cite'] = cite;
+        }
+        if (const {'time', 'ins', 'del'}.contains(tag) &&
+            attrs['datetime'] != null) {
+          element.attributes['datetime'] = attrs['datetime']!;
         }
         for (final name in switch (tag) {
           'ol' => ['start'],

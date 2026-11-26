@@ -2,6 +2,78 @@ import 'dart:convert';
 import '../core/source_span.dart';
 import 'busymark_document.dart';
 
+bool busyMarkStartsSeparateOrderedList(BusyBlock previous, BusyBlock next) {
+  final previousOwner = previous.attributes['listId'];
+  final nextOwner = next.attributes['listId'];
+  final previousMarker = previous.attributes['marker'];
+  final nextMarker = next.attributes['marker'];
+  return previousOwner != null &&
+          nextOwner != null &&
+          previousOwner != nextOwner ||
+      previousMarker != null &&
+          nextMarker != null &&
+          previousMarker.endsWith(')') != nextMarker.endsWith(')');
+}
+
+/// Distinct adjacent Markdown list owners need different delimiters or their
+/// serialized items reparse as one list.
+List<BusyBlock> busyMarkDistinguishAdjacentOrderedLists(
+  List<BusyBlock> blocks, {
+  required bool markDirty,
+}) {
+  String? owner;
+  String? delimiter;
+  var changed = false;
+  final result = <BusyBlock>[];
+  for (final block in blocks) {
+    final group = block.attributes['listId'];
+    final marker = block.attributes['marker'];
+    String? nextDelimiter;
+    if (group != null &&
+        marker != null &&
+        (marker.endsWith('.') || marker.endsWith(')'))) {
+      final original = marker[marker.length - 1];
+      nextDelimiter = switch (delimiter) {
+        final previous? when group == owner => previous,
+        final previous? when previous == original =>
+          original == '.' ? ')' : '.',
+        _ => original,
+      };
+    }
+    owner = group;
+    delimiter = nextDelimiter;
+    final children = block.children.isEmpty
+        ? block.children
+        : busyMarkDistinguishAdjacentOrderedLists(
+            block.children,
+            markDirty: markDirty,
+          );
+    final needsDelimiter =
+        nextDelimiter != null &&
+        marker != null &&
+        !marker.endsWith(nextDelimiter);
+    if (needsDelimiter || !identical(children, block.children)) {
+      changed = true;
+      result.add(
+        block.copyWith(
+          children: children,
+          attributes: needsDelimiter
+              ? {
+                  ...block.attributes,
+                  'marker':
+                      '${marker.substring(0, marker.length - 1)}$nextDelimiter',
+                }
+              : block.attributes,
+          dirty: block.dirty || needsDelimiter && markDirty,
+        ),
+      );
+    } else {
+      result.add(block);
+    }
+  }
+  return changed ? result : blocks;
+}
+
 String nativeMarkdownInlineState(List<BusyInline> inlines) => jsonEncode([
   for (final i in inlines)
     {

@@ -9551,7 +9551,7 @@ void main() {
       ..writeAsStringSync('# Guide');
     const authored =
         '<div><a href="guide%20one.md?q=a%26b#guide">Guide</a>'
-        '<img src="diagram.svg" alt="Diagram"></div>\n';
+        '<img src="diagram.svg?v=a%26b#detail%202" alt="Diagram"></div>\n';
     final document = const MarkdownParser()
         .parse(
           filePath: '${origin.path}/old.md',
@@ -9563,7 +9563,9 @@ void main() {
     final fragment = WysiwygClipboardFragment(
       sourcePath: document.filePath,
       mode: document.mode,
-      mediaPaths: {'diagram.svg': '${origin.path}/diagram.svg'},
+      mediaPaths: {
+        'diagram.svg?v=a%26b#detail%202': '${origin.path}/diagram.svg',
+      },
       blocks: [
         BusyWysiwygStyledBlock(
           kind: block.kind,
@@ -9598,7 +9600,7 @@ void main() {
       text: 'Guide',
       sourceText: authored,
       richFragment: fragment.encode(),
-      mediaBytes: {'diagram.svg': bytes},
+      mediaBytes: {'diagram.svg?v=a%26b#detail%202': bytes},
     );
     expect(
       await tester.runAsync(() => registry.paste(payload)),
@@ -9614,7 +9616,10 @@ void main() {
       raw.rawSource,
       contains('href="../origin/guide%20one.md?q=a%26b#guide"'),
     );
-    expect(raw.rawSource, contains('src="../images/diagram.svg"'));
+    expect(
+      raw.rawSource,
+      contains('src="../images/diagram.svg?v=a%26b#detail%202"'),
+    );
     expect(
       Uri.file(target.path).resolve('../origin/guide%20one.md').toFilePath(),
       guide.path,

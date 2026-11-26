@@ -1,6 +1,5 @@
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
-import 'package:intl/intl.dart' show Bidi;
 // The public parser does not expose authored closing-tag spans. Its tokenizer
 // is the parser's own location-aware boundary source, not a second HTML parser.
 // ignore: implementation_imports
@@ -12,6 +11,7 @@ import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import 'busymark_document.dart';
 import 'raw_html_policy.dart';
+import 'semantic_html_inline.dart';
 
 /// Reports one indexed ownership lookup per semantic HTML break while source
 /// metadata is collected. Tests use this to guard against per-break rescans.
@@ -427,7 +427,9 @@ class RawHtmlAdapter {
         blocks.addAll(_blocksFromElement(node, nextId));
         continue;
       }
-      if (isSafeInlineHtmlTag(tag) && !isSafeBlockHtmlTag(tag)) {
+      if (isSafeInlineHtmlTag(tag) &&
+          !isSafeBlockHtmlTag(tag) &&
+          !_isBlockLink(node)) {
         inlineBuffer.addAll(_inlineFromElement(node));
         inlineNodes.add(node);
         continue;
@@ -445,13 +447,38 @@ class RawHtmlAdapter {
   ) {
     final tag = element.localName?.toLowerCase() ?? '';
     final attributes = sanitizeHtmlAttributes(tag, element.attributes) ?? {};
-    final direction = _elementDirection(element);
+    final direction = busyMarkResolvedHtmlDirection(element);
     if (attributes.containsKey('dir')) {
       attributes.remove('dir');
       if (direction != null) attributes['dir'] = direction;
     }
     final children = element.nodes;
     final text = _plainTextFromNodes(children).trim();
+
+    if (_isBlockLink(element)) {
+      List<BusyBlock> linkBlocks(List<BusyBlock> blocks) => [
+        for (final block in blocks)
+          block.copyWith(
+            inlines: block.inlines.isEmpty
+                ? const []
+                : _linkInlines(block.inlines, attributes),
+            children: linkBlocks(block.children),
+          ),
+      ];
+      final linked = linkBlocks(_blocksFromNodes(children, nextId));
+      // A link split into separate Markdown blocks has no common wrapper.
+      // Keep that wrapper if it carries additional attributes or if a raw
+      // descendant would serialize independently of its semantic inlines.
+      bool needsWrapper(BusyBlock block) =>
+          block.preserveRaw ||
+          block.kind == BusyBlockKind.image ||
+          block.kind == BusyBlockKind.codeBlock ||
+          block.children.any(needsWrapper);
+      return attributes.keys.any((key) => key != 'href' && key != 'title') ||
+              linked.any(needsWrapper)
+          ? [_importedHtmlBlock(element, linked, nextId)]
+          : linked;
+    }
 
     if (_headingLevel(tag) case final level?) {
       final anchorId = attributes['id'] ?? slugForHeading(text);
@@ -604,31 +631,11 @@ class RawHtmlAdapter {
     attributes: {
       'sourceFormat': 'html',
       'htmlTag': element.localName!,
-      if (_elementDirection(element) case final direction?) 'dir': direction,
+      if (busyMarkResolvedHtmlDirection(element) case final direction?)
+        'dir': direction,
     },
     preserveRaw: true,
   );
-
-  String? _elementDirection(html.Element element) {
-    final direction =
-        busyMarkHtmlDirection(element.attributes['dir']) ??
-        (element.localName == 'bdi' ? 'auto' : null);
-    if (direction != 'auto') return direction;
-    final text = StringBuffer();
-    void append(html.Node node) {
-      if (node is html.Text) {
-        text.write(node.data);
-      } else if (node is html.Element &&
-          node.localName != 'bdi' &&
-          busyMarkHtmlDirection(node.attributes['dir']) == null) {
-        node.nodes.forEach(append);
-      }
-    }
-
-    element.nodes.forEach(append);
-    final value = text.toString();
-    return Bidi.startsWithRtl(value) ? 'rtl' : 'ltr';
-  }
 
   List<BusyBlock> _applyHtmlDirection(
     List<BusyBlock> blocks,
@@ -743,7 +750,7 @@ class RawHtmlAdapter {
       return [
         _importedHtmlBlock(
           element,
-          _applyHtmlDirection(blocks, _elementDirection(element)),
+          _applyHtmlDirection(blocks, busyMarkResolvedHtmlDirection(element)),
           nextId,
         ),
       ];
@@ -821,7 +828,7 @@ class RawHtmlAdapter {
             first!.attributes.keys.every((key) => key == 'htmlTag')
         ? children.removeAt(0).inlines
         : const <BusyInline>[];
-    final direction = _elementDirection(element);
+    final direction = busyMarkResolvedHtmlDirection(element);
     return BusyBlock(
       id: nextId(),
       kind: ordered
@@ -882,7 +889,7 @@ class RawHtmlAdapter {
       return [
         _importedHtmlBlock(
           table,
-          _applyHtmlDirection(blocks, _elementDirection(table)),
+          _applyHtmlDirection(blocks, busyMarkResolvedHtmlDirection(table)),
           nextId,
         ),
       ];
@@ -935,7 +942,31 @@ class RawHtmlAdapter {
     return representable(table);
   }
 
+  bool _isBlockLink(html.Element element) =>
+      element.localName == 'a' &&
+      element.querySelector(safeBlockHtmlTags.join(',')) != null;
+
+  List<BusyInline> _linkInlines(
+    List<BusyInline> children,
+    Map<String, String> attributes,
+  ) => switch (attributes['href']) {
+    final href? => [
+      BusyInline(
+        kind: BusyInlineKind.link,
+        text: _plainText(children),
+        destination: href,
+        children: children,
+        attributes: attributes,
+      ),
+    ],
+    null => children,
+  };
+
   bool _isTableCellFlow(html.Element element) {
+    if (_isBlockLink(element)) {
+      return !_inlineNeedsHtml(element) &&
+          element.children.every(_isTableCellFlow);
+    }
     if (!isSafeBlockHtmlTag(element.localName!)) {
       return !_inlineNeedsHtml(element);
     }
@@ -952,7 +983,7 @@ class RawHtmlAdapter {
   List<BusyInline> _tableCellInlines(html.Element cell) {
     final result = <BusyInline>[];
     var flow = <BusyInline>[];
-    void flush() {
+    void flush(Map<String, String> link) {
       final inlines = _trimInlineEdges(flow);
       flow = [];
       if (inlines.every(
@@ -969,21 +1000,32 @@ class RawHtmlAdapter {
           const BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'),
         );
       }
-      result.addAll(inlines);
+      result.addAll(_linkInlines(inlines, link));
     }
 
-    void append(html.Node node) {
-      if (node is html.Element && isSafeBlockHtmlTag(node.localName!)) {
-        flush();
-        node.nodes.forEach(append);
-        flush();
+    void append(html.Node node, Map<String, String> link) {
+      if (node is html.Element && _isBlockLink(node)) {
+        flush(link);
+        final attributes = sanitizeHtmlAttributes('a', node.attributes) ?? {};
+        for (final child in node.nodes) {
+          append(child, attributes);
+        }
+        flush(attributes);
+      } else if (node is html.Element && isSafeBlockHtmlTag(node.localName!)) {
+        flush(link);
+        for (final child in node.nodes) {
+          append(child, link);
+        }
+        flush(link);
       } else {
         flow.addAll(_inlineFromNode(node));
       }
     }
 
-    cell.nodes.forEach(append);
-    flush();
+    for (final node in cell.nodes) {
+      append(node, const {});
+    }
+    flush(const {});
     return result;
   }
 
@@ -1005,7 +1047,8 @@ class RawHtmlAdapter {
       final allHeaderCells = cells.every(
         (cell) => cell.localName?.toLowerCase() == 'th',
       );
-      final rowDirection = _elementDirection(row) ?? inheritedDirection;
+      final rowDirection =
+          busyMarkResolvedHtmlDirection(row) ?? inheritedDirection;
       final rowBlock = BusyBlock(
         id: nextId(),
         kind: BusyBlockKind.table,
@@ -1030,7 +1073,7 @@ class RawHtmlAdapter {
       if (tag == 'tr') {
         addRow(child, sectionHeader: false, remainingRows: 1);
       } else if (tag == 'thead' || tag == 'tbody' || tag == 'tfoot') {
-        final sectionDirection = _elementDirection(child);
+        final sectionDirection = busyMarkResolvedHtmlDirection(child);
         final sectionRows = child.children
             .where((candidate) => candidate.localName == 'tr')
             .toList();
@@ -1056,7 +1099,7 @@ class RawHtmlAdapter {
       (child) =>
           isSafeBlockHtmlTag(child.localName!) && !_isTableCellFlow(child),
     );
-    final direction = _elementDirection(cell);
+    final direction = busyMarkResolvedHtmlDirection(cell);
     return BusyBlock(
       id: nextId(),
       kind: BusyBlockKind.paragraph,
@@ -1083,7 +1126,8 @@ class RawHtmlAdapter {
       if (rowspan != null && rowspan >= 0)
         'rowspan':
             '${rowspan == 0 ? remainingRows : rowspan.clamp(1, remainingRows)}',
-      if (_elementDirection(cell) case final direction?) 'dir': direction,
+      if (busyMarkResolvedHtmlDirection(cell) case final direction?)
+        'dir': direction,
     };
   }
 
@@ -1168,6 +1212,11 @@ class RawHtmlAdapter {
   }) {
     final tag = element.localName?.toLowerCase() ?? '';
     final attributes = sanitizeHtmlAttributes(tag, element.attributes) ?? {};
+    final direction = busyMarkResolvedHtmlDirection(element);
+    final semanticTag = semanticHtmlInlineTags.contains(tag);
+    final inlineAttributes = semanticTag || tag == 'img' || tag == 'br'
+        ? attributes
+        : ({...attributes}..remove('dir'));
     // Whitespace inside an inline wrapper separates it from adjacent content.
     // Only the containing block/fragment may trim its outer edges.
     final children = _inlinesFromNodes(element.nodes, mapping: mapping);
@@ -1176,7 +1225,7 @@ class RawHtmlAdapter {
         const {'strong', 'b', 'em', 'i', 'u', 's', 'del'}.contains(tag)) {
       return children;
     }
-    final List<BusyInline> result = switch (tag) {
+    List<BusyInline> result = switch (tag) {
       'strong' || 'b' => [
         BusyInline(kind: BusyInlineKind.strong, text: text, children: children),
       ],
@@ -1199,35 +1248,24 @@ class RawHtmlAdapter {
           kind: BusyInlineKind.strikethrough,
           text: text,
           children: children,
-          attributes: attributes,
+          attributes: inlineAttributes,
         ),
       ],
-      'code' || 'kbd' || 'samp' => [
+      'code' => [
         BusyInline(
           kind: BusyInlineKind.code,
           text: element.text,
-          attributes: attributes,
+          attributes: inlineAttributes,
         ),
       ],
-      'a' => [
-        if (attributes['href'] case final href?)
-          BusyInline(
-            kind: BusyInlineKind.link,
-            text: text,
-            destination: href,
-            children: children,
-            attributes: attributes,
-          )
-        else
-          ...children,
-      ],
+      'a' => _linkInlines(children, inlineAttributes),
       'img' => [
         BusyInline(
           kind: BusyInlineKind.image,
           text: attributes['alt'] ?? '',
           destination: attributes['src'],
           imageSpan: _imageSpan(element),
-          attributes: attributes,
+          attributes: inlineAttributes,
         ),
       ],
       'br' => [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
@@ -1239,19 +1277,23 @@ class RawHtmlAdapter {
                   BusyInline(
                     kind: BusyInlineKind.text,
                     text: text,
-                    attributes: attributes,
+                    attributes: inlineAttributes,
                   ),
               ]
             : children,
     };
-    final direction = _elementDirection(element);
-    if (mapping == null && direction != null) {
-      return [
+    if (semanticTag || direction != null && tag != 'img' && tag != 'br') {
+      final contents = semanticTag ? children : result;
+      result = [
         BusyInline(
           kind: BusyInlineKind.html,
-          text: _plainText(result),
-          children: result,
-          attributes: {'dir': direction, 'htmlTag': tag},
+          text: _plainText(contents),
+          children: contents,
+          attributes: {
+            if (semanticTag || tag == 'span') ...attributes,
+            'htmlTag': semanticTag ? tag : 'span',
+            if (direction != null) 'dir': direction,
+          },
         ),
       ];
     }

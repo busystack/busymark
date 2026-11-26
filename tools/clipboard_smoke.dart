@@ -1,6 +1,6 @@
 // Build with flutter build linux --debug -t tools/clipboard_smoke.dart.
 // Run the resulting binary with:
-// roundtrip|write|read|plain|html|quota|paste-source|paste-editor|cut-editor OUTPUT_DIRECTORY.
+// roundtrip|write|read|plain|html|quota|paste-source|paste-editor|cut-editor|cut-editor-images OUTPUT_DIRECTORY.
 // Use a private display: this probe intentionally owns that display's clipboard.
 import 'dart:async';
 import 'dart:convert';
@@ -21,24 +21,38 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:html/parser.dart' as html;
+
+import '../test/support/document_history_harness.dart';
+
+const _imageDocument =
+    '![](https://example.test/first.png)\n\nMiddle\n\n'
+    '![](https://example.test/last.png)\n';
 
 const source =
     '# Issues\n\n**When** selecting all\n\n- [ ] First task\n- [x] Second task\n';
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   if (arguments.length != 2) {
     stderr.writeln(
-      'Usage: roundtrip|write|read|plain|html|quota|paste-source|paste-editor|cut-editor OUTPUT_DIRECTORY',
+      'Usage: roundtrip|write|read|plain|html|quota|paste-source|paste-editor|cut-editor|cut-editor-images OUTPUT_DIRECTORY',
     );
     exit(2);
   }
   final operation = arguments.first;
-  if (operation.startsWith('paste-') || operation == 'cut-editor') {
+  if (operation.startsWith('paste-') || operation.startsWith('cut-editor')) {
+    final history = operation == 'cut-editor-images'
+        ? await DocumentHistoryHarness.create(source: _imageDocument)
+        : null;
     runApp(
       MaterialApp(
         localizationsDelegates: busyMarkLocalizationsDelegates,
-        home: _ClipboardEditorProbe(operation, Directory(arguments.last)),
+        home: _ClipboardEditorProbe(
+          operation,
+          Directory(arguments.last),
+          history: history,
+        ),
       ),
     );
     return;
@@ -220,10 +234,11 @@ Future<void> run(String operation, Directory output) async {
 }
 
 class _ClipboardEditorProbe extends StatefulWidget {
-  const _ClipboardEditorProbe(this.operation, this.output);
+  const _ClipboardEditorProbe(this.operation, this.output, {this.history});
 
   final String operation;
   final Directory output;
+  final DocumentHistoryHarness? history;
 
   @override
   State<_ClipboardEditorProbe> createState() => _ClipboardEditorProbeState();
@@ -234,9 +249,19 @@ class _ClipboardEditorProbeState extends State<_ClipboardEditorProbe> {
   final _editor = GlobalKey<BusyMarkWysiwygEditorState>();
   static const _start = 'Target\n';
   static const _raw = '<div dir="auto">Keep me</div>\n\nAfter\n';
-  late final bool _cut = widget.operation == 'cut-editor';
+  static const _images = [
+    'https://example.test/first.png',
+    'https://example.test/last.png',
+  ];
+  late final bool _cut = widget.operation.startsWith('cut-editor');
+  late final bool _cutImages = widget.operation == 'cut-editor-images';
   late final bool _sourceMode = widget.operation == 'paste-source';
-  late String _value = _cut ? _raw : _start;
+  late final String _initialSource = _cutImages
+      ? _imageDocument
+      : _cut
+      ? _raw
+      : _start;
+  late String _value = _initialSource;
 
   @override
   void initState() {
@@ -269,11 +294,23 @@ class _ClipboardEditorProbeState extends State<_ClipboardEditorProbe> {
               document: const MarkdownParser()
                   .parse(
                     filePath: path,
-                    source: _cut ? _raw : _start,
+                    source: widget.history?.buffer.text ?? _initialSource,
                     mode: MarkdownMode.gfm,
                   )
                   .busyDocument,
-              onSourceChanged: (_, text) => _value = text,
+              readEditBase: widget.history?.readBase,
+              onSourceChanged: (_, text) {
+                widget.history?.controller.updateActiveText(text);
+                _value = text;
+              },
+              onUndo: widget.history == null
+                  ? null
+                  : () {
+                      final history = widget.history!;
+                      if (history.controller.undoActiveBuffer()) {
+                        setState(() => _value = history.buffer.text);
+                      }
+                    },
             ),
     );
   }
@@ -286,6 +323,7 @@ class _ClipboardEditorProbeState extends State<_ClipboardEditorProbe> {
       } else {
         _editor.currentState!.restoreEditingFocus();
       }
+      WidgetsBinding.instance.scheduleFrame();
       await Future<void>.delayed(const Duration(milliseconds: 200));
       _command(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
       if (_cut) {
@@ -309,12 +347,33 @@ class _ClipboardEditorProbeState extends State<_ClipboardEditorProbe> {
       }
       if (_cut) {
         final emitted = await RichClipboardService().read();
-        if (emitted.text != 'Keep me\n\nAfter' ||
-            emitted.html?.contains('<div dir="auto">Keep me</div>') != true ||
-            emitted.richFragment != null) {
+        final markup = emitted.html;
+        final selectedImages = markup == null
+            ? const <String?>[]
+            : html
+                  .parseFragment(markup)
+                  .querySelectorAll('img')
+                  .map((image) => image.attributes['src'])
+                  .toList();
+        final publishedAll = _cutImages
+            ? selectedImages.length == _images.length &&
+                  selectedImages.join(' ') == _images.join(' ') &&
+                  emitted.text?.contains('Middle') == true
+            : emitted.text == 'Keep me\n\nAfter' &&
+                  markup?.contains('<div dir="auto">Keep me</div>') == true;
+        if (!publishedAll || emitted.richFragment != null) {
           throw StateError(
             'Cut did not publish the complete interoperable selection',
           );
+        }
+        if (_cutImages) {
+          _command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+          for (var i = 0; i < 100 && _value != _initialSource; i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 100));
+          }
+          if (_value != _initialSource) {
+            throw StateError('Undo did not restore the images and prose');
+          }
         }
       }
       await File(

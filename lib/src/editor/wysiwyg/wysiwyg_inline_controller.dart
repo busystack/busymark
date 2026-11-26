@@ -6,6 +6,8 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_source_map.dart';
+import '../../markdown/semantic_html_inline.dart';
+import '../document_html_inline.dart';
 
 bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
@@ -260,7 +262,7 @@ class BusyMarkWysiwygTextController extends TextEditingController {
     final nextText = busyMarkWysiwygEditableText(block);
     final nextRanges = sourceEditing
         ? const <BusyInlineStyleRange>[]
-        : busyInlineStyleRanges(block.inlines);
+        : busyInlineStyleRanges(block.inlines, includeHtml: true);
     final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
     if (text != nextText) {
       final previousSelection = selection;
@@ -359,6 +361,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       BusyInlineKind.writersideControl => baseStyle.copyWith(
         fontWeight: FontWeight.w600,
       ),
+      BusyInlineKind.html => busyMarkHtmlInlineTextStyle(
+        context,
+        range.attributes['htmlTag']!,
+        baseStyle,
+      ),
       BusyInlineKind.image => baseStyle.copyWith(
         color: colorScheme.primary,
         fontStyle: FontStyle.italic,
@@ -380,14 +387,22 @@ TextSelection _clampedSelection(TextSelection selection, int textLength) {
   );
 }
 
-List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
+List<BusyInlineStyleRange> busyInlineStyleRanges(
+  List<BusyInline> inlines, {
+  bool includeHtml = false,
+}) {
   final ranges = <BusyInlineStyleRange>[];
   var offset = 0;
 
   void visit(BusyInline inline, List<_InheritedInlineStyle> inheritedStyles) {
     final start = offset;
     final children = inline.children;
-    final ownStyle = _styledKind(inline.kind)
+    final styled =
+        _styledKind(inline.kind) ||
+        includeHtml &&
+            inline.kind == BusyInlineKind.html &&
+            semanticHtmlInlineTag(inline.attributes) != null;
+    final ownStyle = styled
         ? _InheritedInlineStyle(
             inline.kind,
             inline.destination,
@@ -408,9 +423,6 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
     final end = offset;
     if (end > start) {
       for (final style in effectiveStyles) {
-        if (!_styledKind(style.kind)) {
-          continue;
-        }
         ranges.add(
           BusyInlineStyleRange(
             start: start,
