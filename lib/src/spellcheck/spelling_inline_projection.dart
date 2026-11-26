@@ -1,4 +1,5 @@
 import '../markdown/busymark_document.dart';
+import '../markdown/semantic_html_inline.dart';
 import 'spelling_projection.dart';
 import 'spelling_text_patterns.dart';
 
@@ -31,7 +32,7 @@ final class _PendingInlineProjection {
 
 /// Projects editable rich-text leaves while keeping a stable tree address for
 /// every emitted atom. Formatting and link containers are transparent; code,
-/// math, variables, and embedded HTML form barriers and are omitted.
+/// math, variables, and opaque HTML form barriers and are omitted.
 List<SpellingInlineProjection> projectSpellingInlineRuns({
   required List<BusyInline> inlines,
   required int sourceBase,
@@ -156,7 +157,11 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     }
     switch (inline.kind) {
       case BusyInlineKind.math:
-      case BusyInlineKind.html:
+      case BusyInlineKind.html
+          when semanticHtmlInlineTag(inline.attributes) == null ||
+              spellingTechnicalHtmlInlineTags.contains(
+                inline.attributes['htmlTag'],
+              ):
       case BusyInlineKind.writersideControl:
       case BusyInlineKind.writersidePath:
       case BusyInlineKind.writersideUiPath:
@@ -225,6 +230,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
           transformation: SpellingTransformationKind.lineBreak,
         );
         return;
+      case BusyInlineKind.html:
       case BusyInlineKind.text:
       case BusyInlineKind.strong:
       case BusyInlineKind.emphasis:

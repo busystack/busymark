@@ -2270,7 +2270,13 @@ const _opaqueInlineKinds = {
   BusyInlineKind.writersideVariable,
 };
 
-const _opaqueHtmlElements = {'code', 'pre', 'script', 'style'};
+const _opaqueHtmlElements = {
+  'code',
+  'pre',
+  'script',
+  'style',
+  ...spellingTechnicalHtmlInlineTags,
+};
 
 const _blockHtmlElements = {
   'address',
