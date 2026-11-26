@@ -234,6 +234,38 @@ void main() {
         },
       );
 
+      const selected = '<p>ABC !</p><p dir="ltr">Explicit LTR !</p>';
+      for (final (label, input) in [
+        (
+          'title',
+          '<html dir="auto"><head><title>العربية</title></head><body>'
+              '<!--StartFragment-->$selected<!--EndFragment--></body></html>',
+        ),
+        (
+          'hidden subtree',
+          '<div dir="auto"><span hidden>العربية</span>$selected</div>',
+        ),
+        (
+          'display:none subtree',
+          '<div dir="auto"><span style="display:none">العربية</span>$selected</div>',
+        ),
+      ]) {
+        test('auto direction survives filtering of its $label', () {
+          final source = paste(input);
+          final output = html.parseFragment(source);
+          expect(
+            output.querySelector('[dir=rtl] p')?.text,
+            'ABC !',
+            reason: input,
+          );
+          expect(
+            output.querySelector('[dir=rtl] p[dir=ltr]')?.text,
+            'Explicit LTR !',
+          );
+          expect(output.text, isNot(contains('العربية')));
+        });
+      }
+
       test('direction and accessibility attributes with meaning survive', () {
         for (final (input, selector) in [
           ('<ul><li dir="rtl">ABC</li></ul>', 'ul li[dir=rtl]'),

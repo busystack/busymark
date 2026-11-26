@@ -104,6 +104,22 @@ class RawHtmlAdapter {
     return fragment;
   }
 
+  /// Recognizes a complete block hyperlink while keeping ordinary inline
+  /// anchors in the Markdown paragraph parser.
+  bool isStandaloneBlockLink(String source) {
+    final fragment = parseSafeRawHtml(source);
+    if (fragment == null) return false;
+    final content = fragment.nodes.where(
+      (node) =>
+          node is html.Element ||
+          node is html.Text && node.data.trim().isNotEmpty,
+    );
+    return switch (content.singleOrNull) {
+      final html.Element element => _isBlockLink(element),
+      _ => false,
+    };
+  }
+
   List<BusyInline>? parseRawHtmlInlineFragment(String text) {
     if (!_mayContainHtml(text)) return null;
     final normalized = _HtmlSourceProjection.create(
@@ -465,7 +481,10 @@ class RawHtmlAdapter {
             children: linkBlocks(block.children),
           ),
       ];
-      final linked = linkBlocks(_blocksFromNodes(children, nextId));
+      final linked = _applyHtmlDirection(
+        linkBlocks(_blocksFromNodes(children, nextId)),
+        direction,
+      );
       // A link split into separate Markdown blocks has no common wrapper.
       // Keep that wrapper if it carries additional attributes or if a raw
       // descendant would serialize independently of its semantic inlines.

@@ -2397,7 +2397,17 @@ class MarkdownAstAdapter {
     var balance = 0;
     for (var index = startIndex; index < lines.length; index += 1) {
       balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if (tag == 'a' && balance > 1) return null;
       if (balance <= 0 && index > startIndex || balance == 0) {
+        if (tag == 'a' &&
+            !_rawHtmlAdapter.isStandaloneBlockLink(
+              lines
+                  .getRange(startIndex, index + 1)
+                  .map((line) => line.rawLine)
+                  .join(),
+            )) {
+          return null;
+        }
         return index + 1;
       }
     }
@@ -2436,7 +2446,7 @@ class MarkdownAstAdapter {
     if (voidHtmlTags.contains(tag)) {
       return null;
     }
-    if (!isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
+    if (tag != 'a' && !isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
       return null;
     }
     return tag;

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/editor/source/source_paste_engine.dart';
@@ -287,6 +288,96 @@ void main() {
       expect(
         _paste('<p>Before <del>old</del> after</p>').trim(),
         'Before ~~old~~ after',
+      );
+    },
+  );
+
+  test(
+    'HTML export packages relative citations from their source document',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-citation-export-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final work = await Directory('${root.path}/work').create();
+      final output = await Directory('${root.path}/export').create();
+      final changes = await Directory('${work.path}/changes').create();
+      const bytes = 'Revision history\n';
+      await File('${changes.path}/revision A.txt').writeAsString(bytes);
+      await File('${root.path}/outside.txt').writeAsString('Outside');
+      const citation = 'changes/revision%20A.txt?token=a%26b#part%202';
+      const external = 'https://example.test/report?mode=full#notes';
+      const date = '2026-11-26';
+      const source =
+          'Before <del cite="$citation" datetime="$date">old</del> '
+          '<q cite="$citation">quote</q> <ins cite="$citation">new</ins> '
+          '<q cite="$external">external</q> '
+          '<q cite="topic.md?view=full#revision-history">entry</q> after.\n\n'
+          '## Revision history\n\n'
+          '<div><q cite="$citation">raw quote</q>'
+          '<del cite="$citation">raw old</del><ins cite="$citation">raw new</ins>'
+          '<q cite="javascript:alert(1)">unsafe</q>'
+          '<q cite="../outside.txt">outside</q></div>\n';
+      Future<HtmlExportResult> export(
+        String filename,
+        HtmlPackaging packaging,
+      ) => HtmlExportService(stylesheetLoader: () async => '').exportMarkdown(
+        MarkdownHtmlExportRequest(
+          source: source,
+          filePath: '${work.path}/topic.md',
+          workspaceRoot: work.path,
+          destinationPath: '${output.path}/$filename',
+          options: HtmlExportOptions(packaging: packaging),
+        ),
+      );
+      final result = await export('index.html', HtmlPackaging.assetsDirectory);
+      final entry = File(result.entryPointPath);
+      final markup = html.parse(await entry.readAsString());
+      final cited = {
+        for (final element in markup.querySelectorAll('del, q, ins'))
+          element.text: element,
+      };
+      expect(cited['old']!.attributes['datetime'], date);
+      expect(cited['external']!.attributes['cite'], external);
+      expect(cited['entry']!.attributes['cite'], '?view=full#revision-history');
+      expect(cited['unsafe']!.attributes['cite'], isNull);
+      expect(cited['outside']!.attributes['cite'], isNull);
+      for (final label in [
+        'old',
+        'quote',
+        'new',
+        'raw quote',
+        'raw old',
+        'raw new',
+      ]) {
+        final uri = Uri.file(
+          entry.path,
+        ).resolve(cited[label]!.attributes['cite']!);
+        expect(uri.query, 'token=a%26b', reason: label);
+        expect(uri.fragment, 'part%202', reason: label);
+        expect(
+          await File(
+            Uri(scheme: 'file', path: uri.path).toFilePath(),
+          ).readAsString(),
+          bytes,
+          reason: label,
+        );
+      }
+
+      final single = await export('single.html', HtmlPackaging.singleFile);
+      final embedded = html.parse(
+        await File(single.entryPointPath).readAsString(),
+      );
+      final data = embedded.querySelector('del')!.attributes['cite']!;
+      final hash = data.indexOf('#');
+      expect(data.substring(hash), '#part%202');
+      expect(
+        UriData.parse(data.substring(0, hash)).contentAsString(encoding: utf8),
+        bytes,
+      );
+      expect(
+        single.warnings.map((warning) => warning.code),
+        contains('link.embedded-query'),
       );
     },
   );

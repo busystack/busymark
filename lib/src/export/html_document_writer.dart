@@ -923,7 +923,7 @@ class HtmlDocumentWriter {
         case BusyInlineKind.html:
           final element = semanticHtmlInlineElement(value);
           if (element == null) {
-            out.addAll(await _raw(value.text, block));
+            out.addAll(await _raw(value.text, block, inherited: a));
             continue;
           }
           node = element..nodes.addAll(nodes);
@@ -938,6 +938,9 @@ class HtmlDocumentWriter {
       }
       if (node is dom.Element && value.kind != BusyInlineKind.link) {
         _attributes(node, value.attributes);
+        if (node.attributes.remove('cite') case final cite?) {
+          await _setCitation(node, cite, block, a);
+        }
       }
       if (value.attributes['switcher-key'] case final key?) {
         node = _el('span', children: [dom.Text('[$key] '), node]);
@@ -1028,7 +1031,11 @@ class HtmlDocumentWriter {
 
   /// Narrow HTML adapter: supported structure survives, attributes never pass
   /// through unchecked. Rejected elements remain visible as escaped source.
-  Future<List<dom.Node>> _raw(String source, BusyBlock block) async {
+  Future<List<dom.Node>> _raw(
+    String source,
+    BusyBlock block, {
+    Map<String, String> inherited = const {},
+  }) async {
     final fragment = parser.parseFragment(source);
     Future<List<dom.Node>> nodes(Iterable<dom.Node> values, int depth) async {
       if (depth > limits.depth) {
@@ -1057,6 +1064,11 @@ class HtmlDocumentWriter {
           continue;
         }
         final attrs = value.attributes.map((k, v) => MapEntry(k.toString(), v));
+        final referenceAttributes = {
+          ...block.attributes,
+          ...inherited,
+          ...attrs,
+        };
         if (attrs.keys.any(
           (name) =>
               name.startsWith('on') ||
@@ -1070,20 +1082,24 @@ class HtmlDocumentWriter {
         }
         if (tag == 'img') {
           out.add(
-            await _image(attrs['src'] ?? '', attrs['alt'] ?? '', {
-              ...block.attributes,
-              ...attrs,
-            }, block),
+            await _image(
+              attrs['src'] ?? '',
+              attrs['alt'] ?? '',
+              referenceAttributes,
+              block,
+            ),
           );
           continue;
         }
         final element = _el(tag, children: await nodes(value.nodes, depth + 1));
         _attributes(element, attrs);
         if (tag == 'a') {
-          final link = await links.resolve(attrs['href'], page, {
-            ...block.attributes,
-            ...attrs,
-          }, line: block.sourceSpan?.startLine ?? 1);
+          final link = await links.resolve(
+            attrs['href'],
+            page,
+            referenceAttributes,
+            line: block.sourceSpan?.startLine ?? 1,
+          );
           if (link != null) {
             element.attributes['href'] = link.url;
             if (link.downloadName case final name?) {
@@ -1108,11 +1124,8 @@ class HtmlDocumentWriter {
         if (tag == 'data' && attrs['value'] != null) {
           element.attributes['value'] = attrs['value']!;
         }
-        final cite = attrs['cite'];
-        if (cite != null &&
-            const {'q', 'ins', 'del'}.contains(tag) &&
-            isSafeHtmlUrlAttribute(tag, 'cite', cite)) {
-          element.attributes['cite'] = cite;
+        if (attrs['cite'] case final cite?) {
+          await _setCitation(element, cite, block, referenceAttributes);
         }
         if (const {'time', 'ins', 'del'}.contains(tag) &&
             attrs['datetime'] != null) {
@@ -1155,6 +1168,22 @@ class HtmlDocumentWriter {
     }
 
     return nodes(fragment.nodes, 0);
+  }
+
+  Future<void> _setCitation(
+    dom.Element element,
+    String value,
+    BusyBlock block,
+    Map<String, String> attributes,
+  ) async {
+    final citation = await links.resolveCitation(
+      element.localName!,
+      value,
+      page,
+      attributes,
+      line: block.sourceSpan?.startLine ?? 1,
+    );
+    if (citation != null) element.attributes['cite'] = citation;
   }
 
   /// OpenAPI already has a structured static representation. Only that output

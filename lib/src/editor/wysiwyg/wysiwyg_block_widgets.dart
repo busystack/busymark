@@ -243,7 +243,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
   final ValueChanged<PointerCancelEvent>? onPointerCancel;
-  final TextEditingController Function(BusyBlock cell)? tableCellController;
+  final BusyMarkWysiwygTextController Function(BusyBlock cell)?
+  tableCellController;
   final UndoHistoryController Function(BusyBlock cell)? tableCellUndoController;
   final FocusNode Function(BusyBlock cell)? tableCellFocusNode;
   final GlobalKey Function(String cellId)? tableCellKey;
@@ -1490,7 +1491,7 @@ class _TableBlockEditor extends StatefulWidget {
   final VoidCallback onTableDeleted;
   final int editRevision;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
-  final TextEditingController Function(BusyBlock cell)? cellController;
+  final BusyMarkWysiwygTextController Function(BusyBlock cell)? cellController;
   final UndoHistoryController Function(BusyBlock cell)? cellUndoController;
   final FocusNode Function(BusyBlock cell)? cellFocusNode;
   final GlobalKey Function(String cellId)? cellKey;
@@ -2082,7 +2083,7 @@ class _TableCellEditor extends StatefulWidget {
   final int editRevision;
   final SourceSpan? sourceSpan;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
-  final TextEditingController? controller;
+  final BusyMarkWysiwygTextController? controller;
   final UndoHistoryController? undoController;
   final FocusNode? focusNode;
   final GlobalKey? cellKey;
@@ -2104,7 +2105,7 @@ class _TableCellEditor extends StatefulWidget {
 }
 
 class _TableCellEditorState extends State<_TableCellEditor> {
-  late TextEditingController _controller;
+  late BusyMarkWysiwygTextController _controller;
   late FocusNode _focusNode;
   late bool _ownsController;
   late bool _ownsFocusNode;
@@ -2134,7 +2135,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     _ownsFocusNode = widget.focusNode == null;
     _controller =
         widget.controller ??
-        TextEditingController(text: _editableText(widget.cell));
+        BusyMarkWysiwygTextController(text: '', ranges: const []);
     _focusNode =
         widget.focusNode ??
         FocusNode(debugLabel: 'BusyMark table cell ${widget.cell?.id}');
@@ -2153,28 +2154,10 @@ class _TableCellEditorState extends State<_TableCellEditor> {
   }
 
   void _reconcileController() {
-    final nextText = _editableText(widget.cell);
-    if (nextText == _controller.text) {
-      return;
+    // The document owner synchronizes borrowed controllers for every edit.
+    if (widget.cell case final cell? when _ownsController) {
+      _controller.updateFromBlock(cell);
     }
-    final selection = _controller.selection;
-    _controller.value = _controller.value.copyWith(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: selection.baseOffset.clamp(0, nextText.length).toInt(),
-        extentOffset: selection.extentOffset.clamp(0, nextText.length).toInt(),
-      ),
-      composing: TextRange.empty,
-    );
-  }
-
-  String _editableText(BusyBlock? cell) {
-    if (cell == null) {
-      return '';
-    }
-    return busyMarkWysiwygBlockContainsMath(cell)
-        ? busyMarkWysiwygEditableText(cell)
-        : cell.plainText;
   }
 
   @override
@@ -2245,6 +2228,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
         ),
       );
     }
+    final editableController = _controller.editableController;
     return KeyedSubtree(
       key: widget.cellKey,
       child: Padding(
@@ -2265,11 +2249,11 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                 child: BusyMarkEditorFocusRestoration(
                   readOnly: DocumentReadOnlyScope.of(context),
                   focusNode: _focusNode,
-                  controller: _controller,
+                  controller: editableController,
                   builder: (context, caretScrollController) => TextField(
                     readOnly: DocumentReadOnlyScope.of(context),
                     key: ValueKey(cell.id),
-                    controller: _controller,
+                    controller: editableController,
                     focusNode: _focusNode,
                     // A table cell owns its caret/range, including when a menu
                     // or dialog returns focus. Explicit Select All is handled
@@ -2329,7 +2313,8 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                         onCellFocused(cell.id);
                       }
                     },
-                    onChanged: (value) {
+                    onChanged: (_) {
+                      final value = _controller.text;
                       if (_sourceEditing) {
                         widget.onSourceChanged(cell.id, value);
                       } else {

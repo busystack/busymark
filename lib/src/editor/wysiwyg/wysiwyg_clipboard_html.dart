@@ -120,23 +120,28 @@ class WysiwygClipboardHtml {
 List<dom.Node> _clipboardNodes(String source) {
   if (_documentWrapper.hasMatch(source)) {
     final document = html.parse(source);
+    final documentElement = document.documentElement;
     final htmlDirection = busyMarkHtmlDirection(
-      document.documentElement?.attributes['dir'],
+      documentElement?.attributes['dir'],
     );
     final bodyDirection = busyMarkHtmlDirection(
       document.body?.attributes['dir'],
     );
     if (document.body case final body?
         when htmlDirection != null || bodyDirection != null) {
-      // Keep the inherited scopes and their original text until the selection
-      // markers have been processed. Head content is outside both scopes.
+      // The original document scope can derive its direction from the title,
+      // even though the body supplies all of the pasteable content.
+      final directions = [
+        if (bodyDirection != null)
+          (bodyDirection, _resolvedAutoDirection(body)),
+        if (htmlDirection != null)
+          (htmlDirection, _resolvedAutoDirection(documentElement!)),
+      ];
       var nodes = body.nodes.toList();
-      for (final direction in [
-        bodyDirection,
-        htmlDirection,
-      ].whereType<String>()) {
+      for (final (direction, autoDirection) in directions) {
         nodes = [
-          _element('div', nodes, {'dir': direction}),
+          _element('div', nodes, {'dir': direction})
+            .._preserveClipboardAutoDirection(autoDirection),
         ];
       }
       return nodes;
@@ -147,6 +152,22 @@ List<dom.Node> _clipboardNodes(String source) {
 }
 
 final _documentWrapper = RegExp(r'<(?:html|body)\s', caseSensitive: false);
+
+String? _resolvedAutoDirection(dom.Element element) {
+  final direction = busyMarkHtmlDirection(element.attributes['dir']);
+  return direction == 'auto' ||
+          (direction == null && element.localName == 'bdi')
+      ? busyMarkResolvedHtmlDirection(element)
+      : null;
+}
+
+extension on dom.Element {
+  void _preserveClipboardAutoDirection(String? original) {
+    if (original != null && busyMarkResolvedHtmlDirection(this) != original) {
+      attributes['dir'] = original;
+    }
+  }
+}
 
 List<dom.Node>? _clipboardFragmentNodes(String source, List<dom.Node> nodes) {
   if (!source.contains('<!--StartFragment-->') ||
@@ -177,14 +198,8 @@ List<dom.Node>? _clipboardFragmentNodes(String source, List<dom.Node> nodes) {
         final children = visit(node.nodes, depth + 1);
         if (children.isNotEmpty || inside && !ended) {
           final clone = node.clone(false)..nodes.addAll(children);
-          if ((!inside || ended) &&
-              (busyMarkHtmlDirection(node.attributes['dir']) == 'auto' ||
-                  node.localName == 'bdi' && node.attributes['dir'] == null)) {
-            final originalDirection = busyMarkResolvedHtmlDirection(node);
-            if (originalDirection != null &&
-                originalDirection != busyMarkResolvedHtmlDirection(clone)) {
-              clone.attributes['dir'] = originalDirection;
-            }
+          if (!inside || ended) {
+            clone._preserveClipboardAutoDirection(_resolvedAutoDirection(node));
           }
           selected.add(clone);
         }
@@ -598,6 +613,7 @@ class _HtmlNormalizer {
         }
       }
       if (external && hidden) continue;
+      final autoDirection = _resolvedAutoDirection(node);
       final children = nodes(
         node.nodes,
         depth + 1,
@@ -643,7 +659,7 @@ class _HtmlNormalizer {
         tag,
         children,
         sanitizeHtmlAttributes(tag, attrs) ?? const {},
-      );
+      ).._preserveClipboardAutoDirection(autoDirection);
       if (external &&
           tag == 'a' &&
           !_hasImportedAnchorContent(normalized) &&

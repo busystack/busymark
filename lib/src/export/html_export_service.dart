@@ -7,6 +7,8 @@ import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_parser.dart';
+import '../markdown/raw_html_policy.dart';
+import '../markdown/semantic_html_inline.dart';
 import '../math/math_coordinator.dart';
 import '../visualization/visualization_coordinator.dart';
 import '../visualization/visualization_models.dart';
@@ -363,6 +365,43 @@ class HtmlExportService {
       }
     }
 
+    Future<void> captureRaw(
+      String source,
+      Map<String, String> inherited,
+      int line,
+    ) async {
+      for (final element
+          in html.parseFragment(source).querySelectorAll('img, a, [cite]')) {
+        final tag = element.localName!;
+        final attrs = {
+          ...inherited,
+          ...element.attributes.map((k, v) => MapEntry(k.toString(), v)),
+        };
+        if (tag == 'img') {
+          await capture(element.attributes['src'], attrs, line);
+        } else if (tag == 'a') {
+          await links.resolve(
+            element.attributes['href'],
+            page,
+            attrs,
+            line: line,
+          );
+        }
+        if (element.attributes['cite'] case final cite?) {
+          // The writer escapes unsupported elements, including their children.
+          var ancestor = element;
+          while (isSafeHtmlTag(ancestor.localName!)) {
+            final parent = ancestor.parent;
+            if (parent == null) {
+              await links.resolveCitation(tag, cite, page, attrs, line: line);
+              break;
+            }
+            ancestor = parent;
+          }
+        }
+      }
+    }
+
     Future<void> inlines(
       List<BusyInline> values,
       Map<String, String> inherited,
@@ -375,6 +414,21 @@ class HtmlExportService {
         }
         if (value.kind == BusyInlineKind.link) {
           await links.resolve(value.destination, page, attrs, line: line);
+        }
+        if (value.attributes.containsKey('cite') ||
+            value.kind == BusyInlineKind.html) {
+          final modeled = semanticHtmlInlineElement(value);
+          if (modeled?.attributes['cite'] case final cite?) {
+            await links.resolveCitation(
+              modeled!.localName!,
+              cite,
+              page,
+              attrs,
+              line: line,
+            );
+          } else if (modeled == null && value.kind == BusyInlineKind.html) {
+            await captureRaw(value.text, attrs, line);
+          }
         }
         await inlines(value.children, attrs, line);
       }
@@ -391,23 +445,7 @@ class HtmlExportService {
           block.attributes['html-footnotes'] ??
           (block.kind == BusyBlockKind.htmlBlock ? block.rawSource : null);
       if (raw != null) {
-        for (final element
-            in html.parseFragment(raw).querySelectorAll('img,a')) {
-          final attrs = {
-            ...block.attributes,
-            ...element.attributes.map((k, v) => MapEntry(k.toString(), v)),
-          };
-          if (element.localName == 'img') {
-            await capture(element.attributes['src'], attrs, line);
-          } else {
-            await links.resolve(
-              element.attributes['href'],
-              page,
-              attrs,
-              line: line,
-            );
-          }
-        }
+        await captureRaw(raw, block.attributes, line);
       }
       await _captureAssets(page, links, block.children, token);
     }
@@ -431,28 +469,34 @@ class HtmlExportService {
         );
       }
       final doc = html.parse(entry.value);
-      for (final element in doc.querySelectorAll('[href],[src]')) {
-        final value = element.attributes['href'] ?? element.attributes['src']!;
-        if (HtmlExportLinks.external(value) != null ||
-            assets.ownsEmbeddedUrl(value)) {
-          continue;
-        }
-        final uri = Uri.parse(value);
-        final path = Uri.decodeComponent(uri.path);
-        if (path.startsWith('${assets.urlDirectory}/')) {
-          if (!assets.filenames.contains(p.posix.basename(path))) {
-            throw const HtmlExportException(
-              'An output resource was not packaged.',
-            );
+      const attributes = ['href', 'src', 'cite'];
+      for (final element in doc.querySelectorAll('[href], [src], [cite]')) {
+        for (final name in attributes) {
+          final value = element.attributes[name];
+          if (value == null ||
+              assets.ownsEmbeddedUrl(value) ||
+              HtmlExportLinks.external(value) != null) {
+            continue;
           }
-        } else {
-          final target = path.isEmpty ? entry.key : path;
-          if (!ids.containsKey(target) ||
-              (uri.fragment.isNotEmpty &&
-                  !ids[target]!.contains(Uri.decodeComponent(uri.fragment)))) {
-            throw HtmlExportException(
-              'An output link does not resolve: $value.',
-            );
+          final uri = Uri.parse(value);
+          final path = Uri.decodeComponent(uri.path);
+          if (path.startsWith('${assets.urlDirectory}/')) {
+            if (!assets.filenames.contains(p.posix.basename(path))) {
+              throw const HtmlExportException(
+                'An output resource was not packaged.',
+              );
+            }
+          } else {
+            final target = path.isEmpty ? entry.key : path;
+            if (!ids.containsKey(target) ||
+                (uri.fragment.isNotEmpty &&
+                    !ids[target]!.contains(
+                      Uri.decodeComponent(uri.fragment),
+                    ))) {
+              throw HtmlExportException(
+                'An output link does not resolve: $value.',
+              );
+            }
           }
         }
       }

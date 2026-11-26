@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
@@ -10,6 +12,8 @@ import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/document_history_harness.dart';
 
 void main() {
   const parser = MarkdownParser();
@@ -270,6 +274,127 @@ void main() {
     expect(reopenedController.text, isNot(contains('AYZC')));
   });
 
+  testWidgets('editable Markdown table cell retains inline direction', (
+    tester,
+  ) async {
+    const source = '| Value |\n| --- |\n| <bdo dir="rtl">ABC</bdo> |\n';
+    final directory = Directory.systemTemp.createTempSync(
+      'busymark-directed-cell-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/table.md')..writeAsStringSync(source);
+    BusyDocument parse(String text) => parser
+        .parse(filePath: file.path, mode: MarkdownMode.gfm, source: text)
+        .busyDocument;
+    String? copied;
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copied = (call.arguments as Map)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    var edited = source;
+    await _pumpEditor(
+      tester,
+      parse(source),
+      onSourceChanged: (value) => edited = value,
+    );
+    final field = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          (widget.controller?.text.contains('ABC') ?? false),
+    );
+    final state = tester.state<EditableTextState>(
+      find.descendant(of: field, matching: find.byType(EditableText)),
+    );
+    double left(int offset) => state.renderEditable
+        .getBoxesForSelection(
+          TextSelection(baseOffset: offset, extentOffset: offset + 1),
+        )
+        .single
+        .left;
+    final controller = state.widget.controller;
+    final offset = controller.text.indexOf('ABC');
+    expect(left(offset), greaterThan(left(offset + 2)));
+
+    await tester.tapAt(
+      state.renderEditable.localToGlobal(
+        state.renderEditable
+            .getLocalRectForCaret(TextPosition(offset: offset + 1))
+            .center,
+      ),
+    );
+    await tester.pump();
+    expect(controller.selection.extentOffset, offset + 1);
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.arrowRight,
+      shift: true,
+    );
+    expect(controller.selection.end - controller.selection.start, 1);
+
+    await _pressEditorShortcut(tester, LogicalKeyboardKey.keyA, control: true);
+    await _pressEditorShortcut(tester, LogicalKeyboardKey.keyC, control: true);
+    expect(copied, 'ABC');
+    controller.selection = TextSelection(
+      baseOffset: offset + 1,
+      extentOffset: offset + 2,
+    );
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: controller.text.replaceRange(offset + 1, offset + 2, 'YZ'),
+        selection: TextSelection.collapsed(offset: offset + 3),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.selection.extentOffset, offset + 3);
+    expect(edited, contains('<bdo dir="rtl">AYZC</bdo>'));
+    expect(edited, isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))));
+
+    final reopened = await tester.runAsync(() async {
+      final writer = await DocumentHistoryHarness.create(path: file.path);
+      try {
+        writer.controller.updateActiveText(edited);
+        expect(await writer.controller.saveActive(), isTrue);
+      } finally {
+        writer.dispose();
+      }
+      final reader = await DocumentHistoryHarness.create(path: file.path);
+      try {
+        return reader.buffer.text;
+      } finally {
+        reader.dispose();
+      }
+    });
+    expect(reopened, edited);
+    await _pumpEditor(tester, parse(reopened!));
+    final reopenedState = tester.state<EditableTextState>(
+      find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              (widget.controller?.text.contains('AYZC') ?? false),
+        ),
+        matching: find.byType(EditableText),
+      ),
+    );
+    final boxes = [offset, offset + 3]
+        .map(
+          (index) => reopenedState.renderEditable
+              .getBoxesForSelection(
+                TextSelection(baseOffset: index, extentOffset: index + 1),
+              )
+              .single
+              .left,
+        )
+        .toList();
+    expect(boxes.first, greaterThan(boxes.last));
+  });
+
   testWidgets('links retain lists and headings in rendered HTML table cells', (
     tester,
   ) async {
@@ -279,12 +404,15 @@ void main() {
           filePath: 'topic.md',
           mode: MarkdownMode.gfm,
           source:
+              '<a href="$url" dir="rtl">\n<p>Linked flow !</p>\n'
+              '<p dir="ltr">Flow override !</p>\n</a>\n\n'
               '<table><tr><th>Items</th></tr>'
               '<tr><td><a href="$url"><ul><li>One</li><li>Two</li></ul></a></td></tr>'
-              '<tr><td><a href="$url"><h3>Heading</h3></a></td></tr></table>',
+              '<tr><td><a href="$url" dir="rtl"><h3>Heading</h3>'
+              '<p dir="ltr">Cell override !</p></a></td></tr></table>',
         )
         .busyDocument;
-    final table = document.blocks.single.children.single;
+    final table = document.blocks.last.children.single;
     final cells = table.children
         .skip(1)
         .map((row) => row.children.single)
@@ -293,12 +421,28 @@ void main() {
       BusyBlockKind.unorderedListItem,
       BusyBlockKind.unorderedListItem,
     ]);
-    expect(cells.last.children.single.kind, BusyBlockKind.heading);
+    final cellLink = cells.last.children.single;
+    expect(cellLink.children.first.kind, BusyBlockKind.heading);
     expect(
-      cells.expand((c) => c.children).map((b) => b.inlines.single.destination),
+      [
+        ...cells.first.children,
+        ...cellLink.children,
+      ].map((b) => b.inlines.single.destination),
       everyElement(url),
     );
     await _pumpEditor(tester, document);
+    for (final (label, direction) in [
+      ('Heading', TextDirection.rtl),
+      ('Cell override !', TextDirection.ltr),
+      ('Linked flow !', TextDirection.rtl),
+      ('Flow override !', TextDirection.ltr),
+    ]) {
+      expect(
+        tester.widget<Text>(find.text(label)).textDirection,
+        direction,
+        reason: label,
+      );
+    }
     expect(find.text('One'), findsOneWidget);
     expect(find.text('Two'), findsOneWidget);
     final markers = tester.widgetList<BusyMarkDocumentListMarker>(

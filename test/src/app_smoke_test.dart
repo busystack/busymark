@@ -23063,9 +23063,12 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
   ) async {
     const source =
         'Before <bdo dir="rtl">ABC</bdo> after.\n\n'
+        '<a href="guide.md" dir="rtl">\n<p>Linked flow !</p>\n'
+        '<p dir="ltr">Flow override !</p>\n</a>\n\n'
         '<table><tr><th>Items</th></tr>'
         '<tr><td><a href="guide.md"><ul><li>One</li><li>Two</li></ul></a></td></tr>'
-        '<tr><td><a href="heading.md"><h3>Linked heading</h3></a></td></tr></table>\n';
+        '<tr><td><a href="heading.md" dir="rtl"><h3>Linked heading</h3>'
+        '<p dir="ltr">Cell override !</p></a></td></tr></table>\n';
     final directory = Directory.systemTemp.createTempSync(
       'busymark-linked-table-',
     );
@@ -23134,6 +23137,18 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
         .single
         .left;
     expect(left(offset), greaterThan(left(offset + 2)));
+    for (final (label, direction) in [
+      ('Linked heading', TextDirection.rtl),
+      ('Cell override !', TextDirection.ltr),
+      ('Linked flow !', TextDirection.rtl),
+      ('Flow override !', TextDirection.ltr),
+    ]) {
+      expect(
+        tester.widget<Text>(find.text(label)).textDirection,
+        direction,
+        reason: label,
+      );
+    }
     expect(find.byType(BusyMarkDocumentListMarker), findsNWidgets(2));
     final one = tester.widget<Text>(find.text('One'));
     final two = tester.widget<Text>(find.text('Two'));
@@ -23146,22 +23161,16 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     expect(_firstTapRecognizer(two.textSpan!)?.onTap, isNotNull);
     final follow = _firstTapRecognizer(heading.textSpan!)?.onTap;
     expect(follow, isNotNull);
-    await tester.runAsync(() async {
-      follow!();
-      for (var attempt = 0; attempt < 100; attempt++) {
-        if (container
-                .read(workspaceControllerProvider)
-                .workspace
-                ?.activeFilePath ==
-            headingFile.path) {
-          return;
-        }
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-      }
-    });
-    expect(
-      container.read(workspaceControllerProvider).workspace?.activeFilePath,
-      headingFile.path,
+    await tester.runAsync(() async => follow!());
+    await pumpUntil(
+      tester,
+      () =>
+          container
+              .read(workspaceControllerProvider)
+              .workspace
+              ?.activeFilePath ==
+          headingFile.path,
+      operation: 'open the linked heading destination from Preview',
     );
   });
 
