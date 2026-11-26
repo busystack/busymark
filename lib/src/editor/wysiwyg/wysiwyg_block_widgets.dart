@@ -1,5 +1,5 @@
 import '../../assets/document_media_context.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
@@ -10,14 +10,18 @@ import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
+import '../document_html_inline.dart';
 import '../document_list_marker.dart';
 import '../document_surface.dart';
 import '../document_text_geometry.dart';
 import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
+import '../inline_semantics.dart';
 import '../markdown_image_view.dart';
 import '../writerside_video_view.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/table_grid.dart';
+import '../../writerside/writerside_table_view.dart';
 import '../../math/math_widget.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
@@ -240,7 +244,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
   final ValueChanged<PointerCancelEvent>? onPointerCancel;
-  final TextEditingController Function(BusyBlock cell)? tableCellController;
+  final BusyMarkWysiwygTextController Function(BusyBlock cell)?
+  tableCellController;
   final UndoHistoryController Function(BusyBlock cell)? tableCellUndoController;
   final FocusNode Function(BusyBlock cell)? tableCellFocusNode;
   final GlobalKey Function(String cellId)? tableCellKey;
@@ -542,13 +547,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                               child: BusyMarkEditorFocusRestoration(
                                 readOnly: DocumentReadOnlyScope.of(context),
                                 focusNode: focusNode,
-                                controller: controller,
+                                controller: controller.editableController,
                                 builder: (context, caretScrollController) => TextField(
                                   readOnly: DocumentReadOnlyScope.of(context),
                                   key: ValueKey(
                                     'wysiwyg-field-$documentFilePath-${block.id}',
                                   ),
-                                  controller: controller,
+                                  controller: controller.editableController,
                                   undoController: undoController,
                                   focusNode: focusNode,
                                   scrollController: caretScrollController,
@@ -599,7 +604,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                           onCheckSpelling: onCheckSpelling,
                                         ),
                                   onTap: onFocused,
-                                  onChanged: onChanged,
+                                  onChanged: (_) => onChanged(controller.text),
                                 ),
                               ),
                             ),
@@ -1062,9 +1067,13 @@ class _RenderedHtmlBlock extends StatelessWidget {
         ),
         child: _RenderedHtmlInlineText(
           block: block,
-          style: textTheme.bodyMedium?.copyWith(
-            height: BusyMarkTypography.bodyLineHeight,
-          ),
+          style:
+              (block.attributes['htmlTag'] == 'figcaption'
+                      ? textTheme.bodySmall?.copyWith(
+                          color: colors.mutedForeground,
+                        )
+                      : textTheme.bodyMedium)
+                  ?.copyWith(height: BusyMarkTypography.bodyLineHeight),
         ),
       ),
       BusyBlockKind.image => Padding(
@@ -1116,7 +1125,18 @@ class _RenderedHtmlBlock extends StatelessWidget {
                 allowRemoteImages: allowRemoteImages,
               ),
       ),
-      BusyBlockKind.table => _RenderedHtmlTable(block: block, first: first),
+      BusyBlockKind.table => _RenderedHtmlTable(
+        block: block,
+        first: first,
+        renderBlocks: (blocks) => _RenderedHtmlBlocks(
+          blocks: blocks,
+          documentFilePath: documentFilePath,
+          workspaceRoot: workspaceRoot,
+          writersideRoot: writersideRoot,
+          imagesDir: imagesDir,
+          allowRemoteImages: allowRemoteImages,
+        ),
+      ),
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
       BusyBlockKind.taskListItem => _RenderedHtmlListItem(
@@ -1129,16 +1149,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
         first: first,
       ),
       BusyBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
-      BusyBlockKind.htmlBlock when block.attributes['htmlTag'] == 'figure' =>
-        _RenderedHtmlFigure(
-          block: block,
-          documentFilePath: documentFilePath,
-          workspaceRoot: workspaceRoot,
-          writersideRoot: writersideRoot,
-          imagesDir: imagesDir,
-          allowRemoteImages: allowRemoteImages,
-          first: first,
-        ),
       BusyBlockKind.htmlBlock => _RenderedHtmlBlocks(
         blocks: block.children,
         documentFilePath: documentFilePath,
@@ -1166,74 +1176,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
   }
 }
 
-class _RenderedHtmlFigure extends StatelessWidget {
-  const _RenderedHtmlFigure({
-    required this.block,
-    required this.documentFilePath,
-    required this.workspaceRoot,
-    required this.writersideRoot,
-    required this.imagesDir,
-    required this.allowRemoteImages,
-    required this.first,
-  });
-
-  final BusyBlock block;
-  final String documentFilePath;
-  final String? workspaceRoot;
-  final String? writersideRoot;
-  final String imagesDir;
-  final bool allowRemoteImages;
-  final bool first;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final contentBlocks = block.children
-        .where((child) => child.attributes['htmlTag'] != 'figcaption')
-        .toList();
-    final captionBlocks = block.children
-        .where((child) => child.attributes['htmlTag'] == 'figcaption')
-        .toList();
-    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: colors.mutedForeground,
-      height: BusyMarkTypography.bodyLineHeight,
-    );
-    return Padding(
-      padding: EdgeInsets.only(
-        top: first ? 0 : BusyMarkSpacing.xs,
-        bottom: BusyMarkSpacing.xs,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _RenderedHtmlBlocks(
-            blocks: contentBlocks,
-            documentFilePath: documentFilePath,
-            workspaceRoot: workspaceRoot,
-            writersideRoot: writersideRoot,
-            imagesDir: imagesDir,
-            allowRemoteImages: allowRemoteImages,
-          ),
-          if (captionBlocks.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: BusyMarkSpacing.xs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final caption in captionBlocks)
-                    _RenderedHtmlInlineText(
-                      block: caption,
-                      style: captionStyle,
-                    ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RenderedHtmlListItem extends StatelessWidget {
   const _RenderedHtmlListItem({
     required this.block,
@@ -1255,10 +1197,18 @@ class _RenderedHtmlListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firstParagraph =
+        block.inlines.isEmpty &&
+            block.children.firstOrNull?.kind == BusyBlockKind.paragraph
+        ? block.children.first
+        : null;
+    final children = firstParagraph == null
+        ? block.children
+        : block.children.sublist(1);
     return Padding(
       padding: EdgeInsets.only(
         top: first ? 0 : BusyMarkSpacing.xs,
-        bottom: block.children.isEmpty ? BusyMarkSpacing.xs : 0,
+        bottom: children.isEmpty ? BusyMarkSpacing.xs : 0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1274,16 +1224,18 @@ class _RenderedHtmlListItem extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
-              Expanded(child: _RenderedHtmlInlineText(block: block)),
+              Expanded(
+                child: _RenderedHtmlInlineText(block: firstParagraph ?? block),
+              ),
             ],
           ),
-          if (block.children.isNotEmpty)
+          if (children.isNotEmpty)
             Padding(
               padding: const EdgeInsetsDirectional.only(
                 start: BusyMarkSizes.documentListIndent,
               ),
               child: _RenderedHtmlBlocks(
-                blocks: block.children,
+                blocks: children,
                 documentFilePath: documentFilePath,
                 workspaceRoot: workspaceRoot,
                 writersideRoot: writersideRoot,
@@ -1298,89 +1250,65 @@ class _RenderedHtmlListItem extends StatelessWidget {
 }
 
 class _RenderedHtmlTable extends StatelessWidget {
-  const _RenderedHtmlTable({required this.block, required this.first});
+  const _RenderedHtmlTable({
+    required this.block,
+    required this.first,
+    required this.renderBlocks,
+  });
 
   final BusyBlock block;
   final bool first;
+  final Widget Function(List<BusyBlock>) renderBlocks;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final rows = block.children;
-    final columnCount = _columnCount(rows);
+    final grid = TableGrid.place([
+      for (final row in rows) row.children,
+    ], (cell) => cell.attributes);
     return Padding(
       padding: EdgeInsets.only(
         top: first ? 0 : BusyMarkSpacing.xs,
         bottom: BusyMarkSpacing.sm,
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: BusyMarkSizes.tableMinWidth,
-          ),
-          child: Table(
-            border: TableBorder.all(
-              color: colors.subtleBorder,
-              borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+      child: DocumentTableGridLayout<BusyBlock>(
+        grid: grid,
+        fixed: true,
+        children: [
+          for (final cell in grid.cells)
+            _cell(
+              context,
+              cell.value,
+              cell.value.attributes['header'] == 'true' ||
+                  rows[cell.row].attributes['header'] == 'true',
+              colors,
             ),
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              for (final (rowIndex, row) in rows.indexed)
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: _isHeaderRow(row, rowIndex)
-                        ? colors.controlHover
-                        : BusyMarkLinuxPalette.transparent,
-                  ),
-                  children: [
-                    for (var column = 0; column < columnCount; column++)
-                      _RenderedHtmlTableCell(
-                        cell: column < row.children.length
-                            ? row.children[column]
-                            : null,
-                        header: _isHeaderRow(row, rowIndex),
-                      ),
-                  ],
-                ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  int _columnCount(List<BusyBlock> rows) {
-    var count = 1;
-    for (final row in rows) {
-      if (row.children.length > count) {
-        count = row.children.length;
-      }
-    }
-    return count;
-  }
-
-  bool _isHeaderRow(BusyBlock row, int index) {
-    return index == 0 || row.attributes['header'] == 'true';
-  }
-}
-
-class _RenderedHtmlTableCell extends StatelessWidget {
-  const _RenderedHtmlTableCell({required this.cell, required this.header});
-
-  final BusyBlock? cell;
-  final bool header;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _cell(
+    BuildContext context,
+    BusyBlock cell,
+    bool header,
+    BusyMarkSurfaceColors colors,
+  ) {
     final style = busyMarkDocumentBodyTextStyle(
       context,
     ).copyWith(fontWeight: header ? FontWeight.w700 : FontWeight.w400);
-    return Padding(
-      padding: BusyMarkInsets.documentTableCell,
-      child: cell == null
-          ? const SizedBox.shrink()
-          : _RenderedHtmlInlineText(block: cell!, style: style),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: header ? colors.controlHover : null,
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: Padding(
+        padding: BusyMarkInsets.documentTableCell,
+        child: cell.children.isEmpty
+            ? _RenderedHtmlInlineText(block: cell, style: style)
+            : renderBlocks(cell.children),
+      ),
     );
   }
 }
@@ -1428,6 +1356,19 @@ class _RenderedHtmlInlineText extends StatelessWidget {
     BusyInline inline,
     TextStyle? baseStyle,
   ) {
+    if (busyMarkRenderedHtmlInline(
+          context,
+          inline.attributes,
+          baseStyle,
+          (style) => [
+            if (inline.children.isEmpty) TextSpan(text: inline.text),
+            for (final child in inline.children)
+              _spanForInline(context, child, style),
+          ],
+        )
+        case final semantic?) {
+      return semantic;
+    }
     final scheme = Theme.of(context).colorScheme;
     final childBaseStyle = _styleForInline(context, inline, baseStyle);
     if (inline.kind == BusyInlineKind.image) {
@@ -1551,7 +1492,7 @@ class _TableBlockEditor extends StatefulWidget {
   final VoidCallback onTableDeleted;
   final int editRevision;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
-  final TextEditingController Function(BusyBlock cell)? cellController;
+  final BusyMarkWysiwygTextController Function(BusyBlock cell)? cellController;
   final UndoHistoryController Function(BusyBlock cell)? cellUndoController;
   final FocusNode Function(BusyBlock cell)? cellFocusNode;
   final GlobalKey Function(String cellId)? cellKey;
@@ -2143,7 +2084,7 @@ class _TableCellEditor extends StatefulWidget {
   final int editRevision;
   final SourceSpan? sourceSpan;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
-  final TextEditingController? controller;
+  final BusyMarkWysiwygTextController? controller;
   final UndoHistoryController? undoController;
   final FocusNode? focusNode;
   final GlobalKey? cellKey;
@@ -2165,7 +2106,7 @@ class _TableCellEditor extends StatefulWidget {
 }
 
 class _TableCellEditorState extends State<_TableCellEditor> {
-  late TextEditingController _controller;
+  late BusyMarkWysiwygTextController _controller;
   late FocusNode _focusNode;
   late bool _ownsController;
   late bool _ownsFocusNode;
@@ -2195,7 +2136,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     _ownsFocusNode = widget.focusNode == null;
     _controller =
         widget.controller ??
-        TextEditingController(text: _editableText(widget.cell));
+        BusyMarkWysiwygTextController(text: '', ranges: const []);
     _focusNode =
         widget.focusNode ??
         FocusNode(debugLabel: 'BusyMark table cell ${widget.cell?.id}');
@@ -2214,28 +2155,10 @@ class _TableCellEditorState extends State<_TableCellEditor> {
   }
 
   void _reconcileController() {
-    final nextText = _editableText(widget.cell);
-    if (nextText == _controller.text) {
-      return;
+    // The document owner synchronizes borrowed controllers for every edit.
+    if (widget.cell case final cell? when _ownsController) {
+      _controller.updateFromBlock(cell);
     }
-    final selection = _controller.selection;
-    _controller.value = _controller.value.copyWith(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: selection.baseOffset.clamp(0, nextText.length).toInt(),
-        extentOffset: selection.extentOffset.clamp(0, nextText.length).toInt(),
-      ),
-      composing: TextRange.empty,
-    );
-  }
-
-  String _editableText(BusyBlock? cell) {
-    if (cell == null) {
-      return '';
-    }
-    return busyMarkWysiwygBlockContainsMath(cell)
-        ? busyMarkWysiwygEditableText(cell)
-        : cell.plainText;
   }
 
   @override
@@ -2306,6 +2229,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
         ),
       );
     }
+    final editableController = _controller.editableController;
     return KeyedSubtree(
       key: widget.cellKey,
       child: Padding(
@@ -2326,11 +2250,11 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                 child: BusyMarkEditorFocusRestoration(
                   readOnly: DocumentReadOnlyScope.of(context),
                   focusNode: _focusNode,
-                  controller: _controller,
+                  controller: editableController,
                   builder: (context, caretScrollController) => TextField(
                     readOnly: DocumentReadOnlyScope.of(context),
                     key: ValueKey(cell.id),
-                    controller: _controller,
+                    controller: editableController,
                     focusNode: _focusNode,
                     // A table cell owns its caret/range, including when a menu
                     // or dialog returns focus. Explicit Select All is handled
@@ -2341,8 +2265,11 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                         !widget.documentSelectionDragging,
                     undoController: widget.undoController,
                     minLines: 1,
-                    maxLines: 1,
-                    inputFormatters: const [_SingleLineTableCellFormatter()],
+                    // With maxLines == 1 Flutter strips even existing semantic
+                    // breaks before the cell's formatter can preserve them.
+                    maxLines: _controller.text.contains('\n') ? null : 1,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: const [_TableCellLineBreakFormatter()],
                     style: textStyle,
                     textAlign: textAlign,
                     selectionHeightStyle:
@@ -2390,7 +2317,8 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                         onCellFocused(cell.id);
                       }
                     },
-                    onChanged: (value) {
+                    onChanged: (_) {
+                      final value = _controller.text;
                       if (_sourceEditing) {
                         widget.onSourceChanged(cell.id, value);
                       } else {
@@ -2531,12 +2459,16 @@ class _SpellingUnderlinePainter extends CustomPainter {
     for (final range in ranges) {
       if (!range.isValid ||
           range.isCollapsed ||
-          range.end > (editable.text?.toPlainText().length ?? 0)) {
+          range.end > controller.text.length) {
         continue;
       }
       if (busyMarkSpellingUnderlineSuppressed(controller, range)) continue;
+      final selection = TextSelection(
+        baseOffset: range.start,
+        extentOffset: range.end,
+      );
       final boxes = editable.getBoxesForSelection(
-        TextSelection(baseOffset: range.start, extentOffset: range.end),
+        _editableSelection(controller, selection),
       );
       for (final box in boxes) {
         final topLeft = overlay.globalToLocal(
@@ -2617,30 +2549,39 @@ TextAlign _tableCellTextAlign(String? value) {
   };
 }
 
-class _SingleLineTableCellFormatter extends TextInputFormatter {
-  const _SingleLineTableCellFormatter();
+class _TableCellLineBreakFormatter extends TextInputFormatter {
+  const _TableCellLineBreakFormatter();
 
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final normalized = newValue.text.replaceAll(RegExp(r'\r\n|\r|\n'), ' ');
-    if (normalized == newValue.text) {
-      return newValue;
+    final breaks = busyMarkNewTableCellLineBreaks(
+      newValue.text,
+      previousText: oldValue.text,
+    ).toList();
+    if (breaks.isEmpty) return newValue;
+    final normalized = StringBuffer();
+    var start = 0;
+    for (final match in breaks) {
+      normalized.write(newValue.text.substring(start, match.start));
+      normalized.write(' ');
+      start = match.end;
     }
+    normalized.write(newValue.text.substring(start));
+
     int normalizedOffset(int offset) {
-      if (offset < 0) {
-        return offset;
+      var result = offset;
+      for (final match in breaks) {
+        if (offset <= match.start) break;
+        result -= (offset < match.end ? offset : match.end) - match.start - 1;
       }
-      return newValue.text
-          .substring(0, offset.clamp(0, newValue.text.length).toInt())
-          .replaceAll(RegExp(r'\r\n|\r|\n'), ' ')
-          .length;
+      return result;
     }
 
     return newValue.copyWith(
-      text: normalized,
+      text: normalized.toString(),
       selection: TextSelection(
         baseOffset: normalizedOffset(newValue.selection.baseOffset),
         extentOffset: normalizedOffset(newValue.selection.extentOffset),
@@ -2739,6 +2680,7 @@ class _WysiwygSelectionOverlayState extends State<_WysiwygSelectionOverlay> {
               painter: _WysiwygSelectionPainter(
                 editableKey: _editableKey,
                 overlayKey: _overlayKey,
+                controller: widget.controller,
                 selectionRange: widget.selectionRange,
                 color:
                     DefaultSelectionStyle.of(context).selectionColor ??
@@ -2760,6 +2702,7 @@ class _WysiwygSelectionPainter extends CustomPainter {
   _WysiwygSelectionPainter({
     required this.editableKey,
     required this.overlayKey,
+    required this.controller,
     required this.selectionRange,
     required this.color,
     required Listenable repaint,
@@ -2767,6 +2710,7 @@ class _WysiwygSelectionPainter extends CustomPainter {
 
   final GlobalKey editableKey;
   final GlobalKey overlayKey;
+  final TextEditingController controller;
   final BusyMarkWysiwygSelectionRange? selectionRange;
   final Color color;
 
@@ -2779,12 +2723,15 @@ class _WysiwygSelectionPainter extends CustomPainter {
     );
     final overlay = overlayKey.currentContext?.findRenderObject();
     if (editable == null || overlay is! RenderBox || !overlay.hasSize) return;
-    final length = editable.text?.toPlainText().length ?? 0;
+    final length = controller.text.length;
     final start = range.start.clamp(0, length).toInt();
     final end = range.end.clamp(0, length).toInt();
     if (end <= start) return;
     final boxes = editable.getBoxesForSelection(
-      TextSelection(baseOffset: start, extentOffset: end),
+      _editableSelection(
+        controller,
+        TextSelection(baseOffset: start, extentOffset: end),
+      ),
     );
     final paint = Paint()..color = color;
     canvas.save();
@@ -2809,10 +2756,18 @@ class _WysiwygSelectionPainter extends CustomPainter {
   bool shouldRepaint(covariant _WysiwygSelectionPainter oldDelegate) =>
       oldDelegate.editableKey != editableKey ||
       oldDelegate.overlayKey != overlayKey ||
+      oldDelegate.controller != controller ||
       oldDelegate.selectionRange?.start != selectionRange?.start ||
       oldDelegate.selectionRange?.end != selectionRange?.end ||
       oldDelegate.color != color;
 }
+
+TextSelection _editableSelection(
+  TextEditingController controller,
+  TextSelection selection,
+) => controller is BusyMarkWysiwygTextController
+    ? controller.editableSelection(selection)
+    : selection;
 
 class _ImageBlockEditor extends StatelessWidget {
   const _ImageBlockEditor({

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/platform/linux_gtk_accent_service.dart';
 import 'package:dbus/dbus.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class FakeAccentSource implements LinuxAccentSource {
   FakeAccentSource(

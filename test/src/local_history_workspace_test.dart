@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/comparison/source_comparison.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_comparison_view.dart';
@@ -21,7 +21,7 @@ import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -7346,7 +7346,7 @@ void main() {
         UncontrolledProviderScope(
           container: h.container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -7416,7 +7416,7 @@ void main() {
           UncontrolledProviderScope(
             container: h.container,
             child: MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: busyMarkLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               theme: buildBusyMarkTheme(
                 brightness: Brightness.light,
@@ -7532,7 +7532,7 @@ void main() {
           UncontrolledProviderScope(
             container: h.container,
             child: MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: busyMarkLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: const Scaffold(body: LocalHistoryComparisonView()),
             ),
@@ -7625,7 +7625,7 @@ void main() {
         UncontrolledProviderScope(
           container: harness.container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -7674,7 +7674,7 @@ void main() {
         UncontrolledProviderScope(
           container: harness.container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -7751,7 +7751,7 @@ void main() {
         UncontrolledProviderScope(
           container: harness.container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,

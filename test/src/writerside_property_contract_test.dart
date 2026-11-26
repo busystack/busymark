@@ -1,4 +1,4 @@
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_inspector_target.dart';
@@ -13,7 +13,7 @@ import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:busymark/src/writerside/writerside_property_validation.dart';
 import 'package:busymark/src/writerside/writerside_effective_properties.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -334,7 +334,7 @@ void main() {
       }) async {
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: PageStorage(
@@ -1114,7 +1114,7 @@ Widget harness(
   WritersideEffectiveProperties effective =
       const WritersideEffectiveProperties(),
 }) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: busyMarkLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(
     body: StatefulBuilder(

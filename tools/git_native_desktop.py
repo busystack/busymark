@@ -14,8 +14,12 @@ import sys
 import time
 from PIL import Image
 
-from application_close_smoke import Desktop, WindowAttributes
+from application_close_smoke import Desktop, LoadedEngine, WindowAttributes
 from git_native_build_receipt import engine_artifact, verify
+from native_shutdown import (
+    XFAIL_FLAG, classify, recovery_state, require_affected_engine, require_executable,
+)
+import owned_processes as owned
 
 
 class XImage(C.Structure):
@@ -276,14 +280,26 @@ def capture(desktop, path, window):
 
 
 def main():
-    binary, output, repository = (Path(value).resolve() for value in sys.argv[1:4])
+    arguments = sys.argv[1:]
+    xfail = XFAIL_FLAG in arguments
+    if xfail:
+        arguments.remove(XFAIL_FLAG)
+    binary, output, repository = (Path(value).resolve() for value in arguments[:3])
     build_receipt = Path(os.environ.get('BUSYSTACK_NATIVE_RECEIPT',
                          str(binary.resolve().parent.parent / 'git-native-source.json')))
     compiled = json.loads(build_receipt.read_text())
     native_host = compiled.get('host', 'busymark')
     if native_host not in {'busymark', 'busyfiles'}:
         raise RuntimeError('Unsupported native acceptance host')
+    if xfail and (compiled.get('host') != 'busymark' or binary.name != 'busymark'):
+        raise RuntimeError('The shutdown exception requires a sealed BusyMark payload')
     verify(compiled, binary.resolve())
+    mode = engine_artifact(binary)
+    sdk = Path(subprocess.check_output(['which', 'flutter'], text=True).strip()).resolve().parent.parent
+    expected_engine = sdk / 'bin/cache/artifacts/engine' / mode / 'libflutter_linux_gtk.so'
+    probe = LoadedEngine(expected_engine) if xfail else None
+    if probe is not None:
+        require_affected_engine(probe.expected)
     # Establish the read-only baseline before starting any native resources or
     # the application. A failed fixture check therefore cannot leak processes.
     plain_directory = os.environ.get('BUSYSTACK_NATIVE_PLAIN_DIRECTORY') == '1'
@@ -365,7 +381,7 @@ def main():
         raise
     # Supported desktop configuration, scoped to this disposable profile and bus.
     # The official Flutter settings portal reads this same GNOME preference.
-    text_scale = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0
+    text_scale = float(arguments[3]) if len(arguments) > 3 else 1.0
     subprocess.run(['gsettings', 'set', 'org.gnome.desktop.interface', 'text-scaling-factor', str(text_scale)], env=env, check=True)
     configure_native_text_dpi(env, text_scale)
     requested_theme = os.environ.get('BUSYSTACK_NATIVE_THEME')
@@ -392,6 +408,7 @@ def main():
         cleanup_runtime()
         raise RuntimeError('Native GTK text DPI differs from the requested acceptance scale')
     daemon = None
+    tracker = None
     daemon_launch = None
     daemon_log = None
     def start_daemon():
@@ -456,8 +473,21 @@ def main():
                 raise RuntimeError('Snap launcher requires the actual desktop session for its systemd scope')
             launch_environment = dict(env, DBUS_SESSION_BUS_ADDRESS=desktop_bus,
                                       XDG_RUNTIME_DIR=desktop_runtime)
-        process = subprocess.Popen(launch_arguments, env=launch_environment,
-                                   stdout=(output / 'application.log').open('w'), stderr=subprocess.STDOUT)
+        if xfail:
+            recovery = Path(env['XDG_DATA_HOME']) / 'io.busystack.busymark/recovery.json'
+            _, initial_recovery = recovery_state(recovery)
+            expected_executable = binary.stat()
+            tracker = owned.ChildTracker(desktop_server=xvfb.pid)
+        with (output / 'application.log').open('x') as log:
+            process = subprocess.Popen(launch_arguments, env=launch_environment,
+                                       stdout=log, stderr=subprocess.STDOUT)
+        if tracker is not None:
+            tracker.root = process.pid
+            stamp = owned.identity(process.pid)
+            if stamp is None:
+                tracker.errors.append('Application process identity unavailable after launch')
+            else:
+                tracker.seen[process.pid] = stamp
     except BaseException:
         if daemon is not None and daemon.poll() is None:
             daemon.terminate(); daemon.wait(timeout=15)
@@ -488,6 +518,10 @@ def main():
     receipt['applicationPayloads'] = {str(p.relative_to(binary.parent)): hashlib.sha256(p.read_bytes()).hexdigest() for p in payloads if p.exists()}
     receipt['sources'] = compiled['sources']
     receipt['host'] = native_host
+    receipt.update(pid=process.pid, normalShutdownRequested=False, functionalChecksPassed=False,
+                   forcedTermination=False, timedOut=False, outcome='FAIL')
+    application_log = ''
+    close_log_offset = 0
     if requested_theme is not None: receipt['theme'] = requested_theme
     if daemon is not None: receipt['daemon'] = daemon_identity
     settings = Path(env['XDG_DATA_HOME']) / 'io.busystack.busymark/settings.json'
@@ -524,14 +558,16 @@ def main():
         if len(mapped) != 1:
             raise RuntimeError('Expected exactly one mapped official Flutter engine')
         engine = Path(mapped.pop())
-        mode = engine_artifact(binary)
-        sdk = Path(subprocess.check_output(['which', 'flutter'], text=True).strip()).resolve().parent.parent
-        expected_engine = sdk / 'bin/cache/artifacts/engine' / mode / 'libflutter_linux_gtk.so'
         actual_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
         expected_hash = hashlib.sha256(expected_engine.read_bytes()).hexdigest()
         receipt['engine'] = {'mapped': str(engine), 'sha256': actual_hash, 'officialSDKArtifact': str(expected_engine), 'matches': actual_hash == expected_hash}
         if actual_hash != expected_hash:
             raise RuntimeError('Mapped engine does not match the official SDK artifact')
+        if tracker is not None:
+            tracker.scan()
+            require_executable(tracker, expected_executable)
+            receipt['verifiedApplicationProcess'] = True
+            probe.capture(tracker)
         if snap_app is not None:
             actual_executable = Path('/proc') / str(process.pid) / 'exe'
             if actual_executable.resolve() != binary.resolve():
@@ -554,6 +590,8 @@ def main():
         receipt['portalTextScale'] = require_portal_text_scale(env, text_scale)
         print(json.dumps({'pid': process.pid, 'backend': 'X11/Xvfb', 'display': env['DISPLAY'], 'size': geometry(desktop, window), 'scale': 1}), flush=True)
         for line in sys.stdin:
+            if tracker is not None:
+                tracker.scan()
             command = json.loads(line)
             with (output / 'commands.jsonl').open('a') as record:
                 record.write(json.dumps(command) + '\n')
@@ -697,7 +735,10 @@ def main():
             elif kind == 'wait':
                 time.sleep(min(command.get('seconds', 1), 10))
             elif kind == 'close':
+                close_log_offset = (output / 'application.log').stat().st_size
                 desktop.close(window)
+                receipt['normalShutdownRequested'] = True
+                receipt['functionalChecksPassed'] = command.get('functionalChecksPassed') is True
                 print(json.dumps({'done': command}), flush=True)
                 break
             else:
@@ -707,15 +748,29 @@ def main():
             print(json.dumps({'done': command}), flush=True)
         try:
             process.wait(timeout=15)
-            receipt['naturalExit'] = process.returncode == 0
         except subprocess.TimeoutExpired:
-            print(json.dumps({'naturalExit': False}), flush=True)
+            receipt.update(timedOut=True, forcedTermination=True)
             process.terminate()
             process.wait(timeout=10)
-            receipt['naturalExit'] = False
         verify(compiled, binary.resolve())
         receipt['repositoryUnchanged'] = initial_repository == fixture_state()
-        (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
+        raw_log = (output / 'application.log').read_bytes()
+        if b'Failed to shutdown Flutter engine' in raw_log:
+            raise RuntimeError('Failed to shutdown Flutter engine')
+        application_log = raw_log[close_log_offset:].decode(errors='replace')
+        if tracker is not None:
+            clean, checkpoint = recovery_state(recovery)
+            receipt['durableCleanShutdown'] = clean is True and checkpoint != initial_recovery
+            if not receipt['durableCleanShutdown']:
+                raise RuntimeError('Durable clean-shutdown checkpoint missing')
+            deadline = time.monotonic() + 5
+            while tracker.outstanding() and time.monotonic() < deadline:
+                time.sleep(.05)
+            receipt['survivingChildren'] = tracker.outstanding()
+        receipt['integrityChecksPassed'] = True
+    except BaseException as error:
+        receipt['error'] = str(error)
+        raise
     finally:
         if process.poll() is None:
             try:
@@ -724,8 +779,22 @@ def main():
                     desktop.close(owned_window)
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
+                receipt.update(timedOut=True, forcedTermination=True)
                 process.terminate()
                 process.wait(timeout=10)
+        receipt['exitCode'] = process.returncode
+        if tracker is not None:
+            errors = []
+            probe.finish(receipt, errors)
+            if snap_app is not None and receipt.get('loadedEngine', {}).get('confinement') != receipt.get('confinementLabel'):
+                errors.append('Mapped engine confinement changed during observation')
+            outcomes, survivors = owned.cleanup_owned(tracker, 2, 3)
+            receipt['cleanupOutcomes'] = outcomes
+            receipt['unresolvedSurvivors'] = survivors
+            if any('sent' in (item.get('term'), item.get('kill')) for item in outcomes):
+                receipt['forcedTermination'] = True
+            tracker.close()
+            receipt['verificationIncomplete'] = errors + tracker.errors
         if daemon is not None:
             if daemon.poll() is None: daemon.terminate()
             receipt['daemonExitCode'] = daemon.wait(timeout=15)
@@ -741,8 +810,17 @@ def main():
             (output/'receipt.json').write_text(json.dumps(receipt, indent=2))
             raise
         receipt['runtimeCleanup'] = True
+        classify(receipt, enabled=xfail, host=native_host, application_log=application_log,
+                 checks_passed=receipt.get('integrityChecksPassed') is True
+                 and receipt.get('repositoryUnchanged') is True and receipt.get('engine', {}).get('matches')
+                 and receipt['credentialService']['ready'] is True
+                 and (not xfail or receipt['functionalChecksPassed'])
+                 and not any(receipt.get(key) for key in (
+                     'error', 'survivingChildren', 'cleanupOutcomes',
+                     'unresolvedSurvivors', 'verificationIncomplete')))
         (output/'receipt.json').write_text(json.dumps(receipt, indent=2))
+    return int(receipt['outcome'] == 'FAIL')
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

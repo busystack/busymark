@@ -7,7 +7,7 @@ import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -27,7 +27,7 @@ import 'package:busystack_git/busystack_git.dart' as shared;
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' show GitHost;
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,7 +50,7 @@ void main() {
             ),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -116,7 +116,7 @@ void main() {
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -212,7 +212,7 @@ void main() {
             ),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.dark,
@@ -289,7 +289,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -364,7 +364,7 @@ void main() {
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -429,7 +429,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -521,7 +521,7 @@ void main() {
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -605,7 +605,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -686,7 +686,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -767,7 +767,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -837,7 +837,7 @@ void main() {
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -904,7 +904,7 @@ void main() {
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -967,7 +967,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: ValueListenableBuilder<bool>(
@@ -1030,7 +1030,7 @@ void main() {
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Consumer(
             builder: (context, ref, child) {
@@ -1154,7 +1154,7 @@ void main() {
             gitRepositoryGatewayProvider.overrideWithValue(metadata),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Consumer(
               builder: (context, ref, _) {
@@ -1283,7 +1283,7 @@ void main() {
             workspaceServiceProvider.overrideWithValue(service),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
@@ -1378,7 +1378,7 @@ void main() {
               workspaceServiceProvider.overrideWithValue(service),
             ],
             child: MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: busyMarkLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               theme: buildBusyMarkTheme(
                 brightness: Brightness.light,
@@ -1459,7 +1459,7 @@ void main() {
             workspaceControllerProvider.overrideWith(createController),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Consumer(

@@ -1,6 +1,6 @@
 // BusyMark-owned native controls built from the pinned public Flutter/Yaru APIs.
 // These small generic mechanisms intentionally have no Git dependency.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 import 'busymark_design.dart';

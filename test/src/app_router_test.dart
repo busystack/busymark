@@ -6,11 +6,23 @@ import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
+  testWidgets('unknown routes retain the Material error page', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider)..go('/unknown-route');
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppBar, 'Page Not Found'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Home'), findsOneWidget);
+  });
+
   final l10n = AppLocalizationsEn();
 
   test('settings return targets are explicit and validated', () {

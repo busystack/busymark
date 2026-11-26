@@ -1,4 +1,5 @@
 import '../support/controlled_image_http_client.dart';
+import '../support/document_history_harness.dart';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
@@ -22,7 +23,7 @@ import 'package:busymark/src/editor/wysiwyg/writerside_property_session.dart';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -100,7 +101,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -113,6 +114,15 @@ import 'package:window_manager/window_manager.dart';
 import '../support/spelling_test_bundle.dart';
 import '../support/widget_async.dart';
 import '../support/shared_git_read_fixture.dart';
+
+// Flutter's byTooltip only checks the SDK Tooltip when semantics are excluded.
+Finder _findExcludedTooltip(String message) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Tooltip &&
+      widget.excludeFromSemantics == true &&
+      widget.message == message,
+  description: 'Tooltip with excluded semantics and message "$message"',
+);
 
 void main() {
   final l10n = AppLocalizationsEn();
@@ -3663,7 +3673,7 @@ void main() {
       l10n.settingsMebibytesValue(512),
     );
 
-    await tester.tap(find.byTooltip(l10n.settingsHistoryCheckpoint));
+    await tester.tap(_findExcludedTooltip(l10n.settingsHistoryCheckpoint));
     await tester.pumpAndSettle();
     for (final choice in [30, 60, 120, 300, 600]) {
       expect(find.text(l10n.settingsSecondsValue(choice)), findsWidgets);
@@ -19954,7 +19964,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
@@ -19988,7 +19998,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     try {
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Align(
@@ -20022,7 +20032,10 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
       expect(find.textContaining(source), findsNothing);
       expect(tester.getSize(image).height, lessThan(60));
       expect(find.byIcon(BusyMarkGlyphs.downArrow), findsNothing);
-      expect(find.byTooltip(l10n.remoteImageBlockedTooltip), findsOneWidget);
+      expect(
+        _findExcludedTooltip(l10n.remoteImageBlockedTooltip),
+        findsOneWidget,
+      );
       expect(
         find.bySemanticsLabel('${l10n.remoteImageBlocked}\n$alt\n$source'),
         findsOneWidget,
@@ -20065,7 +20078,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
@@ -20111,7 +20124,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
@@ -20163,7 +20176,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(
             body: MarkdownImageView(
@@ -20203,7 +20216,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
@@ -20247,7 +20260,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
@@ -20297,7 +20310,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
@@ -20374,7 +20387,7 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: DefaultTextStyle.merge(
@@ -23043,6 +23056,125 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     expect(find.text('Value'), findsOneWidget);
     expect(find.text('A'), findsOneWidget);
     expect(find.textContaining('<table>'), findsNothing);
+  });
+
+  testWidgets('reopened Preview renders and follows linked table blocks', (
+    tester,
+  ) async {
+    const source =
+        'Before <bdo dir="rtl">ABC</bdo> after.\n\n'
+        '<a href="guide.md" dir="rtl" title="Use <a> links">\n'
+        '<!-- <a> -->\n<p>Linked flow !</p>\n'
+        '<p dir="ltr">Flow override !</p>\n</a>\n\n'
+        '<table><tr><th>Items</th></tr>'
+        '<tr><td><a href="guide.md"><ul><li>One</li><li>Two</li></ul></a></td></tr>'
+        '<tr><td><a href="heading.md" dir="rtl"><h3>Linked heading</h3>'
+        '<p dir="ltr">Cell override !</p></a></td></tr></table>\n';
+    final directory = Directory.systemTemp.createTempSync(
+      'busymark-linked-table-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'table.md'))
+      ..writeAsStringSync('Draft\n');
+    File(p.join(directory.path, 'guide.md')).writeAsStringSync('# Guide\n');
+    final headingFile = File(p.join(directory.path, 'heading.md'))
+      ..writeAsStringSync('# Heading destination\n');
+    await tester.runAsync(() async {
+      final writer = await DocumentHistoryHarness.create(path: file.path);
+      try {
+        writer.controller.updateActiveText(source);
+        expect(await writer.controller.saveActive(), isTrue);
+        expect(await file.readAsString(), source);
+      } finally {
+        writer.dispose();
+      }
+    });
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(settings),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+        startupPathProvider.overrideWithValue(file.path),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await pumpUntil(
+      tester,
+      () => find.text('Linked heading').evaluate().isNotEmpty,
+      operation: 'render the reopened table in Preview',
+    );
+    expect(
+      find.byKey(const ValueKey('preview-document-scroll')),
+      findsOneWidget,
+      reason: container.read(workspaceControllerProvider).activeText,
+    );
+    final directionalParagraph = tester.renderObject<RenderParagraph>(
+      find.descendant(
+        of: find.textContaining('ABC'),
+        matching: find.byType(RichText),
+      ),
+    );
+    final offset = directionalParagraph.text.toPlainText().indexOf('ABC');
+    double left(int index) => directionalParagraph
+        .getBoxesForSelection(
+          TextSelection(baseOffset: index, extentOffset: index + 1),
+        )
+        .single
+        .left;
+    expect(left(offset), greaterThan(left(offset + 2)));
+    for (final (label, direction) in [
+      ('Linked heading', TextDirection.rtl),
+      ('Cell override !', TextDirection.ltr),
+      ('Linked flow !', TextDirection.rtl),
+      ('Flow override !', TextDirection.ltr),
+    ]) {
+      expect(
+        tester.widget<Text>(find.text(label)).textDirection,
+        direction,
+        reason: label,
+      );
+    }
+    expect(find.byType(BusyMarkDocumentListMarker), findsNWidgets(2));
+    final one = tester.widget<Text>(find.text('One'));
+    final two = tester.widget<Text>(find.text('Two'));
+    final heading = tester.widget<Text>(find.text('Linked heading'));
+    final flow = tester.widget<Text>(find.text('Linked flow !'));
+    expect(
+      heading.textSpan!.style!.fontSize,
+      greaterThan(one.textSpan!.style!.fontSize!),
+    );
+    expect(_firstTapRecognizer(one.textSpan!)?.onTap, isNotNull);
+    expect(_firstTapRecognizer(two.textSpan!)?.onTap, isNotNull);
+    expect(_firstTapRecognizer(flow.textSpan!)?.onTap, isNotNull);
+    final follow = _firstTapRecognizer(heading.textSpan!)?.onTap;
+    expect(follow, isNotNull);
+    await tester.runAsync(() async => follow!());
+    await pumpUntil(
+      tester,
+      () =>
+          container
+              .read(workspaceControllerProvider)
+              .workspace
+              ?.activeFilePath ==
+          headingFile.path,
+      operation: 'open the linked heading destination from Preview',
+    );
   });
 
   testWidgets('Reading applies Markdown table column alignment', (

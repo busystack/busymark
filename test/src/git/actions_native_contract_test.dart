@@ -2,13 +2,13 @@ import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/git/application/shared_git_integration.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../../busystack_git_flutter/test/support/actions_presentation_contract.dart';
 
 void main() {
@@ -42,7 +42,7 @@ void main() {
         brightness: brightness,
         accentColor: busyMarkDefaultAccentColor,
       ),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: busyMarkLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Directionality(textDirection: direction, child: child),

@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 """Capture real shipping Git interfaces on private desktops, with no UI mocks.
 
-Usage: git_native_smoke.py BINARY OUTPUT [--quick]
+Usage: git_native_smoke.py BINARY OUTPUT [--quick] [--xfail-flutter-3.50.1-shutdown]
 Run from the BusyMark repository with the approved Flutter SDK on PATH.
 The full run covers both themes, en/de/ja/ar, 1.0/1.5 desktop text scaling,
 normal/narrow windows, Branches, the information header, its native menu and Log.
 Rendered widget contracts are the deterministic layout gate; these PNGs require
 human inspection before graphical acceptance.
 """
-import json
 from collections import Counter
+import json
+import os
+from pathlib import Path
+import select
+import subprocess
+import sys
+import tempfile
+import time
+
 from PIL import Image
+
+from native_shutdown import XFAIL_FLAG, summarize
 
 def dominant(image):
     return max(image.getcolors(image.width * image.height), key=lambda pair: pair[0])[1]
@@ -38,15 +48,6 @@ def native_history_graph_bounds(table, subject, rtl):
     left, right = max(table[0], subject[0]), min(table[2], subject[2])
     return (right-40 if rtl else left, top, right if rtl else left+40,
             min(table[3], top+400))
-
-import os
-from pathlib import Path
-import select
-import subprocess
-import sys
-import tempfile
-import time
-
 
 def fixture(root, many=False):
     root.mkdir()
@@ -86,15 +87,23 @@ def fixture(root, many=False):
 
 
 class DesktopRun:
-    def __init__(self, binary, output, repository, scale, locale='en'):
+    def __init__(self, binary, output, repository, scale, locale='en', xfail=False):
         self.output = output
         self.rtl = locale == 'ar'
         self.catalog = json.loads((Path(__file__).resolve().parents[1] /
                                    f'lib/l10n/app_{locale}.arb').read_text())
         self.log = (output / 'desktop.log').open('w')
-        self.process = subprocess.Popen(['dbus-run-session', '--', '/usr/bin/python3', 'tools/git_native_desktop.py',
-            str(binary), str(output), str(repository), str(scale)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.log, text=True, bufsize=1)
-        self.width, self.height = self.read(lambda value: 'pid' in value)['size']
+        command = ['dbus-run-session', '--', '/usr/bin/python3', 'tools/git_native_desktop.py',
+                   str(binary), str(output), str(repository), str(scale)]
+        if xfail:
+            command.append(XFAIL_FLAG)
+        try:
+            self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                            stderr=self.log, text=True, bufsize=1)
+            self.width, self.height = self.read(lambda value: 'pid' in value)['size']
+        except BaseException:
+            self.finish()
+            raise
     def read(self, predicate):
         deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
@@ -545,47 +554,28 @@ class DesktopRun:
         self.send('activateAccessible', name=path, role='panel')
         self.wait_accessible(lambda rows: any(row['name'] == self.catalog['gitUiSearchComparison']
             for row in rows), '_comparison-ready')
-    def close(self):
-        self.send('close')
-        self.process.stdin.close()
+    def finish(self):
         # Application exit still has the driver's unchanged 15-second bound.
         # Allow its subsequent complete payload/source/Git hashing to finish
         # under concurrent build I/O before collecting the verified receipt.
-        status = self.process.wait(timeout=120)
-        self.log.close()
+        try:
+            if hasattr(self, 'process'):
+                self.process.stdin.close()
+                return self.process.wait(timeout=120)
+        finally:
+            self.log.close()
+    def close(self):
+        self.send('close', functionalChecksPassed=True)
+        status = self.finish()
         receipt = json.loads((self.output / 'receipt.json').read_text())
-        if (status or not receipt.get('naturalExit') or not receipt.get('repositoryUnchanged')
-                or not receipt['engine']['matches']
-                or receipt.get('credentialService', {}).get('ready') is not True):
-            raise RuntimeError(f'Native run failed its lifecycle/integrity checks: {self.output}')
+        if status or receipt['outcome'] not in ('PASS', 'XFAIL'):
+            receipt['outcome'] = 'FAIL'
+        return receipt
 
 
-def main():
-    binary, output = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    many = '--many' in sys.argv
-    repository = fixture(Path(tempfile.mkdtemp(prefix='busymark-git-native-')) / 'repository', many=many)
-    (output / 'repository.txt').write_text(str(repository))
-    references_only = '--references-only' in sys.argv
-    combinations = [('light', 'en', 1.0)] if '--quick' in sys.argv or many or references_only else [
-        (theme, locale, scale) for theme in ['light', 'dark'] for locale in ['en', 'de', 'ja', 'ar'] for scale in [1.0, 1.5]]
-    for theme in ['light', 'dark']:
-        if f'--theme={theme}' in sys.argv:
-            combinations = [case for case in combinations if case[0] == theme]
-    for argument in sys.argv[3:]:
-        if argument.startswith('--case='):
-            combinations = [case for case in combinations if '-'.join(map(str, case)) == argument.removeprefix('--case=')]
-    if not combinations:
-        raise ValueError('No matching native presentation case')
-    for theme, locale, scale in combinations:
-        target = output / f'{theme}-{locale}-{scale}'
-        settings = target / 'xdg_data_home/io.busystack.busymark'
-        settings.mkdir(parents=True, exist_ok=True)
-        (target / 'repository.txt').write_text(str(repository))
-        (settings / 'settings.json').write_text(json.dumps({'themeModePreference': theme, 'localeTag': locale,
-            'trustedGitWorkspacePaths': [str(repository)], 'documentViewMode': 'editor'}, ensure_ascii=False))
-        print(f'Native capture: {theme} {locale} scale {scale}', flush=True)
-        desktop = DesktopRun(binary, target, repository, scale, locale=locale)
+def run_matrix_case(binary, target, repository, scale, locale, many, references_only, xfail):
+    desktop = DesktopRun(binary, target, repository, scale, locale=locale, xfail=xfail)
+    try:
         rtl = locale == 'ar'
         desktop.sidebar_view('C')
         desktop.wait_sidebar(rtl)
@@ -606,8 +596,7 @@ def main():
         if references_only:
             desktop.reference_interactions()
             desktop.key('Escape')
-            desktop.close()
-            continue
+            return desktop.close()
         if many:
             desktop.send('scroll', x=800, y=500, direction='down', steps=200)
             desktop.capture('history-first-page-bottom')
@@ -630,9 +619,52 @@ def main():
         desktop.send('resize', width=600, height=730)
         desktop.capture('branches-narrow')
         desktop.key('Escape')
-        desktop.close()
-    print('Native captures complete; inspect every case before accepting graphical presentation.', flush=True)
+        return desktop.close()
+    finally:
+        if not desktop.log.closed:
+            desktop.finish()
+
+
+def main():
+    binary, output = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+    output.mkdir(parents=True)
+    xfail = XFAIL_FLAG in sys.argv[3:]
+    records = []
+    many = '--many' in sys.argv
+    repository = fixture(Path(tempfile.mkdtemp(prefix='busymark-git-native-')) / 'repository', many=many)
+    (output / 'repository.txt').write_text(str(repository))
+    references_only = '--references-only' in sys.argv
+    combinations = [('light', 'en', 1.0)] if '--quick' in sys.argv or many or references_only else [
+        (theme, locale, scale) for theme in ['light', 'dark'] for locale in ['en', 'de', 'ja', 'ar'] for scale in [1.0, 1.5]]
+    for theme in ['light', 'dark']:
+        if f'--theme={theme}' in sys.argv:
+            combinations = [case for case in combinations if case[0] == theme]
+    for argument in sys.argv[3:]:
+        if argument.startswith('--case='):
+            combinations = [case for case in combinations if '-'.join(map(str, case)) == argument.removeprefix('--case=')]
+    if not combinations:
+        raise ValueError('No matching native presentation case')
+    for theme, locale, scale in combinations:
+        target = output / f'{theme}-{locale}-{scale}'
+        settings = target / 'xdg_data_home/io.busystack.busymark'
+        settings.mkdir(parents=True, exist_ok=True)
+        (target / 'repository.txt').write_text(str(repository))
+        (settings / 'settings.json').write_text(json.dumps({'themeModePreference': theme, 'localeTag': locale,
+            'trustedGitWorkspacePaths': [str(repository)], 'documentViewMode': 'editor'}, ensure_ascii=False))
+        print(f'Native capture: {theme} {locale} scale {scale}', flush=True)
+        try:
+            record = run_matrix_case(binary, target, repository, scale, locale,
+                                     many, references_only, xfail)
+        except Exception as error:
+            records.append({'case': target.name, 'outcome': 'FAIL', 'error': str(error)})
+            summarize(output, records, 'Git native matrix')
+            raise
+        records.append({'case': target.name, **record})
+        print(f"{target.name}: {record['outcome']} (application exit {record['exitCode']})", flush=True)
+        if record['outcome'] == 'FAIL':
+            break
+    return summarize(output, records, 'Git native matrix')
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

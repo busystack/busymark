@@ -3,12 +3,16 @@
 Use the official pinned Flutter SDK and a disposable desktop with isolated
 profiles. Never install test builds over an existing application.
 
-`tools/application_close_smoke.py` requires natural process exit, durable clean
-shutdown and verified descendant retirement. A Dart checkpoint, disappearing
-window or forced cleanup does not pass. It identifies only the launched
+`tools/application_close_smoke.py` checks the native exit status, durable clean
+shutdown and verified descendant retirement. It identifies only the launched
 application's window and records failed prerequisites and native exits.
 `--expected-engine` accepts the actual official `libflutter_linux_gtk.so` and
 verifies its mapped inode, device and bytes through retained descriptors.
+Release CI enables the [Flutter 3.50.1 shutdown exception](linux-engine.md).
+Local runs can opt in with `--xfail-flutter-3.50.1-shutdown` and the verified
+release engine. Each matrix writes the PASS, XFAIL and FAIL totals to
+`summary.json` and the GitHub Actions step summary. Individual case receipts
+retain process status, and the application logs remain in their case directories.
 
 ```sh
 python3 tools/application_close_smoke.py \
@@ -53,6 +57,18 @@ and titlebar dragging. It requires a window manager and the explicit
 machine through its ordinary strict launcher and enforced AppArmor label. Use
 the normal systemd user-session bus. Standalone checks can use a private D-Bus
 session. Keep WebKit sandboxing and ordinary graphics settings enabled.
+
+Complete ordinary strict Snap product checks before enabling experimental
+parallel installations. If the setting was changed after a snap ran, restart
+the disposable machine to recreate the mount namespaces.
+For a local package, verify the artifact checksum, install with
+`sudo snap install --dangerous /path/to/busymark.snap`, and compare the installed
+runner, `libapp.so` and engine to the package. Run `tools/snap_product_smoke.py`
+from the disposable desktop session with the instance name, smoke kind, backend,
+a fresh result directory under the instance's `common` data, and
+`--expected-engine` pointing to the official release SDK library. The receipt
+records the observed paths and checks device and inode against the installed
+instance because snapd remaps paths inside parallel instances.
 
 `tools/owned_processes.py` and `tools/run_owned_fixture.py` are also used by
 History and browser regressions. Each supervisor owns a dedicated child tree;

@@ -15,5 +15,5 @@ class MemoryRichClipboard extends RichClipboardService {
   }
 
   @override
-  Future<RichClipboardData> read() async => data;
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async => data;
 }

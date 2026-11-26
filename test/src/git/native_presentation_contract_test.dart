@@ -4,14 +4,14 @@ import '../../../../busystack_git_flutter/test/support/history_presentation_cont
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import '../../../../busystack_git_flutter/test/support/native_surface_contract.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/gestures.dart';
 import '../../../../busystack_git_flutter/test/support/presentation_fixture.dart'
     show FixtureClient, repo;
@@ -540,7 +540,7 @@ void main() {
                 brightness: brightness,
                 accentColor: busyMarkDefaultAccentColor,
               ),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: busyMarkLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: Consumer(
@@ -949,7 +949,7 @@ void main() {
             brightness: Brightness.light,
             accentColor: busyMarkDefaultAccentColor,
           ),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: BusyMarkToastOverlay(
             child: Scaffold(
@@ -1003,7 +1003,7 @@ void main() {
       String? action;
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: BusyMarkToastOverlay(
             child: Scaffold(
@@ -1117,7 +1117,7 @@ Widget _nativeGitHarness({
       brightness: brightness,
       accentColor: busyMarkDefaultAccentColor,
     ),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: busyMarkLocalizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
       body: MediaQuery(

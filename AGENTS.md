@@ -1,7 +1,7 @@
 # BusyMark integration policy
 
 The parent BusyStack engineering policy applies. Keep the official unmodified
-Flutter 3.47.5 / Dart 3.13.4 toolchain and locked third-party versions.
+Flutter 3.50.1 / Dart 3.14.0 toolchain and locked third-party versions.
 
 Git UI is owned once by busystack_git_flutter. Use GitFeatureSidebar,
 GitReview/GitReviewTabs, GitReviewSurface and the common YaruGitPresentation.

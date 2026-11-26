@@ -17,6 +17,7 @@ import 'markdown_list_source.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
+import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
 import '../writerside/writerside_schema.dart';
 
@@ -312,6 +313,7 @@ class MarkdownParser {
 
       if (offset >= rawHtmlBlockEndOffset) {
         final htmlEndIndex = _rawHtmlContainerSourceEndIndex(
+          source,
           scannedLines,
           lineIndex,
         );
@@ -1079,7 +1081,11 @@ class MarkdownParser {
         continue;
       }
 
-      final htmlEndIndex = _rawHtmlContainerSourceEndIndex(indexedLines, index);
+      final htmlEndIndex = _rawHtmlContainerSourceEndIndex(
+        source,
+        indexedLines,
+        index,
+      );
       if (htmlEndIndex != null) {
         addChunk(startIndex, htmlEndIndex);
         index = htmlEndIndex;
@@ -1470,22 +1476,22 @@ class MarkdownParser {
   }
 
   int? _rawHtmlContainerSourceEndIndex(
+    String source,
     List<_ScannedSourceLine> lines,
     int startIndex,
   ) {
-    final tag = _rawHtmlContainerOpeningTag(lines[startIndex].line);
-    if (tag == null) {
-      return null;
+    final start = lines[startIndex];
+    final end = const RawHtmlAdapter().rawHtmlContainerEnd(
+      source,
+      start.offset,
+      start.endOffset,
+    );
+    if (end == null) return null;
+    var index = startIndex;
+    while (lines[index].endOffset < end) {
+      index++;
     }
-
-    var balance = 0;
-    for (var index = startIndex; index < lines.length; index += 1) {
-      balance += _rawHtmlTagBalance(lines[index].line, tag);
-      if ((balance <= 0 && index > startIndex) || balance == 0) {
-        return index + 1;
-      }
-    }
-    return null;
+    return index + 1;
   }
 
   int? _writersideContainerSourceEndIndex(
@@ -1507,23 +1513,6 @@ class MarkdownParser {
       }
     }
     return null;
-  }
-
-  String? _rawHtmlContainerOpeningTag(String line) {
-    final match = RegExp(
-      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
-    ).firstMatch(line);
-    if (match == null) {
-      return null;
-    }
-    final tag = match.group(1)!.toLowerCase();
-    if (voidHtmlTags.contains(tag)) {
-      return null;
-    }
-    if (!isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
-      return null;
-    }
-    return tag;
   }
 
   int _rawHtmlTagBalance(String line, String tag) {

@@ -1,18 +1,18 @@
 import 'package:busymark/src/search/search_session.dart';
 import 'package:busymark/src/search/search_sidebar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/quick_open.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_transfer_service.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _app(Widget child) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: busyMarkLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: child),
 );

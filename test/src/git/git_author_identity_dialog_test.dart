@@ -1,10 +1,10 @@
 // The retired app-owned identity form is replaced by the real shared workflow.
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../../../busystack_git_flutter/test/support/presentation_fixture.dart'
@@ -45,7 +45,7 @@ void main() {
             ),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,

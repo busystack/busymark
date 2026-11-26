@@ -1,0 +1,847 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:busymark/src/editor/source/source_paste_engine.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
+import 'package:busymark/src/export/html_export_models.dart';
+import 'package:busymark/src/export/html_export_service.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/raw_html_adapter.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:html/parser.dart' as html;
+
+import '../support/document_history_harness.dart';
+
+const _codec = WysiwygClipboardHtml();
+const _parser = MarkdownParser();
+const _serializer = BusyMarkMarkdownSerializer();
+
+WysiwygClipboardFragment _capture(
+  List<BusyBlock> blocks, {
+  String sourcePath = '/origin/source.md',
+  Map<String, String> mediaPaths = const {},
+}) => WysiwygClipboardFragment(
+  mode: MarkdownMode.gfm,
+  sourcePath: sourcePath,
+  mediaPaths: mediaPaths,
+  blocks: [
+    for (final block in blocks)
+      BusyWysiwygStyledBlock(
+        kind: block.kind,
+        text: block.plainText,
+        ranges: const [],
+        completeBlock: block,
+      ),
+  ],
+);
+
+BusyDocument _parse(String source) => _parser
+    .parse(
+      filePath: '/origin/source.md',
+      source: source,
+      mode: MarkdownMode.gfm,
+    )
+    .busyDocument;
+
+String _paste(String source) => _codec
+    .decode(source, mode: MarkdownMode.gfm)!
+    .serializeFor(
+      destinationMode: MarkdownMode.gfm,
+      destinationFilePath: '/target.md',
+    );
+
+Future<String> _export(String source) async {
+  final root = await Directory.systemTemp.createTemp('busymark-inline-export-');
+  addTearDown(() => root.delete(recursive: true));
+  final result = await HtmlExportService(stylesheetLoader: () async => '')
+      .exportMarkdown(
+        MarkdownHtmlExportRequest(
+          source: source,
+          filePath: '${root.path}/source.md',
+          workspaceRoot: root.path,
+          destinationPath: '${root.path}/index.html',
+        ),
+      );
+  return File(result.entryPointPath).readAsString();
+}
+
+void main() {
+  test(
+    'Markdown regeneration retains an image destination and title',
+    () async {
+      const source = 'Before ![Alt](<image).png> "Image title") After\n';
+      final document = _parse(source);
+      final paragraph = document.blocks.single;
+      List<String?> reference(BusyBlock block) {
+        final image = block.inlines.singleWhere(
+          (inline) => inline.kind == BusyInlineKind.image,
+        );
+        return [image.destination, image.attributes['title']];
+      }
+
+      expect(reference(paragraph), ['image).png', 'Image title']);
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      controller.updateBlockText(
+        paragraph.id,
+        '${paragraph.plainText} changed',
+      );
+      final regenerated = controller.markdown;
+      final dir = await Directory.systemTemp.createTemp(
+        'busymark-image-target-',
+      );
+      addTearDown(() => dir.delete(recursive: true));
+      await File('${dir.path}/image).png').create();
+      final file = await File('${dir.path}/topic.md').writeAsString(source);
+      final workspace = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(workspace.dispose);
+      workspace.controller.updateActiveText(regenerated);
+      expect(await workspace.controller.saveActive(), isTrue);
+      final reopened = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(reopened.dispose);
+      for (final markdown in [regenerated, reopened.buffer.text]) {
+        final reparsed = _parse(markdown).blocks.single;
+        expect(reference(reparsed), ['image).png', 'Image title']);
+        expect(reparsed.plainText, 'Before Alt After changed');
+      }
+    },
+  );
+
+  test(
+    'regenerated image and link targets round-trip destinations and titles',
+    () {
+      const authoredTitle = r'"A ) \"quote\" &amp; a &#92; slash"';
+      const title = 'A ) "quote" & a \\ slash';
+      for (final (target, destination) in [
+        (
+          'icons.svg?theme=light&size=2#sprite',
+          'icons.svg?theme=light&size=2#sprite',
+        ),
+        ('image(a(b)c).png', 'image(a(b)c).png'),
+        (r'image\(.png', 'image(.png'),
+        (r'image\).png', 'image).png'),
+        ('<two words.png>', 'two%20words.png'),
+        (r'<image\<inner\>.png>', 'image%3Cinner%3E.png'),
+        (r'<path\\file.png>', 'path%5Cfile.png'),
+        (
+          r'<path%2f%5c \> clip).svg?mode=x&amp;amp;y#svgView(viewBox(0,0,1,2))>',
+          'path%2f%5c%20%3E%20clip).svg?mode=x&amp;y#svgView(viewBox(0,0,1,2))',
+        ),
+        ('<>', ''),
+      ]) {
+        for (final (marker, kind) in [
+          ('!', BusyInlineKind.image),
+          ('', BusyInlineKind.link),
+        ]) {
+          final authored = _parse(
+            'Before $marker[Label]($target $authoredTitle) After',
+          );
+          final editor = BusyMarkWysiwygDocumentController(document: authored);
+          addTearDown(editor.dispose);
+          final paragraph = authored.blocks.single;
+          editor.updateBlockText(paragraph.id, 'Before Label After changed');
+          for (final document in [authored, _parse(editor.markdown)]) {
+            final block = document.blocks.single;
+            final reference = block.inlines.singleWhere(
+              (inline) => inline.kind == kind,
+            );
+            expect(
+              (
+                reference.plainText,
+                reference.destination,
+                reference.attributes['title'],
+              ),
+              ('Label', destination, title),
+              reason: document.source,
+            );
+          }
+        }
+      }
+    },
+  );
+
+  test(
+    'external HTML regenerates Markdown targets with literal URL characters',
+    () {
+      const target = r'figure\path &lt;detail&gt;).svg?scale=%2f#view(1)';
+      const expected = 'figure%5Cpath%20%3Cdetail%3E).svg?scale=%2f#view(1)';
+      final markdown = _paste(
+        '<p>Before <img src="$target" alt="Image" title="Figure title"> and '
+        '<a href="$target" title="Link title">Link</a> After</p>',
+      );
+      final paragraph = _parse(markdown).blocks.single;
+      expect(
+        paragraph.inlines
+            .where((inline) => inline.destination != null)
+            .map(
+              (inline) =>
+                  (inline.kind, inline.destination, inline.attributes['title']),
+            ),
+        [
+          (BusyInlineKind.image, expected, 'Figure title'),
+          (BusyInlineKind.link, expected, 'Link title'),
+        ],
+        reason: markdown,
+      );
+      expect(paragraph.plainText, 'Before Image and Link After');
+    },
+  );
+
+  for (final direction in ['ltr', 'auto']) {
+    test('A09 table caption resolves its own $direction direction', () {
+      final input =
+          '<table dir="rtl"><caption dir="$direction">ABC <span dir="rtl">DEF</span></caption>'
+          '<tr><th>Heading</th></tr><tr><td>Cell</td></tr></table>';
+      for (final output in [input, _paste(input)]) {
+        final doc = _parse(output);
+        final caption = doc.blocks.single.children.first;
+        expect(caption.attributes['htmlTag'], 'caption');
+        expect(caption.attributes['dir'], 'ltr');
+        expect(
+          busyMarkWysiwygBlockTextDirection(
+            caption,
+            fallback: TextDirection.rtl,
+          ),
+          TextDirection.ltr,
+        );
+        expect(caption.inlines.last.attributes['dir'], 'rtl');
+        final preview = const BusyMarkPreviewBuilder().buildBlocks(doc);
+        expect(preview.single.children.first.attributes['dir'], 'ltr');
+      }
+    });
+  }
+
+  test('A06 external deletion retains metadata after HTML publication', () {
+    const markup =
+        '<del cite="https://example.test/change" datetime="2026-11-26">old</del>';
+    for (final input in [
+      markup,
+      _codec.encode(_capture(_parse('Before $markup after').blocks)),
+    ]) {
+      final output = _paste(input);
+      final deletion = html.parseFragment(output).querySelector('del');
+      expect(
+        (
+          deletion?.text,
+          deletion?.attributes['cite'],
+          deletion?.attributes['datetime'],
+        ),
+        ('old', 'https://example.test/change', '2026-11-26'),
+        reason: output,
+      );
+    }
+    expect(_paste('<del>old</del>').trim(), '~~old~~');
+  });
+
+  for (final tag in ['strong', 'em', 'u', 'del']) {
+    test('A07 external inline code retains $tag', () {
+      String htmlRoundTrip(String markup) {
+        final output = _paste(markup);
+        return _codec.encode(_capture(_parse(output).blocks));
+      }
+
+      final outgoing = html.parseFragment(
+        htmlRoundTrip('<$tag><code>a  b</code></$tag>'),
+      );
+      expect(outgoing.querySelector('$tag code')?.text, 'a  b');
+      final plain = html.parseFragment(htmlRoundTrip('<code>a  b</code>'));
+      expect(plain.querySelector('code')?.text, 'a  b');
+      expect(plain.querySelector(tag), isNull);
+    });
+  }
+
+  test('A08 image title survives external and native insertion and edits', () {
+    const source = 'Before ![Alt](image.png "Image title") After';
+    const title = 'Image title';
+    String? readTitle(String markdown) => _parse(markdown).blocks.single.inlines
+        .singleWhere((inline) => inline.kind == BusyInlineKind.image)
+        .attributes['title'];
+    final authored = _parse(source);
+    expect(readTitle(_serializer.serialize(authored)), title);
+    final fragment = WysiwygClipboardFragment.decode(
+      _capture(authored.blocks).encode(),
+    )!;
+    final outgoing = _codec.encode(fragment);
+    expect(
+      html.parseFragment(outgoing).querySelector('img')?.attributes['title'],
+      title,
+    );
+    final outputs = <String>[
+      _paste(
+        '<p>Before <img src="https://example.test/image.png" alt="Alt" title="Image title"> After</p>',
+      ),
+      for (final path in ['/origin/source.md', '/destination/target.md'])
+        fragment
+            .rebase(path)
+            .serializeFor(
+              destinationMode: MarkdownMode.gfm,
+              destinationFilePath: path,
+            ),
+    ];
+    final editor = BusyMarkWysiwygDocumentController(document: authored);
+    addTearDown(editor.dispose);
+    editor.updateBlockText(
+      authored.blocks.single.id,
+      '${authored.blocks.single.plainText} revised',
+    );
+    outputs.add(editor.markdown);
+    for (final output in outputs) {
+      expect(readTitle(output), title, reason: output);
+    }
+  });
+
+  test('A08 regenerated image titles are escaped exactly once', () {
+    const source =
+        r'Before ![Alt](image.png "A \"quote\" &amp; a &#92; slash") After';
+    const title = 'A "quote" & a \\ slash';
+    final doc = _parse(source);
+    final editor = BusyMarkWysiwygDocumentController(document: doc);
+    addTearDown(editor.dispose);
+    editor.updateBlockText(
+      doc.blocks.single.id,
+      '${doc.blocks.single.plainText} revised',
+    );
+    final image = _parse(editor.markdown).blocks.single.inlines.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.image,
+    );
+    expect(
+      (image.attributes['title'], image.destination),
+      (title, 'image.png'),
+    );
+  });
+
+  for (final packaging in HtmlPackaging.values) {
+    test('A10 SVG fragments survive HTML export ($packaging)', () async {
+      final root = await Directory.systemTemp.createTemp('busymark-svg-view-');
+      addTearDown(() => root.delete(recursive: true));
+      await File('${root.path}/image.svg').writeAsString(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="10"><rect width="10" height="10"/><rect x="10" width="10" height="10"/></svg>',
+      );
+      const first = 'svgView(viewBox(0,0,10,10))';
+      const second = 'svgView(viewBox(10,0,10,10))';
+      final result = await HtmlExportService(stylesheetLoader: () async => '')
+          .exportMarkdown(
+            MarkdownHtmlExportRequest(
+              source:
+                  '![First](image.svg#$first)\n\n<div><img src="image.svg#$second" alt="Second"></div>',
+              filePath: '${root.path}/source.md',
+              workspaceRoot: root.path,
+              destinationPath: '${root.path}/index.html',
+              options: HtmlExportOptions(packaging: packaging),
+            ),
+          );
+      final images = html
+          .parse(await File(result.entryPointPath).readAsString())
+          .querySelectorAll('img');
+      expect(
+        images.map((image) {
+          final src = image.attributes['src']!;
+          final hash = src.indexOf('#');
+          return hash == -1 ? '' : Uri.decodeComponent(src.substring(hash + 1));
+        }).toList(),
+        [first, second],
+      );
+      expect(
+        images
+            .map((image) => image.attributes['src']!.split('#').first)
+            .toSet(),
+        hasLength(1),
+      );
+    });
+  }
+
+  test(
+    'directional inline keeps nested formatting in Markdown and both HTML outputs',
+    () async {
+      const content =
+          '<span dir="rtl"><a href="https://example.test/guide" '
+          'title="Guide"><strong>ABC &amp; DEF</strong> <em>details</em></a></span>';
+      final inlines = const RawHtmlAdapter().parseRawHtmlInlineFragment(
+        content,
+      )!;
+      final source = _serializer.serializeInlineFragment(inlines);
+      final markup = html.parseFragment(source);
+      expect(markup.querySelector('[dir=rtl] a strong')?.text, 'ABC & DEF');
+      expect(markup.querySelector('[dir=rtl] a em')?.text, 'details');
+      expect(markup.querySelector('a')?.attributes['title'], 'Guide');
+
+      final document = _parse('Read $source today.');
+      final clipboard = html.parseFragment(
+        _codec.encode(_capture(document.blocks)),
+      );
+      expect(clipboard.querySelector('[dir=rtl] a strong')?.text, 'ABC & DEF');
+      expect(
+        clipboard.querySelector('a')?.attributes['href'],
+        'https://example.test/guide',
+      );
+      final exported = html.parseFragment(
+        await _export('Read $content today.'),
+      );
+      expect(exported.querySelector('[dir=rtl] a strong')?.text, 'ABC & DEF');
+      expect(
+        exported.querySelector('[dir=rtl] a')?.attributes['title'],
+        'Guide',
+      );
+    },
+  );
+
+  test(
+    'semantic inline HTML survives paste, reparsing, copy and export',
+    () async {
+      const input =
+          '<p>H<sub>2</sub>O and x<sup>2</sup>. <mark>Remember</mark>'
+          ' <q>quoted</q> <ruby>漢<rp>(</rp><rt>かん</rt><rp>)</rp></ruby>.</p>';
+      final output = _paste(input);
+      for (final markup in [
+        output,
+        _codec.encode(_capture(_parse(output).blocks)),
+        await _export(output),
+      ]) {
+        final fragment = html.parseFragment(markup);
+        for (final (selector, text) in [
+          ('sub', '2'),
+          ('sup', '2'),
+          ('mark', 'Remember'),
+          ('q', 'quoted'),
+          ('ruby rt', 'かん'),
+          ('ruby rp', '('),
+        ]) {
+          expect(fragment.querySelector(selector)?.text, text, reason: markup);
+        }
+      }
+      expect(
+        _paste('<p><b>Plain Markdown</b></p>').trim(),
+        '**Plain Markdown**',
+      );
+    },
+  );
+
+  test(
+    'semantic HTML remains editable and survives workspace Save and reopen',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-semantic-save-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final file = await File(
+        '${root.path}/topic.md',
+      ).writeAsString('Target\n');
+      final incoming = _codec.decode(
+        '<p>Try <mark><strong>bold</strong></mark>, x<sup>23</sup> and '
+        '<q><a href="https://example.test/guide">Guide</a></q>.</p>',
+        mode: MarkdownMode.gfm,
+      )!;
+      final controller = BusyMarkWysiwygDocumentController(
+        document: _parse('Target'),
+      );
+      addTearDown(controller.dispose);
+      final id = controller.document.blocks.single.id;
+      expect(
+        controller.insertStyledBlocksAtSelection(
+          blockId: id,
+          selectionStart: 0,
+          selectionEnd: 6,
+          blocks: incoming.blocks,
+        ),
+        isNotNull,
+      );
+      controller.updateBlockText(id, 'Try bold, x253 and Guide.');
+      controller.updateBlockText(id, 'Try bold, x253 and Guide. Edited.');
+      final authoring = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(authoring.dispose);
+      authoring.controller.updateActiveText(controller.markdown);
+      expect(await authoring.controller.saveActive(), isTrue);
+
+      final reopened = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(reopened.dispose);
+      final document = _parse(reopened.buffer.text);
+      final preview = const BusyMarkPreviewBuilder()
+          .build(document)
+          .blocks
+          .single;
+      final mark = preview.inlines.singleWhere(
+        (i) => i.attributes['htmlTag'] == 'mark',
+      );
+      expect(
+        (mark.children.single.kind, mark.children.single.text),
+        (PreviewInlineKind.strong, 'bold'),
+      );
+      expect(
+        preview.inlines
+            .singleWhere((i) => i.attributes['htmlTag'] == 'sup')
+            .text,
+        '253',
+      );
+      final quote = preview.inlines.singleWhere(
+        (i) => i.attributes['htmlTag'] == 'q',
+      );
+      expect(
+        (quote.children.single.text, quote.children.single.destination),
+        ('Guide', 'https://example.test/guide'),
+      );
+      expect(preview.text, 'Try bold, x253 and Guide. Edited.');
+    },
+  );
+
+  test('block hyperlink retains both paragraphs in flow and in a table', () {
+    const link =
+        '<a href="https://example.test/people"><p>Alice</p><p>Bob</p></a>';
+    final ordinary = _paste(link);
+    final flow = _parse(ordinary).blocks;
+    expect(flow.map((b) => b.plainText), ['Alice', 'Bob']);
+    expect(
+      flow.map((b) => b.inlines.single.destination),
+      everyElement('https://example.test/people'),
+    );
+    final table = _parse(
+      _paste('<table><tr><th>People</th></tr><tr><td>$link</td></tr></table>'),
+    );
+    final cell = table.blocks.single.children.last.children.single;
+    expect(cell.plainText, 'Alice\nBob');
+    expect(
+      cell.inlines
+          .where((i) => i.kind == BusyInlineKind.link)
+          .map((i) => (i.plainText, i.destination)),
+      [
+        ('Alice', 'https://example.test/people'),
+        ('Bob', 'https://example.test/people'),
+      ],
+    );
+  });
+
+  test(
+    'attributed deletion survives native insertion, Save and both HTML writers',
+    () async {
+      const cite = 'https://example.test/change';
+      const date = '2026-11-26';
+      const markup =
+          'Before <del cite="$cite" datetime="$date">old</del> after';
+      final fragment = WysiwygClipboardFragment.decode(
+        _capture(_parse(markup).blocks).encode(),
+      )!;
+      final editor = BusyMarkWysiwygDocumentController(
+        document: _parse('Target'),
+      );
+      addTearDown(editor.dispose);
+      expect(
+        editor.insertStyledBlocksAtSelection(
+          blockId: editor.document.blocks.single.id,
+          selectionStart: 0,
+          selectionEnd: 6,
+          blocks: fragment.blocks,
+        ),
+        isNotNull,
+      );
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-deletion-save-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final file = await File(
+        '${root.path}/topic.md',
+      ).writeAsString('Target\n');
+      final workspace = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(workspace.dispose);
+      workspace.controller.updateActiveText(editor.markdown);
+      expect(await workspace.controller.saveActive(), isTrue);
+      final reopened = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(reopened.dispose);
+      for (final source in [
+        reopened.buffer.text,
+        _codec.encode(_capture(_parse(markup).blocks)),
+        await _export(markup),
+      ]) {
+        final deletion = html.parseFragment(source).querySelector('del');
+        expect(
+          (
+            deletion?.text,
+            deletion?.attributes['cite'],
+            deletion?.attributes['datetime'],
+          ),
+          ('old', cite, date),
+          reason: source,
+        );
+      }
+      expect(
+        _paste('<p>Before <del>old</del> after</p>').trim(),
+        'Before ~~old~~ after',
+      );
+    },
+  );
+
+  test(
+    'HTML export packages relative citations from their source document',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-citation-export-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final work = await Directory('${root.path}/work').create();
+      final output = await Directory('${root.path}/export').create();
+      final changes = await Directory('${work.path}/changes').create();
+      const bytes = 'Revision history\n';
+      await File('${changes.path}/revision A.txt').writeAsString(bytes);
+      await File('${root.path}/outside.txt').writeAsString('Outside');
+      const citation = 'changes/revision%20A.txt?token=a%26b#part%202';
+      const external = 'https://example.test/report?mode=full#notes';
+      const date = '2026-11-26';
+      const source =
+          'Before <del cite="$citation" datetime="$date">old</del> '
+          '<q cite="$citation">quote</q> <ins cite="$citation">new</ins> '
+          '<q cite="$external">external</q> '
+          '<q cite="topic.md?view=full#revision-history">entry</q> after.\n\n'
+          '## Revision history\n\n'
+          '<div><q cite="$citation">raw quote</q>'
+          '<del cite="$citation">raw old</del><ins cite="$citation">raw new</ins>'
+          '<q cite="javascript:alert(1)">unsafe</q>'
+          '<q cite="../outside.txt">outside</q></div>\n';
+      Future<HtmlExportResult> export(
+        String filename,
+        HtmlPackaging packaging,
+      ) => HtmlExportService(stylesheetLoader: () async => '').exportMarkdown(
+        MarkdownHtmlExportRequest(
+          source: source,
+          filePath: '${work.path}/topic.md',
+          workspaceRoot: work.path,
+          destinationPath: '${output.path}/$filename',
+          options: HtmlExportOptions(packaging: packaging),
+        ),
+      );
+      final result = await export('index.html', HtmlPackaging.assetsDirectory);
+      final entry = File(result.entryPointPath);
+      final markup = html.parse(await entry.readAsString());
+      final cited = {
+        for (final element in markup.querySelectorAll('del, q, ins'))
+          element.text: element,
+      };
+      expect(cited['old']!.attributes['datetime'], date);
+      expect(cited['external']!.attributes['cite'], external);
+      expect(cited['entry']!.attributes['cite'], '?view=full#revision-history');
+      expect(cited['unsafe']!.attributes['cite'], isNull);
+      expect(cited['outside']!.attributes['cite'], isNull);
+      for (final label in [
+        'old',
+        'quote',
+        'new',
+        'raw quote',
+        'raw old',
+        'raw new',
+      ]) {
+        final uri = Uri.file(
+          entry.path,
+        ).resolve(cited[label]!.attributes['cite']!);
+        expect(uri.query, 'token=a%26b', reason: label);
+        expect(uri.fragment, 'part%202', reason: label);
+        expect(
+          await File(
+            Uri(scheme: 'file', path: uri.path).toFilePath(),
+          ).readAsString(),
+          bytes,
+          reason: label,
+        );
+      }
+
+      final single = await export('single.html', HtmlPackaging.singleFile);
+      final embedded = html.parse(
+        await File(single.entryPointPath).readAsString(),
+      );
+      final data = embedded.querySelector('del')!.attributes['cite']!;
+      final hash = data.indexOf('#');
+      expect(data.substring(hash), '#part%202');
+      expect(
+        UriData.parse(data.substring(0, hash)).contentAsString(encoding: utf8),
+        bytes,
+      );
+      expect(
+        single.warnings.map((warning) => warning.code),
+        contains('link.embedded-query'),
+      );
+    },
+  );
+
+  test('auto direction respects overrides and original fragment scope', () {
+    final whole = html.parseFragment(
+      _paste('<div dir="auto"><p>العربية</p><p dir="ltr">LTR</p></div>'),
+    );
+    expect(whole.querySelector('[dir=auto] p[dir=ltr]')?.text, 'LTR');
+    final partial = html.parseFragment(
+      _paste(
+        '<div dir="auto">العربية<!--StartFragment-->'
+        '<p>Latin only</p><!--EndFragment-->tail</div>',
+      ),
+    );
+    expect(partial.querySelector('div[dir=rtl] p')?.text, 'Latin only');
+    expect(partial.text, isNot(contains('العربية')));
+    expect(partial.text, isNot(contains('tail')));
+  });
+
+  test(
+    'layout table preserves section and row directions and cell anchors',
+    () {
+      final source = _paste(
+        '<p>See <a href="#target">destination</a></p>'
+        '<table role="presentation"><tbody dir="rtl"><tr>'
+        '<td id="target"><p>Latin under RTL</p></td></tr>'
+        '<tr dir="ltr"><td><p>LTR row</p></td></tr></tbody></table>',
+      );
+      final fragment = html.parseFragment(source);
+      expect(
+        fragment.querySelector('[dir=rtl] #target')?.text,
+        'Latin under RTL',
+      );
+      expect(fragment.querySelector('[dir=rtl] [dir=ltr]')?.text, 'LTR row');
+      final link = _parse(source).blocks.first.inlines.last;
+      expect((link.plainText, link.destination), ('destination', '#target'));
+    },
+  );
+
+  test('retained Markdown and raw HTML images keep query and fragment', () {
+    const ref = 'diagram.svg?v=a%26b#detail%202';
+    final before = _parse('![]($ref)\n\n<div><img src="$ref" alt=""></div>');
+    final fragment = _capture(
+      before.blocks,
+      mediaPaths: {ref: '/origin/diagram.svg'},
+    );
+    final htmlOut = html.parseFragment(_codec.encode(fragment));
+    expect(
+      htmlOut.querySelectorAll('img').map((img) => img.attributes['src']),
+      everyElement('file:///origin/diagram.svg?v=a%26b#detail%202'),
+    );
+    final rebased = fragment
+        .rebase('/target.md', mediaDestinations: {ref: 'assets/diagram.svg'})
+        .serializeFor(
+          destinationMode: MarkdownMode.gfm,
+          destinationFilePath: '/target.md',
+        );
+    expect(
+      RegExp(r'assets/diagram\.svg\?v=a%26b#detail%202').allMatches(rebased),
+      hasLength(2),
+    );
+  });
+
+  test('adjacent ordered list restart survives native and token-free HTML', () {
+    const source = '3. First\n4. Second\n\n3) Restart\n4) Last\n';
+    final document = _parse(source);
+    final outgoing = _codec.encode(_capture(document.blocks));
+    final lists = html.parseFragment(outgoing).querySelectorAll('ol');
+    expect(lists.map((list) => list.attributes['start']), ['3', '3']);
+    expect(lists.map((list) => list.children.map((li) => li.text)), [
+      ['First', 'Second'],
+      ['Restart', 'Last'],
+    ]);
+    expect(_paste(outgoing), source);
+    final native = WysiwygClipboardFragment.decode(
+      _capture(document.blocks).encode(),
+    )!;
+    final serialized = native.serializeFor(
+      destinationMode: MarkdownMode.gfm,
+      destinationFilePath: '/different.md',
+    );
+    final reopened = _parse(serialized);
+    expect(reopened.blocks.map((b) => b.attributes['marker']), [
+      '3.',
+      '4.',
+      '3)',
+      '4)',
+    ]);
+
+    final editor = BusyMarkWysiwygDocumentController(document: document);
+    addTearDown(editor.dispose);
+    editor.applyBlockCommand(
+      document.blocks.last.id,
+      BusyWysiwygBlockCommand.orderedList,
+    );
+    expect(editor.document.blocks.map((b) => b.attributes['marker']), [
+      '3.',
+      '4.',
+      '3)',
+      '4)',
+    ]);
+    expect(_parse(editor.markdown).blocks.map((b) => b.attributes['marker']), [
+      '3.',
+      '4.',
+      '3)',
+      '4)',
+    ]);
+  });
+
+  test('pasted ordered list owns its restart beside an existing list', () {
+    const target = '3. Existing\n\nTarget\n\n3. Later\n';
+    final input = _parse('3. Incoming\n4. Following\n');
+    final fragment = _capture(input.blocks, sourcePath: '/origin/other.md');
+    final source =
+        const SourcePasteEngine().prepareStructured(
+              target: SourcePasteDocumentSnapshot(
+                expectedSource: target,
+                selection: TextSelection(
+                  baseOffset: target.indexOf('Target'),
+                  extentOffset: target.indexOf('Target') + 6,
+                ),
+                format: SourceDocumentFormat.markdown,
+                filePath: '/target.md',
+                markdownMode: MarkdownMode.gfm,
+              ),
+              fragment: fragment,
+            )
+            as SourcePasteReady;
+    final sourceDocument = _parse(
+      target.replaceRange(
+        source.edit.start,
+        source.edit.end,
+        source.edit.replacement,
+      ),
+    );
+    void expectSeparateLists(BusyDocument document) {
+      final lists = html
+          .parseFragment(_codec.encode(_capture(document.blocks)))
+          .querySelectorAll('ol');
+      expect(lists.map((list) => list.attributes['start']), ['3', '3', '3']);
+      expect(lists.map((list) => list.children.map((item) => item.text)), [
+        ['Existing'],
+        ['Incoming', 'Following'],
+        ['Later'],
+      ]);
+    }
+
+    expectSeparateLists(sourceDocument);
+
+    final targetDocument = _parse(target);
+    final editor = BusyMarkWysiwygDocumentController(document: targetDocument);
+    addTearDown(editor.dispose);
+    expect(
+      editor.insertStyledBlocksAtSelection(
+        blockId: targetDocument.blocks[1].id,
+        selectionStart: 0,
+        selectionEnd: 6,
+        blocks: fragment.blocks,
+      ),
+      isNotNull,
+    );
+    expectSeparateLists(_parse(editor.markdown));
+  });
+
+  test('HTML export preserves alphabetic and reversed list markers', () async {
+    final markup = html.parseFragment(
+      await _export(
+        '<ol type="A" reversed start="5"><li>Fifth</li>'
+        '<li value="2">Second</li><li>First</li></ol>\n\n'
+        '<ol type="i"><li>One</li></ol>',
+      ),
+    );
+    expect(
+      markup
+          .querySelector('ol[type=A][reversed][start="5"] li[value="2"]')
+          ?.text,
+      'Second',
+    );
+    expect(markup.querySelector('ol[type=i] li')?.text, 'One');
+  });
+}

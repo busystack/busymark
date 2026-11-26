@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "v0.7.3"
+version: "v0.7.4"
 summary: Workspace for Markdown documents, Nextcloud Notes, and Writerside projects.
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
@@ -82,8 +82,8 @@ apps:
 parts:
   flutter-sdk:
     plugin: nil
-    source: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.5-stable.tar.xz
-    source-checksum: sha256/2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb
+    source: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.50.1-stable.tar.xz
+    source-checksum: sha256/4ad17fc8462fbcef2ba19ff4a78c0a16b7147fde1add8578e267ea62cdb92678
     override-build: |
       cp -r "$CRAFT_PART_SRC" "$CRAFT_PART_INSTALL/flutter-sdk"
     prime:

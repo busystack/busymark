@@ -10,7 +10,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals, visibleForTesting;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../app/busymark_deferred_editor_focus.dart';
 import 'package:flutter/rendering.dart';
@@ -224,6 +224,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   late final DocumentUndoGrouping _undoGrouping;
   late DocumentEditBase _editBase;
   DocumentEditBase get publicationBase => _editBase;
+  bool _clipboardReadOnly = false;
   late final _SourceClipboardInsertionTarget _historyInsertionTarget;
 
   RichClipboardService get _clipboard =>
@@ -394,6 +395,18 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         node.requestFocus();
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final readOnly = DocumentReadOnlyScope.of(context);
+    if (readOnly != _clipboardReadOnly) {
+      _clipboardReadOnly = readOnly;
+      widget.clipboardInsertionRegistry?.capabilitiesChanged(
+        _historyInsertionTarget,
+      );
+    }
   }
 
   @override
@@ -1988,12 +2001,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     });
   }
 
-  void _handleSourceChanged({
+  bool _handleSourceChanged({
     _SourceEditOrigin origin = _SourceEditOrigin.userTyping,
   }) {
     if (DocumentReadOnlyScope.of(context)) {
       _controller.setFullText(widget.text);
-      return;
+      return false;
     }
     final live = widget.readEditBase?.call();
     if (live?.sameDocumentVersion(_editBase) == true) {
@@ -2019,7 +2032,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           ),
         );
       }
-      return;
+      return false;
     }
     _replacementWorker.cancel();
     // Sidebar offsets belong to the pre-edit document. Once the user edits,
@@ -2084,7 +2097,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               ),
         ),
       );
-      return;
+      return false;
     }
     _editBase =
         committed ??
@@ -2099,6 +2112,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _scheduleContentShrinkCorrection();
     }
     _publishSessionState();
+    return true;
   }
 
   void _scheduleContentShrinkCorrection() {
@@ -2309,14 +2323,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         composing.end <= value.text.length;
   }
 
-  void _applyFullEditingValue(
+  bool _applyFullEditingValue(
     TextEditingValue value, {
     _SourceEditOrigin origin = _SourceEditOrigin.command,
   }) {
     BusyMarkEditorFocusRestoration.reveal(_focusNode);
     _controller.setFullEditingValue(value);
     _focusNode.requestFocus();
-    _handleSourceChanged(origin: origin);
+    return _handleSourceChanged(origin: origin);
   }
 
   void _performDocumentHistory({required bool redo}) {
@@ -2532,6 +2546,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         ? _editBase
         : widget.readEditBase!.call();
     return mounted &&
+        !_clipboardReadOnly &&
         identical(target.epoch, _editingEpoch) &&
         live != null &&
         target.base.sameDocumentVersion(live) &&
@@ -2564,12 +2579,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final start = selection.start.clamp(0, target.text.length).toInt();
     final end = selection.end.clamp(start, target.text.length).toInt();
     final selected = target.text.substring(start, end);
+    final origin = _clipboardOrigin;
     final success = await _clipboard.write(
-      RichClipboardData(
-        text: selected,
-        sourceText: selected,
-        origin: _clipboardOrigin,
-      ),
+      RichClipboardData(text: selected, sourceText: selected, origin: origin),
     );
     if (!success) {
       if (mounted) {
@@ -2585,7 +2597,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         kind: BusyMarkClipboardContentKind.text,
         text: selected,
         sourceText: selected,
-        origin: _clipboardOrigin,
+        origin: origin,
       ),
     );
     if (cut && _isClipboardTargetCurrent(target)) {
@@ -2602,10 +2614,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   Future<ClipboardPasteResult> _pasteFromSystemClipboard(
     BusyMarkPasteMode mode,
   ) async {
+    if (_clipboardReadOnly) return ClipboardPasteResult.unavailable;
     if (_hasActiveComposition) return ClipboardPasteResult.staleTarget;
     final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
-    final data = await _clipboard.read();
+    final data = await _clipboard.read(
+      plainTextOnly: mode == BusyMarkPasteMode.plainText,
+    );
     if (!_isClipboardTargetCurrent(target)) {
       return ClipboardPasteResult.staleTarget;
     }
@@ -2626,7 +2641,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   Future<BusyMarkEditorTextPasteAvailability>
   _readContextMenuPasteAvailability() async {
-    if (_hasActiveComposition) {
+    if (_clipboardReadOnly || _hasActiveComposition) {
       return BusyMarkEditorTextPasteAvailability.unavailable;
     }
     final target = _captureClipboardTarget();
@@ -2730,6 +2745,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     BusyMarkClipboardPayload payload, {
     required BusyMarkPasteMode mode,
   }) async {
+    if (_clipboardReadOnly) return ClipboardPasteResult.unavailable;
     if (_hasActiveComposition) {
       return ClipboardPasteResult.staleTarget;
     }
@@ -3152,7 +3168,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final end = (replacementEnd ?? selection.end)
         .clamp(start, target.text.length)
         .toInt();
-    _applyFullEditingValue(
+    final committed = _applyFullEditingValue(
       TextEditingValue(
         text: target.text.replaceRange(start, end, text),
         selection: TextSelection.collapsed(
@@ -3161,7 +3177,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ),
       origin: _SourceEditOrigin.paste,
     );
-    return ClipboardPasteResult.inserted;
+    return committed
+        ? ClipboardPasteResult.inserted
+        : ClipboardPasteResult.staleTarget;
   }
 
   BusyMarkClipboardOrigin get _clipboardOrigin {
@@ -4371,7 +4389,10 @@ class _SourceClipboardInsertionTarget
   String? get documentPath => state.widget.filePath;
 
   @override
-  bool get editable => state.mounted && !state._hasActiveComposition;
+  bool get editable =>
+      state.mounted &&
+      !state._clipboardReadOnly &&
+      !state._hasActiveComposition;
 
   @override
   bool canPaste(

@@ -36,7 +36,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals, mapEquals;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
@@ -82,6 +82,7 @@ import '../../editor/document_list_marker.dart';
 import '../../editor/document_surface.dart';
 import '../../editor/document_text_geometry.dart';
 import '../../editor/document_text_direction.dart';
+import '../../editor/document_html_inline.dart';
 import '../../editor/document_thematic_break.dart';
 import '../../editor/editor_text_context_menu.dart';
 import '../../editor/markdown_image_view.dart';
@@ -13306,6 +13307,16 @@ class _PreviewBlockView extends ConsumerWidget {
       displayBlock,
       inheritedDirection,
     );
+    final firstListParagraph =
+        displayBlock.kind == PreviewBlockKind.list &&
+            displayBlock.text.isEmpty &&
+            displayBlock.children.firstOrNull?.kind ==
+                PreviewBlockKind.paragraph
+        ? displayBlock.children.first
+        : null;
+    final listBody = firstListParagraph == null
+        ? displayBlock.children
+        : displayBlock.children.sublist(1);
     final child = switch (displayBlock.kind) {
       PreviewBlockKind.heading
           when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
@@ -13532,8 +13543,8 @@ class _PreviewBlockView extends ConsumerWidget {
         padding: busyMarkDocumentListItemPadding(
           listRunEnd: listRunEnd,
           endsWithNestedList:
-              displayBlock.children.isNotEmpty &&
-              displayBlock.children.last.kind == PreviewBlockKind.list,
+              listBody.isNotEmpty &&
+              listBody.last.kind == PreviewBlockKind.list,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -13554,19 +13565,23 @@ class _PreviewBlockView extends ConsumerWidget {
                 const SizedBox(width: BusyMarkSpacing.sm),
                 Expanded(
                   child: _PreviewInlineText(
-                    block: displayBlock,
-                    style: _diffPreviewTextStyle(context, displayBlock, null),
+                    block: firstListParagraph ?? displayBlock,
+                    style: _diffPreviewTextStyle(
+                      context,
+                      firstListParagraph ?? displayBlock,
+                      null,
+                    ),
                     editRevision: editRevision,
                   ),
                 ),
               ],
             ),
-            if (displayBlock.children.isNotEmpty)
+            if (listBody.isNotEmpty)
               Padding(
                 padding: const EdgeInsetsDirectional.only(
                   start: BusyMarkSizes.documentListIndent,
                 ),
-                child: _previewChildBlocks(displayBlock.children, first: false),
+                child: _previewChildBlocks(listBody, first: false),
               ),
           ],
         ),
@@ -13996,6 +14011,11 @@ class _PreviewInlineText extends ConsumerWidget {
           ],
         ),
         textAlign: textAlign,
+        textDirection: busyMarkDocumentTextDirection(
+          text: _previewDirectionalText(block),
+          fallback: Directionality.of(context),
+          explicitDirection: block.attributes['dir'],
+        ),
       ),
     );
   }
@@ -14673,11 +14693,18 @@ InlineSpan _previewInlineSpan(
   }
 
   return switch (inline.kind) {
-    PreviewInlineKind.text => span(
-      text: inline.text,
-      children: null,
-      style: mergeStyle(null),
-    ),
+    PreviewInlineKind.text =>
+      busyMarkRenderedHtmlInline(
+            context,
+            inline.attributes,
+            mergeStyle(null),
+            (style) => [
+              if (inline.children.isEmpty)
+                span(text: inline.text, children: null, style: style),
+              for (final child in inline.children) childSpan(child, style),
+            ],
+          ) ??
+          span(text: inline.text, children: null, style: mergeStyle(null)),
     PreviewInlineKind.strong => span(
       text: inline.children.isEmpty ? inline.text : null,
       children: inline.children.isEmpty

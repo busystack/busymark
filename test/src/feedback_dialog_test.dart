@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -9,7 +9,7 @@ import 'package:busymark/src/feedback/feedback_metadata.dart';
 import 'package:busymark/src/feedback/feedback_service.dart';
 import 'package:busymark/src/feedback/feedback_submission.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -418,7 +418,7 @@ Future<void> _pumpDialog(
       ],
       child: MaterialApp(
         locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.light,
@@ -454,7 +454,7 @@ Future<void> _pumpDialogRoute(
       ],
       child: MaterialApp(
         locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: brightness,

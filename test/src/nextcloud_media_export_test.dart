@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/assets/document_media_context.dart';
 import 'package:busymark/src/assets/provider_asset_ingestion_service.dart';
@@ -17,7 +17,7 @@ import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/nextcloud_notes/application/attachment_markdown.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:busymark/src/nextcloud_notes/data/notes_attachment_references.dart';
@@ -51,7 +51,7 @@ void main() {
       for (final source in [image.path, Uri.file(image.path).toString()]) {
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: DocumentMediaScope(
@@ -87,7 +87,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: DocumentMediaScope(

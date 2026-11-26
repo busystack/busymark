@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 // HtmlParser exposes its tokenizer but does not expose per-attribute source
 // spans through its public DOM API. Keep authored-reference discovery on the
 // same tokenizer used by Rename Topic File.
@@ -45,6 +47,49 @@ class WritersideAuthoredHtmlAnchorReference {
 
 class WritersideAuthoredHtmlReferenceScanner {
   const WritersideAuthoredHtmlReferenceScanner();
+
+  /// Changes attribute values on a modeled opening tag without respelling the
+  /// authored element or unrelated attributes.
+  String rewriteAttributeValues(
+    String source,
+    String tag,
+    Map<String, String> replacements,
+  ) {
+    if (replacements.isEmpty) return source;
+    final tokenizer = HtmlTokenizer(
+      source,
+      generateSpans: true,
+      attributeSpans: true,
+    );
+    while (tokenizer.moveNext()) {
+      final token = tokenizer.current;
+      if (token is! StartTagToken || token.name != tag) continue;
+      final edits = <({int start, int end, String value})>[];
+      for (final attribute in token.attributeSpans ?? []) {
+        final replacement = replacements[attribute.name];
+        final start = attribute.startValue, end = attribute.endValue;
+        if (replacement == null || start == null || end == null) continue;
+        final quote = start > 0 ? source[start - 1] : '';
+        final escaped = HtmlEscape(
+          quote == "'"
+              ? HtmlEscapeMode.sqAttribute
+              : const HtmlEscapeMode(escapeLtGt: true, escapeQuot: true),
+        ).convert(replacement);
+        final quoted = quote == '"' || quote == "'";
+        edits.add((
+          start: start,
+          end: end,
+          value: quoted ? escaped : '"$escaped"',
+        ));
+      }
+      edits.sort((a, b) => b.start.compareTo(a.start));
+      for (final edit in edits) {
+        source = source.replaceRange(edit.start, edit.end, edit.value);
+      }
+      break;
+    }
+    return source;
+  }
 
   List<({String destination, SourceSpan span})> scanMarkdownMedia({
     required String filePath,

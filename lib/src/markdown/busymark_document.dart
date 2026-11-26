@@ -209,6 +209,13 @@ class BusyBlock {
 
   String get plainText => inlines.map((inline) => inline.plainText).join();
 
+  bool get isAtomicSelectionBlock =>
+      kind == BusyBlockKind.image ||
+      kind == BusyBlockKind.video ||
+      kind == BusyBlockKind.table ||
+      kind == BusyBlockKind.thematicBreak ||
+      preserveRaw && rawSource?.isNotEmpty == true;
+
   BusyBlock copyWith({
     String? id,
     BusyBlockKind? kind,

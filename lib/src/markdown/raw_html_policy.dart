@@ -1,6 +1,7 @@
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
 import 'package:path/path.dart' as p;
+import 'package:intl/intl.dart' show Bidi;
 
 import '../core/uri_utils.dart';
 
@@ -153,11 +154,56 @@ const perTagAllowedAttributes = <String, Set<String>>{
   'ins': {'cite', 'datetime'},
   'del': {'cite', 'datetime'},
   'time': {'datetime'},
+  'data': {'value'},
   'ol': {'start', 'reversed', 'type'},
   'li': {'value'},
   'code': {'class'},
   'pre': {'class'},
 };
+
+String? busyMarkHtmlDirection(String? value) =>
+    switch (value?.trim().toLowerCase()) {
+      'ltr' => 'ltr',
+      'rtl' => 'rtl',
+      'auto' => 'auto',
+      _ => null,
+    };
+
+String? busyMarkResolvedHtmlDirection(html.Element element) {
+  final direction =
+      busyMarkHtmlDirection(element.attributes['dir']) ??
+      (element.localName == 'bdi' ? 'auto' : null);
+  if (direction != 'auto') return direction;
+  var nodes = 0;
+  String? firstStrong(List<html.Node> children, int depth) {
+    if (depth > maxRawHtmlDepth) {
+      throw const FormatException('HTML direction nesting limit');
+    }
+    for (final node in children) {
+      if (++nodes > maxRawHtmlNodes) {
+        throw const FormatException('HTML direction node limit');
+      }
+      if (node is html.Text) {
+        if (Bidi.startsWithRtl(node.data)) return 'rtl';
+        if (Bidi.startsWithLtr(node.data)) return 'ltr';
+      } else if (node is html.Element &&
+          !const {
+            'bdi',
+            'script',
+            'style',
+            'textarea',
+          }.contains(node.localName) &&
+          busyMarkHtmlDirection(node.attributes['dir']) == null) {
+        if (firstStrong(node.nodes, depth + 1) case final direction?) {
+          return direction;
+        }
+      }
+    }
+    return null;
+  }
+
+  return firstStrong(element.nodes, 0) ?? 'ltr';
+}
 
 bool isSafeHtmlTag(String tag) {
   final normalized = _normalizeName(tag);

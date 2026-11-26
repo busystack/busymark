@@ -5,12 +5,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../l10n/generated/app_localizations.dart';
 import '../../ai/ai_models.dart';
 import '../../ai/ai_configuration.dart';
 import '../../ai/ai_policy.dart';

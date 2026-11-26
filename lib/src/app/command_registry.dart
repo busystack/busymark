@@ -3,7 +3,7 @@ import '../markdown/busymark_document.dart';
 import 'dart:async';
 import '../core/debug_log.dart';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 
 import 'busymark_shortcuts.dart';

@@ -14,6 +14,25 @@ from git_native_desktop import configure_native_portals, configure_native_text_d
 
 
 class NativeGeometryTest(unittest.TestCase):
+    def test_git_matrix_continues_after_xfail_and_blocks_after_fail(self):
+        from git_native_smoke import main
+        from native_shutdown import XFAIL_FLAG
+
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / 'matrix'
+            records = [{'outcome': outcome, 'exitCode': status} for outcome, status in (
+                ('XFAIL', -6), ('PASS', 0), ('FAIL', -11))]
+            with (
+                mock.patch.object(sys, 'argv', ['git_native_smoke.py', 'busymark', str(output), XFAIL_FLAG]),
+                mock.patch('git_native_smoke.fixture', return_value=Path(temp) / 'repo'),
+                mock.patch('git_native_smoke.run_matrix_case', side_effect=records) as run,
+            ):
+                self.assertEqual(main(), 1)
+            self.assertEqual(run.call_count, 3)
+            summary = json.loads((output / 'summary.json').read_text())
+            self.assertEqual(summary['counts'], {'PASS': 1, 'XFAIL': 1, 'FAIL': 1})
+            self.assertEqual([r['exitCode'] for r in summary['records']], [-6, 0, -11])
+
     def test_null_child_restarts_the_complete_owned_snapshot(self):
         from git_native_desktop import retry_accessible_snapshot
         root, owned, replacement = mock.Mock(), mock.Mock(), mock.Mock()
@@ -275,13 +294,18 @@ print(json.dumps({'ready': service['ready'], 'collectionUnlocked': not locked}))
             try:
                 configure_native_portals(env)
                 configure_native_text_dpi(env, 1.5)
+                control = Path(env['XDG_RUNTIME_DIR']) / 'keyring'
+                control.mkdir(mode=0o700)
+                env['GNOME_KEYRING_CONTROL'] = str(control)
                 query = ('import subprocess;subprocess.run(["dbus-update-activation-environment",'
                          '"DISPLAY","GDK_BACKEND","GSETTINGS_BACKEND","XDG_CONFIG_HOME","XDG_DATA_HOME",'
-                         '"XDG_CACHE_HOME","XDG_STATE_HOME","XDG_RUNTIME_DIR"],check=True);'
+                         '"XDG_CACHE_HOME","XDG_STATE_HOME","XDG_RUNTIME_DIR","GNOME_KEYRING_CONTROL"],check=True);'
                          'subprocess.run(["gsettings","set","org.gnome.desktop.interface",'
                          '"text-scaling-factor","1.5"],check=True);'
-                         'import os,sys;sys.path.insert(0,"tools");'
-                         'from git_native_desktop import require_portal_text_scale;'
+                         'import os,sys;from pathlib import Path;sys.path.insert(0,"tools");'
+                         'from git_native_desktop import require_portal_text_scale,start_private_secret_service;'
+                         'control=Path(os.environ["GNOME_KEYRING_CONTROL"]);'
+                         'start_private_secret_service(os.environ,control,control.parent/"keyring.log");'
                          'portal=require_portal_text_scale(os.environ,1.5);'
                          'import gi,json;gi.require_version("Gtk","3.0");'
                          'from gi.repository import Gtk,Gdk,GObject;Gtk.init([]);'

@@ -11,6 +11,16 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Iterable<BusyBlock> _tables(List<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    if (block.kind == BusyBlockKind.table) {
+      yield block;
+    } else {
+      yield* _tables(block.children);
+    }
+  }
+}
+
 void main() {
   final source = File(
     'test/fixtures/clipboard/layout_table_job.html',
@@ -42,13 +52,7 @@ void main() {
         source,
         mode: MarkdownMode.gfm,
       )!;
-      expect(
-        decoded.documentBlocks.where(
-          (block) => block.kind == BusyBlockKind.table,
-        ),
-        hasLength(1),
-        reason: source,
-      );
+      expect(_tables(decoded.documentBlocks), hasLength(1), reason: source);
     }
   });
 
@@ -59,12 +63,7 @@ void main() {
       mode: MarkdownMode.gfm,
     )!;
     expect(decoded.documentBlocks.first.kind, BusyBlockKind.heading);
-    expect(
-      decoded.documentBlocks.where(
-        (block) => block.kind == BusyBlockKind.table,
-      ),
-      hasLength(1),
-    );
+    expect(_tables(decoded.documentBlocks), hasLength(1));
     expect(
       decoded.documentBlocks.last.plainText,
       'Send questions to team@example.test.',
@@ -117,10 +116,7 @@ void main() {
           plan.candidates.first as BusyMarkStructuredPasteCandidate;
       final blocks = candidate.fragment.documentBlocks;
       expect(blocks.first.kind, BusyBlockKind.heading);
-      expect(
-        blocks.where((block) => block.kind == BusyBlockKind.table),
-        hasLength(1),
-      );
+      expect(_tables(blocks), hasLength(1));
       expect(
         blocks
             .expand((block) => block.children)
@@ -194,10 +190,7 @@ void main() {
           )
           .busyDocument;
       expect(reparsed.blocks.first.kind, BusyBlockKind.heading);
-      expect(
-        reparsed.blocks.where((block) => block.kind == BusyBlockKind.table),
-        hasLength(1),
-      );
+      expect(_tables(reparsed.blocks), hasLength(1));
       expect(
         reparsed.blocks.where(
           (block) => block.kind == BusyBlockKind.unorderedListItem,

@@ -3,10 +3,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/assets/asset_input_service.dart';
+import 'package:busymark/src/assets/document_media_context.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
@@ -30,7 +31,7 @@ import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:busymark/src/visualization/web_render_host.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1079,6 +1080,7 @@ void main() {
       String source,
       ValueChanged<String> changed, {
       BusyMarkClipboardInsertionRegistry? registry,
+      RichClipboardService? clipboardService,
       ValueChanged<BusyMarkClipboardCapture>? onCaptured,
       ValueChanged<BusyDocument>? onDocumentChanged,
       String? filePath,
@@ -1090,6 +1092,7 @@ void main() {
       BusyMarkWysiwygTransactionalSourceChanged? onTransactionalSourceChanged,
       bool hostToasts = false,
       bool providerScope = false,
+      bool readOnly = false,
       bool focusFirstField = true,
       MarkdownMode mode = MarkdownMode.writersideMarkdown,
       WysiwygEditorSessionState Function(BusyDocument document)?
@@ -1126,39 +1129,42 @@ void main() {
       }
 
       final app = MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: hostToasts
             ? (context, child) => BusyMarkToastOverlay(child: child!)
             : null,
         home: Scaffold(
-          body: BusyMarkWysiwygEditor(
-            key: ValueKey(id),
-            clipboardService: RichClipboardService(),
-            clipboardInsertionRegistry: registry,
-            onClipboardCaptured: onCaptured,
-            workspaceRoot: workspaceRoot,
-            assetWorkspaceKind: assetWorkspaceKind,
-            assetInputService: assetInputService,
-            assetIngestionService: assetIngestionService,
-            onTransactionalSourceChanged: onTransactionalSourceChanged,
-            readEditBase: history.readBase,
-            readSessionState: () => history.buffer.editorState.wysiwygState,
-            onUndo: () => traverse(false),
-            onRedo: () => traverse(true),
-            onSessionChanged: (_, value) {
-              history.controller.updateDocumentEditorState(
-                history.buffer.id,
-                history.buffer.editorState.copyWith(wysiwygState: value),
-              );
-            },
-            initialSessionState: initialSession,
-            document: document,
-            onDocumentChanged: onDocumentChanged,
-            onSourceChanged: (_, value) {
-              history.controller.updateActiveText(value);
-              changed(value);
-            },
+          body: DocumentReadOnlyScope(
+            readOnly: readOnly,
+            child: BusyMarkWysiwygEditor(
+              key: ValueKey(id),
+              clipboardService: clipboardService ?? RichClipboardService(),
+              clipboardInsertionRegistry: registry,
+              onClipboardCaptured: onCaptured,
+              workspaceRoot: workspaceRoot,
+              assetWorkspaceKind: assetWorkspaceKind,
+              assetInputService: assetInputService,
+              assetIngestionService: assetIngestionService,
+              onTransactionalSourceChanged: onTransactionalSourceChanged,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: () => traverse(false),
+              onRedo: () => traverse(true),
+              onSessionChanged: (_, value) {
+                history.controller.updateDocumentEditorState(
+                  history.buffer.id,
+                  history.buffer.editorState.copyWith(wysiwygState: value),
+                );
+              },
+              initialSessionState: initialSession,
+              document: document,
+              onDocumentChanged: onDocumentChanged,
+              onSourceChanged: (_, value) {
+                history.controller.updateActiveText(value);
+                changed(value);
+              },
+            ),
           ),
         ),
       );
@@ -2164,6 +2170,873 @@ void main() {
         );
       },
     );
+
+    for (final table in [false, true]) {
+      testWidgets(
+        'partial math source Copy and Cut use field offsets (table=$table)',
+        (tester) async {
+          const fieldSource = r'A $x$ Z';
+          final original = table
+              ? '| Value |\n| --- |\n| $fieldSource |\n'
+              : '$fieldSource\n';
+          var result = original;
+          final capture = <BusyMarkClipboardCapture>[];
+          await mount(
+            tester,
+            'math-source-selection',
+            original,
+            (source) => result = source,
+            providerScope: true,
+            focusFirstField: false,
+            onCaptured: capture.add,
+            mode: MarkdownMode.gfm,
+          );
+          Future<TextEditingController> openSource() async {
+            final rendered = find.byWidgetPredicate(
+              (widget) =>
+                  widget.key is ValueKey<String> &&
+                  (widget.key! as ValueKey<String>).value.startsWith(
+                    'wysiwyg-rendered-math-',
+                  ),
+            );
+            if (rendered.evaluate().isNotEmpty) await tester.tap(rendered);
+            await tester.pumpAndSettle();
+            final field = tester.widget<TextField>(
+              find.widgetWithText(TextField, fieldSource),
+            );
+            expect(field.focusNode!.hasFocus, isTrue);
+            return field.controller!;
+          }
+
+          for (final (start, end) in [
+            (3, 4),
+            (2, 3),
+            (4, 5),
+            (0, 2),
+            (5, 7),
+            (1, 4),
+            (3, 6),
+          ]) {
+            final controller = await openSource();
+            controller.selection = TextSelection(
+              baseOffset: end,
+              extentOffset: start,
+            );
+            final selected = fieldSource.substring(start, end);
+            await key(tester, LogicalKeyboardKey.keyC);
+            expect(systemData['text'], selected, reason: 'Copy [$start, $end)');
+            expect(capture.last.sourceText, selected);
+            await key(tester, LogicalKeyboardKey.keyC, shift: true);
+            expect(
+              systemData['text'],
+              selected,
+              reason: 'Copy as plain text [$start, $end)',
+            );
+            expect(capture.last.sourceText, selected);
+            if (start == 3 && end == 4) {
+              final before = capture.length;
+              failWrite = true;
+              await key(tester, LogicalKeyboardKey.keyX);
+              failWrite = false;
+              expect(result, original);
+              expect(capture, hasLength(before));
+              expect(controller.text, fieldSource);
+
+              writeGate = Completer<void>();
+              await key(tester, LogicalKeyboardKey.keyX);
+              final selection = controller.selection;
+              controller.selection = const TextSelection.collapsed(offset: 0);
+              writeGate!.complete();
+              writeGate = null;
+              await tester.pumpAndSettle();
+              expect(systemData['text'], selected);
+              expect(result, original);
+              expect(controller.text, fieldSource);
+              controller.selection = selection;
+            }
+            await key(tester, LogicalKeyboardKey.keyX);
+            expect(systemData['text'], selected, reason: 'Cut [$start, $end)');
+            final saved = _parser
+                .parse(
+                  filePath: '/math.md',
+                  source: result,
+                  mode: MarkdownMode.gfm,
+                )
+                .busyDocument
+                .blocks
+                .single;
+            final edited = table ? saved.children.last.children.single : saved;
+            final expected = fieldSource.replaceRange(start, end, '');
+            expect(
+              busyMarkWysiwygEditableText(edited),
+              expected,
+              reason: result,
+            );
+            await key(tester, LogicalKeyboardKey.keyZ);
+            expect(result, original);
+          }
+        },
+      );
+    }
+
+    test(
+      'direction projection tracks controls through disjoint input edits',
+      () {
+        const original = 'A<br><bdo dir="rtl">BC</bdo> \u2067D\u2069';
+        final document = _parser
+            .parse(
+              filePath: '/direction.md',
+              source: original,
+              mode: MarkdownMode.gfm,
+            )
+            .busyDocument;
+        final block = document.blocks.single;
+        final controller = BusyMarkWysiwygTextController(
+          text: block.plainText,
+          ranges: const [],
+        )..updateFromBlock(block);
+        addTearDown(controller.dispose);
+        final editable = controller.editableController;
+        final before = editable.text;
+        expect(before, 'A\n\u2067\u202eBC\u202c\u2069 \u2067D\u2069');
+        editable.selection = TextSelection.collapsed(offset: before.length);
+        final after = '${before.replaceFirst('\n', '')}E';
+        editable.value = TextEditingValue(
+          text: after,
+          selection: TextSelection.collapsed(offset: after.length),
+        );
+        expect(controller.text, 'ABC \u2067D\u2069E');
+        expect(controller.selection.extentOffset, controller.text.length);
+      },
+    );
+
+    testWidgets(
+      'typing beside a directional table break preserves authored inlines',
+      (tester) async {
+        const source =
+            '| Value |\n| --- |\n| A<br><bdo dir="rtl">BC</bdo> D |\n';
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-clipboard-directed-break-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final file = File('${root.path}/table.md')..writeAsStringSync(source);
+        final savedClips = <BusyMarkClipboardCapture>[];
+        var result = source;
+        await mount(
+          tester,
+          'directed-break',
+          source,
+          (value) => result = value,
+          filePath: file.path,
+          focusFirstField: false,
+          onCaptured: savedClips.add,
+          mode: MarkdownMode.gfm,
+        );
+        final field = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              (widget.controller?.text.contains('BC') ?? false),
+        );
+        await tester.tap(field);
+        final editable = tester.widget<TextField>(field).controller!;
+        expect(editable.text, contains('\n\u2067\u202eBC'));
+        editable.selection = TextSelection.collapsed(
+          offset: editable.text.length,
+        );
+        await tester.pump();
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: '${editable.text}E',
+            selection: TextSelection.collapsed(
+              offset: editable.text.length + 1,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        void checkCell(String markdown, String expected) {
+          final cell = _parser
+              .parse(
+                filePath: file.path,
+                source: markdown,
+                mode: MarkdownMode.gfm,
+              )
+              .busyDocument
+              .blocks
+              .single
+              .children
+              .last
+              .children
+              .single;
+          expect(cell.plainText, 'A\nBC $expected', reason: markdown);
+          expect(
+            cell.inlines.where(
+              (inline) => inline.kind == BusyInlineKind.hardBreak,
+            ),
+            hasLength(1),
+          );
+          final direction = cell.inlines.singleWhere(
+            (inline) => inline.attributes['htmlTag'] == 'bdo',
+          );
+          expect(
+            (direction.attributes['dir'], direction.plainText),
+            ('rtl', 'BC'),
+          );
+          expect(markdown, contains('<br><bdo dir="rtl">BC</bdo> $expected'));
+          expect(
+            markdown,
+            isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))),
+          );
+        }
+
+        checkCell(result, 'DE');
+        expect(
+          editable.selection,
+          TextSelection.collapsed(offset: editable.text.length),
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        expect(systemData['text'], 'A\nBC DE');
+        final copied = savedClips.single;
+        expect(copied.sourceText, 'A  \n<bdo dir="rtl">BC</bdo> DE\n');
+        expect(
+          copied.sourceText,
+          isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))),
+        );
+        final external = html.parseFragment(copied.html!);
+        expect(external.querySelectorAll('br'), hasLength(1));
+        expect(external.querySelector('bdo[dir="rtl"]')?.text, 'BC');
+        expect(external.text, 'ABC DE');
+        expect(
+          copied.html,
+          isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))),
+        );
+
+        final reopened = await tester.runAsync(() async {
+          final writer = await DocumentHistoryHarness.create(path: file.path);
+          try {
+            writer.controller.updateActiveText(result);
+            expect(await writer.controller.saveActive(), isTrue);
+          } finally {
+            writer.dispose();
+          }
+          final reader = await DocumentHistoryHarness.create(path: file.path);
+          try {
+            return reader.buffer.text;
+          } finally {
+            reader.dispose();
+          }
+        });
+        checkCell(reopened!, 'DE');
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+        checkCell(result, 'D');
+      },
+    );
+
+    testWidgets(
+      'A01 cross-block formula selection copies and cuts authored text',
+      (tester) async {
+        const field = r'A $x$ Z';
+        const original = '$field\n\nAfter\n';
+        var result = original;
+        await mount(
+          tester,
+          'cross-math',
+          original,
+          (value) => result = value,
+          providerScope: true,
+          focusFirstField: false,
+          mode: MarkdownMode.gfm,
+        );
+        await tester.tap(
+          find.byWidgetPredicate(
+            (w) =>
+                w.key is ValueKey<String> &&
+                (w.key as ValueKey<String>).value.startsWith(
+                  'wysiwyg-rendered-math-',
+                ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final mathField = tester.widget<TextField>(
+          find.widgetWithText(TextField, field),
+        );
+        final next = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'After'),
+        );
+        mathField.controller!.selection = TextSelection.collapsed(
+          offset: field.indexOf('Z'),
+        );
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+        expect(mathField.controller!.selection.textInside(field), 'Z');
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+        expect(next.focusNode!.hasFocus, isTrue);
+        expect(next.controller!.selection.extentOffset, 0);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.pump();
+        expect(next.controller!.selection.extentOffset, 1);
+        await key(tester, LogicalKeyboardKey.keyC);
+        expect(systemData['text'], 'Z\n\nA');
+        failWrite = true;
+        await key(tester, LogicalKeyboardKey.keyX);
+        failWrite = false;
+        expect(result, original);
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(systemData['text'], 'Z\n\nA');
+        expect(result, 'A \$x\$ fter\n');
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, original);
+      },
+    );
+
+    for (final (rich, reverse) in [
+      (false, false),
+      (true, false),
+      (false, true),
+      (true, true),
+    ]) {
+      testWidgets(
+        'cross-block formula selection with ${rich ? 'rich' : 'plain'} replacement reverse=$reverse',
+        (tester) async {
+          const field = r'A $x$ Z';
+          const original = '$field\n\nAfter\n';
+          var result = original;
+          await mount(
+            tester,
+            'cross-math-replacement',
+            original,
+            (value) => result = value,
+            providerScope: true,
+            focusFirstField: false,
+            mode: MarkdownMode.gfm,
+          );
+          final nextField = find.widgetWithText(TextField, 'After');
+          if (reverse) {
+            await tester.showKeyboard(nextField);
+          } else {
+            await tester.tap(
+              find.byWidgetPredicate(
+                (w) =>
+                    w.key is ValueKey<String> &&
+                    (w.key as ValueKey<String>).value.startsWith(
+                      'wysiwyg-rendered-math-',
+                    ),
+              ),
+            );
+          }
+          await tester.pumpAndSettle();
+          final mathFieldFinder = find.widgetWithText(TextField, field);
+          final from = tester.widget<TextField>(
+            reverse ? nextField : mathFieldFinder,
+          );
+          from.controller!.selection = TextSelection.collapsed(
+            offset: reverse ? 1 : field.indexOf('Z'),
+          );
+          final arrow = reverse
+              ? LogicalKeyboardKey.arrowLeft
+              : LogicalKeyboardKey.arrowRight;
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(arrow);
+          await tester.pump();
+          expect(
+            from.controller!.selection.textInside(from.controller!.text),
+            reverse ? 'A' : 'Z',
+          );
+          await tester.sendKeyEvent(arrow);
+          await tester.pumpAndSettle();
+          final to = tester.widget<TextField>(
+            reverse ? mathFieldFinder : nextField,
+          );
+          expect(to.focusNode!.hasFocus, isTrue);
+          expect(
+            to.controller!.selection.extentOffset,
+            reverse ? field.length : 0,
+          );
+          await tester.sendKeyEvent(arrow);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pump();
+          expect(
+            to.controller!.selection.extentOffset,
+            reverse ? field.indexOf('Z') : 1,
+          );
+          await key(tester, LogicalKeyboardKey.keyC);
+          expect(systemData['text'], 'Z\n\nA');
+
+          systemData = {'text': 'X', if (rich) 'html': '<strong>X</strong>'};
+          await key(tester, LogicalKeyboardKey.keyV, shift: !rich);
+
+          final expected = rich ? r'A $x$ **X**fter' : r'A $x$ Xfter';
+          expect(result, '$expected\n');
+          final replacement = tester.widget<TextField>(
+            find.widgetWithText(TextField, expected),
+          );
+          expect(replacement.focusNode!.hasFocus, isTrue);
+          expect(
+            replacement.controller!.selection,
+            TextSelection.collapsed(offset: expected.indexOf('fter')),
+          );
+          if (!reverse) {
+            final saved = result;
+            final reopened = await tester.runAsync(() async {
+              final dir = await Directory.systemTemp.createTemp(
+                'busymark-formula-paste-',
+              );
+              try {
+                final file = await File(
+                  p.join(dir.path, 'topic.md'),
+                ).writeAsString(original);
+                final writer = await DocumentHistoryHarness.create(
+                  path: file.path,
+                );
+                try {
+                  writer.controller.updateActiveText(saved);
+                  expect(await writer.controller.saveActive(), isTrue);
+                } finally {
+                  writer.dispose();
+                }
+                final reader = await DocumentHistoryHarness.create(
+                  path: file.path,
+                );
+                try {
+                  return _parser
+                      .parse(
+                        filePath: file.path,
+                        source: reader.buffer.text,
+                        mode: MarkdownMode.gfm,
+                      )
+                      .busyDocument;
+                } finally {
+                  reader.dispose();
+                }
+              } finally {
+                await dir.delete(recursive: true);
+              }
+            });
+            final paragraph = reopened!.blocks.single;
+            expect(paragraph.plainText, 'A x Xfter');
+            expect(
+              paragraph.inlines
+                  .singleWhere((i) => i.kind == BusyInlineKind.math)
+                  .text,
+              'x',
+            );
+            expect(
+              paragraph.inlines
+                  .where((i) => i.kind == BusyInlineKind.strong)
+                  .map((i) => i.plainText),
+              rich ? ['X'] : isEmpty,
+            );
+          }
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(result, original);
+        },
+      );
+    }
+
+    for (final (table, rich) in [
+      (false, false),
+      (false, true),
+      (true, false),
+      (true, true),
+    ]) {
+      testWidgets(
+        'formula field selection replacement table=$table rich=$rich',
+        (tester) async {
+          const field = r'A $x$ Z tail';
+          String source(String value) =>
+              table ? '| Value |\n| --- |\n| $value |\n' : '$value\n';
+          final original = source(field);
+          var result = original;
+          await mount(
+            tester,
+            'local-math-replacement',
+            original,
+            (value) => result = value,
+            providerScope: true,
+            focusFirstField: false,
+            mode: MarkdownMode.gfm,
+          );
+          await tester.tap(
+            find.byWidgetPredicate(
+              (w) =>
+                  w.key is ValueKey<String> &&
+                  (w.key as ValueKey<String>).value.startsWith(
+                    'wysiwyg-rendered-math-',
+                  ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final editable = tester.widget<TextField>(
+            find.widgetWithText(TextField, field),
+          );
+          editable.controller!.selection = TextSelection.collapsed(
+            offset: field.indexOf('Z') + 1,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pump();
+          expect(editable.controller!.selection.textInside(field), 'Z');
+
+          systemData = {'text': 'X', if (rich) 'html': '<strong>X</strong>'};
+          await key(tester, LogicalKeyboardKey.keyV, shift: !rich);
+
+          final expected = rich ? r'A $x$ **X** tail' : r'A $x$ X tail';
+          expect(result, source(expected));
+          final replacement = tester.widget<TextField>(
+            find.widgetWithText(TextField, expected),
+          );
+          expect(replacement.focusNode!.hasFocus, isTrue);
+          expect(
+            replacement.controller!.selection,
+            TextSelection.collapsed(offset: expected.indexOf(' tail')),
+          );
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(result, original);
+        },
+      );
+    }
+
+    for (final (table, math) in [(true, true), (false, true), (true, false)]) {
+      for (final origin in ['native', 'external', 'history']) {
+        testWidgets(
+          'A02 rich $origin paste keeps inline semantics table=$table math=$math',
+          (tester) async {
+            final registry = BusyMarkClipboardInsertionRegistry();
+            addTearDown(registry.dispose);
+            final service = RichClipboardService();
+            final field = math ? r'A $x$ Z' : 'A Z';
+            final original = table
+                ? '| Value |\n| --- |\n| $field |\n'
+                : '$field\n';
+            var result = original;
+            await mount(
+              tester,
+              'rich-math-$origin',
+              original,
+              (value) => result = value,
+              registry: registry,
+              clipboardService: service,
+              providerScope: math,
+              focusFirstField: false,
+              mode: MarkdownMode.gfm,
+            );
+            if (math) {
+              await tester.tap(
+                find.byWidgetPredicate(
+                  (w) =>
+                      w.key is ValueKey<String> &&
+                      (w.key as ValueKey<String>).value.startsWith(
+                        'wysiwyg-rendered-math-',
+                      ),
+                ),
+              );
+            } else {
+              await tester.showKeyboard(find.widgetWithText(TextField, field));
+            }
+            await tester.pumpAndSettle();
+            tester
+                .widget<TextField>(find.widgetWithText(TextField, field))
+                .controller!
+                .selection = TextSelection.collapsed(
+              offset: field.indexOf('Z'),
+            );
+            const incoming =
+                '<p><a href="https://example.test" title="Link title"><strong>X</strong></a></p>';
+            final fragment = _fragment(
+              '[**X**](https://example.test "Link title")\n',
+            );
+            if (origin == 'history') {
+              expect(
+                await registry.paste(
+                  BusyMarkClipboardPayload(
+                    id: 'paste',
+                    acquiredAt: DateTime.utc(2026),
+                    kind: BusyMarkClipboardContentKind.richText,
+                    text: 'X',
+                    richFragment: fragment.encode(),
+                  ),
+                ),
+                ClipboardPasteResult.inserted,
+              );
+            } else {
+              if (origin == 'native') {
+                expect(
+                  await service.write(
+                    RichClipboardData(
+                      text: 'X',
+                      richFragment: fragment.encode(),
+                    ),
+                  ),
+                  isTrue,
+                );
+              } else {
+                systemData = {'html': incoming, 'text': 'X'};
+              }
+              await key(tester, LogicalKeyboardKey.keyV);
+            }
+            await tester.pumpAndSettle();
+            final block = _parser
+                .parse(
+                  filePath: '/target.md',
+                  source: result,
+                  mode: MarkdownMode.gfm,
+                )
+                .busyDocument
+                .blocks
+                .single;
+            final cell = table ? block.children.last.children.single : block;
+            expect(cell.plainText, math ? 'A x XZ' : 'A XZ', reason: result);
+            expect(
+              cell.inlines
+                  .where((i) => i.kind == BusyInlineKind.math)
+                  .map((i) => i.text),
+              math ? ['x'] : [],
+            );
+            final link = cell.inlines.singleWhere(
+              (i) => i.kind == BusyInlineKind.link,
+            );
+            expect(
+              (link.destination, link.attributes['title']),
+              ('https://example.test', 'Link title'),
+            );
+            expect(
+              (link.children.single.kind, link.children.single.plainText),
+              (BusyInlineKind.strong, 'X'),
+            );
+            await key(tester, LogicalKeyboardKey.keyZ);
+            expect(result, original);
+          },
+        );
+      }
+    }
+
+    testWidgets('A03 read-only Editor History paste cannot stage an image', (
+      tester,
+    ) async {
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-readonly-editor-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final captures = <BusyMarkClipboardCapture>[];
+      var source = 'Protected\n';
+      final published = <IngestedAsset>[];
+      final gate = Completer<void>();
+      addTearDown(() {
+        if (!gate.isCompleted) gate.complete();
+      });
+      var pausePublication = false;
+      final service = AssetIngestionService(
+        hooks: AssetIngestionHooks(
+          afterPublication: (asset) async {
+            published.add(asset);
+            if (pausePublication) await gate.future;
+          },
+        ),
+      );
+      Future<void> mountTarget({required bool readOnly}) => mount(
+        tester,
+        'protected',
+        source,
+        (value) => source = value,
+        readOnly: readOnly,
+        filePath: '${root.path}/topic.md',
+        workspaceRoot: root.path,
+        assetIngestionService: service,
+        registry: registry,
+        onCaptured: captures.add,
+      );
+      await mountTarget(readOnly: true);
+      final bytes = utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      );
+      final image = File('${root.path}/original.svg')..writeAsBytesSync(bytes);
+      final native = _fragment(
+        'Before ![Panel](panel.svg) after',
+        path: '${root.path}/source.md',
+      );
+      final fragment = WysiwygClipboardFragment(
+        blocks: native.blocks,
+        mode: native.mode,
+        sourcePath: native.sourcePath,
+        mediaPaths: {'panel.svg': image.path},
+      );
+      final payload = BusyMarkClipboardPayload(
+        id: 'image',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        text: 'Before Panel after',
+        external: true,
+        richFragment: fragment.encode(),
+        mediaBytes: {'panel.svg': bytes},
+      );
+      image.deleteSync();
+      final available = registry.canPaste(payload);
+      final outcome = await tester.runAsync(() => registry.paste(payload));
+      await tester.pumpAndSettle();
+      expect(
+        (
+          available,
+          outcome,
+          source,
+          captures.length,
+          root.listSync(recursive: true).whereType<File>().length,
+        ),
+        (false, ClipboardPasteResult.unavailable, 'Protected\n', 0, 0),
+      );
+      expect(published, isEmpty);
+
+      await mountTarget(readOnly: false);
+      expect(registry.canPaste(payload), isTrue);
+      pausePublication = true;
+      ClipboardPasteResult? pendingResult;
+      await tester.runAsync(() async {
+        unawaited(
+          registry.paste(payload).then((value) => pendingResult = value),
+        );
+      });
+      await waitForImageIo(
+        tester,
+        () => published.isNotEmpty,
+        operation: 'stage History image',
+      );
+      expect(File(published.single.absolutePath).readAsBytesSync(), bytes);
+      await mountTarget(readOnly: true);
+      expect(registry.canPaste(payload), isFalse);
+      gate.complete();
+      await waitForImageIo(
+        tester,
+        () => pendingResult != null,
+        operation: 'roll back protected History image',
+      );
+      expect(pendingResult, ClipboardPasteResult.staleTarget);
+      expect(File(published.single.absolutePath).existsSync(), isFalse);
+      expect(source, 'Protected\n');
+      expect(captures, isEmpty);
+    });
+
+    for (final count in [256, 257]) {
+      testWidgets(
+        'A04 clipboard retention is truthful for $count local images',
+        (tester) async {
+          final root = Directory.systemTemp.createTempSync(
+            'busymark-copy-images-',
+          );
+          addTearDown(() => root.delete(recursive: true));
+          final bytes = utf8.encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+          );
+          final references = List.generate(
+            count,
+            (index) => 'image-$index.svg',
+          );
+          for (final reference in references) {
+            File('${root.path}/$reference').writeAsBytesSync(bytes);
+          }
+          final historyScope = ProviderContainer(
+            overrides: [
+              localSettingsStoreProvider.overrideWithValue(
+                _ClipboardMemorySettingsStore(),
+              ),
+            ],
+          );
+          addTearDown(historyScope.dispose);
+          final captures = <BusyMarkClipboardCapture>[];
+          final source =
+              '${references.map((reference) => '![i]($reference)').join(' ')}\n';
+          await mount(
+            tester,
+            'many-images',
+            source,
+            (_) {},
+            filePath: '${root.path}/topic.md',
+            workspaceRoot: root.path,
+            onCaptured: captures.add,
+            mode: MarkdownMode.gfm,
+          );
+          await key(tester, LogicalKeyboardKey.keyA);
+          await key(tester, LogicalKeyboardKey.keyC, startsRealIo: true);
+          await waitForImageIo(
+            tester,
+            () => captures.isNotEmpty,
+            operation: 'retain selected media',
+          );
+          final capture = captures.single;
+          final fragment = WysiwygClipboardFragment.decode(
+            capture.richFragment!,
+          )!;
+          final inlines = fragment.blocks.single.completeBlock!.inlines;
+          expect(
+            inlines
+                .where((i) => i.kind == BusyInlineKind.image)
+                .map((i) => i.destination),
+            references,
+          );
+          final history = historyScope.read(
+            clipboardHistoryControllerProvider.notifier,
+          );
+          final retained = history.retain(capture);
+          final entries = historyScope
+              .read(clipboardHistoryControllerProvider)
+              .entries;
+          if (count == 256 || capture.mediaComplete) {
+            expect(retained, ClipboardRetentionResult.retained);
+            expect(entries.single.mediaBytes, {
+              for (final ref in references) ref: bytes,
+            });
+            expect(capture.mediaComplete, isTrue);
+            expect(capture.mediaBytes, {
+              for (final ref in references) ref: bytes,
+            });
+          } else {
+            expect(capture.mediaComplete, isFalse);
+            expect(retained, ClipboardRetentionResult.oversized);
+            expect(entries, isEmpty);
+          }
+        },
+      );
+    }
+
+    testWidgets('A11 pending Editor Copy keeps the original document origin', (
+      tester,
+    ) async {
+      final clipboard = RichClipboardService();
+      final captures = <BusyMarkClipboardCapture>[];
+      await mount(
+        tester,
+        'reused-copy',
+        'Document A\n',
+        (_) {},
+        filePath: '/one/a.md',
+        clipboardService: clipboard,
+        onCaptured: captures.add,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      writeGate = Completer<void>();
+      await key(tester, LogicalKeyboardKey.keyC);
+      expect(captures, isEmpty);
+      await mount(
+        tester,
+        'reused-copy',
+        'Document B\n',
+        (_) {},
+        filePath: '/two/b.md',
+        clipboardService: clipboard,
+        onCaptured: captures.add,
+      );
+      writeGate!.complete();
+      await tester.pumpAndSettle();
+      expect(systemData['text'], 'Document A');
+      expect((await clipboard.read()).origin?.documentPath, '/one/a.md');
+      expect(captures.single.origin?.documentPath, '/one/a.md');
+    });
 
     testWidgets('rich paste in math fields uses source coordinates', (
       tester,
@@ -3360,6 +4233,274 @@ void main() {
       },
     );
 
+    for (final source in [
+      '<div dir="auto">Keep me</div>\n\nAfter\n',
+      'Before\n\n<div dir="auto">Keep me</div>\n\nAfter\n',
+      'Before\n\n<div dir="auto">Keep me</div>\n',
+    ]) {
+      testWidgets('whole-document Copy and Cut include raw HTML in $source', (
+        tester,
+      ) async {
+        var result = source;
+        await mount(tester, 'origin', source, (value) => result = value);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        final copied = systemData['html'];
+        expect(copied, contains('Keep me'));
+        expect(systemData['text'], contains('Keep me'));
+        expect(result, source);
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(systemData['html'], copied);
+        expect(result.trim(), isEmpty);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+      });
+    }
+
+    for (final reverse in [false, true]) {
+      testWidgets('Cut excludes collapsed text endpoints (reverse=$reverse)', (
+        tester,
+      ) async {
+        const source = 'Before\n\n<div>Keep me</div>\n\nAfter\n';
+        var result = source;
+        await mount(
+          tester,
+          'origin',
+          source,
+          (value) => result = value,
+          focusFirstField: false,
+          initialSessionFor: (document) {
+            final first = document.blocks.first;
+            final last = document.blocks.last;
+            return WysiwygEditorSessionState(
+              activeBlockId: reverse ? first.id : last.id,
+              anchorBlockId: reverse ? last.id : first.id,
+              anchorOffset: reverse ? 0 : first.plainText.length,
+              extentBlockId: reverse ? first.id : last.id,
+              extentOffset: reverse ? first.plainText.length : 0,
+            );
+          },
+        );
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(systemData['text'], 'Keep me');
+        expect(systemData['html'], contains('<div>Keep me</div>'));
+        expect(
+          _parser
+              .parse(filePath: '/cut.md', source: result)
+              .busyDocument
+              .blocks
+              .map((block) => block.plainText),
+          ['Before', 'After'],
+        );
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+      });
+    }
+
+    testWidgets(
+      'whole-document Copy publishes semantic HTML without the native token',
+      (tester) async {
+        const source =
+            'Before\n\n'
+            '<ol type="A" reversed start="5"><li dir="rtl">Fifth</li>'
+            '<li value="2">Second</li><li><a href="https://example.test" title="Guide">First</a></li></ol>'
+            '\n\nAfter\n';
+        await copyAll(tester, source: source);
+        final published = html.parseFragment(systemData['html'] as String);
+        expect(
+          published.querySelector('ol[type=A][reversed][start="5"]'),
+          isNotNull,
+        );
+        expect(published.querySelector('li[dir=rtl]')!.text, 'Fifth');
+        expect(published.querySelector('li[value="2"]')!.text, 'Second');
+        expect(published.querySelector('a[title=Guide]')!.text, 'First');
+        expect(
+          systemData['text'],
+          'Before\n\nE. Fifth\n\nB. Second\n\nA. First\n\nAfter',
+        );
+
+        systemData.remove('token');
+        var result = '';
+        await mount(
+          tester,
+          'other-editor',
+          'Target\n',
+          (value) => result = value,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyV);
+        expect(result, contains('<ol type="A" reversed="" start="5">'));
+        expect(result, contains('title="Guide"'));
+      },
+    );
+
+    for (final (label, source) in [
+      ('leading', '<video src="https://example.test/clip.mp4"/>\n\nAfter\n'),
+      ('trailing', 'Before\n\n<video src="https://example.test/clip.mp4"/>\n'),
+      ('only', '<video src="https://example.test/clip.mp4"/>\n'),
+    ]) {
+      testWidgets('Copy and Cut include the $label video block', (
+        tester,
+      ) async {
+        var output = source;
+        final captures = <BusyMarkClipboardCapture>[];
+        await mount(
+          tester,
+          'video-selection',
+          source,
+          (value) => output = value,
+          focusFirstField: label != 'only',
+          onCaptured: captures.add,
+        );
+        if (label == 'only') {
+          tester
+              .state<BusyMarkWysiwygEditorState>(
+                find.byType(BusyMarkWysiwygEditor),
+              )
+              .restoreEditingFocus();
+          await tester.pumpAndSettle();
+        }
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        final copied = WysiwygClipboardFragment.decode(
+          captures.single.richFragment!,
+        )!;
+        expect(
+          copied.documentBlocks
+              .singleWhere((b) => b.kind == BusyBlockKind.video)
+              .attributes['src'],
+          'https://example.test/clip.mp4',
+        );
+        expect(output, source);
+        failWrite = true;
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(captures, hasLength(1));
+        expect(output, source);
+        failWrite = false;
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(captures.last.richFragment, captures.first.richFragment);
+        expect(output.trim(), isEmpty);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(output, source);
+      });
+    }
+
+    testWidgets('native Copy and Paste retain attributed deletion in prose', (
+      tester,
+    ) async {
+      const cite = 'https://example.test/change';
+      const date = '2026-11-26';
+      const fixture =
+          'Before <del cite="$cite" datetime="$date">old</del> after\n';
+      final clipboard = RichClipboardService();
+      await mount(
+        tester,
+        'del-origin',
+        fixture,
+        (_) {},
+        clipboardService: clipboard,
+        mode: MarkdownMode.gfm,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      final published = html
+          .parseFragment(systemData['html'] as String)
+          .querySelector('del')!;
+      expect(published.text, 'old');
+      expect(published.attributes['cite'], cite);
+      expect(published.attributes['datetime'], date);
+      expect(systemData['token'], isNotEmpty);
+      expect(systemData['text'], 'Before old after');
+
+      // The native selection must win over a distinct HTML representation.
+      systemData['html'] = '<p>HTML fallback</p>';
+      expect((await clipboard.read()).sessionOwned, isTrue);
+      var destination = 'Target\n';
+      await mount(
+        tester,
+        'del-target',
+        destination,
+        (value) => destination = value,
+        clipboardService: clipboard,
+        mode: MarkdownMode.gfm,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV);
+      final deletion = html.parseFragment(destination).querySelector('del');
+      expect(deletion?.text, 'old', reason: destination);
+      expect(deletion?.attributes['cite'], cite);
+      expect(deletion?.attributes['datetime'], date);
+    });
+
+    testWidgets('whole-document Copy and Cut include empty-alt images', (
+      tester,
+    ) async {
+      const source =
+          '![](https://example.test/first.png)\n\nMiddle\n\n'
+          '![](https://example.test/last.png)\n';
+      var result = source;
+      await mount(
+        tester,
+        'origin',
+        source,
+        (value) => result = value,
+        focusFirstField: false,
+      );
+      tester
+          .state<BusyMarkWysiwygEditorState>(find.byType(BusyMarkWysiwygEditor))
+          .restoreEditingFocus();
+      await tester.pumpAndSettle();
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      final copied = html.parseFragment(systemData['html'] as String);
+      expect(
+        copied.querySelectorAll('img').map((image) => image.attributes['src']),
+        ['https://example.test/first.png', 'https://example.test/last.png'],
+      );
+      await key(tester, LogicalKeyboardKey.keyX);
+      expect(
+        html
+            .parseFragment(systemData['html'] as String)
+            .querySelectorAll('img'),
+        hasLength(2),
+      );
+      expect(result.trim(), isEmpty);
+      await key(tester, LogicalKeyboardKey.keyZ);
+      expect(result, source);
+    });
+
+    testWidgets(
+      'Select All and Cut work in a document containing only an image',
+      (tester) async {
+        const source = '![](https://example.test/only.png)\n';
+        var result = source;
+        await mount(
+          tester,
+          'image-only',
+          source,
+          (value) => result = value,
+          focusFirstField: false,
+        );
+        await tester.tapAt(const Offset(400, 400));
+        await tester.pumpAndSettle();
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(
+          html
+              .parseFragment(systemData['html'] as String)
+              .querySelector('img')
+              ?.attributes['src'],
+          'https://example.test/only.png',
+        );
+        expect(result.trim(), isEmpty);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+      },
+    );
+
     testWidgets('cut transfers formatting before deleting the selection', (
       tester,
     ) async {
@@ -3865,7 +5006,7 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Row(
@@ -3934,6 +5075,106 @@ void main() {
       expect(entries.single.kind, BusyMarkClipboardContentKind.image);
       expect(entries.single.text, sourceFile.path);
       expect(entries.single.imageBytes, original);
+    });
+
+    testWidgets('raw HTML links and retained images survive history paste', (
+      tester,
+    ) async {
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-raw-html-media-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final sourceDir = Directory('${root.path}/source')..createSync();
+      final destinationDir = Directory('${root.path}/destination')
+        ..createSync();
+      final guide = File('${sourceDir.path}/guide with space.md')
+        ..writeAsStringSync('# Guide');
+      final sourcePath = '${sourceDir.path}/origin.md';
+      final target = File('${destinationDir.path}/target.md');
+      final image = File('${sourceDir.path}/diagram.svg');
+      final bytes = utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      );
+      image.writeAsBytesSync(bytes);
+      const authored =
+          'Before\n\n<div><a href="guide%20with%20space.md#guide">'
+          'Guide</a><img src="diagram.svg?v=a%26b#detail%202" alt="Diagram"></div>\n\nAfter\n';
+      final captures = <BusyMarkClipboardCapture>[];
+      await mount(
+        tester,
+        'raw-html-origin',
+        authored,
+        (_) {},
+        filePath: sourcePath,
+        workspaceRoot: root.path,
+        onCaptured: captures.add,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      for (var attempt = 0; attempt < 100 && captures.isEmpty; attempt++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
+
+      final capture = captures.single;
+      expect(capture.mediaBytes['diagram.svg?v=a%26b#detail%202'], bytes);
+      final payload = BusyMarkClipboardPayload(
+        id: 'wysiwyg-raw-html-history',
+        acquiredAt: DateTime.utc(2026),
+        kind: capture.kind,
+        text: capture.text,
+        html: capture.html,
+        sourceText: capture.sourceText,
+        richFragment: capture.richFragment,
+        mediaBytes: capture.mediaBytes,
+        mediaComplete: capture.mediaComplete,
+      );
+      // The retained clipboard must be sufficient after the original image disappears.
+      image.deleteSync();
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      var output = 'Target\n';
+      await mount(
+        tester,
+        'raw-html-target',
+        output,
+        (value) => output = value,
+        filePath: target.path,
+        workspaceRoot: root.path,
+        registry: registry,
+        assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      expect(
+        await tester.runAsync(() => registry.paste(payload)),
+        ClipboardPasteResult.inserted,
+      );
+      target.writeAsStringSync(output);
+
+      final reopened = _parser
+          .parse(filePath: target.path, source: target.readAsStringSync())
+          .busyDocument;
+      final raw = reopened.blocks.singleWhere(
+        (b) => b.kind == BusyBlockKind.htmlBlock,
+      );
+      expect(
+        raw.rawSource,
+        contains('href="../source/guide%20with%20space.md#guide"'),
+      );
+      expect(
+        raw.rawSource,
+        contains('src="../images/diagram.svg?v=a%26b#detail%202"'),
+      );
+      expect(
+        Uri.file(
+          target.path,
+        ).resolve('../source/guide%20with%20space.md').toFilePath(),
+        guide.path,
+      );
+      expect(File('${root.path}/images/diagram.svg').readAsBytesSync(), bytes);
     });
 
     testWidgets('copied local video can be pasted from history in Editor', (
@@ -4024,6 +5265,189 @@ void main() {
         video,
       );
     });
+
+    testWidgets(
+      'video and poster survive cross-directory clipboard history paste',
+      (tester) async {
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-video-poster-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final from = Directory('${root.path}/origin')..createSync();
+        final to = Directory('${root.path}/destination')..createSync();
+        final video = Uint8List.fromList([
+          0,
+          0,
+          0,
+          20,
+          ...ascii.encode('ftypmp42'),
+          0,
+          0,
+          0,
+          0,
+        ]);
+        final png = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        );
+        final clip = File('${from.path}/clip.mp4')..writeAsBytesSync(video);
+        final poster = File('${from.path}/poster.png')..writeAsBytesSync(png);
+        final historyScope = ProviderContainer(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _ClipboardMemorySettingsStore(),
+            ),
+          ],
+        );
+        addTearDown(historyScope.dispose);
+        final captures = <BusyMarkClipboardCapture>[];
+        await mount(
+          tester,
+          'video-with-poster',
+          'Before\n\n'
+              "<video src=\"clip.mp4?v=2#t=4\" preview-src='poster.png?v=a%26b#detail%202'/>"
+              '\n\nAfter\n',
+          (_) {},
+          onCaptured: (capture) {
+            captures.add(capture);
+            historyScope
+                .read(clipboardHistoryControllerProvider.notifier)
+                .retain(capture);
+          },
+          filePath: '${from.path}/origin.md',
+          workspaceRoot: root.path,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC, startsRealIo: true);
+        await waitForImageIo(
+          tester,
+          () => captures.isNotEmpty,
+          operation: 'video and poster capture',
+        );
+        final capture = captures.single;
+        expect(capture.mediaBytes['clip.mp4?v=2#t=4'], video);
+        expect(capture.mediaBytes['poster.png?v=a%26b#detail%202'], png);
+        clip.deleteSync();
+        poster.deleteSync();
+        final payload = historyScope
+            .read(clipboardHistoryControllerProvider)
+            .entries
+            .single;
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        final path = '${to.path}/target.md';
+        var source = 'Target\n';
+        await mount(
+          tester,
+          'video-poster-target',
+          source,
+          (value) => source = value,
+          registry: registry,
+          filePath: path,
+          workspaceRoot: root.path,
+          assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(
+          await tester.runAsync(() => registry.paste(payload)),
+          ClipboardPasteResult.inserted,
+        );
+        final saved = await tester.runAsync(() async {
+          await File(path).writeAsString('Target\n');
+          final workspace = await DocumentHistoryHarness.create(path: path);
+          try {
+            workspace.controller.updateActiveText(source);
+            expect(await workspace.controller.saveActive(), isTrue);
+          } finally {
+            workspace.dispose();
+          }
+          final reopened = await DocumentHistoryHarness.create(path: path);
+          try {
+            return reopened.buffer.text;
+          } finally {
+            reopened.dispose();
+          }
+        });
+        final document = _parser
+            .parse(
+              filePath: path,
+              source: saved!,
+              mode: MarkdownMode.writersideMarkdown,
+            )
+            .busyDocument;
+        final attrs = document.blocks
+            .singleWhere((b) => b.kind == BusyBlockKind.video)
+            .attributes;
+        expect(attrs['src'], '../images/clip.mp4?v=2#t=4');
+        expect(attrs['preview-src'], '../images/poster.png?v=a%26b#detail%202');
+        for (final (key, expected) in [('src', video), ('preview-src', png)]) {
+          final local = Uri.file(
+            path,
+          ).resolve(attrs[key]!).replace(query: '', fragment: '');
+          expect(
+            File(
+              Uri(scheme: 'file', path: local.path).toFilePath(),
+            ).readAsBytesSync(),
+            expected,
+          );
+        }
+
+        final staleDirectory = Directory('${root.path}/stale')..createSync();
+        final published = <IngestedAsset>[];
+        final rolledBack = <IngestedAsset>[];
+        final resume = Completer<void>();
+        addTearDown(() {
+          if (!resume.isCompleted) resume.complete();
+        });
+        var staleSource = 'Target\n';
+        await mount(
+          tester,
+          'stale-video-poster-target',
+          staleSource,
+          (value) => staleSource = value,
+          registry: registry,
+          filePath: '${staleDirectory.path}/target.md',
+          assetWorkspaceKind: AssetWorkspaceKind.standalone,
+          assetIngestionService: AssetIngestionService(
+            hooks: AssetIngestionHooks(
+              afterPublication: (asset) async {
+                published.add(asset);
+                if (published.length == 2) await resume.future;
+              },
+              afterRollback: (asset) async => rolledBack.add(asset),
+            ),
+          ),
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        ClipboardPasteResult? staleResult;
+        unawaited(registry.paste(payload).then((value) => staleResult = value));
+        await waitForImageIo(
+          tester,
+          () => published.length == 2,
+          operation: 'video and poster published before target changes',
+        );
+        final controller = tester
+            .widget<TextField>(find.byType(TextField).first)
+            .controller!;
+        controller.selection = const TextSelection.collapsed(offset: 2);
+        resume.complete();
+        await waitForImageIo(
+          tester,
+          () => staleResult != null,
+          operation: 'stale video and poster paste rolls back',
+        );
+        expect(staleResult, ClipboardPasteResult.staleTarget);
+        expect(staleSource, 'Target\n');
+        expect(
+          rolledBack.map((asset) => asset.absolutePath),
+          unorderedEquals(published.map((asset) => asset.absolutePath)),
+        );
+        expect(
+          published.every((asset) => !File(asset.absolutePath).existsSync()),
+          isTrue,
+        );
+      },
+    );
 
     testWidgets('image paste cancellation is terminal and cleans new assets', (
       tester,
@@ -5074,7 +6498,7 @@ class _WysiwygHistoryClipboard extends RichClipboardService {
   RichClipboardData value;
 
   @override
-  Future<RichClipboardData> read() async => value;
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async => value;
 }
 
 class _ClipboardMathHost implements WebRenderHost {

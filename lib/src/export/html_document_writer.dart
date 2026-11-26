@@ -5,7 +5,9 @@ import 'package:html/parser.dart' as parser;
 import 'package:path/path.dart' as p;
 import '../markdown/busymark_document.dart';
 import '../core/path_utils.dart';
+import '../core/uri_utils.dart';
 import '../markdown/raw_html_policy.dart';
+import '../markdown/semantic_html_inline.dart';
 import '../visualization/visualization_models.dart';
 import '../writerside/writerside_document.dart';
 import 'html_export_links.dart';
@@ -865,7 +867,8 @@ class HtmlDocumentWriter {
             attrs: {if (description != null) 'title': description},
           );
         case BusyInlineKind.strikethrough:
-          node = _el('del', children: nodes);
+          node = (semanticHtmlInlineElement(value) ?? dom.Element.tag('del'))
+            ..nodes.addAll(nodes);
         case BusyInlineKind.writersideControl:
           node = _el('strong', children: nodes);
         case BusyInlineKind.writersidePath:
@@ -919,8 +922,12 @@ class HtmlDocumentWriter {
         case BusyInlineKind.math:
           node = await _math(value.text, false, block);
         case BusyInlineKind.html:
-          out.addAll(await _raw(value.text, block));
-          continue;
+          final element = semanticHtmlInlineElement(value);
+          if (element == null) {
+            out.addAll(await _raw(value.text, block, inherited: a));
+            continue;
+          }
+          node = element..nodes.addAll(nodes);
         case BusyInlineKind.writersideVariable:
         case BusyInlineKind.unknown:
           _warn(
@@ -932,6 +939,9 @@ class HtmlDocumentWriter {
       }
       if (node is dom.Element && value.kind != BusyInlineKind.link) {
         _attributes(node, value.attributes);
+        if (node.attributes.remove('cite') case final cite?) {
+          await _setCitation(node, cite, block, a);
+        }
       }
       if (value.attributes['switcher-key'] case final key?) {
         node = _el('span', children: [dom.Text('[$key] '), node]);
@@ -972,7 +982,12 @@ class HtmlDocumentWriter {
         ],
       );
     }
-    final image = _el('img', attrs: {'src': url, 'alt': alt});
+    final reference = Uri.parse(src.trim());
+    final imageUrl = links.assets.ownsEmbeddedUrl(url)
+        // Keep the suffix outside the encoded image bytes.
+        ? (reference.hasFragment ? '$url#${reference.fragment}' : url)
+        : withReferenceSuffix(Uri.parse(url), reference).toString();
+    final image = _el('img', attrs: {'src': imageUrl, 'alt': alt});
     if (a['title'] case final title?) image.attributes['title'] = title;
     _dimension(image, a['width'], 'width');
     _dimension(image, a['height'], 'height');
@@ -1022,7 +1037,11 @@ class HtmlDocumentWriter {
 
   /// Narrow HTML adapter: supported structure survives, attributes never pass
   /// through unchecked. Rejected elements remain visible as escaped source.
-  Future<List<dom.Node>> _raw(String source, BusyBlock block) async {
+  Future<List<dom.Node>> _raw(
+    String source,
+    BusyBlock block, {
+    Map<String, String> inherited = const {},
+  }) async {
     final fragment = parser.parseFragment(source);
     Future<List<dom.Node>> nodes(Iterable<dom.Node> values, int depth) async {
       if (depth > limits.depth) {
@@ -1051,6 +1070,11 @@ class HtmlDocumentWriter {
           continue;
         }
         final attrs = value.attributes.map((k, v) => MapEntry(k.toString(), v));
+        final referenceAttributes = {
+          ...block.attributes,
+          ...inherited,
+          ...attrs,
+        };
         if (attrs.keys.any(
           (name) =>
               name.startsWith('on') ||
@@ -1064,20 +1088,24 @@ class HtmlDocumentWriter {
         }
         if (tag == 'img') {
           out.add(
-            await _image(attrs['src'] ?? '', attrs['alt'] ?? '', {
-              ...block.attributes,
-              ...attrs,
-            }, block),
+            await _image(
+              attrs['src'] ?? '',
+              attrs['alt'] ?? '',
+              referenceAttributes,
+              block,
+            ),
           );
           continue;
         }
         final element = _el(tag, children: await nodes(value.nodes, depth + 1));
         _attributes(element, attrs);
         if (tag == 'a') {
-          final link = await links.resolve(attrs['href'], page, {
-            ...block.attributes,
-            ...attrs,
-          }, line: block.sourceSpan?.startLine ?? 1);
+          final link = await links.resolve(
+            attrs['href'],
+            page,
+            referenceAttributes,
+            line: block.sourceSpan?.startLine ?? 1,
+          );
           if (link != null) {
             element.attributes['href'] = link.url;
             if (link.downloadName case final name?) {
@@ -1090,6 +1118,24 @@ class HtmlDocumentWriter {
           if (!element.children.any((e) => e.localName == 'summary')) {
             element.nodes.insert(0, _el('summary', text: disclosureLabel));
           }
+        }
+        if (tag == 'ol') {
+          if (const {'1', 'a', 'A', 'i', 'I'}.contains(attrs['type'])) {
+            element.attributes['type'] = attrs['type']!;
+          }
+          if (attrs.containsKey('reversed')) {
+            element.attributes['reversed'] = '';
+          }
+        }
+        if (tag == 'data' && attrs['value'] != null) {
+          element.attributes['value'] = attrs['value']!;
+        }
+        if (attrs['cite'] case final cite?) {
+          await _setCitation(element, cite, block, referenceAttributes);
+        }
+        if (const {'time', 'ins', 'del'}.contains(tag) &&
+            attrs['datetime'] != null) {
+          element.attributes['datetime'] = attrs['datetime']!;
         }
         for (final name in switch (tag) {
           'ol' => ['start'],
@@ -1128,6 +1174,22 @@ class HtmlDocumentWriter {
     }
 
     return nodes(fragment.nodes, 0);
+  }
+
+  Future<void> _setCitation(
+    dom.Element element,
+    String value,
+    BusyBlock block,
+    Map<String, String> attributes,
+  ) async {
+    final citation = await links.resolveCitation(
+      element.localName!,
+      value,
+      page,
+      attributes,
+      line: block.sourceSpan?.startLine ?? 1,
+    );
+    if (citation != null) element.attributes['cite'] = citation;
   }
 
   /// OpenAPI already has a structured static representation. Only that output

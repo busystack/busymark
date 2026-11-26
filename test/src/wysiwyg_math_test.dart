@@ -1,5 +1,5 @@
 import '../support/document_history_harness.dart';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/source/source_paste_engine.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
@@ -14,7 +14,7 @@ import 'package:busymark/src/markdown/math_syntax.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:busymark/src/visualization/web_render_host.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -764,7 +764,7 @@ void main() {
             webRenderHostProvider.overrideWithValue(_WysiwygMathHost()),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: SizedBox(
@@ -856,7 +856,7 @@ void main() {
           webRenderHostProvider.overrideWithValue(_WysiwygMathHost()),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
@@ -909,7 +909,7 @@ void main() {
           webRenderHostProvider.overrideWithValue(_WysiwygMathHost()),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
@@ -963,7 +963,7 @@ void main() {
           webRenderHostProvider.overrideWithValue(_WysiwygMathHost()),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: BusyMarkWysiwygEditor(
@@ -1012,7 +1012,7 @@ void main() {
           webRenderHostProvider.overrideWithValue(_WysiwygMathHost()),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: BusyMarkWysiwygEditor(
@@ -1058,7 +1058,7 @@ void main() {
           webRenderHostProvider.overrideWithValue(_WysiwygMathHost()),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: BusyMarkWysiwygEditor(

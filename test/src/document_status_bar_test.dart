@@ -1,9 +1,9 @@
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/workspace/presentation/document_status_bar.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _lfFormat = TextFormatMetadata(
@@ -184,7 +184,7 @@ Future<void> _pumpStatusBar(
 }) {
   return tester.pumpWidget(
     MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: busyMarkLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: buildBusyMarkTheme(
         brightness: Brightness.dark,

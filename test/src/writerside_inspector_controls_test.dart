@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
@@ -12,7 +12,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 BusyDocument parse(String source, bool xml) => xml
@@ -36,7 +36,7 @@ Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
 }
 
 Widget app(Widget child) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: busyMarkLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(
     body: Align(

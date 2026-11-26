@@ -24,3 +24,9 @@ bool isRemoteImageSource(String? source) {
   final scheme = source == null ? null : Uri.tryParse(source.trim())?.scheme;
   return scheme == 'http' || scheme == 'https';
 }
+
+/// Carries a reference's query and fragment when replacing its resource path.
+Uri withReferenceSuffix(Uri replacement, Uri reference) => replacement.replace(
+  query: reference.hasQuery ? reference.query : null,
+  fragment: reference.hasFragment ? reference.fragment : null,
+);

@@ -768,7 +768,7 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
     ).copySync('$tools/build_install_snap_local.sh');
     _writeFixtureFile(
       '$project/pubspec.yaml',
-      'name: busymark\nversion: 0.5.1\nenvironment:\n  flutter: 3.47.5\n',
+      'name: busymark\nversion: 0.5.1\nenvironment:\n  flutter: 3.50.1\n',
     );
     _writeFixtureFile(
       '$project/snap/snapcraft.yaml',
@@ -799,7 +799,7 @@ set -eu
 case "$1" in
   --version)
     test "$2" = --machine
-    printf '{"frameworkVersion":"3.47.5"}\n'
+    printf '{"frameworkVersion":"3.50.1"}\n'
     touch "$STUB_FLUTTER_VERSION_MARKER"
     exit 0 ;;
   pub) test -f "$STUB_FLUTTER_VERSION_MARKER"; exit 0 ;;

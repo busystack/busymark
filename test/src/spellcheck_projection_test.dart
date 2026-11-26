@@ -296,6 +296,25 @@ void main() {
     },
   );
 
+  test('modeled HTML checks prose while leaving key names opaque', () {
+    const source =
+        'Read <mark>wrld</mark> in a <q>quott</q>. '
+        'Press <kbd>Shorcut</kbd>.\n';
+    final document = const MarkdownParser()
+        .parse(filePath: '/semantic.md', source: source, mode: MarkdownMode.gfm)
+        .busyDocument;
+    final rich = const WysiwygSpellingProjector().project(
+      document: document,
+      languageId: 'en-CA',
+      snapshot: _snapshot,
+      documentGeneration: 1,
+    );
+    expect(rich.complete, isTrue, reason: rich.message);
+    final text = rich.runs.map((run) => run.text).join(' ');
+    expect(text, contains('Read wrld in a quott.'));
+    expect(text, isNot(contains('Shorcut')));
+  });
+
   test('live HTML paste preserves prose and maps spelling before a reload', () {
     final html = File(
       'test/fixtures/spelling/pasted_job.html',

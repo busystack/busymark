@@ -1,4 +1,6 @@
 import 'package:path/path.dart' as p;
+import '../core/uri_utils.dart';
+import '../markdown/raw_html_policy.dart';
 import '../writerside/writerside_document.dart';
 import '../writerside/writerside_model.dart';
 import 'html_export_assets.dart';
@@ -81,6 +83,45 @@ class HtmlExportLinks {
       );
       return null;
     }
+  }
+
+  Future<String?> resolveCitation(
+    String tag,
+    String? value,
+    HtmlPage page,
+    Map<String, String> attributes, {
+    required int line,
+  }) async {
+    if (value == null ||
+        sanitizeHtmlAttributes(tag, {'cite': value})?['cite'] == null) {
+      return null;
+    }
+    final resolved = await resolve(value, page, attributes, line: line);
+    if (resolved == null) return null;
+    final reference = Uri.parse(value.trim());
+    if (reference.hasScheme) return resolved.url;
+    if (assets.ownsEmbeddedUrl(resolved.url)) {
+      // A query appended to a data URL becomes part of its encoded bytes.
+      if (reference.hasQuery) {
+        warnings.add(
+          HtmlExportWarning(
+            'link.embedded-query',
+            'A citation query was omitted for a resource embedded in this HTML file.',
+            sourcePath: source(page, attributes),
+            line: line,
+          ),
+        );
+      }
+      return reference.hasFragment
+          ? '${resolved.url}#${reference.fragment}'
+          : resolved.url;
+    }
+    final uri = Uri.parse(resolved.url);
+    return (resolved.downloadName != null
+            ? withReferenceSuffix(uri, reference)
+            // The page resolver already verified and canonicalized its anchor.
+            : uri.replace(query: reference.hasQuery ? reference.query : null))
+        .toString();
   }
 
   Future<HtmlResolvedLink?> _resolve(

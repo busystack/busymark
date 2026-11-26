@@ -5,7 +5,7 @@ import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/visualization/visualization_cache.dart';
 import 'package:busymark/src/visualization/visualization_card.dart';
 import 'package:busymark/src/visualization/visualization_coordinator.dart';
@@ -13,7 +13,7 @@ import 'package:busymark/src/visualization/visualization_models.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:busymark/src/visualization/web_render_host.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -345,7 +345,7 @@ class _App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: busyMarkLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: BusyMarkToastOverlay(
         child: Scaffold(body: SingleChildScrollView(child: child)),

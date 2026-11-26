@@ -774,6 +774,11 @@ void main() {
         addTearDown(() {
           if (!history.release.isCompleted) history.release.complete();
         });
+        // This scenario needs a dirty edit across the refresh. Autosave can
+        // commit it while the refresh is pending, before discard is requested.
+        await h.container
+            .read(appSettingsControllerProvider.notifier)
+            .setAutoSave(false);
         await h.repository.synchronize(_accountId, allowWrites: false);
         await h.controller.openNextcloudWorkspace(_accountId);
         await h.controller.refreshNextcloudNotes();
@@ -782,8 +787,16 @@ void main() {
         h.controller.updateActiveText('discardable local edit');
         remote = serverNote(1, content: 'R', etag: 'refreshed');
         if (!duringDiscard) await h.controller.refreshNextcloudNotes();
+        expect(h.state.activeBuffer!.isDirty, isTrue);
         final discard = h.controller.discardActiveChanges();
-        await history.started.future;
+        expect(
+          await Future.any([
+            history.started.future.then((_) => true),
+            discard.then((_) => false),
+          ]),
+          isTrue,
+          reason: 'Discard must reach protective history capture',
+        );
         if (duringDiscard) await h.controller.refreshNextcloudNotes();
         expect(h.state.activeText, 'discardable local edit');
         expect(h.repository.noteById(id)!.content, 'R');

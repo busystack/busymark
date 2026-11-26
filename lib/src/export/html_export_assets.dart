@@ -25,7 +25,13 @@ class HtmlExportAssets {
   final DocumentMediaContext? media;
   final Map<String, String> _embedded = {};
   final Set<String> _ownedEmbeddedUrls = {};
-  bool ownsEmbeddedUrl(String url) => _ownedEmbeddedUrls.contains(url);
+  bool ownsEmbeddedUrl(String url) {
+    final fragment = url.indexOf('#');
+    return _ownedEmbeddedUrls.contains(
+      fragment == -1 ? url : url.substring(0, fragment),
+    );
+  }
+
   bool get hasExternalAssets =>
       packaging == HtmlPackaging.assetsDirectory && filenames.isNotEmpty;
   final Directory directory;

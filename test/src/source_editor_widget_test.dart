@@ -7,7 +7,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' show BoxHeightStyle;
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -50,7 +50,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,6 +61,87 @@ import '../support/desktop_focus.dart';
 import '../support/document_history_harness.dart';
 
 void main() {
+  testWidgets('A03 read-only Source History paste cannot stage an image', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-readonly-source-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    final captures = <BusyMarkClipboardCapture>[];
+    var source = 'Protected\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: _SourceTestClipboard(),
+      readOnly: true,
+      registry: registry,
+      filePath: '${root.path}/topic.md',
+      workspaceRoot: root.path,
+      onChanged: (value, _) => source = value,
+      onCaptured: captures.add,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'image',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.image,
+      text: 'panel.svg',
+      external: true,
+      imageBytes: utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      ),
+    );
+    final available = registry.canPaste(payload);
+    final outcome = await tester.runAsync(() => registry.paste(payload));
+    await tester.pumpAndSettle();
+    expect(
+      (
+        available,
+        outcome,
+        source,
+        controller.text,
+        captures.length,
+        root.listSync(recursive: true).whereType<File>().length,
+      ),
+      (
+        false,
+        ClipboardPasteResult.unavailable,
+        'Protected\n',
+        'Protected\n',
+        0,
+        0,
+      ),
+    );
+  });
+
+  testWidgets('A11 pending Source Copy keeps the original document origin', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(delayWrite: true);
+    final captures = <BusyMarkClipboardCapture>[];
+    Future<TextEditingController> mount(String text, String path) =>
+        _pumpClipboardSourceEditor(
+          tester,
+          source: text,
+          filePath: path,
+          clipboard: clipboard,
+          onCaptured: captures.add,
+          editorKey: const ValueKey('reused-source-copy'),
+        );
+    final controller = await mount('Document A', '/one/a.md');
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 10);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyC);
+    expect(clipboard.writes.single.origin?.documentPath, '/one/a.md');
+    expect(captures, isEmpty);
+    await mount('Document B', '/two/b.md');
+    clipboard.releaseWrite();
+    await tester.pumpAndSettle();
+    expect(clipboard.writes.single.text, 'Document A');
+    expect(captures.single.origin?.documentPath, '/one/a.md');
+  });
+
   for (final wrap in [false, true]) {
     testWidgets(
       'merged Source document swap retains focus scroll protection wrap=$wrap',
@@ -164,7 +245,7 @@ void main() {
       });
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: BusyMarkSourceEditor(
@@ -203,7 +284,7 @@ void main() {
           var edits = 0;
           await tester.pumpWidget(
             MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: busyMarkLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: BusyMarkSourceEditor(
@@ -288,7 +369,7 @@ void main() {
     (tester) async {
       final key = GlobalKey<BusyMarkSourceEditorState>();
       Widget host(String id) => MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -329,7 +410,7 @@ void main() {
     (tester) async {
       var base = const DocumentEditBase('abc', 0);
       Widget host({required bool wrap}) => MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -405,7 +486,7 @@ void main() {
     var accept = false;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -459,7 +540,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: BusyMarkSourceEditor(
@@ -569,7 +650,7 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Consumer(
@@ -659,7 +740,7 @@ void main() {
         const source = 'cat cat';
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: DocumentReadOnlyScope(
@@ -814,7 +895,7 @@ void main() {
           var text = lookupFinished ? 'dog cat cat' : 'cat cat cat';
           await tester.pumpWidget(
             MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: busyMarkLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: StatefulBuilder(
@@ -913,7 +994,7 @@ void main() {
       var currentText = List.filled(count, 'cat').join(' ');
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: StatefulBuilder(
@@ -1006,7 +1087,7 @@ void main() {
     ).first;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -1064,7 +1145,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -1112,7 +1193,7 @@ void main() {
     final key = GlobalKey<BusyMarkSourceEditorState>();
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -1212,7 +1293,7 @@ void main() {
         );
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: busyMarkLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: SizedBox(
@@ -1374,7 +1455,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -1523,7 +1604,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
@@ -1603,7 +1684,7 @@ void main() {
       });
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
@@ -1719,7 +1800,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
@@ -1779,7 +1860,7 @@ void main() {
     String? changedText;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -1861,7 +1942,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('ar'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -1910,7 +1991,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -1952,7 +2033,7 @@ void main() {
           '## Next\nTail\n';
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
@@ -2053,7 +2134,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -2088,7 +2169,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('de'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
@@ -2122,7 +2203,7 @@ void main() {
     final en = AppLocalizationsEn();
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
@@ -2171,7 +2252,7 @@ void main() {
       final en = AppLocalizationsEn();
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -2225,7 +2306,7 @@ void main() {
     String? undoText;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: StatefulBuilder(
@@ -2293,7 +2374,7 @@ void main() {
     var currentText = 'a a a';
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: StatefulBuilder(
@@ -2345,7 +2426,7 @@ void main() {
 
     Widget editor({Key? key, Set<String> initialKeys = const {}}) {
       return MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
@@ -2422,7 +2503,7 @@ void main() {
       final source = List.generate(80, (index) => 'Line $index').join('\n');
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
@@ -2501,7 +2582,7 @@ void main() {
       const fontSize = 14.0;
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.dark,
@@ -2588,7 +2669,7 @@ void main() {
     const source = '# Agjpqy\nBody\n';
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -2654,7 +2735,7 @@ void main() {
     var source = '';
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -2746,7 +2827,7 @@ void main() {
     var source = List.generate(80, (index) => 'Line $index').join('\n');
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -2816,7 +2897,7 @@ void main() {
     var source = 'one\ntwo\nthree';
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
@@ -2914,7 +2995,7 @@ void main() {
     final source = List.filled(80, 'long-source-token').join('-');
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
@@ -2958,7 +3039,7 @@ void main() {
     String? changedText;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BusyMarkSourceEditor(
@@ -3064,7 +3145,7 @@ void main() {
     late StateSetter updateHost;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: StatefulBuilder(
@@ -9537,6 +9618,96 @@ void main() {
     );
   });
 
+  testWidgets('Source history persists raw HTML links and ingested assets', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-source-raw-media-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final origin = Directory('${root.path}/origin')..createSync();
+    final destination = Directory('${root.path}/destination')..createSync();
+    final target = File('${destination.path}/target.md');
+    final guide = File('${origin.path}/guide one.md')
+      ..writeAsStringSync('# Guide');
+    const authored =
+        '<div><a href="guide%20one.md?q=a%26b#guide">Guide</a>'
+        '<img src="diagram.svg?v=a%26b#detail%202" alt="Diagram"></div>\n';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '${origin.path}/old.md',
+          source: authored,
+          mode: MarkdownMode.gfm,
+        )
+        .busyDocument;
+    final block = document.blocks.single;
+    final fragment = WysiwygClipboardFragment(
+      sourcePath: document.filePath,
+      mode: document.mode,
+      mediaPaths: {
+        'diagram.svg?v=a%26b#detail%202': '${origin.path}/diagram.svg',
+      },
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: const [],
+          completeBlock: busyMarkWysiwygImmutableBlockSnapshot(block),
+        ),
+      ],
+    );
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    String? output;
+    await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target\n',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: target.path,
+      workspaceRoot: root.path,
+      assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      onChanged: (value, _) => output = value,
+    );
+    final bytes = Uint8List.fromList(
+      utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      ),
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'source-raw-html-media',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.richText,
+      text: 'Guide',
+      sourceText: authored,
+      richFragment: fragment.encode(),
+      mediaBytes: {'diagram.svg?v=a%26b#detail%202': bytes},
+    );
+    expect(
+      await tester.runAsync(() => registry.paste(payload)),
+      ClipboardPasteResult.inserted,
+    );
+    target.writeAsStringSync(output!);
+    final raw = const MarkdownParser()
+        .parse(filePath: target.path, source: target.readAsStringSync())
+        .busyDocument
+        .blocks
+        .singleWhere((value) => value.kind == BusyBlockKind.htmlBlock);
+    expect(
+      raw.rawSource,
+      contains('href="../origin/guide%20one.md?q=a%26b#guide"'),
+    );
+    expect(
+      raw.rawSource,
+      contains('src="../images/diagram.svg?v=a%26b#detail%202"'),
+    );
+    expect(
+      Uri.file(target.path).resolve('../origin/guide%20one.md').toFilePath(),
+      guide.path,
+    );
+    expect(File('${root.path}/images/diagram.svg').readAsBytesSync(), bytes);
+  });
+
   testWidgets('structured history restores a local video into Source', (
     tester,
   ) async {
@@ -10124,7 +10295,7 @@ Future<TextEditingController> _pumpAutocompleteSourceEditor(
   );
   await tester.pumpWidget(
     MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: busyMarkLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: buildBusyMarkTheme(
         brightness: Brightness.dark,
@@ -10190,11 +10361,13 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   AssetInputService? assetInputService,
   AssetIngestionService assetIngestionService = const AssetIngestionService(),
   VoidCallback? onAssetSaveRequired,
+  bool readOnly = false,
+  Key? editorKey,
   Future<LinkDestination?> Function()? onChooseLink,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: busyMarkLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: buildBusyMarkTheme(
         brightness: Brightness.dark,
@@ -10204,34 +10377,37 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
         body: SizedBox(
           width: 900,
           height: 600,
-          child: BusyMarkSourceEditor(
-            onChooseLink: onChooseLink,
-            key: UniqueKey(),
-            text: source,
-            language: SourceSyntaxLanguage.markdown,
-            documentFormat: documentFormat,
-            markdownMode: markdownMode,
-            filePath: filePath,
-            documentId: 'source-document',
-            workspaceRoot: workspaceRoot,
-            assetWorkspaceKind: assetWorkspaceKind,
-            assetInputService: assetInputService,
-            assetIngestionService: assetIngestionService,
-            diagnostics: const [],
-            editorFontSize: 14,
-            wordWrap: true,
-            searchActive: false,
-            searchOptions: const SourceSearchOptions(),
-            onChanged: onChanged ?? (_, _) {},
-            onTransactionalChanged: onTransactionalChanged,
-            onUndo: onUndo,
-            onRedo: onRedo,
-            onOpenSearch: () {},
-            onCloseSearch: () {},
-            clipboardService: clipboard,
-            clipboardInsertionRegistry: registry,
-            onClipboardCaptured: onCaptured,
-            onAssetSaveRequired: onAssetSaveRequired,
+          child: DocumentReadOnlyScope(
+            readOnly: readOnly,
+            child: BusyMarkSourceEditor(
+              onChooseLink: onChooseLink,
+              key: editorKey ?? UniqueKey(),
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              documentFormat: documentFormat,
+              markdownMode: markdownMode,
+              filePath: filePath,
+              documentId: 'source-document',
+              workspaceRoot: workspaceRoot,
+              assetWorkspaceKind: assetWorkspaceKind,
+              assetInputService: assetInputService,
+              assetIngestionService: assetIngestionService,
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onChanged: onChanged ?? (_, _) {},
+              onTransactionalChanged: onTransactionalChanged,
+              onUndo: onUndo,
+              onRedo: onRedo,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              clipboardService: clipboard,
+              clipboardInsertionRegistry: registry,
+              onClipboardCaptured: onCaptured,
+              onAssetSaveRequired: onAssetSaveRequired,
+            ),
           ),
         ),
       ),
@@ -10339,7 +10515,7 @@ class _SourceTestClipboard extends RichClipboardService {
   }
 
   @override
-  Future<RichClipboardData> read() async {
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async {
     reads++;
     if (!readStarted.isCompleted) readStarted.complete();
     if (delayRead) await _readRelease.future;

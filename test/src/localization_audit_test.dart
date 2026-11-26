@@ -1,17 +1,41 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/diagnostic_localizations.dart';
 import 'package:busymark/src/app/app_locale.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('standalone Material loads Arabic controls and direction', (
+    tester,
+  ) async {
+    for (final locale in AppLocalizations.supportedLocales) {
+      expect(GlobalMaterialLocalizations.delegate.isSupported(locale), isTrue);
+    }
+    const homeKey = ValueKey('localized-home');
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
+        home: const SizedBox.shrink(key: homeKey),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final context = tester.element(find.byKey(homeKey));
+    expect(
+      MaterialLocalizations.of(context),
+      isA<GlobalMaterialLocalizations>(),
+    );
+    expect(Directionality.of(context), TextDirection.rtl);
+  });
+
   test('production Dart does not hardcode obvious user-facing strings', () {
     const patterns = <_LiteralPattern>[
       _LiteralPattern('Text literal', r"\bText\(\s*'([^']*[A-Z][^']*)'"),
@@ -804,7 +828,7 @@ void main() {
     late String localized;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: busyMarkLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) {

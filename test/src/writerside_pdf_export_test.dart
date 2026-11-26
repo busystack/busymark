@@ -992,6 +992,9 @@ void main() {
 }
 
 String? _bundledTypstCompiler() {
+  final configuredCompiler = const TypstCompilerLocator().locate();
+  if (configuredCompiler != null) return configuredCompiler;
+
   for (final candidate in [
     'build/linux/x64/release/bundle/libexec/busymark/typst',
     'build/linux/x64/debug/bundle/libexec/busymark/typst',

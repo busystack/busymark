@@ -22,6 +22,9 @@ import time
 
 
 import owned_processes as owned
+from native_shutdown import (
+    XFAIL_FLAG, classify, recovery_state, require_affected_engine, require_executable, summarize,
+)
 
 NATIVE_SAVE_SCENARIOS = ('dirty-discard-newer', 'property-save', 'property-invalid')
 
@@ -71,9 +74,10 @@ class LoadedEngine:
                 fd = os.open('root' + self.path, os.O_RDONLY | os.O_CLOEXEC, dir_fd=proc.fd)
                 try:
                     stat = os.fstat(fd)
-                    major, minor = (int(x, 16) for x in rows[0][3].split(':'))
-                    if stat.st_ino != int(rows[0][4]) or stat.st_dev != os.makedev(major, minor):
-                        raise owned.ObservationIncomplete('Engine descriptor does not match the mapped inode/device')
+                    for row in rows:
+                        major, minor = (int(x, 16) for x in row[3].split(':'))
+                        if stat.st_ino != int(row[4]) or stat.st_dev != os.makedev(major, minor):
+                            raise owned.ObservationIncomplete('Engine descriptor does not match the mapped inode/device')
                     if proc.state(tracker.seen[pid])['status'] != 'running':
                         return
                     confinement = proc.read('attr/current').decode().strip()
@@ -297,17 +301,58 @@ class Desktop:
 
 
 def accepted(record):
-    return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors") and not record.get('cleanupErrors') and not record.get('reportingError')
+    return record.get('outcome') in ('PASS', 'XFAIL')
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, expected_engine=None, disposable_display=False):
+def fixture_checks(status, record, scenario, document, expected_document_sha256):
+    if status.get('pid') != record['pid'] or status.get('scenario') != scenario:
+        raise RuntimeError('Close checkpoint does not identify this application and scenario')
+    frame = status.get('readyFrameNumber')
+    frames = status.get('timedFrameNumbersAfterReady', [])
+    if type(frame) is not int or len({n for n in frames if type(n) is int and n > frame}) < 2:
+        raise RuntimeError('Missing post-ready raster frames')
+    required = {
+        'visualization': ('visualizationPublished',),
+        'pending-initialization': ('renderPendingAtCloseDispatch',),
+        'dirty-cancel': ('cancelPreservedWindowAndEdits',),
+        'reopen': ('reopenedContentVerified',),
+        'window-controls': ('windowControlsVerified',),
+        'video': ('decodedChangingVideoObserved',),
+    }
+    if any(status.get(check) is not True for check in required.get(scenario, ())):
+        raise RuntimeError('Missing scenario assertion before shutdown')
+    if scenario.startswith('dirty-') and status.get('editedTextActiveBeforeClose') is not True:
+        raise RuntimeError('Missing active edited document assertion')
+    if scenario.startswith(('dirty-', 'property-')) and not (
+            status.get('document') and isinstance(status.get('expectedText'), str)):
+        raise RuntimeError('Missing persisted document assertion')
+    if scenario in ('visualization', 'reopen') and not status.get('document'):
+        raise RuntimeError('Missing observed document')
+    if status.get('document'):
+        reopened_path = Path(status['document'])
+        record['documentSHA256'] = hashlib.sha256(reopened_path.read_bytes()).hexdigest()
+        if scenario == 'reopen' and (reopened_path != document
+                                    or record['documentSHA256'] != expected_document_sha256):
+            raise RuntimeError('Reopened document differs from the verified saved file')
+    if scenario == 'video' and record.get('decodedChangingVideoObserved') is not True:
+        raise RuntimeError('Missing external video observation')
+    if scenario == 'window-controls' and not record.get('nativeDragDelta'):
+        raise RuntimeError('Missing external window drag observation')
+
+
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None,
+             snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3,
+             expected_engine=None, disposable_display=False, xfail=False, expected_document_sha256=None):
     if scenario == 'window-controls' and not disposable_display:
         raise ValueError('Window drag requires an explicitly disposable desktop')
     record = {"scenario": scenario,
               "command": command, "plainShippingExecutable": plain,
               "observationInterpreter": sys.executable, "exitCode": None,
-              "applicationStarted": False}
+              "applicationStarted": False, 'normalShutdownRequested': False,
+              'functionalChecksPassed': False, 'forcedTermination': False, 'timedOut': False}
     tracker = desktop = process = log = probe = temporary_alias = alias_identity = None
+    application_log = ''
+    close_log_offset = 0
     discard_lock = None
     phase = 'setup'
     def cleanup_error(stage, error):
@@ -357,6 +402,19 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             record['controlledPendingHarness'] = True
         phase = 'observer initialization'
         probe = LoadedEngine(expected_engine) if expected_engine is not None else None
+        recovery = application_profile / 'data/io.busystack.busymark/recovery.json'
+        _, initial_recovery = recovery_state(recovery) if xfail else (None, None)
+        if xfail:
+            if snap_instance:
+                revision = (Path('/snap') / snap_instance / 'current').resolve(strict=True)
+                executable = revision / 'busymark'
+                installed_engine = (revision / 'lib/libflutter_linux_gtk.so').stat()
+            else:
+                executable = Path(command[0])
+            if executable.name != 'busymark' or probe is None:
+                raise RuntimeError('The shutdown exception requires the BusyMark executable and an expected engine')
+            require_affected_engine(probe.expected)
+            expected_executable = executable.stat()
         tracker = owned.ChildTracker()
         desktop = Desktop() if plain or scenario in ('video', 'window-controls', *NATIVE_SAVE_SCENARIOS) else None
         phase = 'log opening'
@@ -382,6 +440,9 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             tracker.scan()
             if probe is not None:
                 probe.capture(tracker)
+                if xfail and probe.fd is not None and not record.get('verifiedApplicationProcess'):
+                    require_executable(tracker, expected_executable)
+                    record['verifiedApplicationProcess'] = True
             if tracker.errors:
                 raise owned.ObservationIncomplete("Child observation is incomplete")
             if plain and not close_sent:
@@ -392,8 +453,8 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                         record['confinement'] = confinement
                         if f'snap.{snap_instance}.busymark' not in confinement or '(enforce)' not in confinement:
                             raise RuntimeError('Expected genuine strict Snap confinement')
+                    close_log_offset = os.fstat(log.fileno()).st_size
                     desktop.close(w)
-
                     close_sent = True
             if report.exists():
                 try:
@@ -405,6 +466,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                 if status.get('phase') == 'awaiting-native-close' and not close_sent:
                     w = desktop.window(process.pid)
                     if w:
+                        close_log_offset = os.fstat(log.fileno()).st_size
                         desktop.close(w)
                         close_sent = True
                 if status.get('phase') == 'awaiting-discard-lock':
@@ -438,13 +500,15 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                         first_video = sample
             time.sleep(.05)
         if process.poll() is None:
+            record['timedOut'] = True
             raise TimeoutError("Natural application exit deadline expired")
         record["exitCode"] = process.returncode
 
         if (plain or scenario in NATIVE_SAVE_SCENARIOS) and not close_sent:
             raise RuntimeError("Process exited before a verified owned-window close request")
         log.flush()
-        application_log = (folder / 'application.log').read_text(errors='replace')
+        raw_log = (folder / 'application.log').read_bytes()
+        application_log = raw_log.decode(errors='replace')
         record['messengerCleanupWarnings'] = application_log.count('Attempted to set message handler on an FlBinaryMessenger without an engine')
         for failure in ['Failed to shutdown Flutter engine']:
             if failure in application_log:
@@ -452,17 +516,15 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         if scenario == 'pending-initialization' and 'visualization-shutdown initPending=1' not in application_log:
             raise RuntimeError('Initialization finished before native shutdown; pending-initialization boundary was not exercised')
         if plain:
-            recovery = application_profile / 'data/io.busystack.busymark/recovery.json'
-            if recovery.exists():
-                clean_shutdown = json.loads(recovery.read_text())['cleanShutdown']
-                record['durableCleanShutdown'] = clean_shutdown
-                if not clean_shutdown:
-                    raise RuntimeError('Durable clean-shutdown checkpoint missing')
+            record['normalShutdownRequested'] = close_sent
+            clean, checkpoint = recovery_state(recovery)
+            record['durableCleanShutdown'] = clean is True and checkpoint != initial_recovery
         if not plain:
             status = json.loads(report.read_text()) if report.exists() else {}
             record["application"] = status
             if status.get("phase") != "close-requested":
                 raise RuntimeError("Missing normal-close application checkpoint")
+            record['normalShutdownRequested'] = True
             required = {
                 'dirty-discard-newer': ('newerEditVetoedDiscard',),
                 'property-save': ('focusedPropertyDraft', 'propertyIncludedInCloseDecision'),
@@ -473,9 +535,17 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             if status.get("document") and status.get("expectedText") is not None:
                 if Path(status["document"]).read_text() != status["expectedText"]:
                     raise RuntimeError("Save/discard produced incorrect document content")
-            recovery = Path(status["applicationSupport"]) / "recovery.json"
-            if not json.loads(recovery.read_text())["cleanShutdown"]:
-                raise RuntimeError("Durable clean-shutdown checkpoint missing")
+            reported_recovery = Path(status['applicationSupport']) / 'recovery.json'
+            if xfail:
+                fixture_checks(status, record, scenario, document, expected_document_sha256)
+                if reported_recovery.resolve() != recovery.resolve():
+                    raise RuntimeError('Recovery checkpoint is outside the isolated profile')
+            clean, checkpoint = recovery_state(reported_recovery)
+            record['durableCleanShutdown'] = clean is True and checkpoint != initial_recovery
+        if record['durableCleanShutdown'] is not True:
+            raise RuntimeError('Durable clean-shutdown checkpoint missing')
+        record['functionalChecksPassed'] = True
+        application_log = raw_log[close_log_offset:].decode(errors='replace')
         child_deadline = time.monotonic() + child_grace
         while tracker.outstanding(children_only=True) and time.monotonic() < child_deadline:
             time.sleep(.02)
@@ -495,10 +565,12 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             record['exitCode'] = process.poll()
     finally:
         if discard_lock is not None:
-            discard_lock.close()
+            try:
+                discard_lock.close()
+            except BaseException as error:
+                cleanup_error('recovery lock release', error)
         if tracker is not None:
-            # Classify before cleanup. A successful cleanup cannot turn any
-            # failed launch, fatal exit, hang or incomplete observation into a pass.
+            # Record any need for intervention before cleanup.
             try:
                 pending = tracker.outstanding()
                 if pending:
@@ -506,13 +578,16 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                 record['observedIdentities'] = dict(tracker.seen)
                 record['admittedAncestry'] = dict(tracker.admitted_by)
                 record['cleanupOutcomes'], record['unresolvedSurvivors'] = owned.cleanup_owned(tracker, term_grace, kill_grace)
+                record['forcedTermination'] = any(
+                    'sent' in (item.get('term'), item.get('kill'))
+                    for item in record['cleanupOutcomes'])
             except BaseException as error:
                 cleanup_error('owned processes', error)
                 record['unresolvedSurvivors'] = [{'status': 'unavailable', 'error': repr(error)}]
             if process is not None:
                 try:
                     if process.poll() is not None:
-                        process.wait()
+                        record['exitCode'] = process.wait()
                 except BaseException as error:
                     cleanup_error('process reap', error)
             try:
@@ -527,6 +602,10 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                 probe.finish(record, errors)
                 if snap_instance and record.get('loadedEngine', {}).get('confinement') != f'snap.{snap_instance}.busymark (enforce)':
                     errors.append('Expected genuine strict Snap confinement for the mapped engine')
+                if xfail and snap_instance and (record.get('loadedEngine', {}).get('device'),
+                                               record.get('loadedEngine', {}).get('inode')) != (
+                                                   installed_engine.st_dev, installed_engine.st_ino):
+                    errors.append('Mapped engine differs from the installed instance')
                 if errors:
                     record.setdefault('verificationIncomplete', []).extend(errors)
             except BaseException as error:
@@ -549,11 +628,17 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                 temporary_alias.unlink()
             except BaseException as error:
                 cleanup_error('temporary alias', error)
+        classify(record, enabled=xfail, host='busymark', application_log=application_log,
+                 checks_passed=not any(record.get(key) for key in (
+                     'error', 'survivingChildren', 'cleanupRequired', 'cleanupOutcomes', 'verificationIncomplete',
+                     'unresolvedSurvivors', 'cleanupErrors')))
         try:
             with (folder / 'result.json').open('x') as output:
                 output.write(json.dumps(record, indent=2))
         except BaseException as error:
             record['reportingError'] = repr(error)
+            record['outcome'] = 'FAIL'
+            record.pop('expectedFailure', None)
             record.setdefault('error', 'Close observer result publication failed')
             print(f'Close observer result publication failed for {folder}: {error!r}; original failure: {record.get("error")}', file=sys.stderr, flush=True)
     return record
@@ -572,8 +657,12 @@ def main():
     parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "window-controls", *NATIVE_SAVE_SCENARIOS], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
     parser.add_argument("--video", type=Path)
     parser.add_argument("--expected-engine", type=Path, help="Expected official engine ELF library; hash the actual mapped file after exit")
+    parser.add_argument(XFAIL_FLAG, action='store_true', dest='xfail',
+                        help='Allow the verified BusyMark Linux release-engine shutdown abort')
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if args.xfail and not args.expected_engine:
+        parser.error(XFAIL_FLAG + ' requires --expected-engine')
     if 'window-controls' in args.scenarios and not args.disposable_display:
         parser.error('window-controls requires --disposable-display and a window manager')
     if args.video:
@@ -600,23 +689,25 @@ def main():
     for cycle in range(args.cycles):
         for scenario in scenarios:
             profile = root / "profiles" / f"{cycle}-{scenario}" if args.fresh_profile else root / "profile"
-            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, expected_engine=args.expected_engine, disposable_display=args.disposable_display)
+            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, expected_engine=args.expected_engine, disposable_display=args.disposable_display, xfail=args.xfail)
             records.append(record)
-            print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "accepted": accepted(record), "error": record.get("error")}), flush=True)
+            print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "outcome": record['outcome'], "error": record.get("error")}), flush=True)
             if record.get('unresolvedSurvivors') or record.get('verificationIncomplete'):
                 break
             document = record.get('application', {}).get('document')
             if not args.plain and document and accepted(record):
-                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), expected_engine=args.expected_engine)
+                reopened = run_case(
+                    command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout,
+                    snap_instance=args.snap_instance, document=Path(document),
+                    expected_engine=args.expected_engine, xfail=args.xfail,
+                    expected_document_sha256=record.get('documentSHA256'))
                 records.append(reopened)
-                print(json.dumps({'cycle': cycle, 'scenario': scenario + '-reopen', 'exitCode': reopened.get('exitCode'), 'accepted': accepted(reopened), 'error': reopened.get('error')}), flush=True)
+                print(json.dumps({'cycle': cycle, 'scenario': scenario + '-reopen', 'exitCode': reopened.get('exitCode'), 'outcome': reopened['outcome'], 'error': reopened.get('error')}), flush=True)
                 if reopened.get('unresolvedSurvivors') or reopened.get('verificationIncomplete'):
                     break
         if records[-1].get('unresolvedSurvivors') or records[-1].get('verificationIncomplete'):
             break
-    summary = {"runs": len(records), "failures": sum(not accepted(r) for r in records), "records": records}
-    (root / "summary.json").write_text(json.dumps(summary, indent=2))
-    return 1 if summary["failures"] else 0
+    return summarize(root, records, root.name)
 
 
 if __name__ == "__main__":

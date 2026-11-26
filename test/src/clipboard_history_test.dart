@@ -477,7 +477,7 @@ class _FakeClipboardService extends RichClipboardService {
   RichClipboardData value;
 
   @override
-  Future<RichClipboardData> read() async => value;
+  Future<RichClipboardData> read({bool plainTextOnly = false}) async => value;
 }
 
 class _FakeAssetInput extends AssetInputService {

@@ -10,6 +10,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from urllib.parse import urlparse
@@ -17,6 +18,8 @@ from urllib.parse import urlparse
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / 'tools'))
+from native_shutdown import FLUTTER_VERSION, XFAIL_FLAG
 
 
 class OfficialFlutterWorkflowTest(unittest.TestCase):
@@ -32,6 +35,8 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         self.assertEqual((url.scheme, url.netloc), ('https', 'storage.googleapis.com'))
         match = re.fullmatch(r'/flutter_infra_release/releases/stable/linux/flutter_linux_(\d+\.\d+\.\d+)-stable.tar.xz', url.path)
         self.assertIsNotNone(match)
+        project = yaml.safe_load((ROOT / 'pubspec.yaml').read_text())
+        self.assertEqual(project['environment']['flutter'], match[1])
         self.assertRegex(sdk['source-checksum'], r'^sha256/[a-f0-9]{64}$')
         selections = [s['with'] for workflow in [self.workflow, self.native] for job in workflow['jobs'].values()
                       for s in job.get('steps', []) if s.get('uses', '').startswith('subosito/flutter-action@')]
@@ -52,6 +57,21 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             library.write_bytes(b'\x7fELFowned official-payload control')
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
+
+    def test_shutdown_exception_requires_reassessment_on_flutter_upgrade(self):
+        jobs = [job for workflow in (self.workflow, self.native) for job in workflow['jobs'].values()]
+        opted_in = [step for job in jobs for step in job.get('steps', [])
+                    if XFAIL_FLAG in step.get('run', '')]
+        self.assertEqual(len(opted_in), 5)
+        for step in opted_in:
+            script = step['run']
+            self.assertTrue(any(tool in script for tool in (
+                'tools/application_close_smoke.py', 'tools/git_native_smoke.py')))
+            self.assertNotIn('matrix.mode', script)
+            self.assertNotIn('continue-on-error', step)
+        project = yaml.safe_load((ROOT / 'pubspec.yaml').read_text())
+        self.assertEqual(project['environment']['flutter'], FLUTTER_VERSION,
+                         'Reassess the BusyMark Linux shutdown exception on every Flutter upgrade')
 
     def test_snap_declares_both_packaged_pinentry_frontends(self):
         packages = set(self.recipe['parts']['busymark']['stage-packages'])
@@ -165,7 +185,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 env = {key: value for key, value in os.environ.items()
                        if not key.startswith('BUSYMARK_')}
                 env.update(PATH=str(spy.parent) + ':/usr/bin:/bin', HOME=str(root),
-                           BUILD_CALLS=str(calls), SPY_VERSION='0.0.0' if case == 'wrong-version' else '3.47.5',
+                           BUILD_CALLS=str(calls), SPY_VERSION='0.0.0' if case == 'wrong-version' else '3.50.1',
                            BUSYMARK_BUILD_TMP_ROOT=str(root / 'tmp'))
                 if case != 'default':
                     env['BUSYMARK_FLUTTER_BIN'] = {
@@ -182,7 +202,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 if case in ['missing', 'nonexecutable', 'wrong-version']:
                     self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
                     self.assertEqual(observed, [['--version', '--machine']] if case == 'wrong-version' else [])
-                    self.assertIn('official Flutter 3.47.5', result.stderr)
+                    self.assertIn('official Flutter 3.50.1', result.stderr)
                 else:
                     self.assertEqual(result.returncode, 77, result.stdout + result.stderr)
                     self.assertEqual(observed, [['--version', '--machine'], ['pub', 'get', '--enforce-lockfile']])
@@ -679,6 +699,13 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
         self.assertEqual(len(setup), 1, 'Parallel-instance setup must be a shared step')
         setup = setup[0]
         self.assertNotIn('continue-on-error', setup)
+        ordinary = [
+            step for step in steps
+            if re.search(r'\bsnap run (?:--shell )?busymark\b(?!_)', step.get('run', ''))
+        ]
+        self.assertTrue(ordinary)
+        for step in ordinary:
+            self.assertLess(steps.index(step), steps.index(setup), step['name'])
         prerequisite = f"steps.{setup['id']}.outcome == 'success'"
         installs = [step for step in steps
                     if re.search(r'\bsnap install\b[^\n]*--name=', step.get('run', ''))]

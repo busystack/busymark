@@ -9,6 +9,7 @@ namespace {
 constexpr char kChannel[] = "com.busymark.app/rich_clipboard";
 constexpr char kToken[] = "application/x-busymark-token";
 constexpr gsize kMaximumBytes = 16 * 1024 * 1024;
+constexpr gsize kMaximumTokenBytes = 256;
 
 struct Payload {
   std::string text;
@@ -109,13 +110,14 @@ struct Read {
   FlMethodCall* call;
   FlValue* result = fl_value_new_map();
   guint64 generation;
-  guint step = 0;
-  gsize bytes = 0;
+  enum class Step { kToken, kHtml, kText, kDone };
+  Step step;
 
-  Read(SharedHost value, FlMethodCall* request)
+  Read(SharedHost value, FlMethodCall* request, bool plain_text_only)
       : host(std::move(value)),
         call(FL_METHOD_CALL(g_object_ref(request))),
-        generation(host->generation) {}
+        generation(host->generation),
+        step(plain_text_only ? Step::kText : Step::kToken) {}
   ~Read() {
     fl_value_unref(result);
     g_object_unref(call);
@@ -129,18 +131,18 @@ void received(GtkClipboard*, GtkSelectionData* selection, gpointer data) {
   auto* request = static_cast<Read*>(data);
   const gint length = gtk_selection_data_get_length(selection);
   const guchar* bytes = gtk_selection_data_get_data(selection);
-  if (request->current() && length > 0 &&
-      static_cast<gsize>(length) <= kMaximumBytes - request->bytes &&
+  const bool token = request->step == Read::Step::kHtml;
+  const gsize limit = token ? kMaximumTokenBytes : kMaximumBytes;
+  if (request->current() && bytes != nullptr && length > 0 &&
+      static_cast<gsize>(length) <= limit &&
       gtk_selection_data_get_format(selection) == 8) {
     // Some HTML providers include a terminating NUL in the byte count.
     gsize size = length;
     while (size > 0 && bytes[size - 1] == 0) size--;
     if (g_utf8_validate(reinterpret_cast<const char*>(bytes), size, nullptr)) {
-      const char* key = request->step == 1 ? "token" : "html";
       fl_value_set_string_take(
-          request->result, key,
+          request->result, token ? "token" : "html",
           fl_value_new_string_sized(reinterpret_cast<const char*>(bytes), size));
-      request->bytes += size;
     }
   }
   next_read(request);
@@ -150,15 +152,17 @@ void received_text(GtkClipboard*, const gchar* text, gpointer data) {
   auto* request = static_cast<Read*>(data);
   if (request->current() && text != nullptr) {
     const gsize length = strlen(text);
-    if (length <= kMaximumBytes - request->bytes) {
-      fl_value_set_string_take(request->result, "text", fl_value_new_string(text));
+    // Keep an independent bounded fallback if HTML is accepted but unusable.
+    if (length <= kMaximumBytes && g_utf8_validate(text, length, nullptr)) {
+      fl_value_set_string_take(
+          request->result, "text", fl_value_new_string_sized(text, length));
     }
   }
   next_read(request);
 }
 
 void next_read(Read* request) {
-  if (!request->current() || request->step == 3) {
+  if (!request->current() || request->step == Read::Step::kDone) {
     // Never combine representations from different clipboard owners.
     if (!request->current()) {
       fl_value_unref(request->result);
@@ -172,19 +176,24 @@ void next_read(Read* request) {
     delete request;
     return;
   }
-  switch (request->step++) {
-    case 0:
+  switch (request->step) {
+    case Read::Step::kToken:
+      request->step = Read::Step::kHtml;
       gtk_clipboard_request_contents(request->host->clipboard,
                                      gdk_atom_intern_static_string(kToken),
                                      received, request);
       break;
-    case 1:
+    case Read::Step::kHtml:
+      request->step = Read::Step::kText;
       gtk_clipboard_request_contents(request->host->clipboard,
                                      gdk_atom_intern_static_string("text/html"),
                                      received, request);
       break;
-    case 2:
+    case Read::Step::kText:
+      request->step = Read::Step::kDone;
       gtk_clipboard_request_text(request->host->clipboard, received_text, request);
+      break;
+    case Read::Step::kDone:
       break;
   }
 }
@@ -195,7 +204,15 @@ void method_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
   if (strcmp(method, "write") == 0) {
     write_clipboard(host, call);
   } else if (strcmp(method, "read") == 0) {
-    next_read(new Read(host, call));
+    FlValue* args = fl_method_call_get_args(call);
+    FlValue* plain_text =
+        args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_MAP
+            ? fl_value_lookup_string(args, "plainTextOnly")
+            : nullptr;
+    const bool plain_text_only = plain_text != nullptr &&
+        fl_value_get_type(plain_text) == FL_VALUE_TYPE_BOOL &&
+        fl_value_get_bool(plain_text);
+    next_read(new Read(host, call, plain_text_only));
   } else {
     fl_method_call_respond_not_implemented(call, nullptr);
   }

@@ -164,7 +164,12 @@ class SourcePasteEngine {
       destinationFilePath: target.filePath ?? '',
     );
     if (serialized.isEmpty) return null;
-    return _serializeCompleteBlockInsertion(target, context, serialized);
+    return _serializeCompleteBlockInsertion(
+      target,
+      context,
+      serialized,
+      blocks,
+    );
   }
 
   _SourcePlan? _serializeSingleParagraphRangeInsertion(
@@ -213,6 +218,7 @@ class SourcePasteEngine {
     SourcePasteDocumentSnapshot target,
     _StructuredSourceInsertionContext context,
     String serialized,
+    List<BusyBlock> blocks,
   ) {
     final split = _mappedStructuredBlockSplit(target, context);
     if (split == null) return const _SourceTerminalPlan();
@@ -358,10 +364,17 @@ class SourcePasteEngine {
         caretOffset: replacementStart + afterStart + afterInline.sourceOffset,
       );
     }
-    final generated = _restoreGeneratedLineEndings(
+    final bounded = _separateAdjacentPastedLists(
       serialized,
-      context.lineEnding,
+      blocks,
+      context.documentBlocks,
+      target.text,
+      replacementStart,
+      replacementEnd,
+      hasBeforeContent: beforeSource.trim().isNotEmpty,
+      hasAfterContent: afterSource.trim().isNotEmpty,
     );
+    final generated = _restoreGeneratedLineEndings(bounded, context.lineEnding);
     final leadingBreaks = _leadingLineBreaks(generated);
     final trailingBreaks = _trailingLineBreaks(generated);
     final expandedBefore = split.expanded
@@ -1803,6 +1816,7 @@ class SourcePasteEngine {
       headingSource: headingSource,
       inlineContext: inlineMapping.context,
       inlineMappingFailed: inlineMapping.failed,
+      documentBlocks: original.busyDocument.blocks,
     );
   }
 
@@ -2626,6 +2640,71 @@ class SourcePasteEngine {
       List.filled(count, lineEnding).join();
 }
 
+String _separateAdjacentPastedLists(
+  String serialized,
+  List<BusyBlock> incoming,
+  List<BusyBlock> existing,
+  String source,
+  int start,
+  int end, {
+  required bool hasBeforeContent,
+  required bool hasAfterContent,
+}) {
+  String? delimiter(
+    BusyBlock? block, {
+    bool last = false,
+    bool authored = false,
+  }) {
+    if (block == null || block.preserveRaw) return null;
+    final item = block.attributes['busymark-list-form'] == 'markdown'
+        ? (last ? block.children.lastOrNull : block.children.firstOrNull)
+        : block;
+    if (item == null || item.attributes['ordered'] != 'true') return null;
+    // A parsed ordered list may use a canonical model marker. The authored
+    // line still has the delimiter that can merge with the pasted syntax.
+    final match = authored && item.rawSource != null
+        ? RegExp(r'^[ \t]*\d+([.)])(?:[ \t]|$)').firstMatch(item.rawSource!)
+        : null;
+    return match?.group(1) ?? item.attributes['marker']?.split('').lastOrNull;
+  }
+
+  final opening = hasBeforeContent ? null : delimiter(incoming.firstOrNull);
+  final closing = hasAfterContent
+      ? null
+      : delimiter(incoming.lastOrNull, last: true);
+  if (opening == null && closing == null) return serialized;
+  BusyBlock? before;
+  BusyBlock? after;
+  for (final block in existing) {
+    final span = block.sourceSpan;
+    if (span == null) continue;
+    if (span.endOffset <= start) before = block;
+    if (span.startOffset >= end) {
+      after = block;
+      break;
+    }
+  }
+
+  bool joins(BusyBlock? neighbor, String? edge, {required bool before}) {
+    if (edge == null ||
+        edge != delimiter(neighbor, last: before, authored: true)) {
+      return false;
+    }
+    final span = neighbor!.sourceSpan!;
+    return before
+        ? source.substring(span.endOffset, start).trim().isEmpty
+        : source.substring(end, span.startOffset).trim().isEmpty;
+  }
+
+  // Blank lines inside CommonMark lists make them loose. An invisible
+  // block boundary preserves both authored lists when their markers agree.
+  return [
+    if (joins(before, opening, before: true)) '<!-- -->\n\n',
+    serialized,
+    if (joins(after, closing, before: false)) '\n<!-- -->\n',
+  ].join();
+}
+
 class _StructuredSourceInsertionContext {
   const _StructuredSourceInsertionContext({
     required this.start,
@@ -2647,6 +2726,7 @@ class _StructuredSourceInsertionContext {
     this.headingSource,
     this.inlineMappingFailed = false,
     this.inlineContext,
+    this.documentBlocks = const [],
   });
 
   final int start;
@@ -2670,6 +2750,7 @@ class _StructuredSourceInsertionContext {
       headingSource?.openingAtxMarkerRange?.start;
   final bool inlineMappingFailed;
   final _MappedSourceInlineContext? inlineContext;
+  final List<BusyBlock> documentBlocks;
 }
 
 class _HeadingSourceDescriptor {
