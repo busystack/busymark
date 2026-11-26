@@ -1996,11 +1996,13 @@ class MarkdownAstAdapter {
         continue;
       }
       final destinationStart = labelEnd + 2;
+      int? titleStart;
       final destinationEnd = _findClosingDelimiter(
         source,
         destinationStart,
         open: '(',
         close: ')',
+        onTitle: (offset) => titleStart = offset - destinationStart,
       );
       if (destinationEnd == -1) {
         buffer.write(source.substring(imageStart));
@@ -2009,7 +2011,9 @@ class MarkdownAstAdapter {
       final rawDestination = source.substring(destinationStart, destinationEnd);
       buffer
         ..write(source.substring(imageStart, destinationStart))
-        ..write(_protectImageDestination(rawDestination))
+        ..write(
+          _protectImageDestination(rawDestination, titleStart: titleStart),
+        )
         ..write(')');
       index = destinationEnd + 1;
       if (onReplacement != null) {
@@ -2024,6 +2028,7 @@ class MarkdownAstAdapter {
     int start, {
     required String open,
     required String close,
+    void Function(int offset)? onTitle,
   }) {
     var depth = 0;
     var escaped = false;
@@ -2036,6 +2041,19 @@ class MarkdownAstAdapter {
       if (char == '\\') {
         escaped = true;
         continue;
+      }
+      // An unescaped parenthesis inside a quoted Markdown title does not
+      // close the image. Leave the title outside the path-whitespace rewrite.
+      if (onTitle != null &&
+          depth == 0 &&
+          index > start &&
+          (char == '"' || char == "'" || char == '(') &&
+          _imageTitleSeparator.hasMatch(source[index - 1])) {
+        final title = _imageTitleEnding.matchAsPrefix(source, index);
+        if (title != null) {
+          onTitle(index);
+          return title.end;
+        }
       }
       if (char == open) {
         depth += 1;
@@ -2052,35 +2070,32 @@ class MarkdownAstAdapter {
     return -1;
   }
 
-  String _protectImageDestination(String raw) {
+  static final _imageTitleSeparator = RegExp(r'\s');
+  static final _imageTitleEnding = RegExp(
+    r'''(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\((?:\\.|[^)\\])*\))\s*(?=\))''',
+  );
+
+  String _protectImageDestination(String raw, {required int? titleStart}) {
     final trimmed = raw.trim();
-    if (trimmed.isEmpty || !RegExp(r'\s').hasMatch(trimmed)) {
+    if (trimmed.isEmpty ||
+        trimmed.startsWith('<') ||
+        !_imageTitleSeparator.hasMatch(trimmed)) {
       return raw;
     }
-    if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
-      return raw;
-    }
-    final leading = raw.substring(0, raw.indexOf(trimmed));
-    final trailing = raw.substring(leading.length + trimmed.length);
-    final titled = RegExp(
-      r'''^(.+?)(\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))$''',
-    ).firstMatch(trimmed);
-    if (titled != null && _looksLikeImageDestination(titled.group(1)!)) {
-      return '$leading${_encodeImageDestinationWhitespace(titled.group(1)!)}'
-          '${titled.group(2)!}$trailing';
-    }
-    if (!_looksLikeImageDestination(trimmed)) {
-      return raw;
-    }
-    return '$leading${_encodeImageDestinationWhitespace(trimmed)}$trailing';
+    final path = titleStart == null
+        ? trimmed
+        : raw.substring(0, titleStart).trim();
+    if (!_looksLikeImageDestination(path)) return raw;
+    final pathStart = raw.indexOf(path);
+    return raw.replaceRange(
+      pathStart,
+      pathStart + path.length,
+      _encodeImageDestinationWhitespace(path),
+    );
   }
 
   bool _looksLikeImageDestination(String value) {
-    var path = value.trim();
-    if (path.startsWith('<') && path.endsWith('>')) {
-      path = path.substring(1, path.length - 1);
-    }
-    path = path.split('#').first.split('?').first;
+    var path = value.split('#').first.split('?').first;
     try {
       path = Uri.decodeComponent(path);
     } on FormatException {

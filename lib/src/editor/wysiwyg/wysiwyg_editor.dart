@@ -8892,7 +8892,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final normalizedReplacement = replacementText
         .replaceAll('\r\n', '\n')
         .replaceAll('\r', '\n');
-    final activeInlineKinds = _activeInlineKindsAt(first.block.id, first.start);
+    final firstTextOffset = first.sourceFieldText == null
+        ? first.start
+        : busyMarkWysiwygTextOffsetForSourceOffset(first.block, first.start);
+    final activeInlineKinds = _activeInlineKindsAt(
+      first.block.id,
+      firstTextOffset,
+    );
     _reportLiveHistorySession();
     final result = _documentController.replaceTextSelectionWithText(
       firstBlockId: first.block.id,

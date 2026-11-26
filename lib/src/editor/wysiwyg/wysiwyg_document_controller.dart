@@ -4206,6 +4206,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         WritersideEditingAdapter.sourceAttributes(owner).isNotEmpty;
   }
 
+  /// An endpoint offset indexes its captured field source when provided and
+  /// the block's semantic text otherwise. Staged insertion uses a semantic
+  /// result. Direct deletion can request an editable field position.
   BusyWysiwygTextSplitResult? deleteTextSelection({
     required String firstBlockId,
     required int firstStartOffset,
@@ -4357,18 +4360,27 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       ),
     );
     notifyListeners();
-    return BusyWysiwygTextSplitResult(
+    final position = BusyWysiwygTextSplitResult(
       blockId: firstBlockId,
-      offset:
-          returnFieldOffset &&
-              busyMarkWysiwygBlockContainsMath(blockById(firstBlockId)!)
-          ? _serializer.serializeInlineFragment(before).length
-          : firstFieldSource == null
+      offset: firstFieldSource == null
           ? firstStart
           : before.fold<int>(
               0,
               (length, inline) => length + inline.plainText.length,
             ),
+    );
+    return returnFieldOffset
+        ? _fieldPositionForSemanticCaret(position)
+        : position;
+  }
+
+  BusyWysiwygTextSplitResult _fieldPositionForSemanticCaret(
+    BusyWysiwygTextSplitResult position,
+  ) {
+    final block = blockById(position.blockId)!;
+    return BusyWysiwygTextSplitResult(
+      blockId: position.blockId,
+      offset: busyMarkWysiwygFieldOffsetForTextOffset(block, position.offset),
     );
   }
 
@@ -4851,10 +4863,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       staged.dispose();
       return null;
     }
+    final fieldPosition = staged._fieldPositionForSemanticCaret(result);
     _document = staged.document;
     staged.dispose();
     notifyListeners();
-    return result;
+    return fieldPosition;
   }
 
   BusyWysiwygTextSplitResult? replaceTextSelectionWithText({
@@ -4915,7 +4928,35 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         ),
       );
     }
-    final mergedText = staged.blockText(deletion.blockId);
+    final mergedBlock = staged.blockById(deletion.blockId)!;
+    if (busyMarkWysiwygBlockContainsMath(mergedBlock)) {
+      // The deletion boundary is semantic. Insert plain inline content at
+      // that boundary to keep the surviving formula and its source syntax.
+      final inserted = staged.insertStyledBlocksAtSelection(
+        blockId: deletion.blockId,
+        selectionStart: deletion.offset,
+        selectionEnd: deletion.offset,
+        blocks: [
+          for (final line in replacementText.split('\n'))
+            BusyWysiwygStyledBlock(
+              kind: BusyBlockKind.paragraph,
+              text: line,
+              ranges: const [],
+            ),
+        ],
+        replacementScope: replacementScope,
+      );
+      if (inserted == null) {
+        staged.dispose();
+        return null;
+      }
+      final fieldPosition = staged._fieldPositionForSemanticCaret(inserted);
+      _document = staged.document;
+      staged.dispose();
+      notifyListeners();
+      return fieldPosition;
+    }
+    final mergedText = mergedBlock.plainText;
     final insertionOffset = deletion.offset.clamp(0, mergedText.length).toInt();
     final nextText = mergedText.replaceRange(
       insertionOffset,

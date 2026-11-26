@@ -2494,6 +2494,214 @@ void main() {
       },
     );
 
+    for (final (rich, reverse) in [
+      (false, false),
+      (true, false),
+      (false, true),
+      (true, true),
+    ]) {
+      testWidgets(
+        'cross-block formula selection with ${rich ? 'rich' : 'plain'} replacement reverse=$reverse',
+        (tester) async {
+          const field = r'A $x$ Z';
+          const original = '$field\n\nAfter\n';
+          var result = original;
+          await mount(
+            tester,
+            'cross-math-replacement',
+            original,
+            (value) => result = value,
+            providerScope: true,
+            focusFirstField: false,
+            mode: MarkdownMode.gfm,
+          );
+          final nextField = find.widgetWithText(TextField, 'After');
+          if (reverse) {
+            await tester.showKeyboard(nextField);
+          } else {
+            await tester.tap(
+              find.byWidgetPredicate(
+                (w) =>
+                    w.key is ValueKey<String> &&
+                    (w.key as ValueKey<String>).value.startsWith(
+                      'wysiwyg-rendered-math-',
+                    ),
+              ),
+            );
+          }
+          await tester.pumpAndSettle();
+          final mathFieldFinder = find.widgetWithText(TextField, field);
+          final from = tester.widget<TextField>(
+            reverse ? nextField : mathFieldFinder,
+          );
+          from.controller!.selection = TextSelection.collapsed(
+            offset: reverse ? 1 : field.indexOf('Z'),
+          );
+          final arrow = reverse
+              ? LogicalKeyboardKey.arrowLeft
+              : LogicalKeyboardKey.arrowRight;
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(arrow);
+          await tester.pump();
+          expect(
+            from.controller!.selection.textInside(from.controller!.text),
+            reverse ? 'A' : 'Z',
+          );
+          await tester.sendKeyEvent(arrow);
+          await tester.pumpAndSettle();
+          final to = tester.widget<TextField>(
+            reverse ? mathFieldFinder : nextField,
+          );
+          expect(to.focusNode!.hasFocus, isTrue);
+          expect(
+            to.controller!.selection.extentOffset,
+            reverse ? field.length : 0,
+          );
+          await tester.sendKeyEvent(arrow);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pump();
+          expect(
+            to.controller!.selection.extentOffset,
+            reverse ? field.indexOf('Z') : 1,
+          );
+          await key(tester, LogicalKeyboardKey.keyC);
+          expect(systemData['text'], 'Z\n\nA');
+
+          systemData = {'text': 'X', if (rich) 'html': '<strong>X</strong>'};
+          await key(tester, LogicalKeyboardKey.keyV, shift: !rich);
+
+          final expected = rich ? r'A $x$ **X**fter' : r'A $x$ Xfter';
+          expect(result, '$expected\n');
+          final replacement = tester.widget<TextField>(
+            find.widgetWithText(TextField, expected),
+          );
+          expect(replacement.focusNode!.hasFocus, isTrue);
+          expect(
+            replacement.controller!.selection,
+            TextSelection.collapsed(offset: expected.indexOf('fter')),
+          );
+          if (!reverse) {
+            final saved = result;
+            final reopened = await tester.runAsync(() async {
+              final dir = await Directory.systemTemp.createTemp(
+                'busymark-formula-paste-',
+              );
+              try {
+                final file = await File(
+                  p.join(dir.path, 'topic.md'),
+                ).writeAsString(original);
+                final writer = await DocumentHistoryHarness.create(
+                  path: file.path,
+                );
+                try {
+                  writer.controller.updateActiveText(saved);
+                  expect(await writer.controller.saveActive(), isTrue);
+                } finally {
+                  writer.dispose();
+                }
+                final reader = await DocumentHistoryHarness.create(
+                  path: file.path,
+                );
+                try {
+                  return _parser
+                      .parse(
+                        filePath: file.path,
+                        source: reader.buffer.text,
+                        mode: MarkdownMode.gfm,
+                      )
+                      .busyDocument;
+                } finally {
+                  reader.dispose();
+                }
+              } finally {
+                await dir.delete(recursive: true);
+              }
+            });
+            final paragraph = reopened!.blocks.single;
+            expect(paragraph.plainText, 'A x Xfter');
+            expect(
+              paragraph.inlines
+                  .singleWhere((i) => i.kind == BusyInlineKind.math)
+                  .text,
+              'x',
+            );
+            expect(
+              paragraph.inlines
+                  .where((i) => i.kind == BusyInlineKind.strong)
+                  .map((i) => i.plainText),
+              rich ? ['X'] : isEmpty,
+            );
+          }
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(result, original);
+        },
+      );
+    }
+
+    for (final (table, rich) in [
+      (false, false),
+      (false, true),
+      (true, false),
+      (true, true),
+    ]) {
+      testWidgets(
+        'formula field selection replacement table=$table rich=$rich',
+        (tester) async {
+          const field = r'A $x$ Z tail';
+          String source(String value) =>
+              table ? '| Value |\n| --- |\n| $value |\n' : '$value\n';
+          final original = source(field);
+          var result = original;
+          await mount(
+            tester,
+            'local-math-replacement',
+            original,
+            (value) => result = value,
+            providerScope: true,
+            focusFirstField: false,
+            mode: MarkdownMode.gfm,
+          );
+          await tester.tap(
+            find.byWidgetPredicate(
+              (w) =>
+                  w.key is ValueKey<String> &&
+                  (w.key as ValueKey<String>).value.startsWith(
+                    'wysiwyg-rendered-math-',
+                  ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final editable = tester.widget<TextField>(
+            find.widgetWithText(TextField, field),
+          );
+          editable.controller!.selection = TextSelection.collapsed(
+            offset: field.indexOf('Z') + 1,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pump();
+          expect(editable.controller!.selection.textInside(field), 'Z');
+
+          systemData = {'text': 'X', if (rich) 'html': '<strong>X</strong>'};
+          await key(tester, LogicalKeyboardKey.keyV, shift: !rich);
+
+          final expected = rich ? r'A $x$ **X** tail' : r'A $x$ X tail';
+          expect(result, source(expected));
+          final replacement = tester.widget<TextField>(
+            find.widgetWithText(TextField, expected),
+          );
+          expect(replacement.focusNode!.hasFocus, isTrue);
+          expect(
+            replacement.controller!.selection,
+            TextSelection.collapsed(offset: expected.indexOf(' tail')),
+          );
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(result, original);
+        },
+      );
+    }
+
     for (final (table, math) in [(true, true), (false, true), (true, false)]) {
       for (final origin in ['native', 'external', 'history']) {
         testWidgets(

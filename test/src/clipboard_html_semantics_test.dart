@@ -75,6 +75,127 @@ Future<String> _export(String source) async {
 }
 
 void main() {
+  test(
+    'Markdown regeneration retains an image destination and title',
+    () async {
+      const source = 'Before ![Alt](<image).png> "Image title") After\n';
+      final document = _parse(source);
+      final paragraph = document.blocks.single;
+      List<String?> reference(BusyBlock block) {
+        final image = block.inlines.singleWhere(
+          (inline) => inline.kind == BusyInlineKind.image,
+        );
+        return [image.destination, image.attributes['title']];
+      }
+
+      expect(reference(paragraph), ['image).png', 'Image title']);
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      controller.updateBlockText(
+        paragraph.id,
+        '${paragraph.plainText} changed',
+      );
+      final regenerated = controller.markdown;
+      final dir = await Directory.systemTemp.createTemp(
+        'busymark-image-target-',
+      );
+      addTearDown(() => dir.delete(recursive: true));
+      await File('${dir.path}/image).png').create();
+      final file = await File('${dir.path}/topic.md').writeAsString(source);
+      final workspace = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(workspace.dispose);
+      workspace.controller.updateActiveText(regenerated);
+      expect(await workspace.controller.saveActive(), isTrue);
+      final reopened = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(reopened.dispose);
+      for (final markdown in [regenerated, reopened.buffer.text]) {
+        final reparsed = _parse(markdown).blocks.single;
+        expect(reference(reparsed), ['image).png', 'Image title']);
+        expect(reparsed.plainText, 'Before Alt After changed');
+      }
+    },
+  );
+
+  test(
+    'regenerated image and link targets round-trip destinations and titles',
+    () {
+      const authoredTitle = r'"A ) \"quote\" &amp; a &#92; slash"';
+      const title = 'A ) "quote" & a \\ slash';
+      for (final (target, destination) in [
+        (
+          'icons.svg?theme=light&size=2#sprite',
+          'icons.svg?theme=light&size=2#sprite',
+        ),
+        ('image(a(b)c).png', 'image(a(b)c).png'),
+        (r'image\(.png', 'image(.png'),
+        (r'image\).png', 'image).png'),
+        ('<two words.png>', 'two%20words.png'),
+        (r'<image\<inner\>.png>', 'image%3Cinner%3E.png'),
+        (r'<path\\file.png>', 'path%5Cfile.png'),
+        (
+          r'<path%2f%5c \> clip).svg?mode=x&amp;amp;y#svgView(viewBox(0,0,1,2))>',
+          'path%2f%5c%20%3E%20clip).svg?mode=x&amp;y#svgView(viewBox(0,0,1,2))',
+        ),
+        ('<>', ''),
+      ]) {
+        for (final (marker, kind) in [
+          ('!', BusyInlineKind.image),
+          ('', BusyInlineKind.link),
+        ]) {
+          final authored = _parse(
+            'Before $marker[Label]($target $authoredTitle) After',
+          );
+          final editor = BusyMarkWysiwygDocumentController(document: authored);
+          addTearDown(editor.dispose);
+          final paragraph = authored.blocks.single;
+          editor.updateBlockText(paragraph.id, 'Before Label After changed');
+          for (final document in [authored, _parse(editor.markdown)]) {
+            final block = document.blocks.single;
+            final reference = block.inlines.singleWhere(
+              (inline) => inline.kind == kind,
+            );
+            expect(
+              (
+                reference.plainText,
+                reference.destination,
+                reference.attributes['title'],
+              ),
+              ('Label', destination, title),
+              reason: document.source,
+            );
+          }
+        }
+      }
+    },
+  );
+
+  test(
+    'external HTML regenerates Markdown targets with literal URL characters',
+    () {
+      const target = r'figure\path &lt;detail&gt;).svg?scale=%2f#view(1)';
+      const expected = 'figure%5Cpath%20%3Cdetail%3E).svg?scale=%2f#view(1)';
+      final markdown = _paste(
+        '<p>Before <img src="$target" alt="Image" title="Figure title"> and '
+        '<a href="$target" title="Link title">Link</a> After</p>',
+      );
+      final paragraph = _parse(markdown).blocks.single;
+      expect(
+        paragraph.inlines
+            .where((inline) => inline.destination != null)
+            .map(
+              (inline) =>
+                  (inline.kind, inline.destination, inline.attributes['title']),
+            ),
+        [
+          (BusyInlineKind.image, expected, 'Figure title'),
+          (BusyInlineKind.link, expected, 'Link title'),
+        ],
+        reason: markdown,
+      );
+      expect(paragraph.plainText, 'Before Image and Link After');
+    },
+  );
+
   for (final direction in ['ltr', 'auto']) {
     test('A09 table caption resolves its own $direction direction', () {
       final input =

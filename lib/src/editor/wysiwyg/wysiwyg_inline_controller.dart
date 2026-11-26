@@ -41,20 +41,29 @@ String busyMarkWysiwygEditableText(BusyBlock block) {
         return authored;
       }
     }
-    return const BusyMarkMarkdownSerializer().serializeBlock(
-      BusyBlock(
-        id: 'wysiwyg-inline-source',
-        kind: BusyBlockKind.paragraph,
-        inlines: block.inlines,
-        dirty: true,
-      ),
-    );
+    return _serializeEditableInlines(block).source;
   }
   final source =
       block.rawSource ??
       const BusyMarkMarkdownSerializer().serializeBlock(block);
   return source.replaceFirst(RegExp(r'(?:\r\n|\r|\n)$'), '');
 }
+
+BusyMarkSerializedInlineFragment _serializeEditableInlines(
+  BusyBlock block, {
+  int textOffset = 0,
+}) => const BusyMarkMarkdownSerializer().serializeInlineFragmentAtTextOffset(
+  block.inlines,
+  textOffset: textOffset,
+  atBlockStart: true,
+);
+
+/// Projects a semantic caret into a regenerated editable field, closing any
+/// inline delimiters at that boundary before placing the caret.
+int busyMarkWysiwygFieldOffsetForTextOffset(BusyBlock block, int textOffset) =>
+    busyMarkWysiwygBlockContainsMath(block)
+    ? _serializeEditableInlines(block, textOffset: textOffset).sourceOffset
+    : textOffset;
 
 bool _containsImage(List<BusyInline> inlines) => inlines.any(
   (inline) =>
@@ -125,14 +134,10 @@ int busyMarkWysiwygTextOffsetForSourceOffset(
   var bestSourceOffset = 0;
   while (low <= high) {
     final textOffset = low + ((high - low) ~/ 2);
-    final mapped = const BusyMarkMarkdownSerializer()
-        .serializeInlineFragmentAtTextOffset(
-          block.inlines,
-          textOffset: textOffset,
-          atBlockStart: true,
-          readableHardBreakRuns: true,
-        )
-        .sourceOffset;
+    final mapped = _serializeEditableInlines(
+      block,
+      textOffset: textOffset,
+    ).sourceOffset;
     if ((mapped - target).abs() < (bestSourceOffset - target).abs() ||
         ((mapped - target).abs() == (bestSourceOffset - target).abs() &&
             mapped <= target)) {

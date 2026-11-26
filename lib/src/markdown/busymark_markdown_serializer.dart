@@ -1845,14 +1845,41 @@ class BusyMarkMarkdownSerializer {
   String _linkTarget(BusyInline inline) {
     final destination = inline.destination ?? '';
     final title = inline.attributes['title'];
-    if (title == null || title.isEmpty) return destination;
+    final escapedDestination = _markdownLinkDestination(destination);
+    if (title == null || title.isEmpty) return escapedDestination;
     final escapedTitle = title
         .replaceAll('&', '&amp;')
         .replaceAll('\\', '&#92;')
         .replaceAll('"', '\\"')
         .replaceAll('\r', '&#13;')
         .replaceAll('\n', '&#10;');
-    return '$destination "$escapedTitle"';
+    final target = escapedDestination.isEmpty ? '<>' : escapedDestination;
+    return '$target "$escapedTitle"';
+  }
+
+  String _markdownLinkDestination(String destination) {
+    // Encode only characters that cannot be emitted literally. Encoding the
+    // whole URI would also encode existing percent escapes.
+    final escaped = destination
+        .replaceAllMapped(
+          RegExp(r'[\x00-\x20\x7f<>\\]'),
+          (match) => Uri.encodeComponent(match[0]!),
+        )
+        .replaceAll(
+          RegExp(r'&(?=(?:[a-zA-Z][a-zA-Z0-9]*|#[0-9]+|#[xX][0-9a-fA-F]+);)'),
+          '&amp;',
+        );
+    var depth = 0;
+    for (final unit in escaped.codeUnits) {
+      if (unit == 0x28) depth++;
+      if (unit == 0x29) {
+        depth--;
+        if (depth < 0) break;
+      }
+    }
+    return depth == 0
+        ? escaped
+        : escaped.replaceAllMapped(RegExp(r'[()]'), (match) => '\\${match[0]}');
   }
 
   String _mathInline(BusyInline inline) {
