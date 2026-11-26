@@ -20,6 +20,8 @@ import 'wysiwyg_inline_controller.dart';
 const _maxNodes = 10000;
 const _maxDepth = 64;
 
+const maxClipboardFragmentMediaPaths = 256;
+
 class WysiwygClipboardFragment {
   const WysiwygClipboardFragment({
     required this.blocks,
@@ -515,7 +517,7 @@ class _FragmentReader {
 
   Map<String, String> attributes(dynamic value) {
     final entries = map(value);
-    if (entries.length > 256) {
+    if (entries.length > maxClipboardFragmentMediaPaths) {
       throw const FormatException('Too many attributes');
     }
     return Map.unmodifiable({

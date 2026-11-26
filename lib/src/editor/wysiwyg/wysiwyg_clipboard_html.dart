@@ -546,11 +546,7 @@ class _HtmlNormalizer {
             continue;
           }
         }
-        dom.Node text = dom.Text(data);
-        for (final tag in _formattingTags.where(styles.contains)) {
-          text = _element(tag, [text]);
-        }
-        out.add(text);
+        out.add(_styled(dom.Text(data), styles));
         continue;
       }
       if (node is! dom.Element) continue;
@@ -614,16 +610,10 @@ class _HtmlNormalizer {
       }
       if (external && hidden) continue;
       final autoDirection = _resolvedAutoDirection(node);
-      final children = nodes(
-        node.nodes,
-        depth + 1,
-        inherited,
-        preformatted:
-            preformatted || (external && (tag == 'pre' || tag == 'code')),
-      );
-      if (_formattingTags.contains(tag)) tag = 'span';
       if (!isSafeHtmlTag(tag)) {
-        out.addAll(children);
+        out.addAll(
+          nodes(node.nodes, depth + 1, inherited, preformatted: preformatted),
+        );
         continue;
       }
       final attrs = <String, String>{};
@@ -655,11 +645,26 @@ class _HtmlNormalizer {
           attrs[name] = entry.value;
         }
       }
-      final normalized = _element(
-        tag,
-        children,
-        sanitizeHtmlAttributes(tag, attrs) ?? const {},
-      ).._preserveClipboardAutoDirection(autoDirection);
+      final attributes = sanitizeHtmlAttributes(tag, attrs) ?? {};
+      if (_formattingTags.contains(tag)) {
+        if (attributes.isEmpty) {
+          tag = 'span';
+        } else {
+          // This element owns semantic metadata. Its wrapper already supplies
+          // the corresponding style, so do not recreate it on each child.
+          inherited.remove(tag);
+        }
+      }
+      final inlineCode = tag == 'code' && !preformatted;
+      final children = nodes(
+        node.nodes,
+        depth + 1,
+        inlineCode ? const {} : inherited,
+        preformatted:
+            preformatted || (external && (tag == 'pre' || tag == 'code')),
+      );
+      final normalized = _element(tag, children, attributes)
+        .._preserveClipboardAutoDirection(autoDirection);
       if (external &&
           tag == 'a' &&
           !_hasImportedAnchorContent(normalized) &&
@@ -691,10 +696,19 @@ class _HtmlNormalizer {
         // Keep each cell as a block container and retain real tables inside it.
         out.addAll(_layoutContainers(normalized));
       } else {
-        out.add(normalized);
+        // The model reads code as a single text leaf. External styles belong
+        // around that leaf, and its whitespace belongs inside it.
+        out.add(inlineCode ? _styled(normalized, inherited) : normalized);
       }
     }
     return _mergeAdjacentFormatting(out);
+  }
+
+  dom.Node _styled(dom.Node node, Set<String> styles) {
+    for (final tag in _formattingTags.where(styles.contains)) {
+      node = _element(tag, [node]);
+    }
+    return node;
   }
 
   List<dom.Node> _mergeAdjacentFormatting(List<dom.Node> nodes) {

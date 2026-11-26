@@ -5,6 +5,7 @@ import 'package:html/parser.dart' as parser;
 import 'package:path/path.dart' as p;
 import '../markdown/busymark_document.dart';
 import '../core/path_utils.dart';
+import '../core/uri_utils.dart';
 import '../markdown/raw_html_policy.dart';
 import '../markdown/semantic_html_inline.dart';
 import '../visualization/visualization_models.dart';
@@ -981,7 +982,12 @@ class HtmlDocumentWriter {
         ],
       );
     }
-    final image = _el('img', attrs: {'src': url, 'alt': alt});
+    final reference = Uri.parse(src.trim());
+    final imageUrl = links.assets.ownsEmbeddedUrl(url)
+        // Keep the suffix outside the encoded image bytes.
+        ? (reference.hasFragment ? '$url#${reference.fragment}' : url)
+        : withReferenceSuffix(Uri.parse(url), reference).toString();
+    final image = _el('img', attrs: {'src': imageUrl, 'alt': alt});
     if (a['title'] case final title?) image.attributes['title'] = title;
     _dimension(image, a['width'], 'width');
     _dimension(image, a['height'], 'height');

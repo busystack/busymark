@@ -2500,6 +2500,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required int selectionStart,
     required int selectionEnd,
     required List<BusyWysiwygStyledBlock> blocks,
+    String? fieldSource,
   }) {
     final cell = blockById(cellId);
     final table = blockById(tableBlockId);
@@ -2509,6 +2510,27 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final inserted = busyMarkTableCellInlinesFromBlocks([
       for (final block in blocks) busyMarkWysiwygClipboardBlock(block),
     ]);
+    if (fieldSource != null) {
+      if (fieldSource != busyMarkWysiwygEditableText(cell)) return null;
+      final start = selectionStart.clamp(0, fieldSource.length);
+      final end = selectionEnd.clamp(start, fieldSource.length);
+      final inlineSource = _serializer.serializeInlineFragment(inserted);
+      final next = fieldSource.replaceRange(start, end, inlineSource);
+      updateTableCellMarkdownSource(tableBlockId, cellId, next);
+      final updated = blockById(cellId)!;
+      final caret = start + inlineSource.length;
+      return busyMarkWysiwygBlockContainsMath(updated)
+          ? caret
+          : const MarkdownParser()
+                .parseInlineFragment(
+                  source: next.substring(0, caret),
+                  mode: _document.mode,
+                )
+                .fold<int>(
+                  0,
+                  (length, inline) => length + inline.plainText.length,
+                );
+    }
     final start = selectionStart.clamp(0, cell.plainText.length);
     final end = selectionEnd.clamp(start, cell.plainText.length);
     final partition = _partitionInlinesForReplacement(cell.inlines, start, end);
@@ -4190,14 +4212,26 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String lastBlockId,
     required int lastEndOffset,
     required Iterable<String> removedBlockIds,
+    String? firstFieldSource,
+    String? lastFieldSource,
+    bool returnFieldOffset = false,
   }) {
     final firstBlock = blockById(firstBlockId);
     final lastBlock = blockById(lastBlockId);
     if (firstBlock == null || lastBlock == null) {
       return null;
     }
-    final firstText = firstBlock.plainText;
-    final lastText = lastBlock.plainText;
+    if ((firstFieldSource != null &&
+            firstFieldSource != busyMarkWysiwygEditableText(firstBlock)) ||
+        (lastFieldSource != null &&
+            lastFieldSource != busyMarkWysiwygEditableText(lastBlock))) {
+      return null;
+    }
+    final firstText = firstFieldSource ?? firstBlock.plainText;
+    final lastText = lastFieldSource ?? lastBlock.plainText;
+    List<BusyInline> authored(String source) => const MarkdownParser()
+        .parseInlineFragment(source: source, mode: _document.mode);
+
     final firstStart = firstStartOffset.clamp(0, firstText.length).toInt();
     final lastEnd = lastEndOffset.clamp(0, lastText.length).toInt();
     final removedIds = removedBlockIds.toSet();
@@ -4235,17 +4269,32 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       }
       final nextText =
           firstText.substring(0, firstStart) + firstText.substring(lastEnd);
+      final inlines = firstFieldSource == null ? null : authored(nextText);
+      final updated = inlines == null
+          ? _blockWithEditedText(firstBlock, nextText)
+          : firstBlock.copyWith(
+              inlines: inlines,
+              preserveRaw: false,
+              dirty: true,
+            );
       _document = _document.copyWith(
         blocks: _replaceInBlocks(
           _document.blocks,
           firstBlockId,
-          (block) => _blockWithEditedText(block, nextText),
+          (_) => updated,
         ),
       );
       notifyListeners();
       return BusyWysiwygTextSplitResult(
         blockId: firstBlockId,
-        offset: firstStart,
+        offset:
+            firstFieldSource == null ||
+                (returnFieldOffset && busyMarkWysiwygBlockContainsMath(updated))
+            ? firstStart
+            : authored(firstText.substring(0, firstStart)).fold<int>(
+                0,
+                (length, inline) => length + inline.plainText.length,
+              ),
       );
     }
 
@@ -4264,20 +4313,21 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return null;
     }
 
-    final firstPartition = _partitionInlinesForReplacement(
-      firstBlock.inlines,
-      firstStart,
-      firstText.length,
-    );
-    final lastPartition = _partitionInlinesForReplacement(
-      lastBlock.inlines,
-      0,
-      lastEnd,
-    );
-    final mergedInlines = _mergeAdjacentInlineStyles([
-      ...firstPartition.before,
-      ...lastPartition.after,
-    ]);
+    final before = firstFieldSource != null
+        ? (firstStart == firstText.length
+              ? firstBlock.inlines
+              : authored(firstText.substring(0, firstStart)))
+        : _partitionInlinesForReplacement(
+            firstBlock.inlines,
+            firstStart,
+            firstText.length,
+          ).before;
+    final after = lastFieldSource != null
+        ? (lastEnd == 0
+              ? lastBlock.inlines
+              : authored(lastText.substring(lastEnd)))
+        : _partitionInlinesForReplacement(lastBlock.inlines, 0, lastEnd).after;
+    final mergedInlines = _mergeAdjacentInlineStyles([...before, ...after]);
     final mergedText = mergedInlines.map((inline) => inline.plainText).join();
     final removeIds = removedIds.where((id) => id != firstBlockId).toSet();
     _document = _document.copyWith(
@@ -4309,7 +4359,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     notifyListeners();
     return BusyWysiwygTextSplitResult(
       blockId: firstBlockId,
-      offset: firstStart,
+      offset:
+          returnFieldOffset &&
+              busyMarkWysiwygBlockContainsMath(blockById(firstBlockId)!)
+          ? _serializer.serializeInlineFragment(before).length
+          : firstFieldSource == null
+          ? firstStart
+          : before.fold<int>(
+              0,
+              (length, inline) => length + inline.plainText.length,
+            ),
     );
   }
 
@@ -4751,6 +4810,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String lastBlockId,
     required int lastEndOffset,
     required Iterable<String> removedBlockIds,
+    String? firstFieldSource,
+    String? lastFieldSource,
     required List<BusyWysiwygStyledBlock> blocks,
     BusyWysiwygReplacementScope replacementScope =
         BusyWysiwygReplacementScope.documentRange,
@@ -4762,13 +4823,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         selectedIds.contains(firstBlockId) &&
         firstStartOffset <= 0 &&
         (firstBlockId != lastBlockId ||
-            lastEndOffset >= firstBlock.plainText.length);
+            lastEndOffset >=
+                (firstFieldSource?.length ?? firstBlock.plainText.length));
     final staged = BusyMarkWysiwygDocumentController(document: _document);
     final deletion = staged.deleteTextSelection(
       firstBlockId: firstBlockId,
       firstStartOffset: firstStartOffset,
+      firstFieldSource: firstFieldSource,
       lastBlockId: lastBlockId,
       lastEndOffset: lastEndOffset,
+      lastFieldSource: lastFieldSource,
       removedBlockIds: removedBlockIds,
     );
     if (deletion == null) {
@@ -4799,6 +4863,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String lastBlockId,
     required int lastEndOffset,
     required Iterable<String> removedBlockIds,
+    String? firstFieldSource,
+    String? lastFieldSource,
     required String replacementText,
     required Iterable<BusyInlineKind> activeInlineKinds,
     required bool preserveTextWhitespace,
@@ -4815,13 +4881,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         selectedIds.contains(firstBlockId) &&
         firstStartOffset <= 0 &&
         (firstBlockId != lastBlockId ||
-            lastEndOffset >= firstBlock.plainText.length);
+            lastEndOffset >=
+                (firstFieldSource?.length ?? firstBlock.plainText.length));
     final staged = BusyMarkWysiwygDocumentController(document: _document);
     final deletion = staged.deleteTextSelection(
       firstBlockId: firstBlockId,
       firstStartOffset: firstStartOffset,
+      firstFieldSource: firstFieldSource,
       lastBlockId: lastBlockId,
       lastEndOffset: lastEndOffset,
+      lastFieldSource: lastFieldSource,
       removedBlockIds: selectedIds,
     );
     if (deletion == null) {
@@ -5344,7 +5413,7 @@ List<BusyInline> busyMarkWysiwygNormalizeClipboardFormatting(
 ) => _normalizePastedFormatting(
   _mergeAdjacentInlineStyles(inlines),
   0,
-  inlines.fold(0, (length, inline) => length + inline.plainText.length),
+  inlines.fold<int>(0, (length, inline) => length + inline.plainText.length),
 );
 
 List<BusyInline> busyMarkWysiwygClipboardInlineSlice(

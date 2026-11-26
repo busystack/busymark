@@ -61,6 +61,87 @@ import '../support/desktop_focus.dart';
 import '../support/document_history_harness.dart';
 
 void main() {
+  testWidgets('A03 read-only Source History paste cannot stage an image', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-readonly-source-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    final captures = <BusyMarkClipboardCapture>[];
+    var source = 'Protected\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: _SourceTestClipboard(),
+      readOnly: true,
+      registry: registry,
+      filePath: '${root.path}/topic.md',
+      workspaceRoot: root.path,
+      onChanged: (value, _) => source = value,
+      onCaptured: captures.add,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'image',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.image,
+      text: 'panel.svg',
+      external: true,
+      imageBytes: utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      ),
+    );
+    final available = registry.canPaste(payload);
+    final outcome = await tester.runAsync(() => registry.paste(payload));
+    await tester.pumpAndSettle();
+    expect(
+      (
+        available,
+        outcome,
+        source,
+        controller.text,
+        captures.length,
+        root.listSync(recursive: true).whereType<File>().length,
+      ),
+      (
+        false,
+        ClipboardPasteResult.unavailable,
+        'Protected\n',
+        'Protected\n',
+        0,
+        0,
+      ),
+    );
+  });
+
+  testWidgets('A11 pending Source Copy keeps the original document origin', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(delayWrite: true);
+    final captures = <BusyMarkClipboardCapture>[];
+    Future<TextEditingController> mount(String text, String path) =>
+        _pumpClipboardSourceEditor(
+          tester,
+          source: text,
+          filePath: path,
+          clipboard: clipboard,
+          onCaptured: captures.add,
+          editorKey: const ValueKey('reused-source-copy'),
+        );
+    final controller = await mount('Document A', '/one/a.md');
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 10);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyC);
+    expect(clipboard.writes.single.origin?.documentPath, '/one/a.md');
+    expect(captures, isEmpty);
+    await mount('Document B', '/two/b.md');
+    clipboard.releaseWrite();
+    await tester.pumpAndSettle();
+    expect(clipboard.writes.single.text, 'Document A');
+    expect(captures.single.origin?.documentPath, '/one/a.md');
+  });
+
   for (final wrap in [false, true]) {
     testWidgets(
       'merged Source document swap retains focus scroll protection wrap=$wrap',
@@ -10280,6 +10361,8 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   AssetInputService? assetInputService,
   AssetIngestionService assetIngestionService = const AssetIngestionService(),
   VoidCallback? onAssetSaveRequired,
+  bool readOnly = false,
+  Key? editorKey,
   Future<LinkDestination?> Function()? onChooseLink,
 }) async {
   await tester.pumpWidget(
@@ -10294,34 +10377,37 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
         body: SizedBox(
           width: 900,
           height: 600,
-          child: BusyMarkSourceEditor(
-            onChooseLink: onChooseLink,
-            key: UniqueKey(),
-            text: source,
-            language: SourceSyntaxLanguage.markdown,
-            documentFormat: documentFormat,
-            markdownMode: markdownMode,
-            filePath: filePath,
-            documentId: 'source-document',
-            workspaceRoot: workspaceRoot,
-            assetWorkspaceKind: assetWorkspaceKind,
-            assetInputService: assetInputService,
-            assetIngestionService: assetIngestionService,
-            diagnostics: const [],
-            editorFontSize: 14,
-            wordWrap: true,
-            searchActive: false,
-            searchOptions: const SourceSearchOptions(),
-            onChanged: onChanged ?? (_, _) {},
-            onTransactionalChanged: onTransactionalChanged,
-            onUndo: onUndo,
-            onRedo: onRedo,
-            onOpenSearch: () {},
-            onCloseSearch: () {},
-            clipboardService: clipboard,
-            clipboardInsertionRegistry: registry,
-            onClipboardCaptured: onCaptured,
-            onAssetSaveRequired: onAssetSaveRequired,
+          child: DocumentReadOnlyScope(
+            readOnly: readOnly,
+            child: BusyMarkSourceEditor(
+              onChooseLink: onChooseLink,
+              key: editorKey ?? UniqueKey(),
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              documentFormat: documentFormat,
+              markdownMode: markdownMode,
+              filePath: filePath,
+              documentId: 'source-document',
+              workspaceRoot: workspaceRoot,
+              assetWorkspaceKind: assetWorkspaceKind,
+              assetInputService: assetInputService,
+              assetIngestionService: assetIngestionService,
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onChanged: onChanged ?? (_, _) {},
+              onTransactionalChanged: onTransactionalChanged,
+              onUndo: onUndo,
+              onRedo: onRedo,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              clipboardService: clipboard,
+              clipboardInsertionRegistry: registry,
+              onClipboardCaptured: onCaptured,
+              onAssetSaveRequired: onAssetSaveRequired,
+            ),
           ),
         ),
       ),

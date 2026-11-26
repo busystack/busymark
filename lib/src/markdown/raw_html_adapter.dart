@@ -104,34 +104,76 @@ class RawHtmlAdapter {
     return fragment;
   }
 
-  /// Returns the exclusive source line boundary of a complete block link.
-  /// The caller has identified a line beginning with a candidate anchor.
-  int? standaloneBlockLinkEnd(String source, int start, int firstLineEnd) {
+  static final _containerStart = RegExp(
+    r'[ \t]{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+  );
+
+  /// Finds an authored container's closing line without interpreting tag-like
+  /// attribute values, comments, or raw-text contents as markup.
+  int? rawHtmlContainerEnd(String source, int start, int firstLineEnd) {
+    final candidate = _containerStart
+        .matchAsPrefix(source, start)
+        ?.group(1)
+        ?.toLowerCase();
+    if (candidate == null ||
+        voidHtmlTags.contains(candidate) ||
+        (candidate != 'a' &&
+            !isSafeBlockHtmlTag(candidate) &&
+            !isUnsafeHtmlTag(candidate))) {
+      return null;
+    }
+
     var scanEnd = firstLineEnd;
     while (true) {
       final tokenizer = html_tokenizer.HtmlTokenizer(
         source.substring(start, scanEnd),
         generateSpans: true,
       );
-      var opened = false;
+      var balance = 0;
       while (tokenizer.moveNext()) {
         final token = tokenizer.current;
-        if (token is html_token.StartTagToken && token.name == 'a') {
-          if (opened || token.selfClosing) return null;
-          opened = true;
-        } else if (token is html_token.EndTagToken && token.name == 'a') {
-          if (!opened || token.span == null) return null;
-          final closingEnd = start + token.span!.end.offset;
-          final newline = source.indexOf('\n', closingEnd);
+        if (token is html_token.StartTagToken) {
+          if (balance == 0 && token.name != candidate) return null;
+          if (token.name == candidate) {
+            if (candidate == 'a' && (balance > 0 || token.selfClosing)) {
+              return null;
+            }
+            if (!token.selfClosing) balance++;
+          }
+          if (!token.selfClosing) {
+            // The DOM parser normally drives the tokenizer's text states.
+            tokenizer.state = switch (token.name) {
+              'script' => tokenizer.scriptDataState,
+              'title' || 'textarea' => tokenizer.rcdataState,
+              'style' ||
+              'xmp' ||
+              'iframe' ||
+              'noembed' ||
+              'noframes' => tokenizer.rawtextState,
+              'plaintext' => tokenizer.plaintextState,
+              _ => tokenizer.state,
+            };
+          }
+        } else if (token is html_token.EndTagToken &&
+            token.name == candidate &&
+            balance > 0) {
+          balance--;
+        } else {
+          continue;
+        }
+        final span = token.span;
+        if (balance == 0 && span != null) {
+          final newline = source.indexOf('\n', start + span.end.offset);
           final end = newline < 0 ? source.length : newline + 1;
-          return _isStandaloneBlockLink(source.substring(start, end))
-              ? end
-              : null;
+          return candidate == 'a' &&
+                  !_isStandaloneBlockLink(source.substring(start, end))
+              ? null
+              : end;
         }
       }
       if (scanEnd == source.length) return null;
-      // Ordinary inline anchors finish in the first window. Grow the window
-      // geometrically for a multiline link so each prefix has bounded rescans.
+      // Grow geometrically so a closing tag on a later line only requires
+      // bounded rescans of each prefix.
       scanEnd = (start + 2 * (scanEnd - start)).clamp(0, source.length);
     }
   }
@@ -492,12 +534,8 @@ class RawHtmlAdapter {
     String Function() nextId,
   ) {
     final tag = element.localName?.toLowerCase() ?? '';
-    final attributes = sanitizeHtmlAttributes(tag, element.attributes) ?? {};
     final direction = busyMarkResolvedHtmlDirection(element);
-    if (attributes.containsKey('dir')) {
-      attributes.remove('dir');
-      if (direction != null) attributes['dir'] = direction;
-    }
+    final attributes = _blockAttributes(element, direction);
     final children = element.nodes;
     final text = _plainTextFromNodes(children).trim();
 
@@ -627,6 +665,19 @@ class RawHtmlAdapter {
       _applyHtmlDirection(blocks, direction),
       nextId,
     );
+  }
+
+  Map<String, String> _blockAttributes(
+    html.Element element,
+    String? direction,
+  ) {
+    final attributes =
+        sanitizeHtmlAttributes(element.localName ?? '', element.attributes) ??
+        <String, String>{};
+    if (attributes.remove('dir') != null && direction != null) {
+      attributes['dir'] = direction;
+    }
+    return attributes;
   }
 
   List<BusyBlock> _preserveClipboardHtml(
@@ -914,14 +965,18 @@ class RawHtmlAdapter {
     for (final caption in table.children.where(
       (child) => child.localName?.toLowerCase() == 'caption',
     )) {
-      final captionAttributes =
-          sanitizeHtmlAttributes('caption', caption.attributes) ?? const {};
       blocks.add(
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.paragraph,
           inlines: _trimInlineEdges(_inlinesFromNodes(caption.nodes)),
-          attributes: {'htmlTag': 'caption', ...captionAttributes},
+          attributes: {
+            'htmlTag': 'caption',
+            ..._blockAttributes(
+              caption,
+              busyMarkResolvedHtmlDirection(caption),
+            ),
+          },
         ),
       );
     }

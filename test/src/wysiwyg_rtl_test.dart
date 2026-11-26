@@ -18,6 +18,31 @@ import '../support/document_history_harness.dart';
 void main() {
   const parser = MarkdownParser();
 
+  for (final dir in ['ltr', 'rtl']) {
+    for (final columns in [1, 2]) {
+      testWidgets('A12 raw $dir table positions $columns columns', (
+        tester,
+      ) async {
+        final doc = parser
+            .parse(
+              filePath: 'table.md',
+              mode: MarkdownMode.gfm,
+              source:
+                  '<table dir="$dir"><tr><td>First</td>${columns == 2 ? '<td>Second</td>' : ''}</tr></table>',
+            )
+            .busyDocument;
+        await _pumpEditor(tester, doc);
+        expect(tester.takeException(), isNull);
+        expect(find.text('First'), findsOneWidget);
+        if (columns == 2) {
+          final first = tester.getCenter(find.text('First')).dx;
+          final second = tester.getCenter(find.text('Second')).dx;
+          expect(first, dir == 'rtl' ? greaterThan(second) : lessThan(second));
+        }
+      });
+    }
+  }
+
   test('raw HTML preserves inherited and overridden block directions', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

@@ -63,6 +63,10 @@ class BusyMarkClipboardInsertionRegistry extends ChangeNotifier {
     _scheduleNotification();
   }
 
+  void capabilitiesChanged(BusyMarkClipboardInsertionTarget target) {
+    if (identical(_target, target)) _scheduleNotification();
+  }
+
   void _scheduleNotification() {
     if (_notificationScheduled || _disposed) return;
     _notificationScheduled = true;

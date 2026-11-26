@@ -39,6 +39,7 @@ import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../../core/local_image_resolver.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
@@ -325,6 +326,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   String? _sessionSource;
   String? _sessionSourceSignature;
   double? _viewportHeight;
+  bool _clipboardReadOnly = false;
   late final _WysiwygClipboardInsertionTarget _historyInsertionTarget;
   _PendingTextFocus? _pendingTextFocus;
   Object? _focusRestoreRequest;
@@ -621,6 +623,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final readOnly = DocumentReadOnlyScope.of(context);
+    if (readOnly != _clipboardReadOnly) {
+      _clipboardReadOnly = readOnly;
+      widget.clipboardInsertionRegistry?.capabilitiesChanged(
+        _historyInsertionTarget,
+      );
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant BusyMarkWysiwygEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.clipboardInsertionRegistry !=
@@ -862,7 +876,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final blocks = entries.map((entry) => entry.block).toList();
     final blockSelectionActive = _hasBlockSelection;
     final selectionRangesByBlockId = {
-      for (final range in _selectedTextRanges(blocks))
+      for (final range in _selectedTextRanges(
+        inputBlocks: blocks,
+        useFieldCoordinates: true,
+      ))
         range.block.id: BusyMarkWysiwygSelectionRange(
           start: range.start,
           end: range.end,
@@ -6270,6 +6287,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<ClipboardPasteResult> _pasteFromSystemClipboard(
     BusyMarkPasteMode mode,
   ) async {
+    if (_clipboardReadOnly) return ClipboardPasteResult.unavailable;
     if (_hasActiveClipboardComposition) {
       return ClipboardPasteResult.staleTarget;
     }
@@ -6298,6 +6316,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   Future<BusyMarkEditorTextPasteAvailability>
   _readContextMenuPasteAvailability() async {
+    if (_clipboardReadOnly) {
+      return BusyMarkEditorTextPasteAvailability.unavailable;
+    }
     final target = _captureClipboardTarget();
     final first = await _clipboard.read();
     if (!_isClipboardTargetCurrent(target)) {
@@ -6624,7 +6645,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (destination == null) return false;
       _continuousTextEdit = null;
       _clearBlockSelection(collapseFields: false);
-      _emitMarkdown();
+      if (!_emitMarkdown()) return false;
       _focusBlockAfterFrame(destination.blockId, offset: destination.offset);
       return true;
     }
@@ -6641,7 +6662,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _continuousTextEdit = null;
     _clearBlockSelection(collapseFields: false);
-    _emitMarkdown();
+    if (!_emitMarkdown()) return false;
     _focusBlockAfterFrame(result.blockId, offset: result.offset);
     return true;
   }
@@ -6723,7 +6744,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         .max(selection.start, selection.end)
         .clamp(start, controller.text.length)
         .toInt();
-    if (styledBlocks != null && !busyMarkWysiwygBlockContainsMath(cell)) {
+    if (styledBlocks != null) {
       _reportLiveHistorySession();
       final offset = _documentController.insertStyledInlinesInTableCell(
         tableBlockId: tableId,
@@ -6731,12 +6752,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         selectionStart: start,
         selectionEnd: end,
         blocks: styledBlocks,
+        fieldSource: busyMarkWysiwygBlockContainsMath(cell)
+            ? controller.text
+            : null,
       );
       if (offset == null) return false;
       if (origin == _WysiwygTextEditOrigin.paste) {
         _continuousTextEdit = null;
       }
-      _emitMarkdown();
+      if (!_emitMarkdown()) return false;
       _focusTextTargetAfterFrame(cellId, offset: offset);
       return true;
     }
@@ -6751,7 +6775,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _reportLiveHistorySession();
     _updateTableCellFromControllerText(tableId, cellId, nextText);
-    _emitMarkdown();
+    if (!_emitMarkdown()) return false;
     _focusTextTargetAfterFrame(
       cellId,
       offset: start + acceptedReplacement.length,
@@ -7571,7 +7595,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return group;
   }
 
-  void _emitMarkdown({
+  bool _emitMarkdown({
     String? undoGroup,
     bool reportEditingSession = false,
     WysiwygEditorSessionState? beforeSpellingSession,
@@ -7580,7 +7604,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (DocumentReadOnlyScope.of(context)) {
       _documentController.replaceDocument(widget.document);
       setState(() {});
-      return;
+      return false;
     }
     if (undoGroup == null) {
       _continuousTextEdit = null;
@@ -7589,7 +7613,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (live?.sameDocumentVersion(_editBase) == true) _editBase = live!;
     if (widget.readEditBase != null && live != _editBase) {
       synchronizeAuthoritativeState();
-      return;
+      return false;
     }
     final markdown = _documentController.markdown;
     _documentController.rebaseCommittedSource(markdown);
@@ -7627,7 +7651,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           : markdown.replaceFirst(RegExp(r'\n+$'), '');
       if (committed.source != expected) {
         synchronizeAuthoritativeState(force: true);
-        return;
+        return false;
       }
     }
     _editBase = committed ?? DocumentEditBase(markdown, widget.contentRevision);
@@ -7638,6 +7662,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     // in the shared session now, before another edit/traversal can arrive.
     _inspectorRestorePending = false;
     if (reportEditingSession) _reportSessionNow();
+    return true;
   }
 
   /// Read the document authority synchronously after traversal. A parent frame
@@ -8135,105 +8160,56 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   Set<String> _fullySelectedBlockIds(List<BusyBlock> blocks) {
     return {
-      for (final range in _selectedTextRanges(blocks))
+      for (final range in _selectedTextRanges(
+        inputBlocks: blocks,
+        useFieldCoordinates: true,
+      ))
         if (range.coversWholeBlock) range.block.id,
     };
   }
 
-  List<_SelectedTextRange> _selectedTextRanges([
+  List<_SelectedTextRange> _selectedTextRanges({
     List<BusyBlock>? inputBlocks,
     bool includeEmptyRanges = false,
-  ]) {
+    bool useFieldCoordinates = false,
+  }) {
     final selection = _documentSelection;
-    if (selection == null) {
-      return const [];
-    }
+    if (selection == null) return const [];
     final blocks =
         inputBlocks ?? _editableBlocks(_documentController.document.blocks);
-    final startIndex = blocks.indexWhere(
+    final anchorIndex = blocks.indexWhere(
       (block) => block.id == selection.anchor.blockId,
     );
-    final endIndex = blocks.indexWhere(
+    final extentIndex = blocks.indexWhere(
       (block) => block.id == selection.extent.blockId,
     );
-    if (startIndex == -1 || endIndex == -1) {
-      return const [];
-    }
+    if (anchorIndex < 0 || extentIndex < 0) return const [];
     final forward =
-        startIndex < endIndex ||
-        (startIndex == endIndex &&
+        anchorIndex < extentIndex ||
+        (anchorIndex == extentIndex &&
             selection.anchor.offset <= selection.extent.offset);
-    final lower = math.min(startIndex, endIndex);
-    final upper = math.max(startIndex, endIndex);
+    final lower = math.min(anchorIndex, extentIndex);
+    final upper = math.max(anchorIndex, extentIndex);
+    final start = forward ? selection.anchor : selection.extent;
+    final end = forward ? selection.extent : selection.anchor;
     final ranges = <_SelectedTextRange>[];
     for (var index = lower; index <= upper; index++) {
       final block = blocks[index];
-      final textLength = block.plainText.length;
-      final range = _rangeForSelectedBlock(
+      final fieldSource =
+          useFieldCoordinates && busyMarkWysiwygBlockContainsMath(block)
+          ? busyMarkWysiwygEditableText(block)
+          : null;
+      final length = fieldSource?.length ?? block.plainText.length;
+      final from = index == lower ? start.offset.clamp(0, length) : 0;
+      final range = _SelectedTextRange(
         block: block,
-        index: index,
-        startIndex: startIndex,
-        endIndex: endIndex,
-        startOffset: selection.anchor.offset.clamp(0, textLength).toInt(),
-        endOffset: selection.extent.offset.clamp(0, textLength).toInt(),
-        forward: forward,
+        start: from,
+        end: index == upper ? end.offset.clamp(from, length) : length,
+        sourceFieldText: fieldSource,
       );
-      if (range != null && (includeEmptyRanges || !range.isEmpty)) {
-        ranges.add(range);
-      }
+      if (includeEmptyRanges || !range.isEmpty) ranges.add(range);
     }
     return ranges;
-  }
-
-  _SelectedTextRange? _rangeForSelectedBlock({
-    required BusyBlock block,
-    required int index,
-    required int startIndex,
-    required int endIndex,
-    required int startOffset,
-    required int endOffset,
-    required bool forward,
-  }) {
-    final textLength = block.plainText.length;
-    if (startIndex == endIndex) {
-      return _SelectedTextRange(
-        block: block,
-        start: math.min(startOffset, endOffset),
-        end: math.max(startOffset, endOffset),
-      );
-    }
-    if (forward) {
-      if (index == startIndex) {
-        return _SelectedTextRange(
-          block: block,
-          start: startOffset.clamp(0, textLength).toInt(),
-          end: textLength,
-        );
-      }
-      if (index == endIndex) {
-        return _SelectedTextRange(
-          block: block,
-          start: 0,
-          end: endOffset.clamp(0, textLength).toInt(),
-        );
-      }
-    } else {
-      if (index == endIndex) {
-        return _SelectedTextRange(
-          block: block,
-          start: endOffset.clamp(0, textLength).toInt(),
-          end: textLength,
-        );
-      }
-      if (index == startIndex) {
-        return _SelectedTextRange(
-          block: block,
-          start: 0,
-          end: startOffset.clamp(0, textLength).toInt(),
-        );
-      }
-    }
-    return _SelectedTextRange(block: block, start: 0, end: textLength);
   }
 
   List<BusyBlock> _selectedBlocks() {
@@ -8632,7 +8608,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _collapseEmptyDocumentSelection() {
-    final ranges = _selectedTextRanges(null, true);
+    final ranges = _selectedTextRanges(
+      includeEmptyRanges: true,
+      useFieldCoordinates: true,
+    );
     if (ranges.length != 1 || !ranges.single.isEmpty) return false;
     _applyKeyboardSelection(_documentSelection!);
     return true;
@@ -8785,7 +8764,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   bool _isWholeBlockSelected(String blockId) {
     if (_hasBlockSelection) {
-      final ranges = _selectedTextRanges();
+      final ranges = _selectedTextRanges(useFieldCoordinates: true);
       return ranges.length == 1 &&
           ranges.single.block.id == blockId &&
           ranges.single.coversWholeBlock;
@@ -8811,7 +8790,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         anchor: _DocumentTextPosition(blockId: first.id, offset: 0),
         extent: _DocumentTextPosition(
           blockId: last.id,
-          offset: last.plainText.length,
+          offset: busyMarkWysiwygEditableText(last).length,
         ),
       );
     });
@@ -8860,7 +8839,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _deleteBlockSelection([List<_SelectedTextRange>? capturedRanges]) {
-    final ranges = capturedRanges ?? _selectedTextRanges(null, true);
+    final ranges =
+        capturedRanges ??
+        _selectedTextRanges(
+          includeEmptyRanges: true,
+          useFieldCoordinates: true,
+        );
     if (ranges.isEmpty) {
       return false;
     }
@@ -8873,9 +8857,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final result = _documentController.deleteTextSelection(
       firstBlockId: first.block.id,
       firstStartOffset: first.start,
+      firstFieldSource: first.sourceFieldText,
       lastBlockId: last.block.id,
       lastEndOffset: last.end,
+      lastFieldSource: last.sourceFieldText,
       removedBlockIds: ranges.map((range) => range.block.id),
+      returnFieldOffset: true,
     );
     if (result == null) {
       return false;
@@ -8890,7 +8877,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     String replacementText, {
     _WysiwygTextEditOrigin origin = _WysiwygTextEditOrigin.userTyping,
   }) {
-    final ranges = _selectedTextRanges(null, true);
+    final ranges = _selectedTextRanges(
+      includeEmptyRanges: true,
+      useFieldCoordinates: true,
+    );
     if (ranges.isEmpty) {
       return false;
     }
@@ -8907,8 +8897,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final result = _documentController.replaceTextSelectionWithText(
       firstBlockId: first.block.id,
       firstStartOffset: first.start,
+      firstFieldSource: first.sourceFieldText,
       lastBlockId: last.block.id,
       lastEndOffset: last.end,
+      lastFieldSource: last.sourceFieldText,
       removedBlockIds: ranges.map((range) => range.block.id),
       replacementText: normalizedReplacement,
       activeInlineKinds: activeInlineKinds,
@@ -8925,7 +8917,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _setPendingInlineKinds(result.blockId, activeInlineKinds);
     }
     _clearBlockSelection(collapseFields: false);
-    _emitMarkdown();
+    if (!_emitMarkdown()) return false;
     _focusBlockAfterFrame(result.blockId, offset: result.offset);
     return true;
   }
@@ -8936,7 +8928,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (blocks.isEmpty) {
       return false;
     }
-    final ranges = _selectedTextRanges(null, true);
+    final ranges = _selectedTextRanges(
+      includeEmptyRanges: true,
+      useFieldCoordinates: true,
+    );
     if (ranges.isEmpty) {
       return false;
     }
@@ -8949,8 +8944,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final result = _documentController.replaceTextSelectionWithStyledBlocks(
       firstBlockId: first.block.id,
       firstStartOffset: first.start,
+      firstFieldSource: first.sourceFieldText,
       lastBlockId: last.block.id,
       lastEndOffset: last.end,
+      lastFieldSource: last.sourceFieldText,
       removedBlockIds: ranges.map((range) => range.block.id),
       blocks: blocks,
       replacementScope: BusyWysiwygReplacementScope.documentRange,
@@ -8960,7 +8957,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _continuousTextEdit = null;
     _clearBlockSelection(collapseFields: false);
-    _emitMarkdown();
+    if (!_emitMarkdown()) return false;
     _focusBlockAfterFrame(result.blockId, offset: result.offset);
     return true;
   }
@@ -8978,7 +8975,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _copyCurrentSelectionAsPlainText() {
     final documentSelection = _hasBlockSelection;
     final allRanges = documentSelection
-        ? _selectedTextRanges(null, true)
+        ? _selectedTextRanges(
+            includeEmptyRanges: true,
+            useFieldCoordinates: true,
+          )
         : _currentSelectionRanges();
     if (allRanges.isEmpty) return false;
     final ranges = documentSelection
@@ -8996,7 +8996,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _copyOrCutSelection({required bool cut}) {
     final documentSelection = _hasBlockSelection;
     final allRanges = documentSelection
-        ? _selectedTextRanges(null, true)
+        ? _selectedTextRanges(
+            includeEmptyRanges: true,
+            useFieldCoordinates: true,
+          )
         : _currentSelectionRanges();
     if (allRanges.isEmpty) return false;
     final ranges = documentSelection
@@ -9023,16 +9026,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return true;
     }
     final blocks = _clipboardBlocksForRanges(ranges);
+    final media = _clipboardMediaPaths(blocks);
     final fragment = WysiwygClipboardFragment(
       mode: _documentController.document.mode,
       sourcePath: _documentController.document.filePath,
       blocks: blocks,
-      mediaPaths: _clipboardMediaPaths(blocks),
+      mediaPaths: media.paths,
     );
     final text = ranges.map(_copyTextForRange).join('\n\n');
     unawaited(
       _writeClipboardSelection(
         fragment: fragment,
+        mediaReferencesComplete: media.complete,
         text: text,
         onWritten: finishCut,
       ),
@@ -9070,12 +9075,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _writeClipboardSelection({
     required WysiwygClipboardFragment fragment,
     required String text,
+    required bool mediaReferencesComplete,
     required VoidCallback onWritten,
   }) async {
+    final origin = _clipboardOrigin;
     var success = false;
     String? html;
     String? encodedFragment;
-    var retainedMedia = (bytes: const <String, Uint8List>{}, complete: true);
+    var retainedMedia = (
+      bytes: const <String, Uint8List>{},
+      complete: mediaReferencesComplete,
+    );
     try {
       try {
         html = const WysiwygClipboardHtml().encode(fragment);
@@ -9083,14 +9093,16 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         // Large selections can still transfer their native structure and text.
       }
       encodedFragment = fragment.encode();
-      retainedMedia = await _readClipboardMediaBytes(fragment);
+      if (mediaReferencesComplete) {
+        retainedMedia = await _readClipboardMediaBytes(fragment);
+      }
       success = await _clipboard.write(
         RichClipboardData(
           text: text,
           html: html,
           sourceText: fragment.markdown,
           richFragment: encodedFragment,
-          origin: _clipboardOrigin,
+          origin: origin,
           mediaBytes: retainedMedia.bytes,
           mediaComplete: retainedMedia.complete,
         ),
@@ -9107,7 +9119,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           sourceText: fragment.markdown,
           html: html,
           richFragment: encodedFragment,
-          origin: _clipboardOrigin,
+          origin: origin,
           mediaBytes: retainedMedia.bytes,
           mediaComplete: retainedMedia.complete,
         ),
@@ -9135,6 +9147,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     BusyMarkClipboardPayload payload, {
     required BusyMarkPasteMode mode,
   }) async {
+    if (_clipboardReadOnly) return ClipboardPasteResult.unavailable;
     if (_hasActiveClipboardComposition) {
       return ClipboardPasteResult.staleTarget;
     }
@@ -9288,7 +9301,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return result;
   }
 
-  Map<String, String> _clipboardMediaPaths(
+  ({Map<String, String> paths, bool complete}) _clipboardMediaPaths(
     List<BusyWysiwygStyledBlock> blocks,
   ) {
     final references = <String>{};
@@ -9318,9 +9331,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       block(busyMarkWysiwygClipboardBlock(value));
     }
     final resolved = <String, String>{};
-    for (final value in references.take(256)) {
-      final media = DocumentMediaScope.of(context);
+    final media = DocumentMediaScope.of(context);
+    var examined = 0;
+    for (final value in references) {
+      final scheme = Uri.tryParse(value)?.scheme;
+      if (scheme == 'http' || scheme == 'https') continue;
       if (media == null && Uri.tryParse(value)?.hasScheme == true) continue;
+      if (examined++ == maxClipboardFragmentMediaPaths) {
+        return (paths: resolved, complete: false);
+      }
       final path = media != null
           ? media.resolveCached(value)
           : resolveLocalMediaPath(
@@ -9333,7 +9352,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             );
       if (path != null) resolved[value] = path;
     }
-    return resolved;
+    return (paths: resolved, complete: true);
   }
 
   Future<({Map<String, Uint8List> bytes, bool complete})>
@@ -9414,6 +9433,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _isClipboardTargetCurrent(_ClipboardTarget target) =>
+      !_clipboardReadOnly &&
       _isDialogTargetCurrent(target.document) &&
       target.documentId == _documentId &&
       target.activeBlockId == _activeBlockId &&
@@ -9478,7 +9498,30 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   BusyWysiwygStyledBlock _styledBlockForRange(_SelectedTextRange range) {
-    assert(range.sourceFieldText == null);
+    if (range.selectedSourceText case final source?) {
+      final inlines = const MarkdownParser().parseInlineFragment(
+        source: source,
+        mode: _documentController.document.mode,
+      );
+      // Reuse the parsed semantics only if the source slice stands on its own.
+      final stable =
+          const BusyMarkMarkdownSerializer().serializeInlineFragment(inlines) ==
+          source;
+      final block = BusyBlock(
+        id: 'clipboard-source-slice',
+        kind: BusyBlockKind.paragraph,
+        inlines: stable
+            ? inlines
+            : [BusyInline(kind: BusyInlineKind.text, text: source)],
+        dirty: true,
+      );
+      return BusyWysiwygStyledBlock(
+        kind: block.kind,
+        text: block.plainText,
+        ranges: const [],
+        completeBlock: block,
+      );
+    }
     final text = range.block.plainText;
     final start = range.start.clamp(0, text.length).toInt();
     final end = range.end.clamp(start, text.length).toInt();
@@ -9792,7 +9835,7 @@ class _SelectedTextRange {
       !(block.plainText.isEmpty && block.isAtomicSelectionBlock);
 
   bool get coversWholeBlock =>
-      sourceFieldText == null && start <= 0 && end >= block.plainText.length;
+      start <= 0 && end >= (sourceFieldText?.length ?? block.plainText.length);
 }
 
 class _WysiwygDialogTarget {
@@ -9895,7 +9938,10 @@ class _WysiwygClipboardInsertionTarget
   }
 
   @override
-  bool get editable => state.mounted && !state._hasActiveClipboardComposition;
+  bool get editable =>
+      state.mounted &&
+      !state._clipboardReadOnly &&
+      !state._hasActiveClipboardComposition;
 
   @override
   bool canPaste(

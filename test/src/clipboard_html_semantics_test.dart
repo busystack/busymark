@@ -6,6 +6,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_service.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
@@ -74,6 +75,169 @@ Future<String> _export(String source) async {
 }
 
 void main() {
+  for (final direction in ['ltr', 'auto']) {
+    test('A09 table caption resolves its own $direction direction', () {
+      final input =
+          '<table dir="rtl"><caption dir="$direction">ABC <span dir="rtl">DEF</span></caption>'
+          '<tr><th>Heading</th></tr><tr><td>Cell</td></tr></table>';
+      for (final output in [input, _paste(input)]) {
+        final doc = _parse(output);
+        final caption = doc.blocks.single.children.first;
+        expect(caption.attributes['htmlTag'], 'caption');
+        expect(caption.attributes['dir'], 'ltr');
+        expect(
+          busyMarkWysiwygBlockTextDirection(
+            caption,
+            fallback: TextDirection.rtl,
+          ),
+          TextDirection.ltr,
+        );
+        expect(caption.inlines.last.attributes['dir'], 'rtl');
+        final preview = const BusyMarkPreviewBuilder().buildBlocks(doc);
+        expect(preview.single.children.first.attributes['dir'], 'ltr');
+      }
+    });
+  }
+
+  test('A06 external deletion retains metadata after HTML publication', () {
+    const markup =
+        '<del cite="https://example.test/change" datetime="2026-11-26">old</del>';
+    for (final input in [
+      markup,
+      _codec.encode(_capture(_parse('Before $markup after').blocks)),
+    ]) {
+      final output = _paste(input);
+      final deletion = html.parseFragment(output).querySelector('del');
+      expect(
+        (
+          deletion?.text,
+          deletion?.attributes['cite'],
+          deletion?.attributes['datetime'],
+        ),
+        ('old', 'https://example.test/change', '2026-11-26'),
+        reason: output,
+      );
+    }
+    expect(_paste('<del>old</del>').trim(), '~~old~~');
+  });
+
+  for (final tag in ['strong', 'em', 'u', 'del']) {
+    test('A07 external inline code retains $tag', () {
+      String htmlRoundTrip(String markup) {
+        final output = _paste(markup);
+        return _codec.encode(_capture(_parse(output).blocks));
+      }
+
+      final outgoing = html.parseFragment(
+        htmlRoundTrip('<$tag><code>a  b</code></$tag>'),
+      );
+      expect(outgoing.querySelector('$tag code')?.text, 'a  b');
+      final plain = html.parseFragment(htmlRoundTrip('<code>a  b</code>'));
+      expect(plain.querySelector('code')?.text, 'a  b');
+      expect(plain.querySelector(tag), isNull);
+    });
+  }
+
+  test('A08 image title survives external and native insertion and edits', () {
+    const source = 'Before ![Alt](image.png "Image title") After';
+    const title = 'Image title';
+    String? readTitle(String markdown) => _parse(markdown).blocks.single.inlines
+        .singleWhere((inline) => inline.kind == BusyInlineKind.image)
+        .attributes['title'];
+    final authored = _parse(source);
+    expect(readTitle(_serializer.serialize(authored)), title);
+    final fragment = WysiwygClipboardFragment.decode(
+      _capture(authored.blocks).encode(),
+    )!;
+    final outgoing = _codec.encode(fragment);
+    expect(
+      html.parseFragment(outgoing).querySelector('img')?.attributes['title'],
+      title,
+    );
+    final outputs = <String>[
+      _paste(
+        '<p>Before <img src="https://example.test/image.png" alt="Alt" title="Image title"> After</p>',
+      ),
+      for (final path in ['/origin/source.md', '/destination/target.md'])
+        fragment
+            .rebase(path)
+            .serializeFor(
+              destinationMode: MarkdownMode.gfm,
+              destinationFilePath: path,
+            ),
+    ];
+    final editor = BusyMarkWysiwygDocumentController(document: authored);
+    addTearDown(editor.dispose);
+    editor.updateBlockText(
+      authored.blocks.single.id,
+      '${authored.blocks.single.plainText} revised',
+    );
+    outputs.add(editor.markdown);
+    for (final output in outputs) {
+      expect(readTitle(output), title, reason: output);
+    }
+  });
+
+  test('A08 regenerated image titles are escaped exactly once', () {
+    const source =
+        r'Before ![Alt](image.png "A \"quote\" &amp; a &#92; slash") After';
+    const title = 'A "quote" & a \\ slash';
+    final doc = _parse(source);
+    final editor = BusyMarkWysiwygDocumentController(document: doc);
+    addTearDown(editor.dispose);
+    editor.updateBlockText(
+      doc.blocks.single.id,
+      '${doc.blocks.single.plainText} revised',
+    );
+    final image = _parse(editor.markdown).blocks.single.inlines.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.image,
+    );
+    expect(
+      (image.attributes['title'], image.destination),
+      (title, 'image.png'),
+    );
+  });
+
+  for (final packaging in HtmlPackaging.values) {
+    test('A10 SVG fragments survive HTML export ($packaging)', () async {
+      final root = await Directory.systemTemp.createTemp('busymark-svg-view-');
+      addTearDown(() => root.delete(recursive: true));
+      await File('${root.path}/image.svg').writeAsString(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="10"><rect width="10" height="10"/><rect x="10" width="10" height="10"/></svg>',
+      );
+      const first = 'svgView(viewBox(0,0,10,10))';
+      const second = 'svgView(viewBox(10,0,10,10))';
+      final result = await HtmlExportService(stylesheetLoader: () async => '')
+          .exportMarkdown(
+            MarkdownHtmlExportRequest(
+              source:
+                  '![First](image.svg#$first)\n\n<div><img src="image.svg#$second" alt="Second"></div>',
+              filePath: '${root.path}/source.md',
+              workspaceRoot: root.path,
+              destinationPath: '${root.path}/index.html',
+              options: HtmlExportOptions(packaging: packaging),
+            ),
+          );
+      final images = html
+          .parse(await File(result.entryPointPath).readAsString())
+          .querySelectorAll('img');
+      expect(
+        images.map((image) {
+          final src = image.attributes['src']!;
+          final hash = src.indexOf('#');
+          return hash == -1 ? '' : Uri.decodeComponent(src.substring(hash + 1));
+        }).toList(),
+        [first, second],
+      );
+      expect(
+        images
+            .map((image) => image.attributes['src']!.split('#').first)
+            .toSet(),
+        hasLength(1),
+      );
+    });
+  }
+
   test(
     'directional inline keeps nested formatting in Markdown and both HTML outputs',
     () async {

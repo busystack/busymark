@@ -1316,6 +1316,8 @@ class MarkdownAstAdapter {
             for (final entry in node.attributes.entries)
               if (!entry.key.startsWith('data-busymark-source-'))
                 entry.key: entry.value,
+            if (node.attributes['title'] case final title?)
+              'title': _decodeMarkdownAttribute(title),
           },
         ),
       ],
@@ -2390,33 +2392,18 @@ class MarkdownAstAdapter {
     List<_MarkdownSourceLine> lines,
     int startIndex,
   ) {
-    final tag = _rawHtmlContainerOpeningTag(lines[startIndex].line);
-    if (tag == null) {
-      return null;
+    final start = lines[startIndex];
+    final end = _rawHtmlAdapter.rawHtmlContainerEnd(
+      source,
+      start.offset,
+      start.endOffset,
+    );
+    if (end == null) return null;
+    var index = startIndex;
+    while (lines[index].endOffset < end) {
+      index++;
     }
-    if (tag == 'a') {
-      final start = lines[startIndex];
-      final end = _rawHtmlAdapter.standaloneBlockLinkEnd(
-        source,
-        start.offset,
-        start.endOffset,
-      );
-      if (end == null) return null;
-      var index = startIndex;
-      while (lines[index].endOffset < end) {
-        index++;
-      }
-      return index + 1;
-    }
-
-    var balance = 0;
-    for (var index = startIndex; index < lines.length; index += 1) {
-      balance += _rawHtmlTagBalance(lines[index].line, tag);
-      if (balance <= 0 && index > startIndex || balance == 0) {
-        return index + 1;
-      }
-    }
-    return null;
+    return index + 1;
   }
 
   int? _writersideContainerEndIndex(
@@ -2438,23 +2425,6 @@ class MarkdownAstAdapter {
       }
     }
     return null;
-  }
-
-  String? _rawHtmlContainerOpeningTag(String line) {
-    final match = RegExp(
-      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
-    ).firstMatch(line);
-    if (match == null) {
-      return null;
-    }
-    final tag = match.group(1)!.toLowerCase();
-    if (voidHtmlTags.contains(tag)) {
-      return null;
-    }
-    if (tag != 'a' && !isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
-      return null;
-    }
-    return tag;
   }
 
   int _rawHtmlTagBalance(String line, String tag) {

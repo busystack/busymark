@@ -283,18 +283,16 @@ class _RenderTable<T> extends RenderBox
     }
     for (var i = 0; i < children.length; i++) {
       final cell = grid.cells[i];
+      final cellWidth = sum(widths, cell.column, cell.colspan);
       children[i].layout(
         BoxConstraints.tight(
-          Size(
-            sum(widths, cell.column, cell.colspan),
-            sum(rowHeights, cell.row, cell.rowspan),
-          ),
+          Size(cellWidth, sum(rowHeights, cell.row, cell.rowspan)),
         ),
       );
       final start = sum(widths, 0, cell.column);
       final x = textDirection == TextDirection.ltr
           ? start
-          : width - start - children[i].size.width;
+          : width - start - cellWidth;
       (children[i].parentData! as _CellParentData).offset = Offset(
         x,
         sum(rowHeights, 0, cell.row),

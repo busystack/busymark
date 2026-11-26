@@ -7,6 +7,7 @@ import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/assets/asset_input_service.dart';
+import 'package:busymark/src/assets/document_media_context.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
@@ -1091,6 +1092,7 @@ void main() {
       BusyMarkWysiwygTransactionalSourceChanged? onTransactionalSourceChanged,
       bool hostToasts = false,
       bool providerScope = false,
+      bool readOnly = false,
       bool focusFirstField = true,
       MarkdownMode mode = MarkdownMode.writersideMarkdown,
       WysiwygEditorSessionState Function(BusyDocument document)?
@@ -1133,33 +1135,36 @@ void main() {
             ? (context, child) => BusyMarkToastOverlay(child: child!)
             : null,
         home: Scaffold(
-          body: BusyMarkWysiwygEditor(
-            key: ValueKey(id),
-            clipboardService: clipboardService ?? RichClipboardService(),
-            clipboardInsertionRegistry: registry,
-            onClipboardCaptured: onCaptured,
-            workspaceRoot: workspaceRoot,
-            assetWorkspaceKind: assetWorkspaceKind,
-            assetInputService: assetInputService,
-            assetIngestionService: assetIngestionService,
-            onTransactionalSourceChanged: onTransactionalSourceChanged,
-            readEditBase: history.readBase,
-            readSessionState: () => history.buffer.editorState.wysiwygState,
-            onUndo: () => traverse(false),
-            onRedo: () => traverse(true),
-            onSessionChanged: (_, value) {
-              history.controller.updateDocumentEditorState(
-                history.buffer.id,
-                history.buffer.editorState.copyWith(wysiwygState: value),
-              );
-            },
-            initialSessionState: initialSession,
-            document: document,
-            onDocumentChanged: onDocumentChanged,
-            onSourceChanged: (_, value) {
-              history.controller.updateActiveText(value);
-              changed(value);
-            },
+          body: DocumentReadOnlyScope(
+            readOnly: readOnly,
+            child: BusyMarkWysiwygEditor(
+              key: ValueKey(id),
+              clipboardService: clipboardService ?? RichClipboardService(),
+              clipboardInsertionRegistry: registry,
+              onClipboardCaptured: onCaptured,
+              workspaceRoot: workspaceRoot,
+              assetWorkspaceKind: assetWorkspaceKind,
+              assetInputService: assetInputService,
+              assetIngestionService: assetIngestionService,
+              onTransactionalSourceChanged: onTransactionalSourceChanged,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: () => traverse(false),
+              onRedo: () => traverse(true),
+              onSessionChanged: (_, value) {
+                history.controller.updateDocumentEditorState(
+                  history.buffer.id,
+                  history.buffer.editorState.copyWith(wysiwygState: value),
+                );
+              },
+              initialSessionState: initialSession,
+              document: document,
+              onDocumentChanged: onDocumentChanged,
+              onSourceChanged: (_, value) {
+                history.controller.updateActiveText(value);
+                changed(value);
+              },
+            ),
           ),
         ),
       );
@@ -2428,6 +2433,402 @@ void main() {
         checkCell(result, 'D');
       },
     );
+
+    testWidgets(
+      'A01 cross-block formula selection copies and cuts authored text',
+      (tester) async {
+        const field = r'A $x$ Z';
+        const original = '$field\n\nAfter\n';
+        var result = original;
+        await mount(
+          tester,
+          'cross-math',
+          original,
+          (value) => result = value,
+          providerScope: true,
+          focusFirstField: false,
+          mode: MarkdownMode.gfm,
+        );
+        await tester.tap(
+          find.byWidgetPredicate(
+            (w) =>
+                w.key is ValueKey<String> &&
+                (w.key as ValueKey<String>).value.startsWith(
+                  'wysiwyg-rendered-math-',
+                ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final mathField = tester.widget<TextField>(
+          find.widgetWithText(TextField, field),
+        );
+        final next = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'After'),
+        );
+        mathField.controller!.selection = TextSelection.collapsed(
+          offset: field.indexOf('Z'),
+        );
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+        expect(mathField.controller!.selection.textInside(field), 'Z');
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+        expect(next.focusNode!.hasFocus, isTrue);
+        expect(next.controller!.selection.extentOffset, 0);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.pump();
+        expect(next.controller!.selection.extentOffset, 1);
+        await key(tester, LogicalKeyboardKey.keyC);
+        expect(systemData['text'], 'Z\n\nA');
+        failWrite = true;
+        await key(tester, LogicalKeyboardKey.keyX);
+        failWrite = false;
+        expect(result, original);
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(systemData['text'], 'Z\n\nA');
+        expect(result, 'A \$x\$ fter\n');
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, original);
+      },
+    );
+
+    for (final (table, math) in [(true, true), (false, true), (true, false)]) {
+      for (final origin in ['native', 'external', 'history']) {
+        testWidgets(
+          'A02 rich $origin paste keeps inline semantics table=$table math=$math',
+          (tester) async {
+            final registry = BusyMarkClipboardInsertionRegistry();
+            addTearDown(registry.dispose);
+            final service = RichClipboardService();
+            final field = math ? r'A $x$ Z' : 'A Z';
+            final original = table
+                ? '| Value |\n| --- |\n| $field |\n'
+                : '$field\n';
+            var result = original;
+            await mount(
+              tester,
+              'rich-math-$origin',
+              original,
+              (value) => result = value,
+              registry: registry,
+              clipboardService: service,
+              providerScope: math,
+              focusFirstField: false,
+              mode: MarkdownMode.gfm,
+            );
+            if (math) {
+              await tester.tap(
+                find.byWidgetPredicate(
+                  (w) =>
+                      w.key is ValueKey<String> &&
+                      (w.key as ValueKey<String>).value.startsWith(
+                        'wysiwyg-rendered-math-',
+                      ),
+                ),
+              );
+            } else {
+              await tester.showKeyboard(find.widgetWithText(TextField, field));
+            }
+            await tester.pumpAndSettle();
+            tester
+                .widget<TextField>(find.widgetWithText(TextField, field))
+                .controller!
+                .selection = TextSelection.collapsed(
+              offset: field.indexOf('Z'),
+            );
+            const incoming =
+                '<p><a href="https://example.test" title="Link title"><strong>X</strong></a></p>';
+            final fragment = _fragment(
+              '[**X**](https://example.test "Link title")\n',
+            );
+            if (origin == 'history') {
+              expect(
+                await registry.paste(
+                  BusyMarkClipboardPayload(
+                    id: 'paste',
+                    acquiredAt: DateTime.utc(2026),
+                    kind: BusyMarkClipboardContentKind.richText,
+                    text: 'X',
+                    richFragment: fragment.encode(),
+                  ),
+                ),
+                ClipboardPasteResult.inserted,
+              );
+            } else {
+              if (origin == 'native') {
+                expect(
+                  await service.write(
+                    RichClipboardData(
+                      text: 'X',
+                      richFragment: fragment.encode(),
+                    ),
+                  ),
+                  isTrue,
+                );
+              } else {
+                systemData = {'html': incoming, 'text': 'X'};
+              }
+              await key(tester, LogicalKeyboardKey.keyV);
+            }
+            await tester.pumpAndSettle();
+            final block = _parser
+                .parse(
+                  filePath: '/target.md',
+                  source: result,
+                  mode: MarkdownMode.gfm,
+                )
+                .busyDocument
+                .blocks
+                .single;
+            final cell = table ? block.children.last.children.single : block;
+            expect(cell.plainText, math ? 'A x XZ' : 'A XZ', reason: result);
+            expect(
+              cell.inlines
+                  .where((i) => i.kind == BusyInlineKind.math)
+                  .map((i) => i.text),
+              math ? ['x'] : [],
+            );
+            final link = cell.inlines.singleWhere(
+              (i) => i.kind == BusyInlineKind.link,
+            );
+            expect(
+              (link.destination, link.attributes['title']),
+              ('https://example.test', 'Link title'),
+            );
+            expect(
+              (link.children.single.kind, link.children.single.plainText),
+              (BusyInlineKind.strong, 'X'),
+            );
+            await key(tester, LogicalKeyboardKey.keyZ);
+            expect(result, original);
+          },
+        );
+      }
+    }
+
+    testWidgets('A03 read-only Editor History paste cannot stage an image', (
+      tester,
+    ) async {
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-readonly-editor-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final captures = <BusyMarkClipboardCapture>[];
+      var source = 'Protected\n';
+      final published = <IngestedAsset>[];
+      final gate = Completer<void>();
+      addTearDown(() {
+        if (!gate.isCompleted) gate.complete();
+      });
+      var pausePublication = false;
+      final service = AssetIngestionService(
+        hooks: AssetIngestionHooks(
+          afterPublication: (asset) async {
+            published.add(asset);
+            if (pausePublication) await gate.future;
+          },
+        ),
+      );
+      Future<void> mountTarget({required bool readOnly}) => mount(
+        tester,
+        'protected',
+        source,
+        (value) => source = value,
+        readOnly: readOnly,
+        filePath: '${root.path}/topic.md',
+        workspaceRoot: root.path,
+        assetIngestionService: service,
+        registry: registry,
+        onCaptured: captures.add,
+      );
+      await mountTarget(readOnly: true);
+      final bytes = utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+      );
+      final image = File('${root.path}/original.svg')..writeAsBytesSync(bytes);
+      final native = _fragment(
+        'Before ![Panel](panel.svg) after',
+        path: '${root.path}/source.md',
+      );
+      final fragment = WysiwygClipboardFragment(
+        blocks: native.blocks,
+        mode: native.mode,
+        sourcePath: native.sourcePath,
+        mediaPaths: {'panel.svg': image.path},
+      );
+      final payload = BusyMarkClipboardPayload(
+        id: 'image',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        text: 'Before Panel after',
+        external: true,
+        richFragment: fragment.encode(),
+        mediaBytes: {'panel.svg': bytes},
+      );
+      image.deleteSync();
+      final available = registry.canPaste(payload);
+      final outcome = await tester.runAsync(() => registry.paste(payload));
+      await tester.pumpAndSettle();
+      expect(
+        (
+          available,
+          outcome,
+          source,
+          captures.length,
+          root.listSync(recursive: true).whereType<File>().length,
+        ),
+        (false, ClipboardPasteResult.unavailable, 'Protected\n', 0, 0),
+      );
+      expect(published, isEmpty);
+
+      await mountTarget(readOnly: false);
+      expect(registry.canPaste(payload), isTrue);
+      pausePublication = true;
+      ClipboardPasteResult? pendingResult;
+      await tester.runAsync(() async {
+        unawaited(
+          registry.paste(payload).then((value) => pendingResult = value),
+        );
+      });
+      await waitForImageIo(
+        tester,
+        () => published.isNotEmpty,
+        operation: 'stage History image',
+      );
+      expect(File(published.single.absolutePath).readAsBytesSync(), bytes);
+      await mountTarget(readOnly: true);
+      expect(registry.canPaste(payload), isFalse);
+      gate.complete();
+      await waitForImageIo(
+        tester,
+        () => pendingResult != null,
+        operation: 'roll back protected History image',
+      );
+      expect(pendingResult, ClipboardPasteResult.staleTarget);
+      expect(File(published.single.absolutePath).existsSync(), isFalse);
+      expect(source, 'Protected\n');
+      expect(captures, isEmpty);
+    });
+
+    for (final count in [256, 257]) {
+      testWidgets(
+        'A04 clipboard retention is truthful for $count local images',
+        (tester) async {
+          final root = Directory.systemTemp.createTempSync(
+            'busymark-copy-images-',
+          );
+          addTearDown(() => root.delete(recursive: true));
+          final bytes = utf8.encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+          );
+          final references = List.generate(
+            count,
+            (index) => 'image-$index.svg',
+          );
+          for (final reference in references) {
+            File('${root.path}/$reference').writeAsBytesSync(bytes);
+          }
+          final historyScope = ProviderContainer(
+            overrides: [
+              localSettingsStoreProvider.overrideWithValue(
+                _ClipboardMemorySettingsStore(),
+              ),
+            ],
+          );
+          addTearDown(historyScope.dispose);
+          final captures = <BusyMarkClipboardCapture>[];
+          final source =
+              '${references.map((reference) => '![i]($reference)').join(' ')}\n';
+          await mount(
+            tester,
+            'many-images',
+            source,
+            (_) {},
+            filePath: '${root.path}/topic.md',
+            workspaceRoot: root.path,
+            onCaptured: captures.add,
+            mode: MarkdownMode.gfm,
+          );
+          await key(tester, LogicalKeyboardKey.keyA);
+          await key(tester, LogicalKeyboardKey.keyC, startsRealIo: true);
+          await waitForImageIo(
+            tester,
+            () => captures.isNotEmpty,
+            operation: 'retain selected media',
+          );
+          final capture = captures.single;
+          final fragment = WysiwygClipboardFragment.decode(
+            capture.richFragment!,
+          )!;
+          final inlines = fragment.blocks.single.completeBlock!.inlines;
+          expect(
+            inlines
+                .where((i) => i.kind == BusyInlineKind.image)
+                .map((i) => i.destination),
+            references,
+          );
+          final history = historyScope.read(
+            clipboardHistoryControllerProvider.notifier,
+          );
+          final retained = history.retain(capture);
+          final entries = historyScope
+              .read(clipboardHistoryControllerProvider)
+              .entries;
+          if (count == 256 || capture.mediaComplete) {
+            expect(retained, ClipboardRetentionResult.retained);
+            expect(entries.single.mediaBytes, {
+              for (final ref in references) ref: bytes,
+            });
+            expect(capture.mediaComplete, isTrue);
+            expect(capture.mediaBytes, {
+              for (final ref in references) ref: bytes,
+            });
+          } else {
+            expect(capture.mediaComplete, isFalse);
+            expect(retained, ClipboardRetentionResult.oversized);
+            expect(entries, isEmpty);
+          }
+        },
+      );
+    }
+
+    testWidgets('A11 pending Editor Copy keeps the original document origin', (
+      tester,
+    ) async {
+      final clipboard = RichClipboardService();
+      final captures = <BusyMarkClipboardCapture>[];
+      await mount(
+        tester,
+        'reused-copy',
+        'Document A\n',
+        (_) {},
+        filePath: '/one/a.md',
+        clipboardService: clipboard,
+        onCaptured: captures.add,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      writeGate = Completer<void>();
+      await key(tester, LogicalKeyboardKey.keyC);
+      expect(captures, isEmpty);
+      await mount(
+        tester,
+        'reused-copy',
+        'Document B\n',
+        (_) {},
+        filePath: '/two/b.md',
+        clipboardService: clipboard,
+        onCaptured: captures.add,
+      );
+      writeGate!.complete();
+      await tester.pumpAndSettle();
+      expect(systemData['text'], 'Document A');
+      expect((await clipboard.read()).origin?.documentPath, '/one/a.md');
+      expect(captures.single.origin?.documentPath, '/one/a.md');
+    });
 
     testWidgets('rich paste in math fields uses source coordinates', (
       tester,

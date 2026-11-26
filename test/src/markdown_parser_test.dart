@@ -16,6 +16,43 @@ import 'package:path/path.dart' as p;
 void main() {
   const parser = MarkdownParser();
 
+  for (final (title, comment) in [
+    ('Use links', ''),
+    ('Use <div> links', ''),
+    ('Use links', '<!-- <div> -->\n'),
+  ]) {
+    test(
+      'A05 raw container with title $title and comment $comment keeps its scope',
+      () {
+        final container =
+            '<div dir="rtl" title="$title">\n$comment'
+            '<p>ABC !</p>\n<p dir="ltr">Override !</p>\n</div>';
+        final source = '$container\n\nAfter\n';
+        BusyDocument parse(String source) => parser
+            .parse(filePath: 'topic.md', source: source, mode: MarkdownMode.gfm)
+            .busyDocument;
+        final original = parse(source);
+        for (final doc in [
+          original,
+          parse(const BusyMarkMarkdownSerializer().serialize(original)),
+        ]) {
+          expect(doc.blocks.map((b) => b.kind), [
+            BusyBlockKind.htmlBlock,
+            BusyBlockKind.paragraph,
+          ]);
+          final raw = doc.blocks.first;
+          expect(raw.rawSource, container);
+          expect(raw.sourceSpan?.startOffset, 0);
+          expect(raw.children.map((b) => (b.plainText, b.attributes['dir'])), [
+            ('ABC !', 'rtl'),
+            ('Override !', 'ltr'),
+          ]);
+          expect(doc.blocks.last.plainText, 'After');
+        }
+      },
+    );
+  }
+
   String fixture(String name) => 'test/fixtures/markdown/$name';
 
   for (final (label, title, comment) in [

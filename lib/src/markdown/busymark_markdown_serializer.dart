@@ -1096,6 +1096,7 @@ class BusyMarkMarkdownSerializer {
     bool formattedUrlLabel = false,
     bool insideFormatting = false,
     bool insideLinkLabel = false,
+    bool insideHtmlWrapper = false,
   }) {
     final totalTextLength = inlines.fold<int>(
       0,
@@ -1240,6 +1241,7 @@ class BusyMarkMarkdownSerializer {
         formattedUrlLabel: formattedUrlLabel,
         insideFormatting: insideFormatting,
         insideLinkLabel: insideLinkLabel,
+        insideHtmlWrapper: insideHtmlWrapper,
         entityOffsets: {
           // Keep the boundary '<' literal without forming HTML or an angle
           // autolink. The following reference also keeps this literal slice
@@ -1445,6 +1447,7 @@ class BusyMarkMarkdownSerializer {
     required bool formattedUrlLabel,
     required bool insideFormatting,
     required bool insideLinkLabel,
+    required bool insideHtmlWrapper,
     required Set<int> entityOffsets,
   }) {
     if (semanticHtmlInlineElement(inline) case final element?) {
@@ -1492,6 +1495,8 @@ class BusyMarkMarkdownSerializer {
                 insideFormatting || _urlFormattingKind(inline.kind),
             insideLinkLabel:
                 insideLinkLabel || inline.kind == BusyInlineKind.link,
+            insideHtmlWrapper:
+                insideHtmlWrapper || inline.kind == BusyInlineKind.underline,
           );
     final children = inline.children.isEmpty
         ? rawText
@@ -1520,7 +1525,7 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.strikethrough =>
         '${delimiter?.opening ?? '~~'}$children${delimiter?.closing ?? '~~'}',
       BusyInlineKind.code =>
-        tableCell && _tableCodeNeedsHtml(inline.text)
+        insideHtmlWrapper || (tableCell && _tableCodeNeedsHtml(inline.text))
             ? _htmlCodeSpan(inline.text)
             : _codeSpan(inline.text),
       BusyInlineKind.link =>
@@ -1528,7 +1533,7 @@ class BusyMarkMarkdownSerializer {
             ? children
             : '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
       BusyInlineKind.image =>
-        '![${_escapeInlineText(inline.text)}](${inline.destination ?? ''})',
+        '![${_escapeInlineText(inline.text)}](${_linkTarget(inline)})',
       BusyInlineKind.softBreak => ' ',
       BusyInlineKind.hardBreak => '  \n',
       BusyInlineKind.writersideVariable => '%${inline.text}%',
