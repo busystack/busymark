@@ -10,6 +10,7 @@ import '../../markdown/markdown_source_map.dart';
 import '../../markdown/semantic_html_inline.dart';
 import '../document_html_inline.dart';
 import '../document_text_direction.dart';
+import '../text_edit_offsets.dart';
 
 bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
@@ -511,6 +512,8 @@ class _DirectionalEditingController extends TextEditingController {
     final previousDocumentText = _document.text;
     final oldProjection = _projection;
     var edited = oldProjection.afterEdit(previous.selection, next.text);
+    // Keep the last valid projection when control identity cannot be recovered.
+    if (edited == null) return;
     if (previous.selection.isValid &&
         previous.selection.isCollapsed &&
         next.selection.isValid &&
@@ -539,6 +542,7 @@ class _DirectionalEditingController extends TextEditingController {
           selection: TextSelection.collapsed(offset: removed.start),
         );
         edited = oldProjection.afterEdit(removed, next.text);
+        if (edited == null) return;
       }
     }
     _projection = edited;
@@ -682,42 +686,21 @@ class _InlineDirectionText {
     );
   }
 
-  _InlineDirectionText afterEdit(TextSelection previousSelection, String next) {
+  _InlineDirectionText? afterEdit(
+    TextSelection previousSelection,
+    String next,
+  ) {
     if (next == text) return this;
-    if (controls.isEmpty) return _InlineDirectionText(next, const []);
-    var prefix = 0;
-    // Prefer the previous selection edges when equal text can be attributed
-    // either to an insertion or to one of the old generated controls.
-    final anchored =
-        previousSelection.isValid &&
-        next.startsWith(text.substring(0, previousSelection.start)) &&
-        next.endsWith(text.substring(previousSelection.end)) &&
-        next.length >=
-            text.length - (previousSelection.end - previousSelection.start);
-    if (anchored) {
-      prefix = previousSelection.start;
-    } else {
-      while (prefix < text.length &&
-          prefix < next.length &&
-          text.codeUnitAt(prefix) == next.codeUnitAt(prefix)) {
-        prefix++;
-      }
-    }
-    var oldEnd = text.length;
-    final delta = next.length - text.length;
-    if (anchored) {
-      oldEnd = previousSelection.end;
-    } else {
-      while (oldEnd > prefix &&
-          oldEnd + delta > prefix &&
-          text.codeUnitAt(oldEnd - 1) == next.codeUnitAt(oldEnd + delta - 1)) {
-        oldEnd--;
-      }
-    }
-    return _InlineDirectionText(next, [
-      for (final offset in controls)
-        if (offset < prefix) offset else if (offset >= oldEnd) offset + delta,
-    ]);
+    final mapped = busyMarkMapUnchangedTextOffsets(
+      text,
+      next,
+      controls,
+      replacedSelection: (
+        start: previousSelection.start,
+        end: previousSelection.end,
+      ),
+    );
+    return mapped == null ? null : _InlineDirectionText(next, mapped);
   }
 }
 

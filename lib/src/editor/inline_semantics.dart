@@ -1,4 +1,5 @@
 import '../markdown/busymark_document.dart';
+import 'text_edit_offsets.dart';
 
 /// Whether two inline wrappers carry the same semantic context independently
 /// of their child content.
@@ -19,10 +20,38 @@ bool busyMarkIsInheritedInlineContext(BusyInlineKind kind) =>
     kind == BusyInlineKind.strikethrough ||
     kind == BusyInlineKind.link;
 
-/// Markdown table cells occupy one physical source line. Normalize every
-/// platform newline form at the semantic boundary shared by Editor and Source.
-String busyMarkNormalizeTableCellText(String text) {
-  return text.replaceAll(RegExp(r'\r\n|\r|\n'), ' ');
+final _tableCellLineEnding = RegExp(r'\r\n|\r|\n');
+
+/// A cell can contain existing semantic breaks (serialized as HTML). New
+/// platform line endings are normalized to spaces inside the edited cell.
+Iterable<Match> busyMarkNewTableCellLineBreaks(
+  String text, {
+  String previousText = '',
+}) {
+  final existing = [
+    for (final match in _tableCellLineEnding.allMatches(previousText))
+      match.start,
+  ];
+  final retained =
+      busyMarkMapUnchangedTextOffsets(previousText, text, existing)?.toSet() ??
+      const <int>{};
+  return _tableCellLineEnding
+      .allMatches(text)
+      .where((match) => !retained.contains(match.start));
+}
+
+String busyMarkNormalizeTableCellText(String text, {String previousText = ''}) {
+  final result = StringBuffer();
+  var start = 0;
+  for (final match in busyMarkNewTableCellLineBreaks(
+    text,
+    previousText: previousText,
+  )) {
+    result.write(text.substring(start, match.start));
+    result.write(' ');
+    start = match.end;
+  }
+  return start == 0 ? text : (result..write(text.substring(start))).toString();
 }
 
 /// Flattens clipboard blocks into the one inline stream accepted by a table

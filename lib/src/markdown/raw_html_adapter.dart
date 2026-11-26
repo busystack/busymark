@@ -104,9 +104,39 @@ class RawHtmlAdapter {
     return fragment;
   }
 
-  /// Recognizes a complete block hyperlink while keeping ordinary inline
-  /// anchors in the Markdown paragraph parser.
-  bool isStandaloneBlockLink(String source) {
+  /// Returns the exclusive source line boundary of a complete block link.
+  /// The caller has identified a line beginning with a candidate anchor.
+  int? standaloneBlockLinkEnd(String source, int start, int firstLineEnd) {
+    var scanEnd = firstLineEnd;
+    while (true) {
+      final tokenizer = html_tokenizer.HtmlTokenizer(
+        source.substring(start, scanEnd),
+        generateSpans: true,
+      );
+      var opened = false;
+      while (tokenizer.moveNext()) {
+        final token = tokenizer.current;
+        if (token is html_token.StartTagToken && token.name == 'a') {
+          if (opened || token.selfClosing) return null;
+          opened = true;
+        } else if (token is html_token.EndTagToken && token.name == 'a') {
+          if (!opened || token.span == null) return null;
+          final closingEnd = start + token.span!.end.offset;
+          final newline = source.indexOf('\n', closingEnd);
+          final end = newline < 0 ? source.length : newline + 1;
+          return _isStandaloneBlockLink(source.substring(start, end))
+              ? end
+              : null;
+        }
+      }
+      if (scanEnd == source.length) return null;
+      // Ordinary inline anchors finish in the first window. Grow the window
+      // geometrically for a multiline link so each prefix has bounded rescans.
+      scanEnd = (start + 2 * (scanEnd - start)).clamp(0, source.length);
+    }
+  }
+
+  bool _isStandaloneBlockLink(String source) {
     final fragment = parseSafeRawHtml(source);
     if (fragment == null) return false;
     final content = fragment.nodes.where(

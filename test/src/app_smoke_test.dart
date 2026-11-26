@@ -23063,7 +23063,8 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
   ) async {
     const source =
         'Before <bdo dir="rtl">ABC</bdo> after.\n\n'
-        '<a href="guide.md" dir="rtl">\n<p>Linked flow !</p>\n'
+        '<a href="guide.md" dir="rtl" title="Use <a> links">\n'
+        '<!-- <a> -->\n<p>Linked flow !</p>\n'
         '<p dir="ltr">Flow override !</p>\n</a>\n\n'
         '<table><tr><th>Items</th></tr>'
         '<tr><td><a href="guide.md"><ul><li>One</li><li>Two</li></ul></a></td></tr>'
@@ -23153,12 +23154,14 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     final one = tester.widget<Text>(find.text('One'));
     final two = tester.widget<Text>(find.text('Two'));
     final heading = tester.widget<Text>(find.text('Linked heading'));
+    final flow = tester.widget<Text>(find.text('Linked flow !'));
     expect(
       heading.textSpan!.style!.fontSize,
       greaterThan(one.textSpan!.style!.fontSize!),
     );
     expect(_firstTapRecognizer(one.textSpan!)?.onTap, isNotNull);
     expect(_firstTapRecognizer(two.textSpan!)?.onTap, isNotNull);
+    expect(_firstTapRecognizer(flow.textSpan!)?.onTap, isNotNull);
     final follow = _firstTapRecognizer(heading.textSpan!)?.onTap;
     expect(follow, isNotNull);
     await tester.runAsync(() async => follow!());

@@ -2338,7 +2338,7 @@ class MarkdownAstAdapter {
         continue;
       }
 
-      final htmlEndIndex = _rawHtmlContainerEndIndex(lines, index);
+      final htmlEndIndex = _rawHtmlContainerEndIndex(source, lines, index);
       if (htmlEndIndex == null) {
         index += 1;
         continue;
@@ -2386,6 +2386,7 @@ class MarkdownAstAdapter {
   }
 
   int? _rawHtmlContainerEndIndex(
+    String source,
     List<_MarkdownSourceLine> lines,
     int startIndex,
   ) {
@@ -2393,21 +2394,25 @@ class MarkdownAstAdapter {
     if (tag == null) {
       return null;
     }
+    if (tag == 'a') {
+      final start = lines[startIndex];
+      final end = _rawHtmlAdapter.standaloneBlockLinkEnd(
+        source,
+        start.offset,
+        start.endOffset,
+      );
+      if (end == null) return null;
+      var index = startIndex;
+      while (lines[index].endOffset < end) {
+        index++;
+      }
+      return index + 1;
+    }
 
     var balance = 0;
     for (var index = startIndex; index < lines.length; index += 1) {
       balance += _rawHtmlTagBalance(lines[index].line, tag);
-      if (tag == 'a' && balance > 1) return null;
       if (balance <= 0 && index > startIndex || balance == 0) {
-        if (tag == 'a' &&
-            !_rawHtmlAdapter.isStandaloneBlockLink(
-              lines
-                  .getRange(startIndex, index + 1)
-                  .map((line) => line.rawLine)
-                  .join(),
-            )) {
-          return null;
-        }
         return index + 1;
       }
     }

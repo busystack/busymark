@@ -16,6 +16,7 @@ import '../document_surface.dart';
 import '../document_text_geometry.dart';
 import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
+import '../inline_semantics.dart';
 import '../markdown_image_view.dart';
 import '../writerside_video_view.dart';
 import '../../markdown/busymark_document.dart';
@@ -2264,8 +2265,11 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                         !widget.documentSelectionDragging,
                     undoController: widget.undoController,
                     minLines: 1,
-                    maxLines: 1,
-                    inputFormatters: const [_SingleLineTableCellFormatter()],
+                    // With maxLines == 1 Flutter strips even existing semantic
+                    // breaks before the cell's formatter can preserve them.
+                    maxLines: _controller.text.contains('\n') ? null : 1,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: const [_TableCellLineBreakFormatter()],
                     style: textStyle,
                     textAlign: textAlign,
                     selectionHeightStyle:
@@ -2545,30 +2549,39 @@ TextAlign _tableCellTextAlign(String? value) {
   };
 }
 
-class _SingleLineTableCellFormatter extends TextInputFormatter {
-  const _SingleLineTableCellFormatter();
+class _TableCellLineBreakFormatter extends TextInputFormatter {
+  const _TableCellLineBreakFormatter();
 
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final normalized = newValue.text.replaceAll(RegExp(r'\r\n|\r|\n'), ' ');
-    if (normalized == newValue.text) {
-      return newValue;
+    final breaks = busyMarkNewTableCellLineBreaks(
+      newValue.text,
+      previousText: oldValue.text,
+    ).toList();
+    if (breaks.isEmpty) return newValue;
+    final normalized = StringBuffer();
+    var start = 0;
+    for (final match in breaks) {
+      normalized.write(newValue.text.substring(start, match.start));
+      normalized.write(' ');
+      start = match.end;
     }
+    normalized.write(newValue.text.substring(start));
+
     int normalizedOffset(int offset) {
-      if (offset < 0) {
-        return offset;
+      var result = offset;
+      for (final match in breaks) {
+        if (offset <= match.start) break;
+        result -= (offset < match.end ? offset : match.end) - match.start - 1;
       }
-      return newValue.text
-          .substring(0, offset.clamp(0, newValue.text.length).toInt())
-          .replaceAll(RegExp(r'\r\n|\r|\n'), ' ')
-          .length;
+      return result;
     }
 
     return newValue.copyWith(
-      text: normalized,
+      text: normalized.toString(),
       selection: TextSelection(
         baseOffset: normalizedOffset(newValue.selection.baseOffset),
         extentOffset: normalizedOffset(newValue.selection.extentOffset),

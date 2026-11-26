@@ -2166,6 +2166,269 @@ void main() {
       },
     );
 
+    for (final table in [false, true]) {
+      testWidgets(
+        'partial math source Copy and Cut use field offsets (table=$table)',
+        (tester) async {
+          const fieldSource = r'A $x$ Z';
+          final original = table
+              ? '| Value |\n| --- |\n| $fieldSource |\n'
+              : '$fieldSource\n';
+          var result = original;
+          final capture = <BusyMarkClipboardCapture>[];
+          await mount(
+            tester,
+            'math-source-selection',
+            original,
+            (source) => result = source,
+            providerScope: true,
+            focusFirstField: false,
+            onCaptured: capture.add,
+            mode: MarkdownMode.gfm,
+          );
+          Future<TextEditingController> openSource() async {
+            final rendered = find.byWidgetPredicate(
+              (widget) =>
+                  widget.key is ValueKey<String> &&
+                  (widget.key! as ValueKey<String>).value.startsWith(
+                    'wysiwyg-rendered-math-',
+                  ),
+            );
+            if (rendered.evaluate().isNotEmpty) await tester.tap(rendered);
+            await tester.pumpAndSettle();
+            final field = tester.widget<TextField>(
+              find.widgetWithText(TextField, fieldSource),
+            );
+            expect(field.focusNode!.hasFocus, isTrue);
+            return field.controller!;
+          }
+
+          for (final (start, end) in [
+            (3, 4),
+            (2, 3),
+            (4, 5),
+            (0, 2),
+            (5, 7),
+            (1, 4),
+            (3, 6),
+          ]) {
+            final controller = await openSource();
+            controller.selection = TextSelection(
+              baseOffset: end,
+              extentOffset: start,
+            );
+            final selected = fieldSource.substring(start, end);
+            await key(tester, LogicalKeyboardKey.keyC);
+            expect(systemData['text'], selected, reason: 'Copy [$start, $end)');
+            expect(capture.last.sourceText, selected);
+            await key(tester, LogicalKeyboardKey.keyC, shift: true);
+            expect(
+              systemData['text'],
+              selected,
+              reason: 'Copy as plain text [$start, $end)',
+            );
+            expect(capture.last.sourceText, selected);
+            if (start == 3 && end == 4) {
+              final before = capture.length;
+              failWrite = true;
+              await key(tester, LogicalKeyboardKey.keyX);
+              failWrite = false;
+              expect(result, original);
+              expect(capture, hasLength(before));
+              expect(controller.text, fieldSource);
+
+              writeGate = Completer<void>();
+              await key(tester, LogicalKeyboardKey.keyX);
+              final selection = controller.selection;
+              controller.selection = const TextSelection.collapsed(offset: 0);
+              writeGate!.complete();
+              writeGate = null;
+              await tester.pumpAndSettle();
+              expect(systemData['text'], selected);
+              expect(result, original);
+              expect(controller.text, fieldSource);
+              controller.selection = selection;
+            }
+            await key(tester, LogicalKeyboardKey.keyX);
+            expect(systemData['text'], selected, reason: 'Cut [$start, $end)');
+            final saved = _parser
+                .parse(
+                  filePath: '/math.md',
+                  source: result,
+                  mode: MarkdownMode.gfm,
+                )
+                .busyDocument
+                .blocks
+                .single;
+            final edited = table ? saved.children.last.children.single : saved;
+            final expected = fieldSource.replaceRange(start, end, '');
+            expect(
+              busyMarkWysiwygEditableText(edited),
+              expected,
+              reason: result,
+            );
+            await key(tester, LogicalKeyboardKey.keyZ);
+            expect(result, original);
+          }
+        },
+      );
+    }
+
+    test(
+      'direction projection tracks controls through disjoint input edits',
+      () {
+        const original = 'A<br><bdo dir="rtl">BC</bdo> \u2067D\u2069';
+        final document = _parser
+            .parse(
+              filePath: '/direction.md',
+              source: original,
+              mode: MarkdownMode.gfm,
+            )
+            .busyDocument;
+        final block = document.blocks.single;
+        final controller = BusyMarkWysiwygTextController(
+          text: block.plainText,
+          ranges: const [],
+        )..updateFromBlock(block);
+        addTearDown(controller.dispose);
+        final editable = controller.editableController;
+        final before = editable.text;
+        expect(before, 'A\n\u2067\u202eBC\u202c\u2069 \u2067D\u2069');
+        editable.selection = TextSelection.collapsed(offset: before.length);
+        final after = '${before.replaceFirst('\n', '')}E';
+        editable.value = TextEditingValue(
+          text: after,
+          selection: TextSelection.collapsed(offset: after.length),
+        );
+        expect(controller.text, 'ABC \u2067D\u2069E');
+        expect(controller.selection.extentOffset, controller.text.length);
+      },
+    );
+
+    testWidgets(
+      'typing beside a directional table break preserves authored inlines',
+      (tester) async {
+        const source =
+            '| Value |\n| --- |\n| A<br><bdo dir="rtl">BC</bdo> D |\n';
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-clipboard-directed-break-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final file = File('${root.path}/table.md')..writeAsStringSync(source);
+        final savedClips = <BusyMarkClipboardCapture>[];
+        var result = source;
+        await mount(
+          tester,
+          'directed-break',
+          source,
+          (value) => result = value,
+          filePath: file.path,
+          focusFirstField: false,
+          onCaptured: savedClips.add,
+          mode: MarkdownMode.gfm,
+        );
+        final field = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              (widget.controller?.text.contains('BC') ?? false),
+        );
+        await tester.tap(field);
+        final editable = tester.widget<TextField>(field).controller!;
+        expect(editable.text, contains('\n\u2067\u202eBC'));
+        editable.selection = TextSelection.collapsed(
+          offset: editable.text.length,
+        );
+        await tester.pump();
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: '${editable.text}E',
+            selection: TextSelection.collapsed(
+              offset: editable.text.length + 1,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        void checkCell(String markdown, String expected) {
+          final cell = _parser
+              .parse(
+                filePath: file.path,
+                source: markdown,
+                mode: MarkdownMode.gfm,
+              )
+              .busyDocument
+              .blocks
+              .single
+              .children
+              .last
+              .children
+              .single;
+          expect(cell.plainText, 'A\nBC $expected', reason: markdown);
+          expect(
+            cell.inlines.where(
+              (inline) => inline.kind == BusyInlineKind.hardBreak,
+            ),
+            hasLength(1),
+          );
+          final direction = cell.inlines.singleWhere(
+            (inline) => inline.attributes['htmlTag'] == 'bdo',
+          );
+          expect(
+            (direction.attributes['dir'], direction.plainText),
+            ('rtl', 'BC'),
+          );
+          expect(markdown, contains('<br><bdo dir="rtl">BC</bdo> $expected'));
+          expect(
+            markdown,
+            isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))),
+          );
+        }
+
+        checkCell(result, 'DE');
+        expect(
+          editable.selection,
+          TextSelection.collapsed(offset: editable.text.length),
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        expect(systemData['text'], 'A\nBC DE');
+        final copied = savedClips.single;
+        expect(copied.sourceText, 'A  \n<bdo dir="rtl">BC</bdo> DE\n');
+        expect(
+          copied.sourceText,
+          isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))),
+        );
+        final external = html.parseFragment(copied.html!);
+        expect(external.querySelectorAll('br'), hasLength(1));
+        expect(external.querySelector('bdo[dir="rtl"]')?.text, 'BC');
+        expect(external.text, 'ABC DE');
+        expect(
+          copied.html,
+          isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))),
+        );
+
+        final reopened = await tester.runAsync(() async {
+          final writer = await DocumentHistoryHarness.create(path: file.path);
+          try {
+            writer.controller.updateActiveText(result);
+            expect(await writer.controller.saveActive(), isTrue);
+          } finally {
+            writer.dispose();
+          }
+          final reader = await DocumentHistoryHarness.create(path: file.path);
+          try {
+            return reader.buffer.text;
+          } finally {
+            reader.dispose();
+          }
+        });
+        checkCell(reopened!, 'DE');
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, source);
+        checkCell(result, 'D');
+      },
+    );
+
     testWidgets('rich paste in math fields uses source coordinates', (
       tester,
     ) async {

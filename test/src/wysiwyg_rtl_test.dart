@@ -404,7 +404,8 @@ void main() {
           filePath: 'topic.md',
           mode: MarkdownMode.gfm,
           source:
-              '<a href="$url" dir="rtl">\n<p>Linked flow !</p>\n'
+              '<a href="$url" dir="rtl" title="Use <a> links">\n'
+              '<!-- <a> -->\n<p>Linked flow !</p>\n'
               '<p dir="ltr">Flow override !</p>\n</a>\n\n'
               '<table><tr><th>Items</th></tr>'
               '<tr><td><a href="$url"><ul><li>One</li><li>Two</li></ul></a></td></tr>'

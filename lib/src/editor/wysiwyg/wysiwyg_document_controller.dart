@@ -2541,7 +2541,6 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String text, {
     required bool parseMarkdownSource,
   }) {
-    final acceptedText = busyMarkNormalizeTableCellText(text);
     var changed = false;
     _document = _document.copyWith(
       blocks: _replaceInBlocks(_document.blocks, tableBlockId, (block) {
@@ -2554,6 +2553,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           final cells = <BusyBlock>[];
           for (final cell in row.children) {
             if (cell.id == cellId) {
+              final acceptedText = busyMarkNormalizeTableCellText(
+                text,
+                previousText: parseMarkdownSource
+                    ? busyMarkWysiwygEditableText(cell)
+                    : cell.plainText,
+              );
               cells.add(
                 parseMarkdownSource
                     ? _tableCellWithEditedSource(cell, acceptedText)

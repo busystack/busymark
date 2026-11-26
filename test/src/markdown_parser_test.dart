@@ -5,6 +5,7 @@ import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -16,6 +17,64 @@ void main() {
   const parser = MarkdownParser();
 
   String fixture(String name) => 'test/fixtures/markdown/$name';
+
+  for (final (label, title, comment) in [
+    ('attribute', ' title="Use <a> links"', ''),
+    ('comment', '', '<!-- <a> -->\n'),
+  ]) {
+    test('block hyperlink boundaries ignore tag text in $label', () {
+      const url = 'https://example.test';
+      final anchor =
+          '<a href="$url" dir="rtl"$title>\n'
+          '$comment<p>ABC !</p>\n<p dir="ltr">Override !</p>\n</a>';
+      final source = '$anchor\n\n<a href="$url">Read more</a> today.\n';
+      BusyDocument parse(String value) => parser
+          .parse(filePath: 'topic.md', source: value, mode: MarkdownMode.gfm)
+          .busyDocument;
+      void verify(BusyDocument document) {
+        expect(document.blocks.map((block) => block.kind), [
+          BusyBlockKind.htmlBlock,
+          BusyBlockKind.paragraph,
+        ]);
+        final raw = document.blocks.first;
+        expect(raw.rawSource, anchor);
+        expect(raw.sourceSpan?.startOffset, 0);
+        expect(
+          raw.sourceSpan?.endOffset,
+          inInclusiveRange(anchor.length, anchor.length + 1),
+        );
+        final linked = raw.children.single.children;
+        expect(
+          linked.map((block) => block.kind),
+          everyElement(BusyBlockKind.paragraph),
+        );
+        expect(
+          linked.map((block) => (block.plainText, block.attributes['dir'])),
+          [('ABC !', 'rtl'), ('Override !', 'ltr')],
+        );
+        for (final block in linked) {
+          final link = block.inlines.single;
+          expect(link.destination, url);
+          expect(
+            link.attributes['title'],
+            title.isEmpty ? null : 'Use <a> links',
+          );
+        }
+        final prose = document.blocks.last;
+        expect(prose.plainText, 'Read more today.');
+        expect(
+          prose.inlines
+              .singleWhere((inline) => inline.kind == BusyInlineKind.link)
+              .destination,
+          url,
+        );
+      }
+
+      final document = parse(source);
+      verify(document);
+      verify(parse(const BusyMarkMarkdownSerializer().serialize(document)));
+    });
+  }
 
   test('inline source mapping uses parsed formatting boundaries', () {
     const marker = '\ue000';

@@ -17,6 +17,7 @@ import 'markdown_list_source.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
+import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
 import '../writerside/writerside_schema.dart';
 
@@ -312,6 +313,7 @@ class MarkdownParser {
 
       if (offset >= rawHtmlBlockEndOffset) {
         final htmlEndIndex = _rawHtmlContainerSourceEndIndex(
+          source,
           scannedLines,
           lineIndex,
         );
@@ -1079,7 +1081,11 @@ class MarkdownParser {
         continue;
       }
 
-      final htmlEndIndex = _rawHtmlContainerSourceEndIndex(indexedLines, index);
+      final htmlEndIndex = _rawHtmlContainerSourceEndIndex(
+        source,
+        indexedLines,
+        index,
+      );
       if (htmlEndIndex != null) {
         addChunk(startIndex, htmlEndIndex);
         index = htmlEndIndex;
@@ -1470,12 +1476,27 @@ class MarkdownParser {
   }
 
   int? _rawHtmlContainerSourceEndIndex(
+    String source,
     List<_ScannedSourceLine> lines,
     int startIndex,
   ) {
     final tag = _rawHtmlContainerOpeningTag(lines[startIndex].line);
     if (tag == null) {
       return null;
+    }
+    if (tag == 'a') {
+      final start = lines[startIndex];
+      final end = const RawHtmlAdapter().standaloneBlockLinkEnd(
+        source,
+        start.offset,
+        start.endOffset,
+      );
+      if (end == null) return null;
+      var index = startIndex;
+      while (lines[index].endOffset < end) {
+        index++;
+      }
+      return index + 1;
     }
 
     var balance = 0;
@@ -1520,7 +1541,7 @@ class MarkdownParser {
     if (voidHtmlTags.contains(tag)) {
       return null;
     }
-    if (!isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
+    if (tag != 'a' && !isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
       return null;
     }
     return tag;
