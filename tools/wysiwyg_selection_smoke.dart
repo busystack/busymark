@@ -456,9 +456,14 @@ class _ProbeState extends State<_Probe> {
       await _pause();
       await _jump(scrollTo);
     }
-    final end = _caret(endText, endOffset);
+    // Focus can scroll the viewport while the drag is in progress. Aim at
+    // the current caret geometry, keeping a field-local gesture in its field.
     for (var step = 1; step <= 10; step++) {
-      final position = Offset.lerp(start, end, step / 10)!;
+      final motionStart = startText == endText
+          ? _caret(startText, startOffset)
+          : start;
+      final end = _caret(endText, endOffset);
+      final position = Offset.lerp(motionStart, end, step / 10)!;
       GestureBinding.instance.handlePointerEvent(
         PointerMoveEvent(
           viewId: viewId,
@@ -483,7 +488,7 @@ class _ProbeState extends State<_Probe> {
           : PointerUpEvent(
               viewId: viewId,
               pointer: pointer,
-              position: end,
+              position: _caret(endText, endOffset),
               kind: PointerDeviceKind.mouse,
             ),
     );
@@ -646,22 +651,17 @@ class _ProbeState extends State<_Probe> {
         expectedRange: tableRange,
         expectedCopy: tableCopy,
       );
-      await _jump(listIndex - 1);
+      await _jump(paragraphIndex);
       await _drag(
-        blocks[listIndex - 1].plainText,
+        paragraph.plainText,
         0,
-        following.plainText,
-        following.plainText.length,
-        scrollTo: paragraphIndex,
+        cells.last.plainText,
+        cells.last.plainText.length,
+        scrollTo: tableIndex,
       );
       await _record(
         '10-drag-with-scroll',
-        expectedRange: range(
-          blocks[listIndex - 1],
-          0,
-          following,
-          following.plainText.length,
-        ),
+        expectedRange: range(paragraph, 0, table, 0),
         needles: [
           paragraph.plainText,
           '/opt/example/gateway',
