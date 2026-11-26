@@ -30,11 +30,15 @@ const semanticHtmlInlineTags = {
 /// Creates the sanitized wrapper for modeled inline HTML. Each destination
 /// supplies its own children so it can apply its normal reference policy.
 dom.Element? semanticHtmlInlineElement(BusyInline inline) {
-  if (inline.kind != BusyInlineKind.html) return null;
-  final tag = semanticHtmlInlineTag(inline.attributes);
+  final tag = switch (inline.kind) {
+    BusyInlineKind.html => semanticHtmlInlineTag(inline.attributes),
+    BusyInlineKind.strikethrough => 'del',
+    _ => null,
+  };
   if (tag == null) return null;
-  final attributes = sanitizeHtmlAttributes(tag, inline.attributes);
-  return dom.Element.tag(tag)..attributes.addAll(attributes ?? const {});
+  final attributes = sanitizeHtmlAttributes(tag, inline.attributes) ?? const {};
+  if (tag == 'del' && attributes.isEmpty) return null;
+  return dom.Element.tag(tag)..attributes.addAll(attributes);
 }
 
 String? semanticHtmlInlineTag(Map<String, String> attributes) {

@@ -1,6 +1,7 @@
 import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -169,6 +170,151 @@ void main() {
     );
     final inline = tester.widget<Text>(find.text('\u2066ABC !\u2069 אבג'));
     expect(inline.textDirection, TextDirection.rtl);
+  });
+
+  testWidgets('ordinary editable paragraph paints a bidi override', (
+    tester,
+  ) async {
+    const source =
+        'Before <bdo dir="rtl">ABC</bdo> <span dir="rtl">ABC !</span> '
+        '<bdi>אבג !</bdi> after.';
+    var edited = source;
+    String? copied;
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copied = (call.arguments as Map)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+    final document = parser
+        .parse(filePath: 'topic.md', mode: MarkdownMode.gfm, source: source)
+        .busyDocument;
+    expect(document.blocks.single.kind, BusyBlockKind.paragraph);
+    await _pumpEditor(
+      tester,
+      document,
+      onSourceChanged: (value) => edited = value,
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    final controller = field.controller!;
+    final widget = tester.state<EditableTextState>(find.byType(EditableText));
+    final offset = controller.text.indexOf('ABC');
+    double left(int index) => widget.renderEditable
+        .getBoxesForSelection(
+          TextSelection(baseOffset: index, extentOffset: index + 1),
+        )
+        .single
+        .left;
+    expect(left(offset), greaterThan(left(offset + 2)));
+    final isolated = controller.text.indexOf('ABC !');
+    expect(left(isolated), lessThan(left(isolated + 2)));
+    expect(left(isolated + 4), lessThan(left(isolated)));
+    final auto = controller.text.indexOf('אבג !');
+    expect(left(auto), greaterThan(left(auto + 4)));
+    field.focusNode!.requestFocus();
+    controller.selection = TextSelection.collapsed(offset: offset + 1);
+    await tester.pump();
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.arrowLeft,
+      shift: true,
+    );
+    expect(controller.selection.end - controller.selection.start, 1);
+    controller.selection = TextSelection(
+      baseOffset: offset,
+      extentOffset: offset + 3,
+    );
+    await _pressEditorShortcut(tester, LogicalKeyboardKey.keyC, control: true);
+    expect(copied, 'ABC');
+
+    controller.selection = TextSelection(
+      baseOffset: offset + 1,
+      extentOffset: offset + 2,
+    );
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: controller.text.replaceRange(offset + 1, offset + 2, 'YZ'),
+        selection: TextSelection.collapsed(offset: offset + 3),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(edited, contains('<bdo dir="rtl">AYZC</bdo>'));
+    expect(edited, isNot(contains(RegExp(r'[\u202c-\u202e\u2066-\u2069]'))));
+    expect(controller.selection.extentOffset, offset + 3);
+    final reopened = parser.parse(
+      filePath: 'topic.md',
+      mode: MarkdownMode.gfm,
+      source: edited,
+    );
+    expect(
+      reopened.busyDocument.blocks.single.plainText,
+      'Before AYZC ABC ! אבג ! after.',
+    );
+    await _pumpEditor(tester, reopened.busyDocument);
+    expect(left(offset), greaterThan(left(offset + 3)));
+
+    final reopenedField = tester.widget<TextField>(find.byType(TextField));
+    final reopenedController = reopenedField.controller!;
+    // The caret sits beyond the invisible closing controls. A physical
+    // Backspace must also remove the preceding authored grapheme.
+    reopenedField.focusNode!.requestFocus();
+    reopenedController.selection = TextSelection.collapsed(offset: offset + 6);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pumpAndSettle();
+    expect(reopenedController.text, contains('AYZ\u202c\u2069'));
+    expect(reopenedController.text, isNot(contains('AYZC')));
+  });
+
+  testWidgets('links retain lists and headings in rendered HTML table cells', (
+    tester,
+  ) async {
+    const url = 'https://example.test/items';
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          mode: MarkdownMode.gfm,
+          source:
+              '<table><tr><th>Items</th></tr>'
+              '<tr><td><a href="$url"><ul><li>One</li><li>Two</li></ul></a></td></tr>'
+              '<tr><td><a href="$url"><h3>Heading</h3></a></td></tr></table>',
+        )
+        .busyDocument;
+    final table = document.blocks.single.children.single;
+    final cells = table.children
+        .skip(1)
+        .map((row) => row.children.single)
+        .toList();
+    expect(cells.first.children.map((b) => b.kind), [
+      BusyBlockKind.unorderedListItem,
+      BusyBlockKind.unorderedListItem,
+    ]);
+    expect(cells.last.children.single.kind, BusyBlockKind.heading);
+    expect(
+      cells.expand((c) => c.children).map((b) => b.inlines.single.destination),
+      everyElement(url),
+    );
+    await _pumpEditor(tester, document);
+    expect(find.text('One'), findsOneWidget);
+    expect(find.text('Two'), findsOneWidget);
+    final markers = tester.widgetList<BusyMarkDocumentListMarker>(
+      find.byType(BusyMarkDocumentListMarker),
+    );
+    expect(markers, hasLength(2));
+    expect(
+      markers.every((marker) => !marker.ordered && !marker.hidden),
+      isTrue,
+    );
+    final heading = tester.widget<Text>(find.text('Heading'));
+    final label = tester.widget<Text>(find.text('One'));
+    expect(
+      (heading.textSpan as TextSpan).style!.fontSize,
+      greaterThan((label.textSpan as TextSpan).style!.fontSize!),
+    );
   });
 
   testWidgets('raw list marker shares the attributed first paragraph row', (
@@ -676,6 +822,7 @@ Future<void> _pumpEditor(
   BusyDocument document, {
   Locale? locale,
   TextDirection textDirection = TextDirection.ltr,
+  ValueChanged<String>? onSourceChanged,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -690,7 +837,7 @@ Future<void> _pumpEditor(
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: document,
-              onSourceChanged: (_, _) {},
+              onSourceChanged: (_, source) => onSourceChanged?.call(source),
             ),
           ),
         ),

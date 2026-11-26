@@ -866,7 +866,8 @@ class HtmlDocumentWriter {
             attrs: {if (description != null) 'title': description},
           );
         case BusyInlineKind.strikethrough:
-          node = _el('del', children: nodes);
+          node = (semanticHtmlInlineElement(value) ?? dom.Element.tag('del'))
+            ..nodes.addAll(nodes);
         case BusyInlineKind.writersideControl:
           node = _el('strong', children: nodes);
         case BusyInlineKind.writersidePath:

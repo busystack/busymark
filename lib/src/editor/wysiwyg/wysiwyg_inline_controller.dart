@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show CharacterBoundary;
 
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
@@ -8,6 +9,7 @@ import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_source_map.dart';
 import '../../markdown/semantic_html_inline.dart';
 import '../document_html_inline.dart';
+import '../document_text_direction.dart';
 
 bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
@@ -256,6 +258,31 @@ class BusyMarkWysiwygTextController extends TextEditingController {
        super(text: text);
 
   List<BusyInlineStyleRange> _ranges;
+  Map<int, String> _directionControls = const {};
+  _DirectionalEditingController? _directional;
+
+  TextEditingController get editableController =>
+      _directional ??
+      (_directionControls.isEmpty
+          ? this
+          : (_directional = _DirectionalEditingController(this)));
+
+  int documentOffset(int editableOffset) =>
+      _directional?._projection.documentOffset(editableOffset) ??
+      editableOffset;
+
+  TextPosition editablePosition(TextPosition position) => TextPosition(
+    offset:
+        _directional?._projection.editableOffset(
+          position.offset,
+          beforeControls: position.affinity == TextAffinity.upstream,
+        ) ??
+        position.offset,
+    affinity: position.affinity,
+  );
+
+  TextSelection editableSelection(TextSelection selection) =>
+      _directional?._projection.toEditable(selection) ?? selection;
 
   void updateFromBlock(BusyBlock block) {
     final sourceEditing = busyMarkWysiwygBlockContainsMath(block);
@@ -264,6 +291,9 @@ class BusyMarkWysiwygTextController extends TextEditingController {
         ? const <BusyInlineStyleRange>[]
         : busyInlineStyleRanges(block.inlines, includeHtml: true);
     final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
+    _directionControls = sourceEditing
+        ? const {}
+        : _inlineDirectionControls(block.inlines);
     if (text != nextText) {
       final previousSelection = selection;
       _ranges = nextRanges;
@@ -276,6 +306,7 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       _ranges = nextRanges;
       notifyListeners();
     }
+    _directional?.refresh(stylesChanged: rangesChanged);
   }
 
   @override
@@ -283,14 +314,27 @@ class BusyMarkWysiwygTextController extends TextEditingController {
     required BuildContext context,
     TextStyle? style,
     required bool withComposing,
-  }) {
+  }) => _buildTextSpan(context, style, text, _ranges, TextRange.empty);
+
+  TextSpan _buildTextSpan(
+    BuildContext context,
+    TextStyle? style,
+    String text,
+    List<BusyInlineStyleRange> styleRanges,
+    TextRange composing,
+  ) {
     final baseStyle = style ?? DefaultTextStyle.of(context).style;
-    if (text.isEmpty || _ranges.isEmpty) {
+    if (text.isEmpty || styleRanges.isEmpty && composing.isCollapsed) {
       return TextSpan(text: text, style: baseStyle);
     }
     final spans = <TextSpan>[];
-    final ranges = _normalizedRanges(_ranges, text.length);
+    final ranges = _normalizedRanges(styleRanges, text.length);
     final boundaries = <int>{0, text.length};
+    if (!composing.isCollapsed) {
+      boundaries
+        ..add(composing.start)
+        ..add(composing.end);
+    }
     for (final range in ranges) {
       boundaries
         ..add(range.start)
@@ -303,18 +347,33 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       if (end <= start) {
         continue;
       }
+      final segmentStyle = _styleForRanges(
+        context,
+        _activeRangesForSegment(ranges, start, end),
+        baseStyle,
+      );
       spans.add(
         TextSpan(
           text: text.substring(start, end),
-          style: _styleForRanges(
-            context,
-            _activeRangesForSegment(ranges, start, end),
-            baseStyle,
-          ),
+          style: start >= composing.start && end <= composing.end
+              ? segmentStyle.copyWith(
+                  decoration: TextDecoration.combine([
+                    if (segmentStyle.decoration case final decoration?)
+                      decoration,
+                    TextDecoration.underline,
+                  ]),
+                )
+              : segmentStyle,
         ),
       );
     }
     return TextSpan(style: baseStyle, children: spans);
+  }
+
+  @override
+  void dispose() {
+    _directional?.dispose();
+    super.dispose();
   }
 
   TextStyle _styleForRanges(
@@ -372,6 +431,293 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       ),
       _ => baseStyle,
     };
+  }
+}
+
+Map<int, String> _inlineDirectionControls(List<BusyInline> inlines) {
+  final controls = <int, String>{};
+  var offset = 0;
+  void add(String text) => controls.update(
+    offset,
+    (existing) => existing + text,
+    ifAbsent: () => text,
+  );
+  void visit(BusyInline inline) {
+    final controls =
+        inline.kind == BusyInlineKind.html && inline.plainText.isNotEmpty
+        ? busyMarkInlineDirectionControls(inline.attributes)
+        : null;
+    if (controls != null) add(controls.open);
+    if (inline.children.isEmpty) {
+      offset += inline.plainText.length;
+    } else {
+      inline.children.forEach(visit);
+    }
+    if (controls != null) add(controls.close);
+  }
+
+  inlines.forEach(visit);
+  return controls;
+}
+
+/// EditableText and the platform input client need the same UTF-16 offsets as
+/// RenderEditable. The document controller only sees authored text and offsets.
+class _DirectionalEditingController extends TextEditingController {
+  _DirectionalEditingController(this._document) {
+    _document.addListener(refresh);
+    refresh();
+  }
+
+  final BusyMarkWysiwygTextController _document;
+  var _projection = const _InlineDirectionText('', []);
+  bool _handlingInput = false;
+
+  void refresh({bool stylesChanged = false}) {
+    if (_handlingInput) return;
+    final next = _InlineDirectionText.fromDocument(
+      _document.text,
+      _document._directionControls,
+    );
+    final current = super.value;
+    final selection =
+        next.text == current.text &&
+            listEquals(next.controls, _projection.controls) &&
+            next.toDocument(current.selection) == _document.selection
+        ? current.selection
+        : next.toEditable(_document.selection);
+    final composing = _document.value.composing;
+    final updated = TextEditingValue(
+      text: next.text,
+      selection: selection,
+      composing: composing.isValid && !composing.isCollapsed
+          ? TextRange(
+              start: next.editableOffset(composing.start),
+              end: next.editableOffset(composing.end, beforeControls: true),
+            )
+          : TextRange.empty,
+    );
+    _projection = next;
+    if (current != updated) {
+      super.value = updated;
+    } else if (stylesChanged) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  set value(TextEditingValue next) {
+    final previous = super.value;
+    if (next == previous) return;
+    final previousDocumentText = _document.text;
+    final oldProjection = _projection;
+    var edited = oldProjection.afterEdit(previous.selection, next.text);
+    if (previous.selection.isValid &&
+        previous.selection.isCollapsed &&
+        next.selection.isValid &&
+        next.selection.isCollapsed &&
+        edited.controls.length < oldProjection.controls.length &&
+        edited.documentText == previousDocumentText) {
+      // Backspace and Delete can otherwise repeatedly remove an invisible
+      // scope boundary which would be restored on the next layout.
+      final offset = _document.selection.extentOffset;
+      final backward =
+          next.selection.extentOffset < previous.selection.extentOffset;
+      final boundary = CharacterBoundary(previousDocumentText);
+      final start = backward && offset > 0
+          ? boundary.getLeadingTextBoundaryAt(offset - 1) ?? 0
+          : offset;
+      final end = !backward && offset < previousDocumentText.length
+          ? boundary.getTrailingTextBoundaryAt(offset) ??
+                previousDocumentText.length
+          : offset;
+      if (end > start) {
+        final removed = oldProjection.toEditable(
+          TextSelection(baseOffset: start, extentOffset: end),
+        );
+        next = TextEditingValue(
+          text: previous.text.replaceRange(removed.start, removed.end, ''),
+          selection: TextSelection.collapsed(offset: removed.start),
+        );
+        edited = oldProjection.afterEdit(removed, next.text);
+      }
+    }
+    _projection = edited;
+    final composing = next.composing;
+    final authored = TextEditingValue(
+      text: _projection.documentText,
+      selection: _projection.toDocument(next.selection),
+      composing: composing.isValid && !composing.isCollapsed
+          ? TextRange(
+              start: _projection.documentOffset(composing.start),
+              end: _projection.documentOffset(composing.end),
+            )
+          : TextRange.empty,
+    );
+    _handlingInput = true;
+    try {
+      _document.value = authored;
+      super.value = next;
+    } finally {
+      _handlingInput = false;
+    }
+    if (next.text != previous.text && authored.text == previousDocumentText) {
+      refresh();
+    }
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) => _document._buildTextSpan(
+    context,
+    style,
+    text,
+    [
+      for (final range in _document._ranges)
+        BusyInlineStyleRange(
+          start: _projection.editableOffset(range.start),
+          end: _projection.editableOffset(range.end, beforeControls: true),
+          kind: range.kind,
+          destination: range.destination,
+          attributes: range.attributes,
+        ),
+    ],
+    withComposing && value.isComposingRangeValid
+        ? value.composing
+        : TextRange.empty,
+  );
+
+  @override
+  void dispose() {
+    _document.removeListener(refresh);
+    super.dispose();
+  }
+}
+
+class _InlineDirectionText {
+  const _InlineDirectionText(this.text, this.controls);
+
+  factory _InlineDirectionText.fromDocument(
+    String text,
+    Map<int, String> insertions,
+  ) {
+    final controls = <int>[];
+    final result = StringBuffer();
+    var start = 0;
+    for (final MapEntry(key: offset, value: codes) in insertions.entries) {
+      if (offset > text.length) break;
+      result.write(text.substring(start, offset));
+      for (var i = 0; i < codes.length; i++) {
+        controls.add(result.length + i);
+      }
+      result.write(codes);
+      start = offset;
+    }
+    result.write(text.substring(start));
+    return _InlineDirectionText(result.toString(), controls);
+  }
+
+  final String text;
+  // Sorted indices of generated UTF-16 code units in the editable text.
+  final List<int> controls;
+
+  String get documentText {
+    if (controls.isEmpty) return text;
+    final result = StringBuffer();
+    var start = 0;
+    for (final offset in controls) {
+      result.write(text.substring(start, offset));
+      start = offset + 1;
+    }
+    return (result..write(text.substring(start))).toString();
+  }
+
+  int documentOffset(int offset) {
+    var result = offset;
+    for (final control in controls) {
+      if (control >= offset) break;
+      result--;
+    }
+    return result;
+  }
+
+  int editableOffset(int offset, {bool beforeControls = false}) {
+    var result = offset;
+    for (final control in controls) {
+      if (control > result || beforeControls && control == result) break;
+      result++;
+    }
+    return result;
+  }
+
+  TextSelection toDocument(TextSelection selection) => selection.copyWith(
+    baseOffset: documentOffset(selection.baseOffset),
+    extentOffset: documentOffset(selection.extentOffset),
+  );
+
+  TextSelection toEditable(TextSelection selection) {
+    if (selection.isCollapsed) {
+      return selection.copyWith(
+        baseOffset: editableOffset(
+          selection.baseOffset,
+          beforeControls: selection.affinity == TextAffinity.upstream,
+        ),
+        extentOffset: editableOffset(
+          selection.extentOffset,
+          beforeControls: selection.affinity == TextAffinity.upstream,
+        ),
+      );
+    }
+    return selection.copyWith(
+      baseOffset: editableOffset(
+        selection.baseOffset,
+        beforeControls: selection.baseOffset == selection.end,
+      ),
+      extentOffset: editableOffset(
+        selection.extentOffset,
+        beforeControls: selection.extentOffset == selection.end,
+      ),
+    );
+  }
+
+  _InlineDirectionText afterEdit(TextSelection previousSelection, String next) {
+    if (next == text) return this;
+    if (controls.isEmpty) return _InlineDirectionText(next, const []);
+    var prefix = 0;
+    // Prefer the previous selection edges when equal text can be attributed
+    // either to an insertion or to one of the old generated controls.
+    final anchored =
+        previousSelection.isValid &&
+        next.startsWith(text.substring(0, previousSelection.start)) &&
+        next.endsWith(text.substring(previousSelection.end)) &&
+        next.length >=
+            text.length - (previousSelection.end - previousSelection.start);
+    if (anchored) {
+      prefix = previousSelection.start;
+    } else {
+      while (prefix < text.length &&
+          prefix < next.length &&
+          text.codeUnitAt(prefix) == next.codeUnitAt(prefix)) {
+        prefix++;
+      }
+    }
+    var oldEnd = text.length;
+    final delta = next.length - text.length;
+    if (anchored) {
+      oldEnd = previousSelection.end;
+    } else {
+      while (oldEnd > prefix &&
+          oldEnd + delta > prefix &&
+          text.codeUnitAt(oldEnd - 1) == next.codeUnitAt(oldEnd + delta - 1)) {
+        oldEnd--;
+      }
+    }
+    return _InlineDirectionText(next, [
+      for (final offset in controls)
+        if (offset < prefix) offset else if (offset >= oldEnd) offset + delta,
+    ]);
   }
 }
 

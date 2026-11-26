@@ -545,13 +545,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                               child: BusyMarkEditorFocusRestoration(
                                 readOnly: DocumentReadOnlyScope.of(context),
                                 focusNode: focusNode,
-                                controller: controller,
+                                controller: controller.editableController,
                                 builder: (context, caretScrollController) => TextField(
                                   readOnly: DocumentReadOnlyScope.of(context),
                                   key: ValueKey(
                                     'wysiwyg-field-$documentFilePath-${block.id}',
                                   ),
-                                  controller: controller,
+                                  controller: controller.editableController,
                                   undoController: undoController,
                                   focusNode: focusNode,
                                   scrollController: caretScrollController,
@@ -602,7 +602,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                           onCheckSpelling: onCheckSpelling,
                                         ),
                                   onTap: onFocused,
-                                  onChanged: onChanged,
+                                  onChanged: (_) => onChanged(controller.text),
                                 ),
                               ),
                             ),
@@ -2470,12 +2470,16 @@ class _SpellingUnderlinePainter extends CustomPainter {
     for (final range in ranges) {
       if (!range.isValid ||
           range.isCollapsed ||
-          range.end > (editable.text?.toPlainText().length ?? 0)) {
+          range.end > controller.text.length) {
         continue;
       }
       if (busyMarkSpellingUnderlineSuppressed(controller, range)) continue;
+      final selection = TextSelection(
+        baseOffset: range.start,
+        extentOffset: range.end,
+      );
       final boxes = editable.getBoxesForSelection(
-        TextSelection(baseOffset: range.start, extentOffset: range.end),
+        _editableSelection(controller, selection),
       );
       for (final box in boxes) {
         final topLeft = overlay.globalToLocal(
@@ -2678,6 +2682,7 @@ class _WysiwygSelectionOverlayState extends State<_WysiwygSelectionOverlay> {
               painter: _WysiwygSelectionPainter(
                 editableKey: _editableKey,
                 overlayKey: _overlayKey,
+                controller: widget.controller,
                 selectionRange: widget.selectionRange,
                 color:
                     DefaultSelectionStyle.of(context).selectionColor ??
@@ -2699,6 +2704,7 @@ class _WysiwygSelectionPainter extends CustomPainter {
   _WysiwygSelectionPainter({
     required this.editableKey,
     required this.overlayKey,
+    required this.controller,
     required this.selectionRange,
     required this.color,
     required Listenable repaint,
@@ -2706,6 +2712,7 @@ class _WysiwygSelectionPainter extends CustomPainter {
 
   final GlobalKey editableKey;
   final GlobalKey overlayKey;
+  final TextEditingController controller;
   final BusyMarkWysiwygSelectionRange? selectionRange;
   final Color color;
 
@@ -2718,12 +2725,15 @@ class _WysiwygSelectionPainter extends CustomPainter {
     );
     final overlay = overlayKey.currentContext?.findRenderObject();
     if (editable == null || overlay is! RenderBox || !overlay.hasSize) return;
-    final length = editable.text?.toPlainText().length ?? 0;
+    final length = controller.text.length;
     final start = range.start.clamp(0, length).toInt();
     final end = range.end.clamp(0, length).toInt();
     if (end <= start) return;
     final boxes = editable.getBoxesForSelection(
-      TextSelection(baseOffset: start, extentOffset: end),
+      _editableSelection(
+        controller,
+        TextSelection(baseOffset: start, extentOffset: end),
+      ),
     );
     final paint = Paint()..color = color;
     canvas.save();
@@ -2748,10 +2758,18 @@ class _WysiwygSelectionPainter extends CustomPainter {
   bool shouldRepaint(covariant _WysiwygSelectionPainter oldDelegate) =>
       oldDelegate.editableKey != editableKey ||
       oldDelegate.overlayKey != overlayKey ||
+      oldDelegate.controller != controller ||
       oldDelegate.selectionRange?.start != selectionRange?.start ||
       oldDelegate.selectionRange?.end != selectionRange?.end ||
       oldDelegate.color != color;
 }
+
+TextSelection _editableSelection(
+  TextEditingController controller,
+  TextSelection selection,
+) => controller is BusyMarkWysiwygTextController
+    ? controller.editableSelection(selection)
+    : selection;
 
 class _ImageBlockEditor extends StatelessWidget {
   const _ImageBlockEditor({

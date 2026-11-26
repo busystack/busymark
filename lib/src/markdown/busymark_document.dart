@@ -211,6 +211,7 @@ class BusyBlock {
 
   bool get isAtomicSelectionBlock =>
       kind == BusyBlockKind.image ||
+      kind == BusyBlockKind.video ||
       kind == BusyBlockKind.table ||
       kind == BusyBlockKind.thematicBreak ||
       preserveRaw && rawSource?.isNotEmpty == true;

@@ -1097,7 +1097,8 @@ class RawHtmlAdapter {
   ) {
     final useBlocks = cell.children.any(
       (child) =>
-          isSafeBlockHtmlTag(child.localName!) && !_isTableCellFlow(child),
+          (isSafeBlockHtmlTag(child.localName!) || _isBlockLink(child)) &&
+          !_isTableCellFlow(child),
     );
     final direction = busyMarkResolvedHtmlDirection(cell);
     return BusyBlock(

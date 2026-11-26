@@ -5,6 +5,8 @@ import 'package:path/path.dart' as p;
 
 import '../core/local_image_resolver.dart';
 
+const busyMarkVideoMediaAttributes = {'src', 'preview-src'};
+
 const busyMarkWritersideVideoExtensions = {
   '.avi',
   '.m4v',

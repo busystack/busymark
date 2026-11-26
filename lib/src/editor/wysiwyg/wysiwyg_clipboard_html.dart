@@ -39,9 +39,7 @@ class WysiwygClipboardHtml {
       return null;
     }
     try {
-      // Fragment parsing retains leading text even without an explicit body.
-      final body = html.parseFragment(source);
-      final selected = _clipboardFragmentNodes(source, body);
+      final selected = _clipboardFragmentNodes(source, _clipboardNodes(source));
       if (selected == null) return null;
       final normalizer = _HtmlNormalizer(external: external);
       final clean = dom.Element.tag('div')
@@ -119,13 +117,41 @@ class WysiwygClipboardHtml {
   }
 }
 
-List<dom.Node>? _clipboardFragmentNodes(
-  String source,
-  dom.DocumentFragment fragment,
-) {
+List<dom.Node> _clipboardNodes(String source) {
+  if (_documentWrapper.hasMatch(source)) {
+    final document = html.parse(source);
+    final htmlDirection = busyMarkHtmlDirection(
+      document.documentElement?.attributes['dir'],
+    );
+    final bodyDirection = busyMarkHtmlDirection(
+      document.body?.attributes['dir'],
+    );
+    if (document.body case final body?
+        when htmlDirection != null || bodyDirection != null) {
+      // Keep the inherited scopes and their original text until the selection
+      // markers have been processed. Head content is outside both scopes.
+      var nodes = body.nodes.toList();
+      for (final direction in [
+        bodyDirection,
+        htmlDirection,
+      ].whereType<String>()) {
+        nodes = [
+          _element('div', nodes, {'dir': direction}),
+        ];
+      }
+      return nodes;
+    }
+  }
+  // Fragment parsing retains leading text even without an explicit body.
+  return html.parseFragment(source).nodes;
+}
+
+final _documentWrapper = RegExp(r'<(?:html|body)\s', caseSensitive: false);
+
+List<dom.Node>? _clipboardFragmentNodes(String source, List<dom.Node> nodes) {
   if (!source.contains('<!--StartFragment-->') ||
       !source.contains('<!--EndFragment-->')) {
-    return fragment.nodes;
+    return nodes;
   }
 
   // A marker may sit inside a selected wrapper. Keep only nodes between
@@ -169,7 +195,7 @@ List<dom.Node>? _clipboardFragmentNodes(
     return selected;
   }
 
-  final selected = visit(fragment.nodes, 0);
+  final selected = visit(nodes, 0);
   return ended ? selected : null;
 }
 
@@ -394,6 +420,14 @@ class _HtmlWriter {
       List<dom.Node> children() => value.children.isEmpty
           ? <dom.Node>[dom.Text(value.text)]
           : inlines(value.children, depth + 1);
+      if (semanticHtmlInlineElement(value) case final element?) {
+        if (element.attributes.remove('cite') case final cite?) {
+          final resolved = url(cite, element.localName!, 'cite');
+          if (resolved != null) element.attributes['cite'] = resolved;
+        }
+        out.add(element..nodes.addAll(children()));
+        continue;
+      }
       switch (value.kind) {
         case BusyInlineKind.strong:
           out.add(_element('strong', children()));
@@ -405,17 +439,6 @@ class _HtmlWriter {
           out.add(_element('del', children()));
         case BusyInlineKind.code:
           out.add(_element('code', [dom.Text(value.text)]));
-        case BusyInlineKind.html:
-          final element = semanticHtmlInlineElement(value);
-          if (element != null) {
-            if (element.attributes.remove('cite') case final cite?) {
-              final resolved = url(cite, element.localName!, 'cite');
-              if (resolved != null) element.attributes['cite'] = resolved;
-            }
-            out.add(element..nodes.addAll(children()));
-          } else {
-            out.addAll(children());
-          }
         case BusyInlineKind.hardBreak:
           out.add(dom.Element.tag('br'));
         case BusyInlineKind.softBreak:

@@ -69,6 +69,7 @@ import 'wysiwyg_toolbar.dart';
 import 'writerside_editing_adapter.dart';
 import 'writerside_properties.dart' show writersideElementLabel;
 import '../../writerside/writerside_project.dart';
+import '../../writerside/writerside_video.dart';
 
 typedef BusyMarkWysiwygSourceChanged =
     void Function(String filePath, String source);
@@ -4808,12 +4809,24 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (wordBoundary == null) {
         return null;
       }
+      final editableOffset = controller
+          .editablePosition(
+            TextPosition(
+              offset: offset,
+              affinity: forward
+                  ? TextAffinity.downstream
+                  : TextAffinity.upstream,
+            ),
+          )
+          .offset;
+      final boundary = forward
+          ? wordBoundary.getTrailingTextBoundaryAt(editableOffset)
+          : wordBoundary.getLeadingTextBoundaryAt(editableOffset - 1);
       return _DocumentTextPosition(
         blockId: position.blockId,
-        offset: forward
-            ? wordBoundary.getTrailingTextBoundaryAt(offset) ??
-                  controller.text.length
-            : wordBoundary.getLeadingTextBoundaryAt(offset - 1) ?? 0,
+        offset: boundary == null
+            ? (forward ? controller.text.length : 0)
+            : controller.documentOffset(boundary),
       );
     }
     final nextBlock = _relativeSelectionBlock(
@@ -4873,9 +4886,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (controller == null) {
       return null;
     }
-    final currentPosition = TextPosition(
-      offset: position.offset.clamp(0, controller.text.length).toInt(),
-      affinity: position.affinity,
+    final currentPosition = controller.editablePosition(
+      TextPosition(
+        offset: position.offset.clamp(0, controller.text.length).toInt(),
+        affinity: position.affinity,
+      ),
     );
     final renderEditable = _renderEditableForBlock(position.blockId);
     if (renderEditable != null && renderEditable.hasSize) {
@@ -4901,7 +4916,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _verticalCaretMovementPosition = target;
         return _DocumentTextPosition(
           blockId: position.blockId,
-          offset: target.offset,
+          offset: controller.documentOffset(target.offset),
           affinity: target.affinity,
         );
       }
@@ -4916,7 +4931,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         blockId: position.blockId,
         offset: boundaryOffset,
       );
-      _verticalCaretMovementPosition = TextPosition(offset: boundaryOffset);
+      _verticalCaretMovementPosition = controller.editablePosition(
+        TextPosition(offset: boundaryOffset),
+      );
       return target;
     }
     if (nextBlock.kind == BusyBlockKind.table) {
@@ -4925,15 +4942,19 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final nextController = _textControllerFor(nextBlock);
     final nextRenderEditable = _renderEditableForBlock(nextBlock.id);
-    var targetPosition = TextPosition(
-      offset: position.offset.clamp(0, nextController.text.length).toInt(),
+    var targetPosition = nextController.editablePosition(
+      TextPosition(
+        offset: position.offset.clamp(0, nextController.text.length).toInt(),
+      ),
     );
     if (nextRenderEditable != null && nextRenderEditable.hasSize) {
-      final edgePosition = TextPosition(
-        offset: direction < 0 ? nextController.text.length : 0,
-        affinity: direction < 0
-            ? TextAffinity.upstream
-            : TextAffinity.downstream,
+      final edgePosition = nextController.editablePosition(
+        TextPosition(
+          offset: direction < 0 ? nextController.text.length : 0,
+          affinity: direction < 0
+              ? TextAffinity.upstream
+              : TextAffinity.downstream,
+        ),
       );
       final edgeCaret = nextRenderEditable.getLocalRectForCaret(edgePosition);
       final edgeGlobal = nextRenderEditable.localToGlobal(edgeCaret.center);
@@ -4950,7 +4971,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _verticalCaretMovementPosition = targetPosition;
     return _DocumentTextPosition(
       blockId: nextBlock.id,
-      offset: targetPosition.offset
+      offset: nextController
+          .documentOffset(targetPosition.offset)
           .clamp(0, nextController.text.length)
           .toInt(),
       affinity: targetPosition.affinity,
@@ -4975,6 +4997,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           (block) =>
               _isFocusableTextBlock(block) ||
               block.kind == BusyBlockKind.image ||
+              block.kind == BusyBlockKind.video ||
               block.kind == BusyBlockKind.table,
         )
         .toList();
@@ -5244,6 +5267,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           'show-structure',
         }.contains(block.attributes['element']) &&
         block.kind != BusyBlockKind.image &&
+        block.kind != BusyBlockKind.video &&
         block.kind != BusyBlockKind.thematicBreak &&
         block.kind != BusyBlockKind.table;
   }
@@ -9258,9 +9282,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
 
     void block(BusyBlock value) {
-      if ({BusyBlockKind.image, BusyBlockKind.video}.contains(value.kind) &&
-          value.attributes['src'] != null) {
-        references.add(value.attributes['src']!);
+      final mediaAttributes = switch (value.kind) {
+        BusyBlockKind.video => busyMarkVideoMediaAttributes,
+        BusyBlockKind.image => const {'src'},
+        _ => const <String>{},
+      };
+      for (final name in mediaAttributes) {
+        if (value.attributes[name] case final reference?) {
+          references.add(reference);
+        }
       }
       value.inlines.forEach(inline);
       value.children.forEach(block);
@@ -9554,9 +9584,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final editable = _renderEditableForBlock(blockId);
     if (editable != null && editable.hasSize) {
-      return editable
-          .getPositionForPoint(globalPosition)
-          .offset
+      return controller
+          .documentOffset(editable.getPositionForPoint(globalPosition).offset)
           .clamp(0, controller.text.length)
           .toInt();
     }
@@ -9602,7 +9631,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         .clamp(0.0, renderObject.size.height)
         .toDouble();
     final textPainter = TextPainter(
-      text: controller.buildTextSpan(
+      text: controller.editableController.buildTextSpan(
         context: context,
         style: _textStyleForBlock(block),
         withComposing: false,
@@ -9611,9 +9640,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       textScaler: MediaQuery.textScalerOf(context),
       locale: Localizations.maybeLocaleOf(context),
     )..layout(maxWidth: textLayoutWidth);
-    return textPainter
-        .getPositionForOffset(Offset(textX, textY))
-        .offset
+    return controller
+        .documentOffset(
+          textPainter.getPositionForOffset(Offset(textX, textY)).offset,
+        )
         .clamp(0, controller.text.length)
         .toInt();
   }

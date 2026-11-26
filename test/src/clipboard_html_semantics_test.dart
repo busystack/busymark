@@ -232,6 +232,65 @@ void main() {
     );
   });
 
+  test(
+    'attributed deletion survives native insertion, Save and both HTML writers',
+    () async {
+      const cite = 'https://example.test/change';
+      const date = '2026-11-26';
+      const markup =
+          'Before <del cite="$cite" datetime="$date">old</del> after';
+      final fragment = WysiwygClipboardFragment.decode(
+        _capture(_parse(markup).blocks).encode(),
+      )!;
+      final editor = BusyMarkWysiwygDocumentController(
+        document: _parse('Target'),
+      );
+      addTearDown(editor.dispose);
+      expect(
+        editor.insertStyledBlocksAtSelection(
+          blockId: editor.document.blocks.single.id,
+          selectionStart: 0,
+          selectionEnd: 6,
+          blocks: fragment.blocks,
+        ),
+        isNotNull,
+      );
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-deletion-save-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final file = await File(
+        '${root.path}/topic.md',
+      ).writeAsString('Target\n');
+      final workspace = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(workspace.dispose);
+      workspace.controller.updateActiveText(editor.markdown);
+      expect(await workspace.controller.saveActive(), isTrue);
+      final reopened = await DocumentHistoryHarness.create(path: file.path);
+      addTearDown(reopened.dispose);
+      for (final source in [
+        reopened.buffer.text,
+        _codec.encode(_capture(_parse(markup).blocks)),
+        await _export(markup),
+      ]) {
+        final deletion = html.parseFragment(source).querySelector('del');
+        expect(
+          (
+            deletion?.text,
+            deletion?.attributes['cite'],
+            deletion?.attributes['datetime'],
+          ),
+          ('old', cite, date),
+          reason: source,
+        );
+      }
+      expect(
+        _paste('<p>Before <del>old</del> after</p>').trim(),
+        'Before ~~old~~ after',
+      );
+    },
+  );
+
   test('auto direction respects overrides and original fragment scope', () {
     final whole = html.parseFragment(
       _paste('<div dir="auto"><p>العربية</p><p dir="ltr">LTR</p></div>'),

@@ -1079,6 +1079,7 @@ void main() {
       String source,
       ValueChanged<String> changed, {
       BusyMarkClipboardInsertionRegistry? registry,
+      RichClipboardService? clipboardService,
       ValueChanged<BusyMarkClipboardCapture>? onCaptured,
       ValueChanged<BusyDocument>? onDocumentChanged,
       String? filePath,
@@ -1134,7 +1135,7 @@ void main() {
         home: Scaffold(
           body: BusyMarkWysiwygEditor(
             key: ValueKey(id),
-            clipboardService: RichClipboardService(),
+            clipboardService: clipboardService ?? RichClipboardService(),
             clipboardInsertionRegistry: registry,
             onClipboardCaptured: onCaptured,
             workspaceRoot: workspaceRoot,
@@ -3462,6 +3463,105 @@ void main() {
       },
     );
 
+    for (final (label, source) in [
+      ('leading', '<video src="https://example.test/clip.mp4"/>\n\nAfter\n'),
+      ('trailing', 'Before\n\n<video src="https://example.test/clip.mp4"/>\n'),
+      ('only', '<video src="https://example.test/clip.mp4"/>\n'),
+    ]) {
+      testWidgets('Copy and Cut include the $label video block', (
+        tester,
+      ) async {
+        var output = source;
+        final captures = <BusyMarkClipboardCapture>[];
+        await mount(
+          tester,
+          'video-selection',
+          source,
+          (value) => output = value,
+          focusFirstField: label != 'only',
+          onCaptured: captures.add,
+        );
+        if (label == 'only') {
+          tester
+              .state<BusyMarkWysiwygEditorState>(
+                find.byType(BusyMarkWysiwygEditor),
+              )
+              .restoreEditingFocus();
+          await tester.pumpAndSettle();
+        }
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        final copied = WysiwygClipboardFragment.decode(
+          captures.single.richFragment!,
+        )!;
+        expect(
+          copied.documentBlocks
+              .singleWhere((b) => b.kind == BusyBlockKind.video)
+              .attributes['src'],
+          'https://example.test/clip.mp4',
+        );
+        expect(output, source);
+        failWrite = true;
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(captures, hasLength(1));
+        expect(output, source);
+        failWrite = false;
+        await key(tester, LogicalKeyboardKey.keyX);
+        expect(captures.last.richFragment, captures.first.richFragment);
+        expect(output.trim(), isEmpty);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(output, source);
+      });
+    }
+
+    testWidgets('native Copy and Paste retain attributed deletion in prose', (
+      tester,
+    ) async {
+      const cite = 'https://example.test/change';
+      const date = '2026-11-26';
+      const fixture =
+          'Before <del cite="$cite" datetime="$date">old</del> after\n';
+      final clipboard = RichClipboardService();
+      await mount(
+        tester,
+        'del-origin',
+        fixture,
+        (_) {},
+        clipboardService: clipboard,
+        mode: MarkdownMode.gfm,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      final published = html
+          .parseFragment(systemData['html'] as String)
+          .querySelector('del')!;
+      expect(published.text, 'old');
+      expect(published.attributes['cite'], cite);
+      expect(published.attributes['datetime'], date);
+      expect(systemData['token'], isNotEmpty);
+      expect(systemData['text'], 'Before old after');
+
+      // The native selection must win over a distinct HTML representation.
+      systemData['html'] = '<p>HTML fallback</p>';
+      expect((await clipboard.read()).sessionOwned, isTrue);
+      var destination = 'Target\n';
+      await mount(
+        tester,
+        'del-target',
+        destination,
+        (value) => destination = value,
+        clipboardService: clipboard,
+        mode: MarkdownMode.gfm,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV);
+      final deletion = html.parseFragment(destination).querySelector('del');
+      expect(deletion?.text, 'old', reason: destination);
+      expect(deletion?.attributes['cite'], cite);
+      expect(deletion?.attributes['datetime'], date);
+    });
+
     testWidgets('whole-document Copy and Cut include empty-alt images', (
       tester,
     ) async {
@@ -4293,6 +4393,189 @@ void main() {
         video,
       );
     });
+
+    testWidgets(
+      'video and poster survive cross-directory clipboard history paste',
+      (tester) async {
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-video-poster-',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final from = Directory('${root.path}/origin')..createSync();
+        final to = Directory('${root.path}/destination')..createSync();
+        final video = Uint8List.fromList([
+          0,
+          0,
+          0,
+          20,
+          ...ascii.encode('ftypmp42'),
+          0,
+          0,
+          0,
+          0,
+        ]);
+        final png = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        );
+        final clip = File('${from.path}/clip.mp4')..writeAsBytesSync(video);
+        final poster = File('${from.path}/poster.png')..writeAsBytesSync(png);
+        final historyScope = ProviderContainer(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _ClipboardMemorySettingsStore(),
+            ),
+          ],
+        );
+        addTearDown(historyScope.dispose);
+        final captures = <BusyMarkClipboardCapture>[];
+        await mount(
+          tester,
+          'video-with-poster',
+          'Before\n\n'
+              "<video src=\"clip.mp4?v=2#t=4\" preview-src='poster.png?v=a%26b#detail%202'/>"
+              '\n\nAfter\n',
+          (_) {},
+          onCaptured: (capture) {
+            captures.add(capture);
+            historyScope
+                .read(clipboardHistoryControllerProvider.notifier)
+                .retain(capture);
+          },
+          filePath: '${from.path}/origin.md',
+          workspaceRoot: root.path,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC, startsRealIo: true);
+        await waitForImageIo(
+          tester,
+          () => captures.isNotEmpty,
+          operation: 'video and poster capture',
+        );
+        final capture = captures.single;
+        expect(capture.mediaBytes['clip.mp4?v=2#t=4'], video);
+        expect(capture.mediaBytes['poster.png?v=a%26b#detail%202'], png);
+        clip.deleteSync();
+        poster.deleteSync();
+        final payload = historyScope
+            .read(clipboardHistoryControllerProvider)
+            .entries
+            .single;
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        final path = '${to.path}/target.md';
+        var source = 'Target\n';
+        await mount(
+          tester,
+          'video-poster-target',
+          source,
+          (value) => source = value,
+          registry: registry,
+          filePath: path,
+          workspaceRoot: root.path,
+          assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(
+          await tester.runAsync(() => registry.paste(payload)),
+          ClipboardPasteResult.inserted,
+        );
+        final saved = await tester.runAsync(() async {
+          await File(path).writeAsString('Target\n');
+          final workspace = await DocumentHistoryHarness.create(path: path);
+          try {
+            workspace.controller.updateActiveText(source);
+            expect(await workspace.controller.saveActive(), isTrue);
+          } finally {
+            workspace.dispose();
+          }
+          final reopened = await DocumentHistoryHarness.create(path: path);
+          try {
+            return reopened.buffer.text;
+          } finally {
+            reopened.dispose();
+          }
+        });
+        final document = _parser
+            .parse(
+              filePath: path,
+              source: saved!,
+              mode: MarkdownMode.writersideMarkdown,
+            )
+            .busyDocument;
+        final attrs = document.blocks
+            .singleWhere((b) => b.kind == BusyBlockKind.video)
+            .attributes;
+        expect(attrs['src'], '../images/clip.mp4?v=2#t=4');
+        expect(attrs['preview-src'], '../images/poster.png?v=a%26b#detail%202');
+        for (final (key, expected) in [('src', video), ('preview-src', png)]) {
+          final local = Uri.file(
+            path,
+          ).resolve(attrs[key]!).replace(query: '', fragment: '');
+          expect(
+            File(
+              Uri(scheme: 'file', path: local.path).toFilePath(),
+            ).readAsBytesSync(),
+            expected,
+          );
+        }
+
+        final staleDirectory = Directory('${root.path}/stale')..createSync();
+        final published = <IngestedAsset>[];
+        final rolledBack = <IngestedAsset>[];
+        final resume = Completer<void>();
+        addTearDown(() {
+          if (!resume.isCompleted) resume.complete();
+        });
+        var staleSource = 'Target\n';
+        await mount(
+          tester,
+          'stale-video-poster-target',
+          staleSource,
+          (value) => staleSource = value,
+          registry: registry,
+          filePath: '${staleDirectory.path}/target.md',
+          assetWorkspaceKind: AssetWorkspaceKind.standalone,
+          assetIngestionService: AssetIngestionService(
+            hooks: AssetIngestionHooks(
+              afterPublication: (asset) async {
+                published.add(asset);
+                if (published.length == 2) await resume.future;
+              },
+              afterRollback: (asset) async => rolledBack.add(asset),
+            ),
+          ),
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        ClipboardPasteResult? staleResult;
+        unawaited(registry.paste(payload).then((value) => staleResult = value));
+        await waitForImageIo(
+          tester,
+          () => published.length == 2,
+          operation: 'video and poster published before target changes',
+        );
+        final controller = tester
+            .widget<TextField>(find.byType(TextField).first)
+            .controller!;
+        controller.selection = const TextSelection.collapsed(offset: 2);
+        resume.complete();
+        await waitForImageIo(
+          tester,
+          () => staleResult != null,
+          operation: 'stale video and poster paste rolls back',
+        );
+        expect(staleResult, ClipboardPasteResult.staleTarget);
+        expect(staleSource, 'Target\n');
+        expect(
+          rolledBack.map((asset) => asset.absolutePath),
+          unorderedEquals(published.map((asset) => asset.absolutePath)),
+        );
+        expect(
+          published.every((asset) => !File(asset.absolutePath).existsSync()),
+          isTrue,
+        );
+      },
+    );
 
     testWidgets('image paste cancellation is terminal and cleans new assets', (
       tester,

@@ -11,6 +11,8 @@ import '../../markdown/markdown_model.dart';
 import '../../markdown/raw_html_adapter.dart';
 import '../../markdown/raw_html_policy.dart';
 import '../../platform/rich_clipboard_service.dart';
+import '../../writerside/writerside_html_reference_scanner.dart';
+import '../../writerside/writerside_video.dart';
 import '../inline_semantics.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -262,12 +264,15 @@ class WysiwygClipboardFragment {
     Map<String, String> attributes(
       Map<String, String> values, {
       bool rawHtml = false,
+      Set<String> mediaAttributes = const {'src'},
     }) => {
       for (final entry in values.entries)
-        entry.key: {'src', 'href', 'destination', 'cite'}.contains(entry.key)
+        entry.key:
+            mediaAttributes.contains(entry.key) ||
+                const {'href', 'destination', 'cite'}.contains(entry.key)
             ? destination(
                     entry.value,
-                    media: entry.key == 'src',
+                    media: mediaAttributes.contains(entry.key),
                     rawHtml: rawHtml,
                   ) ??
                   entry.value
@@ -314,7 +319,13 @@ class WysiwygClipboardFragment {
 
     BusyBlock block(BusyBlock value, {bool withinRawHtml = false}) {
       final rawHtml = withinRawHtml || value.kind == BusyBlockKind.htmlBlock;
-      final rebasedAttributes = attributes(value.attributes, rawHtml: rawHtml);
+      final rebasedAttributes = attributes(
+        value.attributes,
+        rawHtml: rawHtml,
+        mediaAttributes: value.kind == BusyBlockKind.video
+            ? busyMarkVideoMediaAttributes
+            : const {'src'},
+      );
       final rebasedInlines = [
         for (final child in value.inlines) inline(child, rawHtml),
       ];
@@ -325,12 +336,16 @@ class WysiwygClipboardFragment {
             for (var i = 0; i < before.children.length; i++)
               referencesChanged(before.children[i], after.children[i]),
           ].any((v) => v);
+      final source = value.rawSource;
       final rawSource = switch (value.kind) {
-        BusyBlockKind.video => _rebaseVideoRawSource(
-          value.rawSource,
-          originalSource: value.attributes['src'],
-          rebasedSource: rebasedAttributes['src'],
-        ),
+        BusyBlockKind.video when source != null =>
+          const WritersideAuthoredHtmlReferenceScanner()
+              .rewriteAttributeValues(source, 'video', {
+                for (final name in busyMarkVideoMediaAttributes)
+                  if (rebasedAttributes[name] case final reference?
+                      when reference != value.attributes[name])
+                    name: reference,
+              }),
         BusyBlockKind.htmlBlock => rebaseHtml(value.rawSource),
         _ => value.rawSource,
       };
@@ -389,32 +404,6 @@ class WysiwygClipboardFragment {
       ],
     );
   }
-}
-
-String? _rebaseVideoRawSource(
-  String? rawSource, {
-  required String? originalSource,
-  required String? rebasedSource,
-}) {
-  if (rawSource == null ||
-      originalSource == null ||
-      rebasedSource == null ||
-      originalSource == rebasedSource) {
-    return rawSource;
-  }
-  final attribute = RegExp(
-    r'''(\ssrc\s*=\s*)(["'])(.*?)\2''',
-    caseSensitive: false,
-    dotAll: true,
-  );
-  return rawSource.replaceFirstMapped(attribute, (match) {
-    final quote = match.group(2)!;
-    final escaped = rebasedSource
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll(quote, quote == '"' ? '&quot;' : '&apos;');
-    return '${match.group(1)}$quote$escaped$quote';
-  });
 }
 
 Map<String, Object?> _encodeInline(BusyInline inline) => {

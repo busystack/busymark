@@ -1,4 +1,5 @@
 import '../support/controlled_image_http_client.dart';
+import '../support/document_history_harness.dart';
 import 'package:busymark/src/core/save_destination.dart';
 import 'package:busymark/src/app/linux/linux_page_frame.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
@@ -23055,6 +23056,113 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     expect(find.text('Value'), findsOneWidget);
     expect(find.text('A'), findsOneWidget);
     expect(find.textContaining('<table>'), findsNothing);
+  });
+
+  testWidgets('reopened Preview renders and follows linked table blocks', (
+    tester,
+  ) async {
+    const source =
+        'Before <bdo dir="rtl">ABC</bdo> after.\n\n'
+        '<table><tr><th>Items</th></tr>'
+        '<tr><td><a href="guide.md"><ul><li>One</li><li>Two</li></ul></a></td></tr>'
+        '<tr><td><a href="heading.md"><h3>Linked heading</h3></a></td></tr></table>\n';
+    final directory = Directory.systemTemp.createTempSync(
+      'busymark-linked-table-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'table.md'))
+      ..writeAsStringSync('Draft\n');
+    File(p.join(directory.path, 'guide.md')).writeAsStringSync('# Guide\n');
+    final headingFile = File(p.join(directory.path, 'heading.md'))
+      ..writeAsStringSync('# Heading destination\n');
+    await tester.runAsync(() async {
+      final writer = await DocumentHistoryHarness.create(path: file.path);
+      try {
+        writer.controller.updateActiveText(source);
+        expect(await writer.controller.saveActive(), isTrue);
+        expect(await file.readAsString(), source);
+      } finally {
+        writer.dispose();
+      }
+    });
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(settings),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+        startupPathProvider.overrideWithValue(file.path),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await pumpUntil(
+      tester,
+      () => find.text('Linked heading').evaluate().isNotEmpty,
+      operation: 'render the reopened table in Preview',
+    );
+    expect(
+      find.byKey(const ValueKey('preview-document-scroll')),
+      findsOneWidget,
+      reason: container.read(workspaceControllerProvider).activeText,
+    );
+    final directionalParagraph = tester.renderObject<RenderParagraph>(
+      find.descendant(
+        of: find.textContaining('ABC'),
+        matching: find.byType(RichText),
+      ),
+    );
+    final offset = directionalParagraph.text.toPlainText().indexOf('ABC');
+    double left(int index) => directionalParagraph
+        .getBoxesForSelection(
+          TextSelection(baseOffset: index, extentOffset: index + 1),
+        )
+        .single
+        .left;
+    expect(left(offset), greaterThan(left(offset + 2)));
+    expect(find.byType(BusyMarkDocumentListMarker), findsNWidgets(2));
+    final one = tester.widget<Text>(find.text('One'));
+    final two = tester.widget<Text>(find.text('Two'));
+    final heading = tester.widget<Text>(find.text('Linked heading'));
+    expect(
+      heading.textSpan!.style!.fontSize,
+      greaterThan(one.textSpan!.style!.fontSize!),
+    );
+    expect(_firstTapRecognizer(one.textSpan!)?.onTap, isNotNull);
+    expect(_firstTapRecognizer(two.textSpan!)?.onTap, isNotNull);
+    final follow = _firstTapRecognizer(heading.textSpan!)?.onTap;
+    expect(follow, isNotNull);
+    await tester.runAsync(() async {
+      follow!();
+      for (var attempt = 0; attempt < 100; attempt++) {
+        if (container
+                .read(workspaceControllerProvider)
+                .workspace
+                ?.activeFilePath ==
+            headingFile.path) {
+          return;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    });
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      headingFile.path,
+    );
   });
 
   testWidgets('Reading applies Markdown table column alignment', (

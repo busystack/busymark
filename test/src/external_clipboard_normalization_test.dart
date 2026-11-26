@@ -196,6 +196,44 @@ void main() {
         }
       });
 
+      test(
+        'clipboard document wrappers preserve only the selected direction scope',
+        () {
+          for (final (input, selector) in [
+            (
+              '<html dir="rtl"><head><title>Hidden title</title></head><body>'
+                  '<!--StartFragment--><p>ABC !</p><!--EndFragment--></body></html>',
+              '[dir=rtl] p',
+            ),
+            (
+              '<html><body dir="rtl"><!--StartFragment--><section>'
+                  '<p>ABC !</p><p dir="ltr">Override !</p></section>'
+                  '<!--EndFragment--></body></html>',
+              '[dir=rtl] p[dir=ltr]',
+            ),
+            (
+              '<html dir="auto"><body>العربية<!--StartFragment-->'
+                  '<p>ABC !</p><!--EndFragment-->unselected tail</body></html>',
+              '[dir=rtl] p',
+            ),
+            (
+              '<html><body dir="auto">العربية<!--StartFragment-->'
+                  '<p>ABC !</p><!--EndFragment-->unselected tail</body></html>',
+              '[dir=rtl] p',
+            ),
+          ]) {
+            final source = paste(input);
+            final output = html.parseFragment(source);
+            expect(output.querySelector(selector), isNotNull, reason: input);
+            expect(output.text, contains('ABC !'));
+            expect(output.text, isNot(contains('العربية')));
+            expect(output.text, isNot(contains('unselected tail')));
+            expect(output.text, isNot(contains('Hidden title')));
+          }
+          expect(paste('Leading <b>bold</b>').trim(), 'Leading **bold**');
+        },
+      );
+
       test('direction and accessibility attributes with meaning survive', () {
         for (final (input, selector) in [
           ('<ul><li dir="rtl">ABC</li></ul>', 'ul li[dir=rtl]'),
