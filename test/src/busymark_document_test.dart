@@ -7497,10 +7497,10 @@ void main() {}
     expect(find.text('Column 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    headerField.onChanged!('Name');
+    await tester.enterText(find.byKey(ValueKey(headerCellId)), 'Name');
     await tester.pump();
     expect(tester.takeException(), isNull);
-    bodyField.onChanged!('Alice');
+    await tester.enterText(find.byKey(ValueKey(bodyCellId)), 'Alice');
     await tester.pump();
 
     expect(
