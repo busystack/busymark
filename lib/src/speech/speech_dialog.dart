@@ -486,7 +486,10 @@ class _SpeechDialogState extends State<SpeechDialog> {
                             if (_audio.seekable) ...[
                               IconButton(
                                 tooltip: l10n.speechPreviousSegment,
-                                icon: const Icon(Icons.skip_previous),
+                                icon: Icon(
+                                  Icons.skip_previous,
+                                  semanticLabel: l10n.speechPreviousSegment,
+                                ),
                                 onPressed: () {
                                   final target =
                                       result.segmentOffsets
@@ -507,7 +510,10 @@ class _SpeechDialogState extends State<SpeechDialog> {
                               ),
                               IconButton(
                                 tooltip: l10n.speechNextSegment,
-                                icon: const Icon(Icons.skip_next),
+                                icon: Icon(
+                                  Icons.skip_next,
+                                  semanticLabel: l10n.speechNextSegment,
+                                ),
                                 onPressed: () {
                                   final target = result.segmentOffsets
                                       .where(

@@ -45,30 +45,44 @@ class SystemSpeech {
 
   static Future<SystemSpeech> connect() async {
     if (!Platform.isLinux) throw _unavailable;
-    final configured = Platform.environment['SPEECHD_ADDRESS'];
-    final runtime = Platform.environment['XDG_RUNTIME_DIR'];
-    final path = switch (configured) {
-      final String value when value.startsWith('unix_socket:') =>
-        value.substring('unix_socket:'.length),
-      null when runtime != null => p.join(
-        runtime,
-        'speech-dispatcher',
-        'speechd.sock',
-      ),
-      _ => null,
-    };
-    if (path == null || !p.isAbsolute(path)) throw _unavailable;
-    try {
-      return SystemSpeech._(
-        await Socket.connect(
-          InternetAddress(path, type: InternetAddressType.unix),
-          0,
-          timeout: const Duration(seconds: 2),
-        ),
-      );
-    } on SocketException {
-      throw _unavailable;
+    for (final path in _socketPaths(Platform.environment)) {
+      if (!p.isAbsolute(path)) continue;
+      try {
+        return SystemSpeech._(
+          await Socket.connect(
+            InternetAddress(path, type: InternetAddressType.unix),
+            0,
+            timeout: const Duration(seconds: 2),
+          ),
+        );
+      } on SocketException {
+        // A connected interface or running service can be absent.
+      }
     }
+    throw _unavailable;
+  }
+
+  static List<String> _socketPaths(Map<String, String> environment) {
+    final configured = environment['SPEECHD_ADDRESS'];
+    const unix = 'unix_socket:';
+    if (configured != null) {
+      return [
+        if (configured.startsWith(unix)) configured.substring(unix.length),
+      ];
+    }
+    final value = environment['XDG_RUNTIME_DIR'];
+    if (value == null || !p.isAbsolute(value)) return const [];
+    final runtime = p.normalize(value);
+    final session = p.dirname(runtime);
+    final instance = environment['SNAP_INSTANCE_NAME'];
+    return [
+      p.join(runtime, 'speech-dispatcher', 'speechd.sock'),
+      // desktop-legacy grants the running user's canonical SSIP socket.
+      if (instance != null &&
+          p.basename(runtime) == 'snap.$instance' &&
+          RegExp(r'^/(?:var/)?run/user/[0-9]+$').hasMatch(session))
+        p.join(session, 'speech-dispatcher', 'speechd.sock'),
+    ];
   }
 
   static const _unavailable = AiException(

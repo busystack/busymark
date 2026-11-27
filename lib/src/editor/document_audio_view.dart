@@ -344,10 +344,10 @@ class BusyMarkDocumentAudioView extends StatelessWidget {
     final localized = context.l10n;
     final name = audio.accessibleName ?? localized.audio;
     final edit = editable ? scope?.widget.editAudio : null;
-    Widget properties() => IconButton(
-      tooltip: localized.audioProperties,
+    Widget properties() => _audioButton(
+      label: localized.audioProperties,
       onPressed: edit == null ? null : () => edit(audio),
-      icon: const Icon(Icons.audio_file_outlined),
+      icon: Icons.audio_file_outlined,
     );
     if (!audio.controls || scope == null) return properties();
     final owner = (
@@ -383,6 +383,25 @@ class BusyMarkDocumentAudioView extends StatelessWidget {
     );
   }
 }
+
+Widget _audioButton({
+  required String label,
+  required IconData icon,
+  required VoidCallback? onPressed,
+  bool? isSelected,
+  IconData? selectedIcon,
+}) => Tooltip(
+  message: label,
+  excludeFromSemantics: true,
+  child: IconButton(
+    icon: Icon(icon, semanticLabel: label),
+    selectedIcon: selectedIcon == null
+        ? null
+        : Icon(selectedIcon, semanticLabel: label),
+    isSelected: isSelected,
+    onPressed: onPressed,
+  ),
+);
 
 class BusyMarkAudioTransport extends StatelessWidget {
   const BusyMarkAudioTransport({
@@ -424,8 +443,8 @@ class BusyMarkAudioTransport extends StatelessWidget {
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          IconButton(
-            tooltip: busy && cancelOpening != null
+          _audioButton(
+            label: busy && cancelOpening != null
                 ? localized.cancel
                 : failed
                 ? localized.audioRetry
@@ -441,15 +460,13 @@ class BusyMarkAudioTransport extends StatelessWidget {
                       current && !failed ? audio.toggle(owner) : start(),
                     );
                   },
-            icon: Icon(
-              busy && cancelOpening != null
-                  ? Icons.stop
-                  : failed
-                  ? Icons.refresh
-                  : running
-                  ? Icons.pause
-                  : Icons.play_arrow,
-            ),
+            icon: busy && cancelOpening != null
+                ? Icons.stop
+                : failed
+                ? Icons.refresh
+                : running
+                ? Icons.pause
+                : Icons.play_arrow,
           ),
           if (busy)
             const Padding(
@@ -481,11 +498,9 @@ class BusyMarkAudioTransport extends StatelessWidget {
                 ),
               ),
             if (current) ...[
-              IconButton(
-                tooltip: audio.mute
-                    ? localized.audioUnmute
-                    : localized.audioMute,
-                icon: Icon(audio.mute ? Icons.volume_off : Icons.volume_up),
+              _audioButton(
+                label: audio.mute ? localized.audioUnmute : localized.audioMute,
+                icon: audio.mute ? Icons.volume_off : Icons.volume_up,
                 onPressed: () =>
                     unawaited(audio.configure(owner, muted: !audio.mute)),
               ),
@@ -513,16 +528,19 @@ class BusyMarkAudioTransport extends StatelessWidget {
                       child: Text('$value×'),
                     ),
                 ],
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Text('${audio.rate}×'),
+                child: Semantics(
+                  label: localized.audioPlaybackRate,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Text('${audio.rate}×'),
+                  ),
                 ),
               ),
-              IconButton(
-                tooltip: localized.audioLoop,
+              _audioButton(
+                label: localized.audioLoop,
                 isSelected: audio.loop,
-                icon: const Icon(Icons.repeat),
-                selectedIcon: const Icon(Icons.repeat_one),
+                icon: Icons.repeat,
+                selectedIcon: Icons.repeat_one,
                 onPressed: () =>
                     unawaited(audio.configure(owner, looping: !audio.loop)),
               ),

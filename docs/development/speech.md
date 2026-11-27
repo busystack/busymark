@@ -69,8 +69,13 @@ environment and pass `SPEECH_LOCAL_ENGINE=system` and `SPEECH_SYSTEM_PLAY=true`.
 The fixture opens two connections, pauses, resumes and cancels the first
 connection's message, and requires completion on the second. Capture the
 second message's PCM, confirm its content, and terminate the owned daemon.
-This verifies client isolation on a standalone host. An installed strict Snap
-can expose separate availability through the socket probe.
+This verifies client isolation on a standalone host. In a strict Snap,
+BusyMark also probes the owning session's canonical
+`/run/user/<uid>/speech-dispatcher/speechd.sock` when Snapd assigns the
+instance its own runtime subdirectory. The installed `desktop-legacy`
+interface allows this owner socket on Snapd 2.78. Discovery still verifies the
+running service, and eSpeak NG and Piper are available without a system
+speech daemon. [Released Snapd AppArmor rule](https://github.com/canonical/snapd/blob/2.78/interfaces/builtin/desktop_legacy.go)
 
 `tools/speech_cloud_qualification_test.dart` is outside the normal test corpus.
 It accepts explicit provider, language, private evidence directory, credential

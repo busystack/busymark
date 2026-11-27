@@ -1,11 +1,49 @@
 import 'dart:io';
 
+import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/editor/audio_playback.dart';
+import 'package:busymark/src/editor/document_audio_view.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('playback button has an accessible name and action', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: busyMarkLocalizationsDelegates,
+          home: Material(
+            child: BusyMarkAudioTransport(
+              owner: 'owned',
+              label: 'Recorded introduction',
+              start: () async {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final play = find.bySemanticsLabel('Play');
+      expect(play, findsOneWidget);
+      expect(
+        tester
+            .getSemantics(play)
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+    } finally {
+      semantics.dispose();
+    }
+  });
 
   test('a native pause event before the method reply stays paused', () async {
     const channel = MethodChannel('com.busymark.app/audio_player');
