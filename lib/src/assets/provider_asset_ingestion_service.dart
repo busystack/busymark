@@ -93,7 +93,7 @@ class ProviderAssetIngestionService extends AssetIngestionService {
     }
     final filename =
         '${p.basenameWithoutExtension(suggestedFileName)}.${format.extension}';
-    final publication = await publish(bytes, filename);
+    final publication = await publish(Uint8List.fromList(bytes), filename);
     return IngestedAsset(
       absolutePath: publication.cachedPath,
       markdownPath: publication.reference,

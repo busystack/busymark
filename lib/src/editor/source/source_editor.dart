@@ -2913,14 +2913,18 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     WysiwygClipboardFragment fragment,
   ) {
     if (fragment.mediaPaths.isEmpty) return true;
+    final audio = fragment.audioReferences;
     return snapshot.mediaComplete &&
         fragment.mediaPaths.entries.every((entry) {
           final bytes = snapshot.mediaBytes[entry.key];
-          return bytes != null &&
-              widget.assetIngestionService.canIngestMediaBytes(
-                bytes: bytes,
-                suggestedFileName: p.basename(entry.value),
-              );
+          if (bytes == null) return false;
+          final service = widget.assetIngestionService;
+          return audio.contains(entry.key)
+              ? service.canIngestAudioBytes(bytes)
+              : service.canIngestMediaBytes(
+                  bytes: bytes,
+                  suggestedFileName: p.basename(entry.value),
+                );
         });
   }
 

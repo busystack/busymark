@@ -13,6 +13,9 @@ import '../core/atomic_file_writer.dart';
 import 'asset_limits.dart';
 import 'audio_asset_format.dart';
 
+Future<String> _hashAssetBytes(Uint8List bytes) =>
+    Isolate.run(() => sha256.convert(bytes).toString());
+
 enum AssetIngestionOrigin {
   imagePicker,
   audioPicker,
@@ -250,16 +253,7 @@ class AssetIngestionService {
     required AssetIngestionOrigin origin,
   }) async {
     _validateBytes(bytes, request: request);
-    final video = _videoType(suggestedFileName);
-    if (video == null && AudioAssetFormat.identify(bytes) != null) {
-      return ingestAudioBytes(
-        bytes: bytes,
-        suggestedFileName: suggestedFileName,
-        request: request,
-        origin: origin,
-      );
-    }
-    final type = video ?? _detectImageType(bytes);
+    final type = _detectImageType(bytes) ?? _videoType(suggestedFileName);
     if (type == null) {
       throw const AssetIngestionException(
         'asset.invalid-media-type',
@@ -282,8 +276,11 @@ class AssetIngestionService {
       bytes.isNotEmpty &&
       bytes.length <= maximumAssetBytes &&
       (_videoType(suggestedFileName) != null ||
-          AudioAssetFormat.identify(bytes) != null ||
           _detectImageType(bytes) != null);
+
+  bool canIngestAudioBytes(Uint8List bytes) =>
+      bytes.length <= maximumAssetBytes &&
+      AudioAssetFormat.identify(bytes) != null;
 
   void _validateBytes(
     Uint8List bytes, {
@@ -308,15 +305,14 @@ class AssetIngestionService {
     required _DetectedAssetType type,
     bool audio = false,
   }) async {
+    final capturedBytes = Uint8List.fromList(bytes);
+    final contentHash = await _hashAssetBytes(capturedBytes);
     final destination = await _destinationDirectory(request, audio: audio);
     final result = await _withDirectoryOperation(destination.path, () async {
       final pending = await _pendingPublications(destination);
-      final contentHash = await Isolate.run(
-        () => sha256.convert(bytes).toString(),
-      );
       final existing = await _identicalAsset(
         destination,
-        bytes.length,
+        capturedBytes.length,
         contentHash,
         pendingFinalNames: pending.values.toSet(),
       );
@@ -335,7 +331,7 @@ class AssetIngestionService {
           destination,
           stem: stem,
           extension: type.extension,
-          bytes: bytes,
+          bytes: capturedBytes,
           publicationId: publicationId,
           initiallyPendingFinalNames: pending.values.toSet(),
         );

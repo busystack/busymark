@@ -63,6 +63,33 @@ void main() {
   );
 
   test(
+    'audio publication owns the original bytes across the async write',
+    () async {
+      final root = await Directory.systemTemp.createTemp('audio-captured-');
+      addTearDown(() => root.delete(recursive: true));
+      final document = await File(
+        p.join(root.path, 'doc.md'),
+      ).writeAsString('');
+      final request = AssetIngestionRequest(
+        documentFilePath: document.path,
+        workspaceKind: AssetWorkspaceKind.standalone,
+      );
+      const service = AssetIngestionService();
+      final callerBytes = Uint8List.fromList(wave);
+      final publication = service.ingestAudioBytes(
+        bytes: callerBytes,
+        suggestedFileName: 'recording.wav',
+        request: request,
+        origin: AssetIngestionOrigin.audioPicker,
+      );
+      callerBytes.fillRange(0, callerBytes.length, 63);
+      final asset = await publication;
+      await service.commit(asset);
+      expect(await File(asset.absolutePath).readAsBytes(), wave);
+    },
+  );
+
+  test(
     'audio destination symlinks cannot create directories outside the root',
     () async {
       final root = await Directory.systemTemp.createTemp('audio-root-');

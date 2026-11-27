@@ -6387,14 +6387,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         candidate.fragment.mediaPaths.isEmpty) {
       return true;
     }
+    final audio = candidate.fragment.audioReferences;
     return snapshot.mediaComplete &&
         candidate.fragment.mediaPaths.entries.every((entry) {
           final bytes = snapshot.mediaBytes[entry.key];
-          return bytes != null &&
-              widget.assetIngestionService.canIngestMediaBytes(
-                bytes: bytes,
-                suggestedFileName: p.basename(entry.value),
-              );
+          if (bytes == null) return false;
+          final service = widget.assetIngestionService;
+          return audio.contains(entry.key)
+              ? service.canIngestAudioBytes(bytes)
+              : service.canIngestMediaBytes(
+                  bytes: bytes,
+                  suggestedFileName: p.basename(entry.value),
+                );
         });
   }
 
@@ -10042,27 +10046,9 @@ class _WysiwygClipboardInsertionTarget
       destination: BusyMarkPasteDestination.editor,
       markdownMode: state._documentController.document.mode,
     );
-    return plan.candidates.any((candidate) {
-      if (candidate is BusyMarkImagePasteCandidate) {
-        return state.widget.assetIngestionService.canIngestMediaBytes(
-          bytes: candidate.bytes,
-          suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
-        );
-      }
-      if (candidate is! BusyMarkStructuredPasteCandidate ||
-          candidate.fragment.mediaPaths.isEmpty) {
-        return true;
-      }
-      return snapshot.mediaComplete &&
-          candidate.fragment.mediaPaths.entries.every((entry) {
-            final bytes = snapshot.mediaBytes[entry.key];
-            return bytes != null &&
-                state.widget.assetIngestionService.canIngestMediaBytes(
-                  bytes: bytes,
-                  suggestedFileName: p.basename(entry.value),
-                );
-          });
-    });
+    return plan.candidates.any(
+      (candidate) => state._canPrepareSystemPasteCandidate(snapshot, candidate),
+    );
   }
 
   @override
