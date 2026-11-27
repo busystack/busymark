@@ -9,6 +9,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData add = YaruIcons.plus;
   static const IconData ai = YaruIcons.star_filled;
   static const IconData appearance = YaruIcons.desktop_appearance;
+  static const IconData audioFile = YaruIcons.music_single;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData blankLine = YaruIcons.insert_text;
   static const IconData bold = YaruIcons.bold;
@@ -44,6 +45,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData folderOpen = YaruIcons.folder_open;
   static const IconData font = YaruIcons.font;
   static const IconData fullScreen = YaruIcons.fullscreen;
+  static const IconData generateAudio = YaruIcons.music_note;
   static const IconData goTop = YaruIcons.go_top;
   static const IconData hardBreak = YaruIcons.go_down;
   static const IconData heading = YaruIcons.font;
@@ -63,7 +65,10 @@ abstract final class BusyMarkGlyphs {
   static const IconData link = YaruIcons.insert_link;
   static const IconData markdownFile = YaruIcons.text_editor;
   static const IconData math = Icons.functions;
+  static const IconData pauseAudio = YaruIcons.media_pause;
   static const IconData play = YaruIcons.media_play;
+  static const IconData previousSegment = YaruIcons.skip_backward;
+  static const IconData nextSegment = YaruIcons.skip_forward;
   static const IconData mainMenu = YaruIcons.menu;
   static const IconData menuHorizontal = YaruIcons.view_more_horizontal;
   static const IconData menuVertical = YaruIcons.view_more;
@@ -79,6 +84,8 @@ abstract final class BusyMarkGlyphs {
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
   static const IconData refresh = YaruIcons.refresh;
+  static const IconData repeatAudio = YaruIcons.repeat;
+  static const IconData repeatAudioOnce = YaruIcons.repeat_single;
   static const IconData save = YaruIcons.save;
   static const IconData search = YaruIcons.search;
   static const IconData searchUnavailable = YaruIcons.find_replace;
@@ -89,7 +96,10 @@ abstract final class BusyMarkGlyphs {
   static const IconData sidebarViews = YaruIcons.display_layout;
   static const IconData selectContext = YaruIcons.selection;
   static const IconData sidebar = YaruIcons.sidebar;
+  static const IconData speaker = YaruIcons.speaker_high;
+  static const IconData mutedSpeaker = YaruIcons.speaker_muted;
   static const IconData startTopic = YaruIcons.document;
+  static const IconData stopAudio = YaruIcons.media_stop;
   static const IconData strikethrough = YaruIcons.strikethrough;
   static const IconData sourceView = YaruIcons.code;
   static const IconData splitView = YaruIcons.sidebar_right;
@@ -132,6 +142,12 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == appearance || icon == settings) {
       return 'preferences-system-symbolic';
+    }
+    if (icon == audioFile || icon == generateAudio) {
+      return 'audio-x-generic-symbolic';
+    }
+    if (icon == speaker) {
+      return 'audio-volume-high-symbolic';
     }
     if (icon == blockquote || icon == feedback) {
       return 'chat-symbolic';

@@ -1336,7 +1336,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.history => BusyMarkGlyphs.documentHistory,
     SettingsPage.nextcloudNotes => BusyMarkGlyphs.documentHistory,
     SettingsPage.ai => BusyMarkGlyphs.ai,
-    SettingsPage.speech => Icons.record_voice_over_outlined,
+    SettingsPage.speech => BusyMarkGlyphs.speaker,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,
   };
 }

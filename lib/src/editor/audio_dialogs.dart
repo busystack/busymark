@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../markdown/audio_media.dart';
 import '../markdown/audio_syntax.dart';
@@ -63,7 +64,7 @@ class _InsertAudioDialogState extends State<InsertAudioDialog> {
               OutlinedButton.icon(
                 onPressed: () =>
                     Navigator.pop(context, const AudioInsertion.file()),
-                icon: const Icon(Icons.audio_file_outlined),
+                icon: const Icon(BusyMarkGlyphs.audioFile),
                 label: Text(l10n.audioCopyFile),
               ),
               if (widget.canLinkFile)
@@ -72,7 +73,7 @@ class _InsertAudioDialogState extends State<InsertAudioDialog> {
                     context,
                     const AudioInsertion.file(link: true),
                   ),
-                  icon: const Icon(Icons.link),
+                  icon: const Icon(BusyMarkGlyphs.link),
                   label: Text(l10n.audioLinkFile),
                 ),
               const SizedBox(height: 14),

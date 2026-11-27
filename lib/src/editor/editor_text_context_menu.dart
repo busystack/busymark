@@ -399,9 +399,9 @@ class _BusyMarkEditorTextMenuPresentation {
       );
     }
     for (final (id, icon) in [
-      (BusyMarkCommandIds.insertAudio, Icons.audio_file_outlined),
-      (BusyMarkCommandIds.readAloud, Icons.record_voice_over_outlined),
-      (BusyMarkCommandIds.generateAudio, Icons.graphic_eq),
+      (BusyMarkCommandIds.insertAudio, BusyMarkGlyphs.audioFile),
+      (BusyMarkCommandIds.readAloud, BusyMarkGlyphs.speaker),
+      (BusyMarkCommandIds.generateAudio, BusyMarkGlyphs.generateAudio),
     ]) {
       if (commands[id] case final command? when command.canExecute) {
         items.add(

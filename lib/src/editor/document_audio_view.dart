@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 
+import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../assets/asset_limits.dart';
 import '../assets/audio_asset_format.dart';
@@ -347,7 +348,7 @@ class BusyMarkDocumentAudioView extends StatelessWidget {
     Widget properties() => _audioButton(
       label: localized.audioProperties,
       onPressed: edit == null ? null : () => edit(audio),
-      icon: Icons.audio_file_outlined,
+      icon: BusyMarkGlyphs.audioFile,
     );
     if (!audio.controls || scope == null) return properties();
     final owner = (
@@ -461,12 +462,12 @@ class BusyMarkAudioTransport extends StatelessWidget {
                     );
                   },
             icon: busy && cancelOpening != null
-                ? Icons.stop
+                ? BusyMarkGlyphs.stopAudio
                 : failed
-                ? Icons.refresh
+                ? BusyMarkGlyphs.refresh
                 : running
-                ? Icons.pause
-                : Icons.play_arrow,
+                ? BusyMarkGlyphs.pauseAudio
+                : BusyMarkGlyphs.play,
           ),
           if (busy)
             const Padding(
@@ -500,7 +501,9 @@ class BusyMarkAudioTransport extends StatelessWidget {
             if (current) ...[
               _audioButton(
                 label: audio.mute ? localized.audioUnmute : localized.audioMute,
-                icon: audio.mute ? Icons.volume_off : Icons.volume_up,
+                icon: audio.mute
+                    ? BusyMarkGlyphs.mutedSpeaker
+                    : BusyMarkGlyphs.speaker,
                 onPressed: () =>
                     unawaited(audio.configure(owner, muted: !audio.mute)),
               ),
@@ -539,8 +542,8 @@ class BusyMarkAudioTransport extends StatelessWidget {
               _audioButton(
                 label: localized.audioLoop,
                 isSelected: audio.loop,
-                icon: Icons.repeat,
-                selectedIcon: Icons.repeat_one,
+                icon: BusyMarkGlyphs.repeatAudio,
+                selectedIcon: BusyMarkGlyphs.repeatAudioOnce,
                 onPressed: () =>
                     unawaited(audio.configure(owner, looping: !audio.loop)),
               ),

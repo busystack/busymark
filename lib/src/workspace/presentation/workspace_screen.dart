@@ -8509,12 +8509,12 @@ List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
       BusyMarkPopupMenuItem(
         value: _OutlineSectionAction.readAloud,
         label: context.l10n.readAloud,
-        icon: Icons.record_voice_over_outlined,
+        icon: BusyMarkGlyphs.speaker,
       ),
       BusyMarkPopupMenuItem(
         value: _OutlineSectionAction.generateAudio,
         label: context.l10n.generateAudio,
-        icon: Icons.graphic_eq,
+        icon: BusyMarkGlyphs.generateAudio,
       ),
     ],
     if (!multipleSelection) ...[

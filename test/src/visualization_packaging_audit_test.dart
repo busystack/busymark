@@ -172,6 +172,7 @@ void main() {
     final nativeWorkflow = File(
       '.github/workflows/flutter-linux-native.yml',
     ).readAsStringSync();
+    final packCore26 = File('tools/pack_core26_ci_snap.sh').readAsStringSync();
     final workflow = '$applicationWorkflow\n$nativeWorkflow';
 
     expect(workflow, contains('libwebkit2gtk-4.1-dev'));
@@ -210,7 +211,12 @@ void main() {
           'Native smoke tests must exercise the offscreen view policy '
           'without globally disabling WebKit compositing.',
     );
-    expect(nativeWorkflow, contains('snapcore/action-build@v1'));
+    expect(nativeWorkflow, contains('run: bash tools/pack_core26_ci_snap.sh'));
+    expect(nativeWorkflow, contains('snap install snapcraft --classic'));
+    expect(packCore26, contains('snapcraft=/snap/bin/snapcraft'));
+    expect(packCore26, contains(r'"$snapcraft" clean --use-lxd'));
+    expect(packCore26, contains(r'"$snapcraft" pack --use-lxd'));
+    expect(packCore26, contains('SNAPCRAFT_BUILD_INFO=1'));
     expect(nativeWorkflow, contains('squashfs-tools'));
     // Parsed trigger, invocation, prerequisite and artifact-selection controls
     // run in tools/test_official_flutter_workflow.py.

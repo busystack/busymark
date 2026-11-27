@@ -72,17 +72,17 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           (
             BusyMarkMainMenuAction.insertAudio,
             BusyMarkCommandIds.insertAudio,
-            Icons.audio_file_outlined,
+            BusyMarkGlyphs.audioFile,
           ),
           (
             BusyMarkMainMenuAction.readAloud,
             BusyMarkCommandIds.readAloud,
-            Icons.record_voice_over_outlined,
+            BusyMarkGlyphs.speaker,
           ),
           (
             BusyMarkMainMenuAction.generateAudio,
             BusyMarkCommandIds.generateAudio,
-            Icons.graphic_eq,
+            BusyMarkGlyphs.generateAudio,
           ),
         ])
           if (command(id).canExecute)

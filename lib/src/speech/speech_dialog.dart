@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../app/save_destination_picker.dart';
 import '../core/atomic_file_writer.dart';
@@ -487,7 +488,7 @@ class _SpeechDialogState extends State<SpeechDialog> {
                               IconButton(
                                 tooltip: l10n.speechPreviousSegment,
                                 icon: Icon(
-                                  Icons.skip_previous,
+                                  BusyMarkGlyphs.previousSegment,
                                   semanticLabel: l10n.speechPreviousSegment,
                                 ),
                                 onPressed: () {
@@ -511,7 +512,7 @@ class _SpeechDialogState extends State<SpeechDialog> {
                               IconButton(
                                 tooltip: l10n.speechNextSegment,
                                 icon: Icon(
-                                  Icons.skip_next,
+                                  BusyMarkGlyphs.nextSegment,
                                   semanticLabel: l10n.speechNextSegment,
                                 ),
                                 onPressed: () {
