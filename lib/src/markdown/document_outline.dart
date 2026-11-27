@@ -58,11 +58,9 @@ extension BusyDocumentOutline on BusyDocument {
         continue;
       }
       final generated = block.attributes['generatedId'] != 'false';
+      final text = block.plainTextWithFallback;
       final id = generated
-          ? nextGeneratedHeadingId(
-              slugForHeading(block.plainText),
-              generatedIdOccurrences,
-            )
+          ? nextGeneratedHeadingId(slugForHeading(text), generatedIdOccurrences)
           : block.attributes['id'] ?? block.id;
       final level = (int.tryParse(block.attributes['level'] ?? '') ?? 1)
           .clamp(1, 6)
@@ -71,7 +69,7 @@ extension BusyDocumentOutline on BusyDocument {
       headings.add(
         DocumentOutlineHeading(
           level: level,
-          text: block.plainText,
+          text: text,
           id: id,
           sourceStartLine: sourceSpan?.startLine,
           sourceStartOffset: sourceSpan?.startOffset,

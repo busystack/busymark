@@ -410,7 +410,7 @@ class HtmlDocumentWriter {
                 attrs: {
                   'type': 'checkbox',
                   'disabled': '',
-                  'aria-label': item.plainText,
+                  'aria-label': item.plainTextWithFallback,
                   if ((item.attributes['task'] ?? item.attributes['checked']) ==
                       'true')
                     'checked': '',
@@ -460,7 +460,9 @@ class HtmlDocumentWriter {
           text:
               b.attributes['collapsed-title'] ??
               b.attributes['title'] ??
-              (b.plainText.trim().isEmpty ? disclosureLabel : b.plainText),
+              (b.plainTextWithFallback.trim().isEmpty
+                  ? disclosureLabel
+                  : b.plainTextWithFallback),
         ),
       );
       // Strip only the wrapper ID to avoid a duplicate anchor on the heading.
@@ -668,7 +670,7 @@ class HtmlDocumentWriter {
           },
           children: [
             if (b.plainText.trim().isNotEmpty || b.attributes['title'] != null)
-              _el('h3', text: b.attributes['title'] ?? b.plainText),
+              _el('h3', text: b.attributes['title'] ?? b.plainTextWithFallback),
             ...await _blocks(b.children, depth + 1),
           ],
         );

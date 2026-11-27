@@ -403,7 +403,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     if (block.kind == BusyBlockKind.thematicBreak) {
       return BusyMarkDocumentThematicBreak(editable: true, selected: selected);
     }
-    if (block.kind == BusyBlockKind.table && !_containsAudio(block)) {
+    if (block.kind == BusyBlockKind.table) {
       return Directionality(
         textDirection: textDirection,
         child: _TableBlockEditor(
@@ -477,31 +477,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
             onTap: onFocused,
           ),
         ],
-      );
-    }
-    if (!_isRenderedHtmlBlock && _containsAudio(block)) {
-      return _RenderedHtmlMedia(
-        buildImage: (inline) => MarkdownImageView(
-          source: inline.destination ?? '',
-          alt: inline.text,
-          sourceSpan: inline.imageSpan,
-          activeFilePath: documentFilePath,
-          workspaceRoot: workspaceRoot,
-          writersideRoot: writersideRoot,
-          imagesDir: imagesDir,
-          allowRemoteImages: allowRemoteImages,
-          maxWidth: BusyMarkSizes.previewMinWidth,
-          maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-          preferredHeight: BusyMarkSizes.previewInlineImageHeight,
-        ),
-        child: _RenderedHtmlBlocks(
-          blocks: [block],
-          documentFilePath: documentFilePath,
-          workspaceRoot: workspaceRoot,
-          writersideRoot: writersideRoot,
-          imagesDir: imagesDir,
-          allowRemoteImages: allowRemoteImages,
-        ),
       );
     }
     if (_isRenderedHtmlBlock) {
@@ -698,15 +673,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     return '```${descriptor.originalLanguage}\n$source```';
   }
 
-  bool _containsAudio(BusyBlock value) =>
-      value.audio != null ||
-      _inlineAudio(value.inlines) ||
-      value.children.any(_containsAudio);
-
-  bool _inlineAudio(List<BusyInline> values) => values.any(
-    (value) => value.audio != null || _inlineAudio(value.children),
-  );
-
   bool get _isRenderedHtmlBlock {
     return block.kind == BusyBlockKind.htmlBlock &&
         block.attributes['sourceFormat'] == 'html' &&
@@ -899,6 +865,12 @@ class _RenderedMathBlock extends StatelessWidget {
           onSuccess: () =>
               onMathDiagnostic?.call(expressionId, null, block.sourceSpan),
         ),
+      );
+    }
+    if (inline.audio case final audio?) {
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: BusyMarkDocumentAudioView(audio: audio, editable: true),
       );
     }
     if (inline.kind == BusyInlineKind.hardBreak) {
@@ -2313,9 +2285,13 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                         !widget.documentSelectionDragging,
                     undoController: widget.undoController,
                     minLines: 1,
-                    // With maxLines == 1 Flutter strips even existing semantic
-                    // breaks before the cell's formatter can preserve them.
-                    maxLines: _controller.text.contains('\n') ? null : 1,
+                    // Keep semantic breaks and fit the inline player within
+                    // the cell's width. The cell formatter still governs Enter.
+                    maxLines:
+                        _controller.hasInlineAudio ||
+                            _controller.text.contains('\n')
+                        ? null
+                        : 1,
                     keyboardType: TextInputType.text,
                     inputFormatters: const [_TableCellLineBreakFormatter()],
                     style: textStyle,

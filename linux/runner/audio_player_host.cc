@@ -14,12 +14,16 @@ struct BusyMarkAudioPlayerHost {
   bool playing = false;
   bool looping = false;
   bool ended = false;
+  bool streamed = false;
+  guint64 streamed_bytes = 0;
   double rate = 1;
 };
 
 namespace {
 
 constexpr guint64 kMaximumAudioBytes = 100 * 1024 * 1024;
+constexpr gsize kStreamChunkBytes = 64 * 1024;
+constexpr guint64 kStreamQueueBytes = 512 * 1024;
 
 void stop(BusyMarkAudioPlayerHost* host) {
   if (host->watch != 0) {
@@ -33,6 +37,8 @@ void stop(BusyMarkAudioPlayerHost* host) {
   }
   host->playing = false;
   host->ended = false;
+  host->streamed = false;
+  host->streamed_bytes = 0;
   host->id = 0;
   host->rate = 1;
 }
@@ -134,6 +140,50 @@ void reply(FlMethodCall* call, bool ok) {
   fl_method_call_respond_success(call, value, nullptr);
 }
 
+void configure_stream_source(GstElement*, GstElement* source, gpointer) {
+  // Only attached to our appsrc URI. The source never opens network URLs.
+  g_object_set(source, "block", FALSE, "max-bytes", kStreamQueueBytes,
+               nullptr);
+}
+
+void feed_stream(BusyMarkAudioPlayerHost* host, FlMethodCall* call,
+                 FlValue* args, bool finish) {
+  FlValue* bytes = lookup(args, "bytes", FL_VALUE_TYPE_UINT8_LIST);
+  const auto size = bytes == nullptr ? 0 : fl_value_get_length(bytes);
+  gint result = -1;
+  if (host->streamed && host->playing && !host->ended &&
+      (finish || (size > 0 && size <= kStreamChunkBytes &&
+                  host->streamed_bytes + size <= kMaximumAudioBytes))) {
+    GstElement* source = nullptr;
+    g_object_get(host->player, "source", &source, nullptr);
+    result = 0;
+    if (source != nullptr) {
+      guint64 queued = 0;
+      g_object_get(source, "current-level-bytes", &queued, nullptr);
+      if (finish || queued + size <= kStreamQueueBytes) {
+        GstFlowReturn flow = GST_FLOW_ERROR;
+        if (finish) {
+          g_signal_emit_by_name(source, "end-of-stream", &flow);
+        } else {
+          GstBuffer* buffer = gst_buffer_new_allocate(nullptr, size, nullptr);
+          if (buffer != nullptr) {
+            gst_buffer_fill(buffer, 0, fl_value_get_uint8_list(bytes), size);
+            g_signal_emit_by_name(source, "push-buffer", buffer, &flow);
+            gst_buffer_unref(buffer);
+          }
+        }
+        result = flow == GST_FLOW_OK ? 1 : -1;
+        if (result == 1) host->streamed_bytes += size;
+      }
+      gst_object_unref(source);
+    }
+  } else if (host->streamed && !host->playing && !host->ended) {
+    result = 0;
+  }
+  g_autoptr(FlValue) response = fl_value_new_int(result);
+  fl_method_call_respond_success(call, response, nullptr);
+}
+
 void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
   auto* host = static_cast<BusyMarkAudioPlayerHost*>(data);
   FlValue* args = fl_method_call_get_args(call);
@@ -141,19 +191,22 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
   FlValue* id_value = lookup(args, "id", FL_VALUE_TYPE_INT);
   const gint64 id = id_value == nullptr ? 0 : fl_value_get_int(id_value);
 
-  if (g_str_equal(method, "open")) {
+  const bool streamed = g_str_equal(method, "openStream");
+  if (streamed || g_str_equal(method, "open")) {
     FlValue* path_value = lookup(args, "path", FL_VALUE_TYPE_STRING);
     const char* path = path_value == nullptr ? nullptr
                                             : fl_value_get_string(path_value);
     struct stat stat_buffer;
-    if (id <= 0 || path == nullptr || !g_path_is_absolute(path) ||
-        lstat(path, &stat_buffer) != 0 || !S_ISREG(stat_buffer.st_mode) ||
-        stat_buffer.st_size <= 0 ||
-        static_cast<guint64>(stat_buffer.st_size) > kMaximumAudioBytes) {
+    if (id <= 0 || (!streamed &&
+        (path == nullptr || !g_path_is_absolute(path) ||
+         lstat(path, &stat_buffer) != 0 || !S_ISREG(stat_buffer.st_mode) ||
+         stat_buffer.st_size <= 0 ||
+         static_cast<guint64>(stat_buffer.st_size) > kMaximumAudioBytes))) {
       reply(call, false);
       return;
     }
-    g_autofree char* uri = g_filename_to_uri(path, nullptr, nullptr);
+    g_autofree char* uri = streamed ? g_strdup("appsrc://")
+                                  : g_filename_to_uri(path, nullptr, nullptr);
     stop(host);
     if (uri == nullptr || !gst_init_check(nullptr, nullptr, nullptr)) {
       reply(call, false);
@@ -165,8 +218,13 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
       return;
     }
     host->id = id;
-    host->looping = boolean(args, "loop");
+    host->streamed = streamed;
+    host->looping = !streamed && boolean(args, "loop");
     host->playing = true;
+    if (streamed) {
+      g_signal_connect(host->player, "source-setup",
+                       G_CALLBACK(configure_stream_source), nullptr);
+    }
     guint flags = 0;
     g_object_get(host->player, "flags", &flags, nullptr);
     // Disable video, subtitles and visualizations. Keep the normal audio sink.
@@ -186,6 +244,18 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
     return;
   }
 
+  const bool append = g_str_equal(method, "streamBytes");
+  const bool finish = g_str_equal(method, "finishStream");
+  if (append || finish) {
+    if (host->id == id && host->player != nullptr) {
+      feed_stream(host, call, args, finish);
+    } else {
+      g_autoptr(FlValue) rejected = fl_value_new_int(-1);
+      fl_method_call_respond_success(call, rejected, nullptr);
+    }
+    return;
+  }
+
   if (host->id != id || host->player == nullptr) {
     reply(call, false);
     return;
@@ -196,6 +266,11 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
     reply(call, true);
   } else if (g_str_equal(method, "play") || g_str_equal(method, "pause")) {
     host->playing = g_str_equal(method, "play");
+    if (host->playing && host->ended && host->streamed) {
+      host->playing = false;
+      reply(call, false);
+      return;
+    }
     if (host->playing && host->ended && !seek_to(host, 0, host->rate)) {
       // Reopen a stream which cannot seek after reaching its end.
       if (gst_element_set_state(host->player, GST_STATE_READY) ==
@@ -224,7 +299,8 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
                              fl_value_new_float(position / double(GST_SECOND)));
     fl_value_set_string_take(result, "duration", fl_value_new_float(
         duration < 0 ? -1.0 : duration / double(GST_SECOND)));
-    fl_value_set_string_take(result, "seekable", fl_value_new_bool(seekable));
+    fl_value_set_string_take(result, "seekable",
+                             fl_value_new_bool(!host->streamed && seekable));
     fl_method_call_respond_success(call, result, nullptr);
   } else if (g_str_equal(method, "audio")) {
     const double volume = seconds(args, "volume", 1.0);
@@ -232,7 +308,7 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
       reply(call, false);
       return;
     }
-    host->looping = boolean(args, "loop");
+    host->looping = !host->streamed && boolean(args, "loop");
     g_object_set(host->player, "volume", volume, "mute", boolean(args, "mute"),
                  nullptr);
     reply(call, true);
@@ -244,7 +320,7 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
       reply(call, false);
       return;
     }
-    reply(call, seek_to(host, position, rate));
+    reply(call, !host->streamed && seek_to(host, position, rate));
   } else {
     fl_method_call_respond_not_implemented(call, nullptr);
   }

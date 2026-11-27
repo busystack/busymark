@@ -419,14 +419,13 @@ bool _isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
     return scheme == 'https' &&
             parsed.host.isNotEmpty &&
             parsed.userInfo.isEmpty ||
-        scheme == 'busymark-attachment' &&
-            !parsed.hasAuthority &&
-            RegExp(
-              r'^[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$',
-            ).hasMatch(parsed.path);
+        isBusyMarkAttachmentUri(parsed);
   }
   if (attribute == 'href') {
-    return isLaunchableExternalUriScheme(scheme);
+    // A queued Notes download link is an opaque provider reference. Desktop
+    // URL launching still uses the separate external-scheme allowlist.
+    return isLaunchableExternalUriScheme(scheme) ||
+        tag == 'a' && isBusyMarkAttachmentUri(parsed);
   }
   if (attribute == 'src' && tag == 'img') {
     return isRemoteResourceUriScheme(scheme);

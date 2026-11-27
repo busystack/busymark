@@ -2741,6 +2741,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       activeInlineKinds: pendingInlineKinds,
       preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
       normalizePastedFormatting: origin == _WysiwygTextEditOrigin.paste,
+      replacedRange: _audioTextEditRange(
+        oldText,
+        value,
+        previousSelection,
+        controller?.selection,
+      ),
     );
     if (controller != null) _rememberModelTextSelection(blockId, controller);
     if (value.isNotEmpty) {
@@ -2766,6 +2772,23 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       newSuffixStart--;
     }
     return newText.substring(prefixLength, newSuffixStart);
+  }
+
+  ({int start, int end})? _audioTextEditRange(
+    String previous,
+    String next,
+    TextSelection? before,
+    TextSelection? after,
+  ) {
+    if (!previous.contains(busyMarkInlineAudioPlaceholder) ||
+        before == null ||
+        !before.isValid) {
+      return null;
+    }
+    if (!before.isCollapsed) return (start: before.start, end: before.end);
+    if (after == null || !after.isValid || !after.isCollapsed) return null;
+    final start = math.min(before.start, after.start);
+    return (start: start, end: after.start + previous.length - next.length);
   }
 
   void _handleTableCellTextChanged(
@@ -2842,7 +2865,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         accepted,
       );
     } else {
-      _documentController.updateTableCellText(tableBlockId, cellId, accepted);
+      _documentController.updateTableCellText(
+        tableBlockId,
+        cellId,
+        accepted,
+        replacedRange: _audioTextEditRange(
+          currentText,
+          accepted,
+          previousSelection,
+          controller?.selection,
+        ),
+      );
     }
     _emitMarkdown(
       reportEditingSession: true,
@@ -2859,8 +2892,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   void _updateTableCellFromControllerText(
     String tableBlockId,
     String cellId,
-    String text,
-  ) {
+    String text, {
+    ({int start, int end})? replacedRange,
+  }) {
     final cell = _documentController.blockById(cellId);
     if (cell != null && busyMarkWysiwygBlockContainsMath(cell)) {
       _documentController.updateTableCellMarkdownSource(
@@ -2870,7 +2904,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       );
       return;
     }
-    _documentController.updateTableCellText(tableBlockId, cellId, text);
+    _documentController.updateTableCellText(
+      tableBlockId,
+      cellId,
+      text,
+      replacedRange: replacedRange,
+    );
   }
 
   void _handleTableRowInserted(
@@ -8029,11 +8068,25 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         ? safeOffset
         : math.min(plainText.length, safeOffset + 1);
     final raw = source.substring(span.startOffset, span.endOffset);
+    final inlineAudio = busyMarkWysiwygInlineAudio(block.inlines);
     final sourceStarts = <int>[];
     final sourceEnds = <int>[];
     var rawOffset = _aiBlockContentStart(raw);
     var textOffset = 0;
     while (textOffset < requiredCharacters) {
+      if (inlineAudio[textOffset] case final audio?) {
+        final position = audio.sourceSpan;
+        if (position == null ||
+            position.startOffset < span.startOffset + rawOffset ||
+            position.endOffset > span.endOffset) {
+          return null;
+        }
+        sourceStarts.add(position.startOffset);
+        sourceEnds.add(position.endOffset);
+        rawOffset = position.endOffset - span.startOffset;
+        textOffset++;
+        continue;
+      }
       final codeUnit = plainText.codeUnitAt(textOffset);
       if (_aiMappingWhitespace(codeUnit)) {
         final visibleRunStart = textOffset;
@@ -9097,18 +9150,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return true;
     }
     final blocks = _clipboardBlocksForRanges(ranges);
-    final media = _clipboardMediaPaths(blocks);
     final fragment = WysiwygClipboardFragment(
       mode: _documentController.document.mode,
       sourcePath: _documentController.document.filePath,
       blocks: blocks,
-      mediaPaths: media.paths,
     );
     final text = ranges.map(_copyTextForRange).join('\n\n');
     unawaited(
       _writeClipboardSelection(
         fragment: fragment,
-        mediaReferencesComplete: media.complete,
         text: text,
         onWritten: finishCut,
       ),
@@ -9146,16 +9196,20 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _writeClipboardSelection({
     required WysiwygClipboardFragment fragment,
     required String text,
-    required bool mediaReferencesComplete,
     required VoidCallback onWritten,
   }) async {
     final origin = _clipboardOrigin;
+    final clipboard = _clipboard;
     var success = false;
     String? html;
     String? encodedFragment;
-    var retainedMedia = (
-      bytes: const <String, Uint8List>{},
-      complete: mediaReferencesComplete,
+    final retainedMedia = await _captureClipboardMedia(fragment);
+    if (!mounted) return;
+    fragment = WysiwygClipboardFragment(
+      mode: fragment.mode,
+      sourcePath: fragment.sourcePath,
+      blocks: fragment.blocks,
+      mediaPaths: retainedMedia.paths,
     );
     try {
       try {
@@ -9164,10 +9218,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         // Large selections can still transfer their native structure and text.
       }
       encodedFragment = fragment.encode();
-      if (mediaReferencesComplete) {
-        retainedMedia = await _readClipboardMediaBytes(fragment);
-      }
-      success = await _clipboard.write(
+      success = await clipboard.write(
         RichClipboardData(
           text: text,
           html: html,
@@ -9195,7 +9246,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           mediaComplete: retainedMedia.complete,
         ),
       );
-      onWritten();
+      if (retainedMedia.complete) onWritten();
     } else {
       BusyMarkToastOverlay.show(
         context,
@@ -9250,6 +9301,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _ClipboardTarget target,
   ) async {
     final destinations = <String, String>{};
+    final publishedAudio = <String, String>{};
     final assets = <IngestedAsset>[];
     final audio = fragment.audioReferences;
     try {
@@ -9259,7 +9311,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        final ingest = audio.contains(entry.key)
+        final resource = audio.contains(entry.key)
+            ? busyMarkAudioResourcePath(entry.key)
+            : null;
+        if (publishedAudio[resource] case final reference?) {
+          destinations[entry.key] = reference;
+          continue;
+        }
+        final ingest = resource != null
             ? widget.assetIngestionService.ingestAudioBytes
             : widget.assetIngestionService.ingestMediaBytes;
         final asset = await ingest(
@@ -9279,6 +9338,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                 DocumentMediaScope.of(context) == null
             ? asset.markdownPath.split('/').map(Uri.encodeComponent).join('/')
             : asset.markdownPath;
+        if (resource != null) {
+          publishedAudio[resource] = destinations[entry.key]!;
+        }
       }
       return (
         fragment: fragment.rebase(
@@ -9381,20 +9443,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return result;
   }
 
-  ({Map<String, String> paths, bool complete}) _clipboardMediaPaths(
-    List<BusyWysiwygStyledBlock> blocks,
-  ) {
-    final references = <String>{};
-    void addAudio(BusyAudio? audio) {
-      if (audio != null) {
-        references.addAll(
-          audio.authoredSources.map((source) => source.destination),
-        );
-      }
-    }
+  Future<
+    ({Map<String, String> paths, Map<String, Uint8List> bytes, bool complete})
+  >
+  _captureClipboardMedia(WysiwygClipboardFragment fragment) async {
+    final audio = fragment.audioReferences;
+    final references = {...audio};
 
     void inline(BusyInline value) {
-      addAudio(value.audio);
       if (value.kind == BusyInlineKind.image && value.destination != null) {
         references.add(value.destination!);
       }
@@ -9402,7 +9458,6 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
 
     void block(BusyBlock value) {
-      addAudio(value.audio);
       final mediaAttributes = switch (value.kind) {
         BusyBlockKind.video => busyMarkVideoMediaAttributes,
         BusyBlockKind.image => const {'src'},
@@ -9417,60 +9472,84 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       value.children.forEach(block);
     }
 
-    for (final value in blocks) {
-      block(busyMarkWysiwygClipboardBlock(value));
-    }
-    final resolved = <String, String>{};
+    fragment.documentBlocks.forEach(block);
     final media = DocumentMediaScope.of(context);
+    final workspaceRoot = widget.workspaceRoot;
+    final writersideRoot = widget.writersideRoot;
+    final imagesDir = widget.imagesDir;
+    final paths = <String, String>{};
+    final bytes = <String, Uint8List>{};
+    final resolvedResources = <String, String?>{};
+    var remaining = maxRichClipboardOwnershipBytes;
+    var complete = true;
     var examined = 0;
     for (final value in references) {
-      final scheme = Uri.tryParse(value)?.scheme;
-      if (scheme == 'http' || scheme == 'https') continue;
-      if (media == null && Uri.tryParse(value)?.hasScheme == true) continue;
+      final uri = Uri.tryParse(value);
+      if (uri?.hasAuthority == true ||
+          uri?.scheme == 'http' ||
+          uri?.scheme == 'https') {
+        continue;
+      }
+      if (media == null && uri?.hasScheme == true) continue;
       if (examined++ == maxClipboardFragmentMediaPaths) {
-        return (paths: resolved, complete: false);
+        complete = false;
+        break;
       }
-      final path = media != null
-          ? media.resolveCached(value)
-          : resolveLocalMediaPath(
-              activeFilePath: _documentController.document.filePath,
-              destination: value,
-              workspaceRoot: widget.workspaceRoot,
-              writersideRoot: widget.writersideRoot,
-              imagesDir: widget.imagesDir,
-              maxRecursiveEntries: 1000,
-            );
-      if (path != null) resolved[value] = path;
-    }
-    return (paths: resolved, complete: true);
-  }
-
-  Future<({Map<String, Uint8List> bytes, bool complete})>
-  _readClipboardMediaBytes(WysiwygClipboardFragment fragment) async {
-    if (fragment.mediaPaths.isEmpty) {
-      return (bytes: const <String, Uint8List>{}, complete: true);
-    }
-    final maximumBytes = const ClipboardHistoryPolicy().maximumBytes;
-    final result = <String, Uint8List>{};
-    var total = 0;
-    for (final entry in fragment.mediaPaths.entries) {
       try {
-        final file = File(entry.value);
+        final isAudio = audio.contains(value);
+        final resource = isAudio ? busyMarkAudioResourcePath(value) : value;
+        if (!resolvedResources.containsKey(resource)) {
+          resolvedResources[resource] = media != null
+              ? await media.resolve(resource)
+              : isAudio
+              ? await resolveDocumentAudioPath(
+                  resource,
+                  documentPath: fragment.sourcePath,
+                  rootPath:
+                      workspaceRoot ??
+                      writersideRoot ??
+                      p.dirname(fragment.sourcePath),
+                )
+              : resolveLocalMediaPath(
+                  activeFilePath: fragment.sourcePath,
+                  destination: value,
+                  workspaceRoot: workspaceRoot,
+                  writersideRoot: writersideRoot,
+                  imagesDir: imagesDir,
+                  maxRecursiveEntries: 1000,
+                );
+        }
+        final path = resolvedResources[resource];
+        if (path == null) {
+          if (media != null || isAudio) complete = false;
+          continue;
+        }
+        final file = File(path);
         final length = await file.length();
-        if (length <= 0 || total + length > maximumBytes) {
-          return (bytes: const <String, Uint8List>{}, complete: false);
+        if (length <= 0 || length > remaining) {
+          complete = false;
+          continue;
         }
-        final bytes = await file.readAsBytes();
-        if (bytes.length != length) {
-          return (bytes: const <String, Uint8List>{}, complete: false);
+        final handle = await file.open();
+        try {
+          final retained = await handle.read(length + 1);
+          if (retained.length != length) {
+            complete = false;
+            continue;
+          }
+          paths[value] = path;
+          bytes[value] = retained;
+          remaining -= length;
+        } finally {
+          await handle.close();
         }
-        result[entry.key] = bytes;
-        total += bytes.length;
-      } on FileSystemException {
-        return (bytes: const <String, Uint8List>{}, complete: false);
+      } on IOException {
+        complete = false;
+      } on FormatException {
+        complete = false;
       }
     }
-    return (bytes: Map<String, Uint8List>.unmodifiable(result), complete: true);
+    return (paths: paths, bytes: bytes, complete: complete);
   }
 
   bool _hasActiveComposition(TextEditingController controller) {
@@ -9658,7 +9737,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final nextText = text.replaceRange(start, end, '');
     final cellEntry = _tableCellEntry(blockId);
     if (cellEntry != null) {
-      _updateTableCellFromControllerText(cellEntry.table.id, blockId, nextText);
+      _updateTableCellFromControllerText(
+        cellEntry.table.id,
+        blockId,
+        nextText,
+        replacedRange: (start: start, end: end),
+      );
     } else if (sourceFieldText != null) {
       final destination = _documentController.updateMathSource(
         blockId,
@@ -9670,7 +9754,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _focusBlockAfterFrame(destination.blockId, offset: destination.offset);
       return true;
     } else {
-      _documentController.updateBlockText(blockId, nextText);
+      _documentController.updateBlockText(
+        blockId,
+        nextText,
+        replacedRange: (start: start, end: end),
+      );
     }
     _emitMarkdown();
     _focusTextTargetAfterFrame(blockId, offset: start);
@@ -9678,7 +9766,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   String _copyTextForBlock(BusyBlock block) {
-    final text = block.plainText.trimRight();
+    final text = block.plainTextWithFallback.trimRight();
     return switch (block.kind) {
       BusyBlockKind.unorderedListItem => '• $text',
       BusyBlockKind.orderedListItem =>
@@ -9721,10 +9809,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (text.isEmpty) {
       return '';
     }
-    return text.substring(
+    return busyMarkWysiwygClipboardInlineSlice(
+      range.block.inlines,
       range.start.clamp(0, text.length).toInt(),
       range.end.clamp(0, text.length).toInt(),
-    );
+    ).map((inline) => inline.plainTextWithFallback).join();
   }
 
   List<BusyInlineStyleRange> _inlineRangesForSlice(

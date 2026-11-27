@@ -1,6 +1,9 @@
 import 'package:html/dom.dart' as html;
+import 'package:path/path.dart' as p;
 
+import '../assets/audio_asset_format.dart';
 import '../core/source_span.dart';
+import '../core/uri_utils.dart';
 import 'raw_html_policy.dart';
 
 /// The path portion of a document-relative audio reference belongs to the
@@ -89,6 +92,21 @@ class BusyAudio {
   Iterable<BusyAudioSource> get authoredSources sync* {
     if (directSource case final source?) yield source;
     yield* sources;
+  }
+
+  /// An authored fallback can refer to the same recording or to an alternate
+  /// downloadable audio file. Ordinary transcript and navigation links are
+  /// not owned audio resources.
+  bool ownsFallbackReference(String reference) {
+    final uri = Uri.tryParse(reference);
+    if (uri == null || uri.path.isEmpty) return false;
+    final path = busyMarkAudioResourcePath(reference);
+    final extension = p.url.extension(uri.path).toLowerCase();
+    return isBusyMarkAttachmentUri(uri) ||
+        authoredSources.any(
+          (source) => busyMarkAudioResourcePath(source.destination) == path,
+        ) ||
+        AudioAssetFormat.extensions.any((format) => extension == '.$format');
   }
 
   bool get controls => attributes.containsKey('controls');

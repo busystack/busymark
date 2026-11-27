@@ -6,6 +6,7 @@ import 'package:markdown/src/link_parser.dart' show LinkParser;
 import 'package:markdown/src/util.dart' show normalizeLinkLabel;
 
 import '../core/source_span.dart';
+import '../markdown/audio_media.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
@@ -106,6 +107,23 @@ List<AuthoredReference> markdownReferences({
     source: source,
     protectedRanges: parsed.codeBlocks.map((b) => b.span),
   );
+  final audioWithSpans = <BusyAudio>[];
+  void addAudio(BusyAudio? audio) {
+    if (audio != null && audio.sourceSpan != null) audioWithSpans.add(audio);
+  }
+
+  void readInline(BusyInline inline) {
+    addAudio(inline.audio);
+    inline.children.forEach(readInline);
+  }
+
+  void readBlock(BusyBlock block) {
+    addAudio(block.audio);
+    block.inlines.forEach(readInline);
+    block.children.forEach(readBlock);
+  }
+
+  parsed.busyDocument.blocks.forEach(readBlock);
   SourceSpan span(int start, int end) => SourceSpan.fromOffsets(
     filePath: identity,
     source: source,
@@ -235,6 +253,12 @@ List<AuthoredReference> markdownReferences({
               ),
         origin: html.origin,
         htmlQuote: html.quote,
+        isAudio: audioWithSpans.any((audio) {
+          final span = audio.sourceSpan!;
+          return html.hrefSpan.startOffset >= span.startOffset &&
+              html.hrefSpan.endOffset <= span.endOffset &&
+              audio.ownsFallbackReference(html.href);
+        }),
       ),
     );
   }

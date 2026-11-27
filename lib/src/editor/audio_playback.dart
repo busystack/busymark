@@ -14,6 +14,8 @@ enum AudioPlaybackState {
   failed,
 }
 
+enum AudioStreamFeed { waiting, accepted, failed }
+
 class AudioPlayback extends ChangeNotifier {
   AudioPlayback() {
     _channel.setMethodCallHandler(_nativeEvent);
@@ -31,6 +33,7 @@ class AudioPlayback extends ChangeNotifier {
   double position = 0;
   double? duration;
   bool seekable = false;
+  bool streamed = false;
   double volume = 1;
   double rate = 1;
   bool mute = false;
@@ -47,6 +50,16 @@ class AudioPlayback extends ChangeNotifier {
     File file, {
     bool muted = false,
     bool looping = false,
+  }) => _open(owner, file: file, muted: muted, looping: looping);
+
+  Future<bool> openStream(Object owner, {bool muted = false}) =>
+      _open(owner, muted: muted, looping: false);
+
+  Future<bool> _open(
+    Object owner, {
+    File? file,
+    required bool muted,
+    required bool looping,
   }) async {
     final previous = _nativeId;
     final id = ++_serial;
@@ -56,14 +69,15 @@ class AudioPlayback extends ChangeNotifier {
     position = 0;
     duration = null;
     seekable = false;
+    streamed = file == null;
     mute = muted;
     loop = looping;
     volume = rate = 1;
     notifyListeners();
     if (previous != null) await _call('close', previous);
     if (_nativeId != id) return false;
-    final ok = await _call('open', id, {
-      'path': file.path,
+    final ok = await _call(file == null ? 'openStream' : 'open', id, {
+      if (file != null) 'path': file.path,
       'mute': muted,
       'loop': looping,
     });
@@ -72,6 +86,38 @@ class AudioPlayback extends ChangeNotifier {
       notifyListeners();
     }
     return ok && _nativeId == id;
+  }
+
+  Future<AudioStreamFeed> feedStream(Object owner, [Uint8List? bytes]) async {
+    final id = _nativeId;
+    if (!streamed || !owns(owner) || id == null) return AudioStreamFeed.failed;
+    try {
+      final result = await _channel.invokeMethod<int>(
+        bytes == null ? 'finishStream' : 'streamBytes',
+        {'id': id, if (bytes != null) 'bytes': bytes},
+      );
+      if (_nativeId != id) return AudioStreamFeed.failed;
+      return switch (result) {
+        0 => AudioStreamFeed.waiting,
+        1 => AudioStreamFeed.accepted,
+        _ => AudioStreamFeed.failed,
+      };
+    } on PlatformException {
+      return AudioStreamFeed.failed;
+    } on MissingPluginException {
+      return AudioStreamFeed.failed;
+    }
+  }
+
+  Future<void> failStream(Object owner) async {
+    if (!streamed || !owns(owner)) return;
+    final id = _nativeId;
+    _nativeId = null;
+    _poll?.cancel();
+    _poll = null;
+    state = AudioPlaybackState.failed;
+    notifyListeners();
+    if (id != null) await _call('close', id);
   }
 
   Future<void> toggle(Object owner) async {
@@ -130,7 +176,7 @@ class AudioPlayback extends ChangeNotifier {
     if (!owns(owner) || id == null) return;
     final nextVolume = level ?? volume;
     final nextMute = muted ?? mute;
-    final nextLoop = looping ?? loop;
+    final nextLoop = !streamed && (looping ?? loop);
     if (await _call('audio', id, {
           'volume': nextVolume,
           'mute': nextMute,

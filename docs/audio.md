@@ -41,7 +41,12 @@ controls. Preview omits controls if the element does not declare them.
 
 Use **Audio properties** in Editor to change the source markup, order of
 alternatives, MIME hints, accessible label, or authored settings. The same
-markup is available directly in Source. On local files, the properties dialog
+markup is available directly in Source. Inline audio has one selection position
+in Editor, so adjacent text and table cells remain editable. Copying audio to
+another document retains the recording and rebases its download link. BusyMark
+fetches uncached Notes attachments through the original note's account before
+copying. If the recording is unavailable, normal Paste does not insert an
+audio element with a missing attachment. On local files, the properties dialog
 can open the recording in the desktop's default application or show its
 folder. Removing an element leaves the recording file available for other
 references and document history.
@@ -56,9 +61,14 @@ markup.
 
 Opening a document never starts a recording. For external HTTPS audio,
 BusyMark asks before contacting the origin. Permission applies to that
-document visit. The app downloads eligible recordings before playback, with
-a size limit and same-origin redirect checks. Long or unsupported streams
-may be unavailable. Switching documents pauses the active recording.
+document visit. BusyMark checks redirects against the approved origin. Finite
+responses with a declared size download before playback, up to 100 MiB in two
+minutes. A direct audio response without a declared size can play as it
+arrives, up to 100 MiB or 30 minutes. An idle stream times out after 15 seconds.
+Use **Cancel** to close a live stream. Live streams have no seek, playback rate
+or loop controls. Playlist protocols
+such as HLS and DASH are unsupported. Switching documents pauses the active
+recording.
 Starting a different recording or narration transfers the in-app transport.
 
 File types recognized for audio include MP3, WAV, Ogg, FLAC, AAC, M4A and WebM.

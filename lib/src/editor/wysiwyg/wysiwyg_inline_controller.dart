@@ -3,20 +3,42 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show CharacterBoundary;
 
 import '../../app/busymark_design.dart';
+import '../../markdown/audio_media.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_source_map.dart';
 import '../../markdown/semantic_html_inline.dart';
+import '../document_audio_view.dart';
 import '../document_html_inline.dart';
 import '../document_text_direction.dart';
 import '../text_edit_offsets.dart';
 
 bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
-    (inline) => inline.kind == BusyInlineKind.math || contains(inline.children),
+    (inline) =>
+        inline.kind == BusyInlineKind.math ||
+        inline.audio == null && contains(inline.children),
   );
   return block.kind == BusyBlockKind.math || contains(block.inlines);
+}
+
+Map<int, BusyAudio> busyMarkWysiwygInlineAudio(List<BusyInline> inlines) {
+  final positions = <int, BusyAudio>{};
+  var offset = 0;
+
+  void visit(BusyInline inline) {
+    if (inline.audio case final audio?) {
+      positions[offset++] = audio;
+    } else if (inline.children.isEmpty) {
+      offset += inline.text.length;
+    } else {
+      inline.children.forEach(visit);
+    }
+  }
+
+  inlines.forEach(visit);
+  return positions;
 }
 
 bool busyMarkWysiwygBlockDescendantsContainMath(BusyBlock block) {
@@ -206,7 +228,7 @@ List<BusyInlineStyleRange> busyInlineReferenceRanges(List<BusyInline> inlines) {
         ),
       );
     }
-    if (inline.children.isNotEmpty) {
+    if (inline.audio == null && inline.children.isNotEmpty) {
       inline.children.forEach(visit);
     } else {
       offset += inline.plainText.length;
@@ -236,7 +258,7 @@ List<BusyInlineSemanticAnchor> busyInlineSemanticAnchors(
       anchors.add(BusyInlineSemanticAnchor(offset: offset, inline: anchored));
       return;
     }
-    if (inline.children.isNotEmpty) {
+    if (inline.audio == null && inline.children.isNotEmpty) {
       for (final child in inline.children) {
         visit(child, [...ancestors, inline]);
       }
@@ -264,8 +286,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
        super(text: text);
 
   List<BusyInlineStyleRange> _ranges;
+  Map<int, BusyAudio> _audio = const {};
   Map<int, String> _directionControls = const {};
   _DirectionalEditingController? _directional;
+
+  bool get hasInlineAudio => _audio.isNotEmpty;
 
   TextEditingController get editableController =>
       _directional ??
@@ -297,6 +322,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
         ? const <BusyInlineStyleRange>[]
         : busyInlineStyleRanges(block.inlines, includeHtml: true);
     final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
+    final audio = sourceEditing
+        ? const <int, BusyAudio>{}
+        : busyMarkWysiwygInlineAudio(block.inlines);
+    final audioChanged = !mapEquals(_audio, audio);
+    _audio = audio;
     _directionControls = sourceEditing
         ? const {}
         : _inlineDirectionControls(block.inlines);
@@ -308,11 +338,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
         selection: _clampedSelection(previousSelection, nextText.length),
         composing: TextRange.empty,
       );
-    } else if (rangesChanged) {
+    } else if (rangesChanged || audioChanged) {
       _ranges = nextRanges;
       notifyListeners();
     }
-    _directional?.refresh(stylesChanged: rangesChanged);
+    _directional?.refresh(stylesChanged: rangesChanged || audioChanged);
   }
 
   @override
@@ -320,20 +350,22 @@ class BusyMarkWysiwygTextController extends TextEditingController {
     required BuildContext context,
     TextStyle? style,
     required bool withComposing,
-  }) => _buildTextSpan(context, style, text, _ranges, TextRange.empty);
+  }) => _buildTextSpan(context, style, text, _ranges, _audio, TextRange.empty);
 
   TextSpan _buildTextSpan(
     BuildContext context,
     TextStyle? style,
     String text,
     List<BusyInlineStyleRange> styleRanges,
+    Map<int, BusyAudio> audio,
     TextRange composing,
   ) {
     final baseStyle = style ?? DefaultTextStyle.of(context).style;
-    if (text.isEmpty || styleRanges.isEmpty && composing.isCollapsed) {
+    if (text.isEmpty ||
+        styleRanges.isEmpty && audio.isEmpty && composing.isCollapsed) {
       return TextSpan(text: text, style: baseStyle);
     }
-    final spans = <TextSpan>[];
+    final spans = <InlineSpan>[];
     final ranges = _normalizedRanges(styleRanges, text.length);
     final boundaries = <int>{0, text.length};
     if (!composing.isCollapsed) {
@@ -346,11 +378,31 @@ class BusyMarkWysiwygTextController extends TextEditingController {
         ..add(range.start)
         ..add(range.end);
     }
+    for (final offset in audio.keys) {
+      if (offset < text.length &&
+          text.startsWith(busyMarkInlineAudioPlaceholder, offset)) {
+        boundaries
+          ..add(offset)
+          ..add(offset + 1);
+      }
+    }
     final sortedBoundaries = boundaries.toList()..sort();
     for (var index = 0; index < sortedBoundaries.length - 1; index++) {
       final start = sortedBoundaries[index];
       final end = sortedBoundaries[index + 1];
       if (end <= start) {
+        continue;
+      }
+      final player = audio[start];
+      if (player != null &&
+          end == start + 1 &&
+          text.startsWith(busyMarkInlineAudioPlaceholder, start)) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: BusyMarkDocumentAudioView(audio: player, editable: true),
+          ),
+        );
         continue;
       }
       final segmentStyle = _styleForRanges(
@@ -454,7 +506,7 @@ Map<int, String> _inlineDirectionControls(List<BusyInline> inlines) {
         ? busyMarkInlineDirectionControls(inline.attributes)
         : null;
     if (controls != null) add(controls.open);
-    if (inline.children.isEmpty) {
+    if (inline.audio != null || inline.children.isEmpty) {
       offset += inline.plainText.length;
     } else {
       inline.children.forEach(visit);
@@ -593,6 +645,10 @@ class _DirectionalEditingController extends TextEditingController {
           attributes: range.attributes,
         ),
     ],
+    {
+      for (final entry in _document._audio.entries)
+        _projection.editableOffset(entry.key): entry.value,
+    },
     withComposing && value.isComposingRangeValid
         ? value.composing
         : TextRange.empty,
@@ -746,7 +802,7 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(
     final effectiveStyles = ownStyle == null
         ? inheritedStyles
         : [...inheritedStyles, ownStyle];
-    if (children.isEmpty) {
+    if (inline.audio != null || children.isEmpty) {
       offset += inline.plainText.length;
     } else {
       for (final child in children) {

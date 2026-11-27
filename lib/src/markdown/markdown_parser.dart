@@ -58,17 +58,23 @@ class MarkdownParser {
 
   /// Rebind an already edited projection to its emitted source. This reuses
   /// the ordinary positioned scanner; it does not infer lists from adjacency.
-  BusyDocument rebindSourceMetadata(BusyDocument document, String source) =>
-      const MarkdownAstAdapter().bindImageSpans(
-        _withScannedSourceMetadata(
-          document.copyWith(source: source),
-          document.diagnostics,
-        ),
-      );
+  BusyDocument rebindSourceMetadata(BusyDocument document, String source) {
+    final projected = const MarkdownAstAdapter().bindImageSpans(
+      _withScannedSourceMetadata(
+        document.copyWith(source: source),
+        document.diagnostics,
+      ),
+    );
+    return bindBusyMarkAudioSpans(projected, [
+      for (final block in _walkBlocks(projected.blocks))
+        if (block.kind == BusyBlockKind.codeBlock)
+          if (block.sourceSpan case final span?) span,
+    ]);
+  }
 
   /// Refresh presentation ranges while retaining the editor’s live blocks,
   /// serializer metadata and rich editing state.
-  BusyDocument rebindImageSpans(BusyDocument document, String source) {
+  BusyDocument rebindMediaSpans(BusyDocument document, String source) {
     final projected = rebindSourceMetadata(document, source);
     final positions = {
       for (final block in _walkBlocks(projected.blocks)) block.id: block,
@@ -87,6 +93,7 @@ class MarkdownParser {
               ? positioned[index]
               : null;
           return inline.copyWith(
+            audio: mapped?.audio,
             imageSpan: mapped?.imageSpan,
             clearImageSpan: mapped?.imageSpan == null,
             children: copySpans(inline.children, mapped?.children ?? const []),
@@ -97,6 +104,7 @@ class MarkdownParser {
     BusyBlock bind(BusyBlock block) {
       final positioned = positions[block.id];
       return block.copyWith(
+        audio: positioned?.audio,
         inlines: copySpans(block.inlines, positioned?.inlines ?? const []),
         posterSpan: positioned?.posterSpan,
         clearPosterSpan: positioned?.posterSpan == null,
@@ -722,11 +730,9 @@ class MarkdownParser {
           .clamp(1, 6)
           .toInt();
       final generated = block.attributes['generatedId'] != 'false';
+      final text = block.plainTextWithFallback;
       final id = generated
-          ? nextGeneratedHeadingId(
-              slugForHeading(block.plainText),
-              generatedIdOccurrences,
-            )
+          ? nextGeneratedHeadingId(slugForHeading(text), generatedIdOccurrences)
           : block.attributes['id'] ?? block.id;
       blocks.add(
         block.copyWith(
@@ -744,7 +750,7 @@ class MarkdownParser {
       }
       final heading = MarkdownHeading(
         level: level,
-        text: block.plainText,
+        text: text,
         id: id,
         generatedId: generated,
         span: span,
@@ -825,7 +831,7 @@ class MarkdownParser {
           case BusyInlineKind.link:
             links.add(
               MarkdownLink(
-                text: inline.plainText,
+                text: inline.plainTextWithFallback,
                 destination: destination,
                 span: span,
               ),

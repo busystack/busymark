@@ -2637,9 +2637,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       if (audio == null) return;
       final span = audio.sourceSpan;
       if (span != null && span.startOffset >= start && span.endOffset <= end) {
-        authorized.addAll(
-          audio.authoredSources.map((source) => source.destination),
-        );
+        authorized.addAll(authoredAudioClipboardReferences(audio));
       }
     }
 
@@ -2688,8 +2686,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     var remaining = maxRichClipboardOwnershipBytes;
     var complete = true;
     for (final destination in destinations) {
-      final scheme = Uri.tryParse(destination)?.scheme;
-      if (scheme == 'http' || scheme == 'https') continue;
+      final uri = Uri.tryParse(destination);
+      if (uri?.hasAuthority == true ||
+          uri?.scheme == 'http' ||
+          uri?.scheme == 'https') {
+        continue;
+      }
       try {
         final path = media != null
             ? await media.resolve(busyMarkAudioResourcePath(destination))
@@ -2783,7 +2785,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         origin: origin,
       ),
     );
-    if (cut && _isClipboardTargetCurrent(target)) {
+    if (cut && data.mediaComplete && _isClipboardTargetCurrent(target)) {
       _applyFullEditingValue(
         TextEditingValue(
           text: target.text.replaceRange(start, end, ''),
@@ -3284,6 +3286,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _SourceClipboardOperationTarget target,
   ) async {
     final destinations = <String, String>{};
+    final publishedAudio = <String, String>{};
     final assets = <IngestedAsset>[];
     final audio = fragment.audioReferences;
     try {
@@ -3293,7 +3296,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        final ingest = audio.contains(entry.key)
+        final resource = audio.contains(entry.key)
+            ? busyMarkAudioResourcePath(entry.key)
+            : null;
+        if (publishedAudio[resource] case final reference?) {
+          destinations[entry.key] = reference;
+          continue;
+        }
+        final ingest = resource != null
             ? widget.assetIngestionService.ingestAudioBytes
             : widget.assetIngestionService.ingestMediaBytes;
         final asset = await ingest(
@@ -3313,6 +3323,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 DocumentMediaScope.of(context) == null
             ? asset.markdownPath.split('/').map(Uri.encodeComponent).join('/')
             : asset.markdownPath;
+        if (resource != null) {
+          publishedAudio[resource] = destinations[entry.key]!;
+        }
       }
       return (
         fragment: fragment.rebase(

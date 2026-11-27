@@ -202,10 +202,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
       rebased = rebased.copyWith(blocks: rebased.blocks.map(commit).toList());
       _document = busyMarkWysiwygBindMarkdownReferences(rebased);
-    } else if (_hasRemoteImages()) {
-      _document = const MarkdownParser().rebindImageSpans(_document, source);
+    } else if (_hasRemoteImages() || _hasAudio()) {
+      _document = const MarkdownParser().rebindMediaSpans(_document, source);
     }
   }
+
+  bool _hasAudio() => _flattenBlocks(_document.blocks).any(
+    (block) =>
+        block.audio != null ||
+        _containsInlineKind(block.inlines, BusyInlineKind.audio),
+  );
 
   bool _hasRemoteImages() {
     bool hasImage(BusyInline inline) =>
@@ -2279,6 +2285,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     Iterable<BusyInlineKind> activeInlineKinds = const [],
     bool preserveTextWhitespace = false,
     bool normalizePastedFormatting = false,
+    ({int start, int end})? replacedRange,
   }) {
     _replaceBlock(
       blockId,
@@ -2288,16 +2295,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         activeInlineKinds: activeInlineKinds,
         preserveTextWhitespace: preserveTextWhitespace,
         normalizePastedFormatting: normalizePastedFormatting,
+        replacedRange: replacedRange,
       ),
     );
   }
 
-  void updateTableCellText(String tableBlockId, String cellId, String text) {
+  void updateTableCellText(
+    String tableBlockId,
+    String cellId,
+    String text, {
+    ({int start, int end})? replacedRange,
+  }) {
     _updateTableCellText(
       tableBlockId,
       cellId,
       text,
       parseMarkdownSource: false,
+      replacedRange: replacedRange,
     );
   }
 
@@ -2564,6 +2578,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String cellId,
     String text, {
     required bool parseMarkdownSource,
+    ({int start, int end})? replacedRange,
   }) {
     var changed = false;
     _document = _document.copyWith(
@@ -2586,7 +2601,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               cells.add(
                 parseMarkdownSource
                     ? _tableCellWithEditedSource(cell, acceptedText)
-                    : _blockWithEditedText(cell, acceptedText),
+                    : _blockWithEditedText(
+                        cell,
+                        acceptedText,
+                        replacedRange: replacedRange,
+                      ),
               );
               rowChanged = true;
               changed = true;
@@ -5476,11 +5495,7 @@ bool busyMarkClipboardRequiresCompleteBlockInsertion(
   BusyWysiwygStyledBlock styled,
 ) {
   final block = styled.completeBlock;
-  bool containsAudio(List<BusyInline> inlines) => inlines.any(
-    (inline) => inline.audio != null || containsAudio(inline.children),
-  );
-  return block != null &&
-      (block.kind != BusyBlockKind.paragraph || containsAudio(block.inlines));
+  return block != null && block.kind != BusyBlockKind.paragraph;
 }
 
 class _OutdentResult {
@@ -5503,6 +5518,10 @@ List<BusyInline>? _applySpellingLeafEdits(
   var applied = 0;
 
   BusyInline? visit(BusyInline inline, List<int> path) {
+    if (inline.audio != null) {
+      fieldOffset += inline.plainText.length;
+      return inline;
+    }
     if (inline.children.isNotEmpty) {
       final children = <BusyInline>[];
       for (final (index, child) in inline.children.indexed) {
@@ -5749,7 +5768,7 @@ Map<String, String> _attributesAfterInlineMathEdit(
   if (block.kind == BusyBlockKind.heading &&
       attributes['generatedId'] != 'false') {
     attributes['id'] = slugForHeading(
-      inlines.map((inline) => inline.plainText).join().trim(),
+      inlines.map((inline) => inline.plainTextWithFallback).join().trim(),
     );
     attributes['generatedId'] = 'true';
   }
@@ -5813,6 +5832,7 @@ _partitionInlinesForReplacement(
   int end, {
   required bool refreshUrls,
 }) {
+  if (inline.audio != null) return (before: null, after: null);
   final length = inline.plainText.length;
   if (inline.children.isNotEmpty) {
     final partition = _partitionInlinesForReplacement(
@@ -6624,7 +6644,8 @@ List<BusyInline> _editModeledInlineTree(
     final length = inline.plainText.length;
     final localStart = start - offset;
     final localEnd = end - offset;
-    if (inline.children.isNotEmpty &&
+    if (inline.audio == null &&
+        inline.children.isNotEmpty &&
         localStart >= 0 &&
         localEnd <= length &&
         (localStart < localEnd || localStart > 0 && localEnd < length)) {
@@ -6661,6 +6682,7 @@ BusyBlock _blockWithEditedText(
   bool preserveTextWhitespace = false,
   bool normalizePastedFormatting = false,
   bool leadingAnchorsAfterEdit = false,
+  ({int start, int end})? replacedRange,
 }) {
   final oldText = block.plainText;
   final oldRanges = busyInlineStyleRanges(block.inlines);
@@ -6680,10 +6702,37 @@ BusyBlock _blockWithEditedText(
     nextText,
     nextRanges,
   );
-  final prefix = _commonPrefixLength(oldText, nextText);
-  final suffix = _commonSuffixLength(oldText, nextText, prefix);
+  final audio = busyMarkWysiwygInlineAudio(block.inlines);
+  // Adjacent players use the same placeholder. The actual editing range
+  // distinguishes removing the first one from removing the second one.
+  final knownRange =
+      audio.isNotEmpty &&
+      replacedRange != null &&
+      replacedRange.start >= 0 &&
+      replacedRange.end >= replacedRange.start &&
+      replacedRange.end <= oldText.length &&
+      replacedRange.start + oldText.length - replacedRange.end <=
+          nextText.length &&
+      nextText.startsWith(oldText.substring(0, replacedRange.start)) &&
+      nextText.endsWith(oldText.substring(replacedRange.end));
+  final prefix = knownRange
+      ? replacedRange.start
+      : _commonPrefixLength(oldText, nextText);
+  final suffix = knownRange
+      ? oldText.length - replacedRange.end
+      : _commonSuffixLength(oldText, nextText, prefix);
   final newEditEnd = nextText.length - suffix;
-  var inlines = _hasModeledHtmlInlines(block.inlines)
+  var inlines = audio.isNotEmpty
+      ? _editInlineAudioText(
+          block.inlines,
+          rebuiltInlines,
+          nextText,
+          prefix,
+          oldText.length - suffix,
+          newEditEnd,
+          audio.keys,
+        )
+      : _hasModeledHtmlInlines(block.inlines)
       // Style ranges describe the visible formatting, but cannot reconstruct
       // nested semantic wrappers. Keep the original tree around the edit.
       ? _editModeledInlineTree(
@@ -6716,6 +6765,57 @@ BusyBlock _blockWithEditedText(
     ),
     preserveRaw: false,
     dirty: true,
+  );
+}
+
+List<BusyInline> _editInlineAudioText(
+  List<BusyInline> original,
+  List<BusyInline> rebuilt,
+  String text,
+  int start,
+  int oldEnd,
+  int newEnd,
+  Iterable<int> audioOffsets,
+) {
+  final originalSlots = audioOffsets
+      .where((i) => start <= i && i < oldEnd)
+      .toList();
+  final nextSlots = busyMarkInlineAudioPlaceholder
+      .allMatches(text, start)
+      .takeWhile((match) => match.start < newEnd)
+      .map((match) => match.start)
+      .toList();
+  if (originalSlots.length != nextSlots.length || originalSlots.isEmpty) {
+    return _editModeledInlineTree(
+      original,
+      start,
+      oldEnd,
+      busyMarkWysiwygClipboardInlineSlice(rebuilt, start, newEnd),
+    );
+  }
+
+  // An input method can change prose on both sides of an unchanged player
+  // in one update. Edit each gap without rebuilding the audio or its fallback.
+  var inlines = original;
+  var oldRight = oldEnd;
+  var newRight = newEnd;
+  for (var index = originalSlots.length - 1; index >= 0; index--) {
+    final oldLeft = originalSlots[index] + 1;
+    final newLeft = nextSlots[index] + 1;
+    inlines = _editModeledInlineTree(
+      inlines,
+      oldLeft,
+      oldRight,
+      busyMarkWysiwygClipboardInlineSlice(rebuilt, newLeft, newRight),
+    );
+    oldRight = oldLeft - 1;
+    newRight = newLeft - 1;
+  }
+  return _editModeledInlineTree(
+    inlines,
+    start,
+    oldRight,
+    busyMarkWysiwygClipboardInlineSlice(rebuilt, start, newRight),
   );
 }
 
@@ -6840,7 +6940,7 @@ BusyBlock _blockWithCommand(
       ..remove('generatedId');
   }
   if (kind == BusyBlockKind.heading) {
-    final text = block.plainText.trim();
+    final text = block.plainTextWithFallback.trim();
     attributes['id'] = slugForHeading(text);
     attributes['generatedId'] = 'true';
   }
@@ -7592,7 +7692,7 @@ List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
 
   for (var index = 0; index < inlines.length; index++) {
     final sourceInline = inlines[index];
-    var inline = sourceInline.children.isEmpty
+    var inline = sourceInline.audio != null || sourceInline.children.isEmpty
         ? sourceInline
         : sourceInline.copyWith(
             children: _mergeAdjacentInlineStyles(sourceInline.children),

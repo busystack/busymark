@@ -197,6 +197,30 @@ class BusyMarkClipboardPasteResolver {
           ? null
           : WysiwygClipboardFragment.decode(encoded);
       if (nativeFragment != null) {
+        final audioRequiresOwnership = nativeFragment.audioReferences.where((
+          reference,
+        ) {
+          final uri = Uri.tryParse(reference);
+          return uri != null &&
+              !uri.hasAuthority &&
+              (uri.scheme.isEmpty || uri.scheme == 'busymark-attachment');
+        });
+        if (audioRequiresOwnership.isNotEmpty) {
+          if (!snapshot.mediaComplete ||
+              audioRequiresOwnership.any(
+                (reference) =>
+                    !nativeFragment.mediaPaths.containsKey(reference) ||
+                    snapshot.mediaBytes[reference]?.isNotEmpty != true,
+              )) {
+            return const BusyMarkPastePlan([]);
+          }
+          return BusyMarkPastePlan([
+            BusyMarkStructuredPasteCandidate(
+              fragment: nativeFragment,
+              source: BusyMarkStructuredClipboardSource.richFragment,
+            ),
+          ]);
+        }
         candidates.add(
           BusyMarkStructuredPasteCandidate(
             fragment: nativeFragment,

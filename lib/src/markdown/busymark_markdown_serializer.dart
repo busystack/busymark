@@ -1339,6 +1339,12 @@ class BusyMarkMarkdownSerializer {
     var consumed = 0;
 
     void emit(BusyInline value, List<int> inlinePath, [dom.Element? wrapper]) {
+      if (value.audio case final audio?) {
+        sourceOffsets[consumed] = output.length;
+        output.write(audio.rawSource);
+        sourceOffsets[++consumed] = output.length;
+        return;
+      }
       final tag = switch (value.kind) {
         BusyInlineKind.strong || BusyInlineKind.writersideControl => 'strong',
         BusyInlineKind.emphasis => 'em',
@@ -1451,6 +1457,16 @@ class BusyMarkMarkdownSerializer {
     required bool insideHtmlWrapper,
     required Set<int> entityOffsets,
   }) {
+    if (inline.audio case final audio?) {
+      final source = audio.rawSource;
+      return _InlineSerialization(
+        source: source,
+        sourceOffsets: {
+          for (final target in textOffsets)
+            target: target <= 0 ? 0 : source.length,
+        },
+      );
+    }
     if (semanticHtmlInlineElement(inline) case final element?) {
       return _semanticHtmlInline(
         inline,

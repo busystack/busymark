@@ -214,7 +214,11 @@ class BusyBlock {
   final bool isSourceProtected;
   final bool dirty;
 
+  /// The text and inline object positions used by the Editor.
   String get plainText => inlines.map((inline) => inline.plainText).join();
+
+  String get plainTextWithFallback =>
+      inlines.map((inline) => inline.plainTextWithFallback).join();
 
   bool get isAtomicSelectionBlock =>
       kind == BusyBlockKind.image ||
@@ -282,6 +286,10 @@ enum BusyInlineKind {
   unknown,
 }
 
+/// An inline player occupies a single UTF-16 position in the semantic field.
+/// Its authored fallback remains available as children for HTML and export.
+const busyMarkInlineAudioPlaceholder = '\uFFFC';
+
 class BusyInline {
   const BusyInline({
     required this.kind,
@@ -304,11 +312,17 @@ class BusyInline {
   final Map<String, String> attributes;
 
   String get plainText {
+    if (audio != null) return busyMarkInlineAudioPlaceholder;
     if (children.isNotEmpty) {
       return children.map((inline) => inline.plainText).join();
     }
     return text;
   }
+
+  /// Text for labels and plain-text export, where there are no editable atoms.
+  String get plainTextWithFallback => children.isEmpty
+      ? text
+      : children.map((inline) => inline.plainTextWithFallback).join();
 
   BusyInline copyWith({
     BusyInlineKind? kind,

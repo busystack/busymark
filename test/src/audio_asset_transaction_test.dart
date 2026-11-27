@@ -125,7 +125,8 @@ void main() {
       const markup = """<audio controls='false' data-extra='preserved'>
 <source src=first.ogg type='audio/ogg'>
 <source src="second.wav?take=8&amp;sample=1">
-<a href="second.wav">Transcript</a></audio>""";
+<span data-extra='Keep'><a href=second.wav#download>Recording</a></span>
+<a href="transcript.md">Transcript</a></audio>""";
       final parsed = const MarkdownParser()
           .parse(
             filePath: '/docs/source.md',
@@ -152,6 +153,7 @@ void main() {
       expect(decoded.audioReferences, {
         'first.ogg',
         'second.wav?take=8&sample=1',
+        'second.wav#download',
       });
       final pasted = decoded.rebase(
         '/docs/target.md',
@@ -165,7 +167,8 @@ void main() {
         result.rawSource,
         markup
             .replaceFirst('first.ogg', 'audio/rebased.ogg')
-            .replaceFirst('second.wav?', 'audio/other.wav?'),
+            .replaceFirst('second.wav?', 'audio/other.wav?')
+            .replaceFirst('second.wav#download', 'audio/other.wav#download'),
       );
       expect(result.controls, isTrue);
     },

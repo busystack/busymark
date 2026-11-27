@@ -30,6 +30,14 @@ The core26 extension removes shared GNOME and graphics libraries from the
 application payload. The old per-revision exclusion manifest is retired.
 The runtime checks verify file and symbol resolution in the launched Snap,
 including GStreamer shared and private plugins and Git's curl dependencies.
+
+Direct HTTPS audio streams use the installed GStreamer `appsrc` URI handler.
+BusyMark validates the response's media signature in Dart and sends bounded
+byte chunks to the native audio player. The decoder receives no remote URI or
+credential. The native queue returns backpressure to the single HTTP consumer;
+the native driver disables seek and loop for that source. The installed decoder
+gate checks `appsrc` alongside the eight file-container decodes. Reviewed
+2026-11-27 against the GStreamer 1.28 runtime and upstream [appsrc contract](https://gstreamer.freedesktop.org/documentation/app/appsrc.html).
 Glycin decodes the packaged SVG in the same environment that starts the
 application. Build-time icon caches use the tool under
 `SNAPCRAFT_GNOME_SDK`. BusyMark retains its own Yaru variants and deterministic

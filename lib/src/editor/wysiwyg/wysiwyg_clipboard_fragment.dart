@@ -45,9 +45,7 @@ class WysiwygClipboardFragment {
     final references = <String>{};
     void add(BusyAudio? audio) {
       if (audio != null) {
-        references.addAll(
-          audio.authoredSources.map((source) => source.destination),
-        );
+        references.addAll(authoredAudioClipboardReferences(audio));
       }
     }
 
@@ -188,7 +186,7 @@ class WysiwygClipboardFragment {
         reader.visit(0);
         final block = reader.map(item);
         final kind = BusyBlockKind.values.byName(reader.string(block['kind']));
-        final text = reader.string(block['text']);
+        var text = reader.string(block['text']);
         final ranges = <BusyInlineStyleRange>[];
         for (final item in reader.list(block['ranges'])) {
           reader.visit(0);
@@ -217,9 +215,21 @@ class WysiwygClipboardFragment {
         final complete = block['completeBlock'] == null
             ? null
             : reader.block(block['completeBlock'], 0);
-        if (complete != null &&
-            (complete.kind != kind || complete.plainText != text)) {
-          throw const FormatException('Inconsistent clipboard block');
+        if (complete != null) {
+          if (complete.kind != kind) {
+            throw const FormatException('Inconsistent clipboard block');
+          }
+          if (complete.plainText != text) {
+            if (complete.plainTextWithFallback != text) {
+              throw const FormatException('Inconsistent clipboard text');
+            }
+            // Older fragments counted the fallback text in inline offsets.
+            // The complete semantic block can restore the single edit position.
+            text = complete.plainText;
+            ranges
+              ..clear()
+              ..addAll(busyInlineStyleRanges(complete.inlines));
+          }
         }
         blocks.add(
           BusyWysiwygStyledBlock(
@@ -258,15 +268,34 @@ class WysiwygClipboardFragment {
     if (!rebaseRelativeReferences && mediaDestinations.isEmpty) {
       return this;
     }
+    final audioDestinationsByResource = <String, String>{};
+    if (mediaDestinations.isNotEmpty) {
+      for (final reference in audioReferences) {
+        if (mediaDestinations[reference] case final retained?) {
+          audioDestinationsByResource.putIfAbsent(
+            busyMarkAudioResourcePath(reference),
+            () => retained,
+          );
+        }
+      }
+    }
     String? destination(
       String? value, {
       bool media = false,
       bool rawHtml = false,
+      bool audio = false,
     }) {
       if (value == null || value.isEmpty) return value;
       final uri = Uri.tryParse(value);
       if (uri == null) return value;
-      final retained = media ? mediaDestinations[value] : null;
+      final retained = media
+          ? mediaDestinations[value] ??
+                (audio
+                    ? audioDestinationsByResource[busyMarkAudioResourcePath(
+                        value,
+                      )]
+                    : null)
+          : null;
       if (retained != null) {
         return withReferenceSuffix(Uri.parse(retained), uri).toString();
       }
@@ -312,7 +341,8 @@ class WysiwygClipboardFragment {
         : rebaseAuthoredAudio(
             value,
             (source) =>
-                destination(source, media: true, rawHtml: true) ?? source,
+                destination(source, media: true, rawHtml: true, audio: true) ??
+                source,
           );
 
     BusyInline inline(BusyInline value, bool rawHtml) => BusyInline(
@@ -332,27 +362,65 @@ class WysiwygClipboardFragment {
       if (source == null) return null;
       final fragment = const RawHtmlAdapter().parseSafeRawHtml(source);
       if (fragment == null) return source;
+      final authoredAudio = {
+        for (final element in fragment.querySelectorAll('audio'))
+          element: BusyAudio.fromHtml(element),
+      };
+      final edits = <({int start, int end, String value})>[];
       var changed = false;
       for (final element in fragment.querySelectorAll(
         '[href], [src], [cite]',
       )) {
         final tag = element.localName!;
         final allowed = sanitizeHtmlAttributes(tag, element.attributes)!;
+        var parent = element.parent;
+        while (parent != null && !authoredAudio.containsKey(parent)) {
+          parent = parent.parent;
+        }
         for (final attribute in const ['href', 'src', 'cite']) {
           final previous = allowed[attribute];
           if (previous == null) continue;
+          final audio =
+              attribute == 'src' && (tag == 'audio' || tag == 'source') ||
+              attribute == 'href' &&
+                  authoredAudio[parent]?.ownsFallbackReference(previous) ==
+                      true;
           final updated = destination(
             previous,
-            media:
-                const {'img', 'audio', 'source'}.contains(tag) &&
-                attribute == 'src',
+            media: audio || tag == 'img' && attribute == 'src',
             rawHtml: true,
+            audio: audio,
           );
           if (updated != null && updated != previous) {
+            if (authoredAudio.isNotEmpty) {
+              if (element.attributeValueSpans?[attribute] case final span?) {
+                final start = span.start.offset;
+                edits.add((
+                  start: start,
+                  end: span.end.offset,
+                  value: escapeAuthoredHtmlAttribute(updated, switch (start == 0
+                      ? ''
+                      : source[start - 1]) {
+                    '"' => WritersideHtmlAttributeQuote.doubleQuoted,
+                    "'" => WritersideHtmlAttributeQuote.singleQuoted,
+                    _ => WritersideHtmlAttributeQuote.unquoted,
+                  }),
+                ));
+              }
+              continue;
+            }
             element.attributes[attribute] = updated;
             changed = true;
           }
         }
+      }
+      if (authoredAudio.isNotEmpty) {
+        edits.sort((a, b) => b.start.compareTo(a.start));
+        var rewritten = source;
+        for (final edit in edits) {
+          rewritten = rewritten.replaceRange(edit.start, edit.end, edit.value);
+        }
+        return rewritten;
       }
       return changed ? fragment.outerHtml : source;
     }

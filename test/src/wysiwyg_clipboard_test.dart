@@ -26,8 +26,15 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/raw_html_adapter.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_media.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_attachment_references.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/speech/speech_pcm.dart';
+import 'package:busymark/src/speech/speech_provider.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:busymark/src/visualization/web_render_host.dart';
@@ -37,9 +44,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/widget_async.dart';
+import 'nextcloud_notes/notes_api_test.dart' show serverNote, testAccount;
 
 const _source =
     '# Issues\n\n**When** selecting all, keep *formatting*.\n\n- [ ] First task\n- [x] Second task\n';
@@ -1093,6 +1103,7 @@ void main() {
       bool hostToasts = false,
       bool providerScope = false,
       bool readOnly = false,
+      DocumentMediaContext? documentMedia,
       bool focusFirstField = true,
       MarkdownMode mode = MarkdownMode.writersideMarkdown,
       WysiwygEditorSessionState Function(BusyDocument document)?
@@ -1135,35 +1146,38 @@ void main() {
             ? (context, child) => BusyMarkToastOverlay(child: child!)
             : null,
         home: Scaffold(
-          body: DocumentReadOnlyScope(
-            readOnly: readOnly,
-            child: BusyMarkWysiwygEditor(
-              key: ValueKey(id),
-              clipboardService: clipboardService ?? RichClipboardService(),
-              clipboardInsertionRegistry: registry,
-              onClipboardCaptured: onCaptured,
-              workspaceRoot: workspaceRoot,
-              assetWorkspaceKind: assetWorkspaceKind,
-              assetInputService: assetInputService,
-              assetIngestionService: assetIngestionService,
-              onTransactionalSourceChanged: onTransactionalSourceChanged,
-              readEditBase: history.readBase,
-              readSessionState: () => history.buffer.editorState.wysiwygState,
-              onUndo: () => traverse(false),
-              onRedo: () => traverse(true),
-              onSessionChanged: (_, value) {
-                history.controller.updateDocumentEditorState(
-                  history.buffer.id,
-                  history.buffer.editorState.copyWith(wysiwygState: value),
-                );
-              },
-              initialSessionState: initialSession,
-              document: document,
-              onDocumentChanged: onDocumentChanged,
-              onSourceChanged: (_, value) {
-                history.controller.updateActiveText(value);
-                changed(value);
-              },
+          body: DocumentMediaScope(
+            media: documentMedia,
+            child: DocumentReadOnlyScope(
+              readOnly: readOnly,
+              child: BusyMarkWysiwygEditor(
+                key: ValueKey(id),
+                clipboardService: clipboardService ?? RichClipboardService(),
+                clipboardInsertionRegistry: registry,
+                onClipboardCaptured: onCaptured,
+                workspaceRoot: workspaceRoot,
+                assetWorkspaceKind: assetWorkspaceKind,
+                assetInputService: assetInputService,
+                assetIngestionService: assetIngestionService,
+                onTransactionalSourceChanged: onTransactionalSourceChanged,
+                readEditBase: history.readBase,
+                readSessionState: () => history.buffer.editorState.wysiwygState,
+                onUndo: () => traverse(false),
+                onRedo: () => traverse(true),
+                onSessionChanged: (_, value) {
+                  history.controller.updateDocumentEditorState(
+                    history.buffer.id,
+                    history.buffer.editorState.copyWith(wysiwygState: value),
+                  );
+                },
+                initialSessionState: initialSession,
+                document: document,
+                onDocumentChanged: onDocumentChanged,
+                onSourceChanged: (_, value) {
+                  history.controller.updateActiveText(value);
+                  changed(value);
+                },
+              ),
             ),
           ),
         ),
@@ -3037,6 +3051,221 @@ void main() {
       expect((await clipboard.read()).origin?.documentPath, '/one/a.md');
       expect(captures.single.origin?.documentPath, '/one/a.md');
     });
+
+    testWidgets(
+      'unplayed Notes audio copies across notes and after offline restart',
+      (tester) async {
+        const recording = '.attachments.1/recording%20%C3%A9.wav';
+        const authoredSrc = '$recording?take=8&mic=1#t=1';
+        const authoredLink = '$recording#download';
+        const source =
+            "Before\n\n<audio controls src='$recording?take=8&amp;mic=1#t=1'>"
+            '<a href=$authoredLink>Download recording</a></audio>\n\nAfter\n';
+        final wave = encodeSpeechWave(
+          SpeechPcm(Uint8List(4800), sampleRate: 24000),
+        );
+        final fetches = <String>[];
+        final account = testAccount();
+        var offline = false;
+        final root = Directory.systemTemp.createTempSync(
+          'clipboard-notes-audio-',
+        );
+        late NotesRepository repository;
+        var repositoryOpen = false;
+        Future<void> open() async {
+          final transport = MockClient((request) async {
+            if (request.url.path.endsWith('/attachment/1')) {
+              final resource = request.url.queryParameters['path']!;
+              fetches.add(resource);
+              if (offline) throw http.ClientException('test is offline');
+              return http.Response.bytes(
+                wave,
+                200,
+                headers: {'content-type': 'audio/wav'},
+              );
+            }
+            expect(request.url.path, endsWith('/v1/notes'));
+            return http.Response(
+              jsonEncode([
+                serverNote(1, content: source),
+                serverNote(2, content: 'Destination\n'),
+              ]),
+              200,
+            );
+          });
+          repository = NotesRepository(
+            clock: () => DateTime.utc(2026, 11, 27),
+            store: await NotesStore.open(
+              path: p.join(root.path, 'notes.sqlite3'),
+            ),
+            clientForAccount: (account) async => NotesApiClient(
+              client: transport,
+              account: account,
+              appPassword: 'fixture',
+            ),
+          );
+          await repository.initialize();
+          repositoryOpen = true;
+        }
+
+        addTearDown(() async {
+          if (repositoryOpen) await repository.dispose();
+          await root.delete(recursive: true);
+        });
+        await tester.runAsync(() async {
+          await open();
+          await repository.upsertAccount(account);
+          await repository.synchronize(account.id, allowWrites: false);
+        });
+        final clipboard = RichClipboardService();
+        for (final restarted in [false, true]) {
+          if (restarted) {
+            await tester.runAsync(() async {
+              await repository.dispose();
+              repositoryOpen = false;
+              offline = true;
+              await open();
+            });
+          }
+          final original = repository.notes.singleWhere(
+            (note) => note.serverId == 1,
+          );
+          final destination = repository.notes.singleWhere(
+            (note) => note.serverId == 2,
+          );
+          final originalMedia = NextcloudDocumentMedia(
+            repository,
+            account.id,
+            original.localId,
+          );
+          final destinationMedia = NextcloudDocumentMedia(
+            repository,
+            account.id,
+            destination.localId,
+          );
+          expect(originalMedia.context.resolveCached(recording), isNull);
+          final captures = <BusyMarkClipboardCapture>[];
+          await mount(
+            tester,
+            'audio-original-$restarted',
+            source,
+            (_) {},
+            mode: MarkdownMode.commonMark,
+            clipboardService: clipboard,
+            onCaptured: captures.add,
+            documentMedia: originalMedia.context,
+            assetIngestionService: originalMedia.ingestion,
+          );
+          await key(tester, LogicalKeyboardKey.keyA);
+          await key(tester, LogicalKeyboardKey.keyA);
+          await key(tester, LogicalKeyboardKey.keyC, startsRealIo: true);
+          await waitForImageIo(
+            tester,
+            () => captures.isNotEmpty,
+            operation: 'capture unplayed note audio',
+          );
+          final captured = captures.single;
+          expect(captured.mediaComplete, isTrue);
+          expect(captured.mediaBytes, {authoredSrc: wave, authoredLink: wave});
+          expect(fetches, ['.attachments.1/recording é.wav']);
+
+          var pasted = '';
+          await mount(
+            tester,
+            'audio-destination-$restarted',
+            'Destination\n',
+            (value) => pasted = value,
+            mode: MarkdownMode.commonMark,
+            clipboardService: clipboard,
+            documentMedia: destinationMedia.context,
+            assetIngestionService: destinationMedia.ingestion,
+          );
+          await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
+          await waitForImageIo(
+            tester,
+            () => pasted.isNotEmpty,
+            operation: 'paste into destination note',
+          );
+          expect(pasted, contains('Before'));
+          expect(pasted, contains('After'));
+          final attached = (await tester.runAsync(
+            () => repository.attachments(destination.localId),
+          ))!;
+          expect(attached, hasLength(restarted ? 2 : 1));
+          final references = notesAttachmentReferences(
+            pasted,
+          ).where((item) => item.audio).toList();
+          expect(references, hasLength(2));
+          final reference = references.first.reference;
+          expect(
+            references.map((entry) => entry.reference),
+            everyElement(reference),
+          );
+          expect(references.map((entry) => entry.suffix), [
+            '?take=8&mic=1#t=1',
+            '#download',
+          ]);
+          expect(pasted, contains("src='$reference?take=8&amp;mic=1#t=1'"));
+          expect(pasted, contains('href=$reference#download'));
+          final asset = attached.singleWhere(
+            (item) => item.reference == reference,
+          );
+          expect(
+            await tester.runAsync(
+              () => repository.store.attachmentBytes(asset.id),
+            ),
+            wave,
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'unavailable provider audio marks Copy incomplete and prevents normal Paste',
+      (tester) async {
+        const source =
+            'Before\n\n<audio controls src="unavailable.wav#t=1"></audio>\n\nAfter\n';
+        final references = <String>[];
+        final captures = <BusyMarkClipboardCapture>[];
+        final clipboard = RichClipboardService();
+        await mount(
+          tester,
+          'unavailable-audio',
+          source,
+          (_) {},
+          mode: MarkdownMode.commonMark,
+          clipboardService: clipboard,
+          onCaptured: captures.add,
+          documentMedia: DocumentMediaContext(
+            identity: 'missing',
+            resolve: (reference) async {
+              references.add(reference);
+              return null;
+            },
+            resolveCached: (_) =>
+                throw StateError('Copy should use the asynchronous resolver'),
+          ),
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC);
+        expect(references, ['unavailable.wav']);
+        expect(captures.single.mediaComplete, isFalse);
+        expect(captures.single.mediaBytes, isEmpty);
+        final data = await clipboard.read();
+        expect(data.mediaComplete, isFalse);
+        var result = 'Destination\n';
+        await mount(
+          tester,
+          'no-media-paste',
+          result,
+          (value) => result = value,
+          clipboardService: clipboard,
+        );
+        await key(tester, LogicalKeyboardKey.keyV);
+        expect(result, 'Destination\n');
+      },
+    );
 
     testWidgets('rich paste in math fields uses source coordinates', (
       tester,

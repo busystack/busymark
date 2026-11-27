@@ -1,5 +1,11 @@
 const _launchableExternalUriSchemes = {'http', 'https', 'mailto', 'tel'};
 const _remoteResourceUriSchemes = {'http', 'https'};
+final _attachmentId = RegExp(r'^[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$');
+
+bool isBusyMarkAttachmentUri(Uri uri) =>
+    uri.scheme == 'busymark-attachment' &&
+    !uri.hasAuthority &&
+    _attachmentId.hasMatch(uri.path);
 
 Uri? parseSchemedUri(String value) {
   final uri = Uri.tryParse(value.trim());

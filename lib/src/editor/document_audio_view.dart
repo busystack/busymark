@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
@@ -22,6 +23,32 @@ typedef AudioDocumentIdentity = ({
 });
 
 final _documentAudioScopes = <_DocumentAudioScopeState>{};
+const _remoteAudioIdleTimeout = Duration(seconds: 15);
+const _remoteAudioStreamLimit = Duration(minutes: 30);
+const _remoteAudioChunkBytes = 64 * 1024;
+
+class _AudioDownload {
+  _AudioDownload(this.directory, this.file);
+
+  final Directory directory;
+  final File file;
+  Future<void>? _release;
+
+  Future<void> release() => _release ??= delete(directory);
+
+  static Future<void> delete(Directory directory) async {
+    try {
+      await directory.delete(recursive: true);
+    } on FileSystemException {
+      // The private temporary directory may already have been removed.
+    }
+  }
+}
+
+typedef _RemoteAudio = ({
+  _AudioDownload? download,
+  ({HttpClient client, HttpClientResponse response})? stream,
+});
 
 Future<void> settleDocumentAudioForWindowClose() async {
   await Future.wait([
@@ -66,9 +93,10 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
   final states = <Object, ValueNotifier<AudioPlaybackState>>{};
   final approvedOrigins = <String>{};
   HttpClient? _client;
-  Future<File?>? _downloading;
+  Future<_RemoteAudio?>? _downloading;
+  Future<void>? _streaming;
   Future<void> _retiring = Future.value();
-  Directory? _downloaded;
+  _AudioDownload? _downloaded;
   Object? owner;
   AudioDocumentIdentity? _boundDocument;
   bool _confirmed = false;
@@ -113,6 +141,8 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
     _client = null;
     final pending = _downloading;
     _downloading = null;
+    final streaming = _streaming;
+    _streaming = null;
     final current = owner;
     owner = null;
     _boundDocument = null;
@@ -126,7 +156,8 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
         // file to be closed and removed, including on cancellation.
         await pending.then<void>((_) {}, onError: (Object _, StackTrace _) {});
       }
-      if (download != null) await _deleteDownload(download);
+      if (streaming != null) await streaming;
+      if (download != null) await download.release();
     });
     await _retiring;
   }
@@ -138,14 +169,6 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
     if (owner != key) return;
     status.value = AudioPlaybackState.ready;
     await _reset();
-  }
-
-  static Future<void> _deleteDownload(Directory directory) async {
-    try {
-      await directory.delete(recursive: true);
-    } on FileSystemException {
-      // The temporary directory may already have been removed.
-    }
   }
 
   @override
@@ -173,21 +196,21 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
     return path == null ? null : File(path);
   }
 
-  Future<File?> _remote(Uri source, int version) async {
+  Future<_RemoteAudio?> _remote(Uri source, int version) async {
     final client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 12)
       ..autoUncompress = false;
     _client = client;
     Directory? directory;
+    var ownsRequest = true;
     try {
       var uri = source.replace(fragment: '');
       for (var redirects = 0; redirects < 5; redirects++) {
         if (_version != version) return null;
         final request = await client.getUrl(uri);
         request.followRedirects = false;
-        final response = await request.close().timeout(
-          const Duration(seconds: 15),
-        );
+        request.headers.set(HttpHeaders.acceptEncodingHeader, 'identity');
+        final response = await request.close().timeout(_remoteAudioIdleTimeout);
         if (response.isRedirect) {
           final location = response.headers.value(HttpHeaders.locationHeader);
           if (location == null) return null;
@@ -201,8 +224,13 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
           continue;
         }
         if (response.statusCode != HttpStatus.ok ||
-            response.contentLength > maximumManagedAssetBytes) {
+            response.contentLength > maximumManagedAssetBytes ||
+            _version != version) {
           return null;
+        }
+        if (response.contentLength < 0) {
+          ownsRequest = false;
+          return (download: null, stream: (client: client, response: response));
         }
         directory = await Directory.systemTemp.createTemp('busymark-media-');
         final file = File(p.join(directory.path, 'audio'));
@@ -210,9 +238,7 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
         try {
           var length = 0;
           final deadline = Stopwatch()..start();
-          await for (final chunk in response.timeout(
-            const Duration(seconds: 15),
-          )) {
+          await for (final chunk in response.timeout(_remoteAudioIdleTimeout)) {
             length += chunk.length;
             if (_version != version ||
                 deadline.elapsed > const Duration(minutes: 2) ||
@@ -221,23 +247,102 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
             }
             await handle.writeFrom(chunk);
           }
-          if (length == 0 ||
-              response.contentLength >= 0 && response.contentLength != length) {
+          if (length == 0 || response.contentLength != length) {
             return null;
           }
         } finally {
           await handle.close();
         }
         if (_version != version) return null;
-        _downloaded = directory;
+        final download = _AudioDownload(directory, file);
+        _downloaded = download;
         directory = null;
-        return file;
+        return (download: download, stream: null);
       }
       return null;
     } finally {
-      client.close(force: true);
-      if (identical(client, _client)) _client = null;
-      if (directory != null) await _deleteDownload(directory);
+      if (ownsRequest) _closeClient(client);
+      if (directory != null) await _AudioDownload.delete(directory);
+    }
+  }
+
+  void _closeClient(HttpClient client) {
+    client.close(force: true);
+    if (identical(client, _client)) _client = null;
+  }
+
+  Future<void> _pumpStream(
+    Object key,
+    int version,
+    ({HttpClient client, HttpClientResponse response}) stream,
+  ) async {
+    final clock = Stopwatch()..start();
+    final signature = BytesBuilder(copy: false);
+    var accepted = false;
+    var finished = false;
+    var length = 0;
+    bool current() => _version == version && playback.owns(key);
+    Future<bool> push([Uint8List? bytes]) async {
+      while (current() && clock.elapsed < _remoteAudioStreamLimit) {
+        switch (await playback.feedStream(key, bytes)) {
+          case AudioStreamFeed.accepted:
+            return true;
+          case AudioStreamFeed.failed:
+            return false;
+          case AudioStreamFeed.waiting:
+            await Future<void>.delayed(const Duration(milliseconds: 25));
+        }
+      }
+      return false;
+    }
+
+    try {
+      await for (final chunk in stream.response.timeout(
+        _remoteAudioIdleTimeout,
+      )) {
+        length += chunk.length;
+        if (!current() ||
+            length > maximumManagedAssetBytes ||
+            clock.elapsed >= _remoteAudioStreamLimit) {
+          return;
+        }
+        var offset = 0;
+        if (!accepted) {
+          offset = (64 - signature.length).clamp(0, chunk.length);
+          signature.add(chunk.sublist(0, offset));
+          if (signature.length < 64) continue;
+          final header = signature.takeBytes();
+          if (AudioAssetFormat.identify(header) == null ||
+              !await push(header)) {
+            return;
+          }
+          accepted = true;
+        }
+        while (offset < chunk.length) {
+          final end = (offset + _remoteAudioChunkBytes).clamp(
+            offset,
+            chunk.length,
+          );
+          if (!await push(Uint8List.fromList(chunk.sublist(offset, end)))) {
+            return;
+          }
+          offset = end;
+        }
+      }
+      if (!accepted) {
+        final header = signature.takeBytes();
+        if (AudioAssetFormat.identify(header) == null || !await push(header)) {
+          return;
+        }
+      }
+      finished = await push();
+    } on IOException {
+      // A disconnected stream is retryable only by a new user action.
+    } on TimeoutException {
+      // The remote peer stopped delivering bytes within the idle limit.
+    } finally {
+      _closeClient(stream.client);
+      if (!finished && current()) await playback.failStream(key);
     }
   }
 
@@ -264,6 +369,9 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
     for (final candidate in audio.playbackSources) {
       if (_version != version || !context.mounted) break;
       final uri = Uri.tryParse(candidate.destination);
+      _RemoteAudio? remote;
+      Future<void>? feeding;
+      var keep = false;
       try {
         File? target;
         if (uri?.scheme == 'https' &&
@@ -294,7 +402,8 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
           final pending = _remote(uri, version);
           _downloading = pending;
           try {
-            target = await pending;
+            remote = await pending;
+            target = remote?.download?.file;
           } finally {
             if (identical(_downloading, pending)) _downloading = null;
           }
@@ -302,7 +411,10 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
           target = await _local(candidate.destination, media);
         }
         if (_version != version) break;
-        if (target == null || await AudioAssetFormat.inspect(target) == null) {
+        final stream = remote?.stream;
+        if (stream == null &&
+            (target == null ||
+                await AudioAssetFormat.inspect(target) == null)) {
           continue;
         }
         if (_version != version) break;
@@ -319,25 +431,31 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
           }
         }
 
+        playback.addListener(onPlayback);
         try {
-          final opening = playback.open(
-            key,
-            target,
-            muted: audio.muted,
-            looping: audio.loop,
-          );
-          playback.addListener(onPlayback);
-          if (await opening &&
+          final opened = stream == null
+              ? await playback.open(
+                  key,
+                  target!,
+                  muted: audio.muted,
+                  looping: audio.loop,
+                )
+              : await playback.openStream(key, muted: audio.muted);
+          if (opened && stream != null && _version == version) {
+            feeding = _pumpStream(key, version, stream);
+            _streaming = feeding;
+          }
+          if (opened &&
               await ready.future.timeout(
                 const Duration(seconds: 20),
                 onTimeout: () => false,
               ) &&
               _version == version) {
+            keep = true;
             _confirmed = true;
             status.value = AudioPlaybackState.ready;
             return;
           }
-          if (_version == version) await playback.close(key);
         } finally {
           playback.removeListener(onPlayback);
         }
@@ -347,11 +465,19 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
         // Retry requires a user action after the source list is exhausted.
       } on FormatException {
         // Invalid path escapes do not become filesystem paths.
-      }
-      final downloaded = _downloaded;
-      if (_version == version && downloaded != null) {
-        _downloaded = null;
-        await _deleteDownload(downloaded);
+      } finally {
+        if (!keep) {
+          if (remote?.stream case final stream?) _closeClient(stream.client);
+          if (_version == version) await playback.close(key);
+          if (feeding != null) {
+            await feeding;
+            if (identical(_streaming, feeding)) _streaming = null;
+          }
+          if (remote?.download case final downloaded?) {
+            if (identical(_downloaded, downloaded)) _downloaded = null;
+            await downloaded.release();
+          }
+        }
       }
     }
     status.value = _version == version
@@ -490,7 +616,12 @@ class BusyMarkAudioTransport extends StatelessWidget {
                 ? null
                 : () {
                     unawaited(
-                      current && !failed ? audio.toggle(owner) : start(),
+                      current &&
+                              !failed &&
+                              !(audio.streamed &&
+                                  state == AudioPlaybackState.ended)
+                          ? audio.toggle(owner)
+                          : start(),
                     );
                   },
             icon: busy && cancelOpening != null
@@ -501,6 +632,16 @@ class BusyMarkAudioTransport extends StatelessWidget {
                 ? BusyMarkGlyphs.pauseAudio
                 : BusyMarkGlyphs.play,
           ),
+          if (!busy &&
+              current &&
+              audio.streamed &&
+              cancelOpening != null &&
+              (running || state == AudioPlaybackState.paused))
+            _audioButton(
+              label: localized.cancel,
+              icon: BusyMarkGlyphs.stopAudio,
+              onPressed: () => unawaited(cancelOpening!()),
+            ),
           if (busy)
             const Padding(
               padding: EdgeInsets.all(6),
@@ -550,35 +691,38 @@ class BusyMarkAudioTransport extends StatelessWidget {
                   ),
                 ),
               ),
-              PopupMenuButton<double>(
-                tooltip: localized.audioPlaybackRate,
-                enabled: audio.seekable,
-                onSelected: (value) =>
-                    unawaited(audio.seek(owner, audio.position, speed: value)),
-                itemBuilder: (context) => [
-                  for (final value in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
-                    CheckedPopupMenuItem(
-                      value: value,
-                      checked: audio.rate == value,
-                      child: Text('$value×'),
+              if (!audio.streamed)
+                PopupMenuButton<double>(
+                  tooltip: localized.audioPlaybackRate,
+                  enabled: audio.seekable,
+                  onSelected: (value) => unawaited(
+                    audio.seek(owner, audio.position, speed: value),
+                  ),
+                  itemBuilder: (context) => [
+                    for (final value in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
+                      CheckedPopupMenuItem(
+                        value: value,
+                        checked: audio.rate == value,
+                        child: Text('$value×'),
+                      ),
+                  ],
+                  child: Semantics(
+                    label: localized.audioPlaybackRate,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text('${audio.rate}×'),
                     ),
-                ],
-                child: Semantics(
-                  label: localized.audioPlaybackRate,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Text('${audio.rate}×'),
                   ),
                 ),
-              ),
-              _audioButton(
-                label: localized.audioLoop,
-                isSelected: audio.loop,
-                icon: BusyMarkGlyphs.repeatAudio,
-                selectedIcon: BusyMarkGlyphs.repeatAudioOnce,
-                onPressed: () =>
-                    unawaited(audio.configure(owner, looping: !audio.loop)),
-              ),
+              if (!audio.streamed)
+                _audioButton(
+                  label: localized.audioLoop,
+                  isSelected: audio.loop,
+                  icon: BusyMarkGlyphs.repeatAudio,
+                  selectedIcon: BusyMarkGlyphs.repeatAudioOnce,
+                  onPressed: () =>
+                      unawaited(audio.configure(owner, looping: !audio.loop)),
+                ),
             ],
           ],
         ],

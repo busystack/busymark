@@ -626,7 +626,7 @@ class BusyMarkPreviewBuilder {
           if (inline.kind == BusyInlineKind.softBreak) {
             return ' ';
           }
-          return inline.plainText;
+          return inline.plainTextWithFallback;
         })
         .join()
         .replaceAll(RegExp(r'\s+'), ' ')
