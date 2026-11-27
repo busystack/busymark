@@ -1053,6 +1053,11 @@ void terminate_web_process_for_release_smoke(BusyMarkWebRenderHost* self,
       g_object_ref(self), g_object_unref);
 }
 
+bool is_render_initializing(BusyMarkWebRenderHost* self) {
+  return self->state == RenderState::scheduled ||
+         self->state == RenderState::loading;
+}
+
 void method_call_cb(FlMethodChannel*,
                     FlMethodCall* method_call,
                     gpointer user_data) {
@@ -1075,6 +1080,17 @@ void method_call_cb(FlMethodChannel*,
   }
   if (g_strcmp0(method, "terminateWebProcessForReleaseSmoke") == 0) {
     terminate_web_process_for_release_smoke(self, method_call);
+    return;
+  }
+  if (g_strcmp0(method, "hasPendingInitializationForReleaseSmoke") == 0) {
+    if (g_strcmp0(g_getenv("BUSYMARK_RELEASE_SMOKE"), "1") != 0) {
+      respond_error(method_call, "visualization.releaseSmokeDisabled",
+                    "The release visualization smoke hook is disabled.");
+      return;
+    }
+    g_autoptr(FlValue) result = fl_value_new_bool(
+        is_render_initializing(self) && !g_queue_is_empty(self->queue));
+    fl_method_call_respond_success(method_call, result, nullptr);
     return;
   }
   if (!is_render_operation(method) &&
@@ -1136,8 +1152,7 @@ void method_call_cb(FlMethodChannel*,
 
 void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
   g_return_if_fail(BUSYMARK_IS_WEB_RENDER_HOST(self));
-  if (self->state == RenderState::scheduled ||
-      self->state == RenderState::loading) {
+  if (is_render_initializing(self)) {
     g_printerr("visualization-shutdown initPending=1\n");
   }
   if (self->shutting_down) {

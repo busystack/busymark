@@ -120,6 +120,14 @@ class PlatformWebRenderHost implements WebRenderHost {
         .timeout(renderTimeout);
   }
 
+  /// Observes native initialization after a render request has been queued.
+  /// The Linux runner requires the same opt-in as its recovery smoke hook.
+  Future<bool> hasPendingInitializationForReleaseSmoke() async =>
+      await _channel
+          .invokeMethod<bool>('hasPendingInitializationForReleaseSmoke')
+          .timeout(renderTimeout) ??
+      false;
+
   @override
   Future<Map<Object?, Object?>> renderMermaid({
     required String source,

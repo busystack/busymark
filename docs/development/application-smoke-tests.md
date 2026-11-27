@@ -32,9 +32,11 @@ flutter build linux --release -t lib/main.dart
 
 The alternate entry point exercises the real application, editors and close
 listener. It verifies Save/Discard/Cancel, saved-file reopening and rendered
-content before closing. Frame callbacks confirm raster activity; video checks
-require changing decoded frames. The pending-initialization case requires
-`visualization-shutdown initPending=1`, using a harness that withholds readiness.
+content before closing. Frame callbacks confirm raster activity and video checks
+require changing decoded frames. The pending-initialization case queues a real
+render request in a harness that withholds readiness. It observes native
+initialization before dispatching close and requires
+`visualization-shutdown initPending=1` from the exiting process.
 
 The Save command and status regressions in `test/src/app_smoke_test.dart`
 exercise the effective keymap, Main menu, Actions, destination authorization

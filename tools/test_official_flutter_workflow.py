@@ -724,7 +724,8 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
         self.assertIn("steps.snap-inspection.outcome == 'success'", selection['if'])
         self.assertIn("steps.snapcraft.outcome == 'success'", selection['if'])
         self.assertIn("steps.snapcraft-retry.outcome == 'success'", selection['if'])
-        for scenario in ['primary', 'retry', 'stale', 'foreign', 'wrong-recipe', 'missing', 'failed']:
+        for scenario in ['primary', 'retry', 'stale', 'foreign', 'wrong-recipe',
+                         'missing-recipe', 'missing', 'failed']:
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as temp:
                 root = Path(temp)
                 workspace, run_temp = root / 'workspace', root / 'runner'
@@ -749,12 +750,13 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
                 unsquashfs.chmod(0o700)
                 wrong = root / 'wrong.yaml'
                 wrong.write_text('name: different-control\n')
+                embedded = {'wrong-recipe': wrong, 'missing-recipe': root / 'absent.yaml'}
                 env = {**os.environ, 'PATH': str(bin_dir) + ':' + os.environ['PATH'],
                        'GITHUB_WORKSPACE': str(workspace), 'RUNNER_TEMP': str(run_temp),
                        'GITHUB_OUTPUT': str(root / 'output'), 'PRIMARY_SNAP': str(artifact),
                        'PRIMARY_OUTCOME': 'failure' if scenario in ['retry', 'failed'] else 'success',
                        'RETRY_SNAP': str(artifact), 'RETRY_OUTCOME': 'success' if scenario == 'retry' else 'failure',
-                       'CONTROL_RECIPE': str(wrong if scenario == 'wrong-recipe' else recipe)}
+                       'CONTROL_RECIPE': str(embedded.get(scenario, recipe))}
                 result = subprocess.run(['bash', '-euc', selection['run']], cwd=workspace,
                                         env=env, capture_output=True, text=True, timeout=10)
                 self.assertEqual(result.returncode == 0, scenario in ['primary', 'retry'],
@@ -762,8 +764,37 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
                 output = root / 'output'
                 if result.returncode == 0:
                     self.assertEqual(output.read_text(), f'snap={artifact.resolve()}\n')
+                    self.assertEqual((run_temp / 'core26-build/snapcraft.yaml').read_bytes(),
+                                     recipe.read_bytes())
                 else:
                     self.assertFalse(output.exists())
+
+    def test_all_ci_snap_builds_provide_build_info_after_sudo(self):
+        steps = {step['id']: step for step in self.native['jobs']['snap']['steps']
+                 if 'id' in step}
+        for name in ['snapcraft', 'snapcraft-retry', 'close-fixture-snap']:
+            self.assertEqual(steps[name]['run'], 'bash tools/pack_core26_ci_snap.sh')
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            sudo = root / 'sudo'
+            sudo.write_text('''#!/usr/bin/env bash
+                set -eu
+                if [[ "$*" == *' -- /snap/bin/snapcraft clean --use-lxd' ]]; then
+                    touch "$PWD/cleaned"
+                    exit 0
+                fi
+                [[ -f "$PWD/cleaned" && ! -f "$PWD/busymark_stale.snap" ]]
+                [[ "$*" == *' -- env SNAPCRAFT_BUILD_INFO=1 /snap/bin/snapcraft pack --use-lxd --verbosity=debug' ]]
+                touch "$PWD/busymark_fresh.snap"
+            ''')
+            sudo.chmod(0o700)
+            (root / 'busymark_stale.snap').touch()
+            output = root / 'output'
+            env = {**os.environ, 'PATH': str(root) + ':' + os.environ['PATH'],
+                   'GITHUB_OUTPUT': str(output)}
+            subprocess.run(['bash', ROOT / 'tools/pack_core26_ci_snap.sh'], cwd=root,
+                           env=env, check=True, capture_output=True, timeout=10)
+            self.assertEqual(output.read_text(), f'snap={root / "busymark_fresh.snap"}\n')
 
     def test_parallel_snap_setup_is_shared_and_required_by_every_named_install(self):
         steps = self.native['jobs']['snap']['steps']

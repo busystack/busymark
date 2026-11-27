@@ -47,6 +47,7 @@ the supported baseline alongside `docs/api/README.md` and `docs/api/v1.md`:
 | v6.0.1 | `6cb67c3645acad9c5757b47ffc819a6f158646c5` | 0.2, 1.3, 1.4 | GET, POST |
 | v6.0.2 | `d2916b499c3c72e323b1a0db6191661178d683a6` | 0.2, 1.3, 1.4 | GET, POST |
 | v6.1.0 | `0c3dd46dbd781b780c1ea60a13873198609bb98d` | 0.2, 1.3, 1.4 | GET, POST, DELETE |
+| v6.1.1 | `8394754a00590c1de486c7514855653066bce667` | 0.2, 1.3, 1.4 | GET, POST, DELETE |
 
 Notes 6.0.x is a supported baseline. The documentation's claim that API 1.4
 arrived in 6.1 conflicts with the tagged 6.0.x implementation; the advertised
@@ -436,18 +437,24 @@ flutter test --no-pub tools/nextcloud_notes_live_acceptance_test.dart
 
 Set `BUSYMARK_NOTES_LIVE_CA` to the path to a private test CA if needed.
 Set `BUSYMARK_NOTES_LIVE_ATTACHMENT_READS=1` with the CA to run the focused
-category-relative attachment checks, including offline reopening. Set
-`BUSYMARK_NOTES_LIVE_AUDIO=1` with the CA to run the focused WAV case against
-a disposable official server. This case covers staging and a byte-exact Notes
-API download, offline restart, provider isolation, Markdown and HTML copies,
-cross-note recovery, attachment deletion capability, historical restoration
-where supported and an uncertain upload. Repeat it with Notes 6.0.2 and 6.1.1.
-It exercises disposable notes and attachments, including conflicts, offline
-saves, restart, and explicit adoption after uncertain creation. Repeat against
-the supported Notes 6.0.x and 6.1.x baselines when changing the API contract;
-mocked tests alone do not establish live server compatibility. Keep the
-checkpoint, revision, explicit-adoption and attachment ownership invariants
-above covered, and remove temporary acceptance data when finished.
+category-relative attachment checks, including offline reopening.
+
+Set `BUSYMARK_NOTES_LIVE_AUDIO=1` with the CA to run the WAV scenario. Run it
+against disposable official Nextcloud containers using Notes 6.0.2 and 6.1.1.
+The scenario creates an owned recording, verifies byte-exact API download
+and reference suffix preservation, reopens offline, and exports Markdown
+and self-contained HTML. It exercises cross-note copying, conflict and merge,
+element removal, note deletion, attachment deletion and restoration where
+supported, and durable upload state after restart. It injects an HTTP 413
+before publication and drops a real successful upload response to exercise
+both outcomes. The recording checks qualify BusyMark's attachment workflow
+and exported HTML.
+See the tagged API declarations reviewed on 2026-11-27. [Notes 6.0.2 routes](https://github.com/nextcloud/notes/blob/v6.0.2/appinfo/routes.php) · [Notes 6.1.1 routes](https://github.com/nextcloud/notes/blob/v6.1.1/appinfo/routes.php)
+
+The general live scenario covers conflicts, offline saves, restart and
+explicit adoption after uncertain note creation. Repeat against both supported
+Notes baselines when changing the API contract. Remove the isolated accounts,
+credentials and temporary fixtures when finished.
 
 For repeatable performance measurements, build the existing real-SQLite corpus
 harness with the pinned Dart SDK and dependency lock. Use an empty corpus

@@ -68,6 +68,13 @@ independent of testing audible output and controls in the application.
 The standalone workflow builds and exercises its archive on 26.04. Older
 standalone and Snap hosts require separate installed acceptance receipts.
 
+The native CI job calls the official `snapcraft pack --use-lxd` command with
+`SNAPCRAFT_BUILD_INFO=1` set inside the runner-user command. Ubuntu 26.04's
+`sudo-rs` ignores the `sudo -E` used by `snapcore/action-build@v1`. The job
+retains Snapcraft's build manifest and compares the embedded recipe byte for
+byte with the source recipe before installing the package. [Snapcraft build
+options][build-options] · [Ubuntu sudo-rs][sudo-rs]
+
 The locked Android path-provider dependency can discover an optional JVM when
 a Linux builder happens to have a JDK. Linux uses its own path-provider
 implementation. BusyMark disables that optional JNI discovery in its own
@@ -79,4 +86,6 @@ desktop runtime.
 [migration]: https://ubuntu.com/docs/snapcraft/9/how-to/change-bases/change-from-core24-to-core26/
 [gnome]: https://ubuntu.com/docs/snapcraft/9/reference/extensions/gnome-extension/
 [resolute]: https://packages.ubuntu.com/resolute/
+[build-options]: https://ubuntu.com/docs/snapcraft/9/reference/build-environment-options/
+[sudo-rs]: https://ubuntu.com/server/docs/how-to/security/user-management/#sudo-rs
 [piper]: https://github.com/OHF-Voice/piper1-gpl/releases/tag/v1.8.0

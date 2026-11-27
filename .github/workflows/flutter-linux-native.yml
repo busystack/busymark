@@ -237,6 +237,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y squashfs-tools python3-yaml binutils
 
+      - name: Install official Snapcraft and its managed build provider
+        run: |
+          sudo groupadd --force --system lxd
+          sudo usermod --append --groups lxd "$(id -un)"
+          sudo snap install lxd --channel=6/stable
+          sudo lxd init --auto
+          for firewall in iptables ip6tables; do
+            if sudo "$firewall" -S DOCKER-USER >/dev/null 2>&1; then
+              sudo "$firewall" -I DOCKER-USER -i lxdbr0 -j ACCEPT
+              sudo "$firewall" -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+            fi
+          done
+          sudo snap install snapcraft --classic --channel=latest/stable
+
       - name: Prepare clean Snap artifact selection
         run: |
           rm -f ./*.snap
@@ -244,19 +258,13 @@ jobs:
 
       - name: Build strict Snap from a clean core26 environment (attempt 1)
         id: snapcraft
-        uses: snapcore/action-build@v1
-        with:
-          snapcraft-channel: latest/stable
-          snapcraft-args: --verbosity=debug
+        run: bash tools/pack_core26_ci_snap.sh
         continue-on-error: true
 
       - name: Retry strict Snap build after an infrastructure failure
         id: snapcraft-retry
         if: steps.snapcraft.outcome == 'failure'
-        uses: snapcore/action-build@v1
-        with:
-          snapcraft-channel: latest/stable
-          snapcraft-args: --verbosity=debug
+        run: bash tools/pack_core26_ci_snap.sh
 
       - name: Collect official Snapcraft and Snapd failure diagnostics
         if: ${{ !cancelled() && (steps.snapcraft.outcome == 'failure' || steps.snapcraft-retry.outcome == 'failure') }}
@@ -379,8 +387,10 @@ jobs:
             "$GITHUB_WORKSPACE"/*.snap) ;;
             *) echo "Refusing Snap outside the clean checkout: $snap_path" >&2; exit 1 ;;
           esac
-          test "$(unsquashfs -cat "$snap_path" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
-            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
+          evidence="${RUNNER_TEMP}/core26-build"
+          mkdir -p "$evidence"
+          unsquashfs -cat "$snap_path" snap/snapcraft.yaml > "$evidence/snapcraft.yaml"
+          cmp snap/snapcraft.yaml "$evidence/snapcraft.yaml"
           echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
 
       - name: Inspect build metadata and official engine
@@ -759,17 +769,15 @@ jobs:
       - name: Build genuine strict compiled-close fixture
         if: ${{ !cancelled() && inputs.run-stress && steps.strict-fixture-source.outcome == 'success' }}
         id: close-fixture-snap
-        uses: snapcore/action-build@v1
-        with:
-          snapcraft-channel: latest/stable
+        run: bash tools/pack_core26_ci_snap.sh
       - name: Install strict compiled-close fixture
         if: ${{ !cancelled() && inputs.run-stress && steps.close-fixture-snap.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-fixture-install
         run: |
           fixture="${{ steps.close-fixture-snap.outputs.snap }}"
           test -f "$fixture"
-          test "$(unsquashfs -cat "$fixture" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
-            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
+          unsquashfs -cat "$fixture" snap/snapcraft.yaml > "${RUNNER_TEMP}/fixture-snapcraft.yaml"
+          cmp snap/snapcraft.yaml "${RUNNER_TEMP}/fixture-snapcraft.yaml"
           sudo snap install --dangerous --name=busymark_fixture "$fixture"
           fixture_root="$HOME/snap/busymark_fixture/common"
           mkdir -p "$fixture_root/fixtures"

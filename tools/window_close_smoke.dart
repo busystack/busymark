@@ -330,10 +330,11 @@ Future<void> main(List<String> args) async {
       checks['reopenedContentVerified'] = true;
     }
     if (scenario == 'pending-initialization') {
+      const host = PlatformWebRenderHost();
       final token = VisualizationCancellationToken();
       var completed = false;
       unawaited(
-        const PlatformWebRenderHost()
+        host
             .renderMermaid(
               source: 'graph TD; A-->B',
               theme: VisualizationTheme.light,
@@ -348,7 +349,11 @@ Future<void> main(List<String> args) async {
               },
             ),
       );
-      checks['renderPendingAtCloseDispatch'] = !completed;
+      final pending = await host.hasPendingInitializationForReleaseSmoke();
+      checks['renderPendingAtCloseDispatch'] = pending && !completed;
+      if (checks['renderPendingAtCloseDispatch'] != true) {
+        throw StateError('Native initialization was not pending before close.');
+      }
     }
     if (scenario == 'video') {
       if (args.length != 3) {
@@ -493,7 +498,10 @@ Future<void> main(List<String> args) async {
         await windowManager.close();
         await choose('discard');
       } else if (scenario == 'dirty-cancel') {
-        await choose('cancel');
+        final cancel = await decision('cancel');
+        final cancelling = window.requestClose();
+        cancel.onPressed!();
+        await cancelling;
         await binding.endOfFrame;
         if (!await windowManager.isVisible() ||
             !container.read(workspaceControllerProvider).hasUnsavedChanges ||

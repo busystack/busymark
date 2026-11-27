@@ -54,7 +54,23 @@ and transcript rules. `tools/speech_local_qualification_test.dart` exercises
 official installed engines. Supply `SPEECH_LOCAL_ENGINE` and a private
 `SPEECH_LOCAL_EVIDENCE_DIR` as Dart defines. The Piper probe accepts
 `SPEECH_LOCAL_EXECUTABLE` and can prepare a voice when
-`SPEECH_INSTALL_VOICE=true`.
+`SPEECH_INSTALL_VOICE=true`. Use `SPEECH_LOCAL_LANGUAGE=fr` to exercise the
+French Unicode sample and the pinned Siwis voice.
+Use `SPEECH_TEST_PIPER_FAILURES=true` with the Piper probe to exercise missing
+and corrupt models, cancellation, and owned worker cleanup on Linux.
+
+For Speech Dispatcher playback, run an owned daemon in the foreground with
+its own PID file, private runtime directory, config directory and Unix socket
+named `system.sock` in the evidence directory. Configure the released eSpeak
+NG module with a test-owned PCM sink. An ALSA `file` PCM with a `null` slave
+can write raw signed 16-bit mono frames without using the desktop audio device.
+Set `SPEECHD_ADDRESS=unix_socket:<evidence directory>/system.sock` in the test
+environment and pass `SPEECH_LOCAL_ENGINE=system` and `SPEECH_SYSTEM_PLAY=true`.
+The fixture opens two connections, pauses, resumes and cancels the first
+connection's message, and requires completion on the second. Capture the
+second message's PCM, confirm its content, and terminate the owned daemon.
+This verifies client isolation on a standalone host. An installed strict Snap
+can expose separate availability through the socket probe.
 
 `tools/speech_cloud_qualification_test.dart` is outside the normal test corpus.
 It accepts explicit provider, language, private evidence directory, credential

@@ -589,6 +589,9 @@ int main(int argc, char** argv) {
     g_autoptr(TestResponse) disabled =
         h.call("terminateWebProcessForReleaseSmoke", nullptr);
     h.error(disabled, "visualization.releaseSmokeDisabled");
+    g_autoptr(TestResponse) pending_disabled =
+        h.call("hasPendingInitializationForReleaseSmoke", nullptr);
+    h.error(pending_disabled, "visualization.releaseSmokeDisabled");
     g_autoptr(TestResponse) unknown = h.call("unknown", nullptr);
     g_assert_true(unknown->responded);
     g_autoptr(TestResponse) invalid_render = h.call("renderMermaid", nullptr);
@@ -830,6 +833,11 @@ int main(int argc, char** argv) {
       g_autoptr(FlValue) result = h.success(repeated);
       verify("renderMermaid", result);
     } else if (strstr(mode, "shutdown-") == mode) {
+      g_setenv("BUSYMARK_RELEASE_SMOKE", "1", TRUE);
+      g_autoptr(TestResponse) dormant_call =
+          h.call("hasPendingInitializationForReleaseSmoke", nullptr);
+      g_autoptr(FlValue) dormant = h.success(dormant_call);
+      g_assert_false(fl_value_get_bool(dormant));
       g_autoptr(TestResponse) first = h.call("renderMermaid", request);
       if (strcmp(mode, "shutdown-loading") == 0)
         until([&] { return h.host->state == RenderState::loading; });
@@ -839,6 +847,12 @@ int main(int argc, char** argv) {
         until([&] { return h.host->active != nullptr; });
       if (strcmp(mode, "shutdown-engine") == 0)
         until([&] { return resource_reads["mermaid-engine.js"] != 0; });
+      g_autoptr(TestResponse) pending_call =
+          h.call("hasPendingInitializationForReleaseSmoke", nullptr);
+      g_autoptr(FlValue) pending = h.success(pending_call);
+      const bool request_has_started = strcmp(mode, "shutdown-active") == 0 ||
+                                       strcmp(mode, "shutdown-engine") == 0;
+      g_assert_cmpint(fl_value_get_bool(pending), ==, !request_has_started);
       busymark_web_render_host_shutdown(h.host);
       h.error(first, "visualization.hostUnavailable");
       until([&] { return h.host->active == nullptr; });

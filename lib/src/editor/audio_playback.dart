@@ -77,12 +77,16 @@ class AudioPlayback extends ChangeNotifier {
   Future<void> toggle(Object owner) async {
     final id = _nativeId;
     if (!owns(owner) || id == null) return;
+    if (running) {
+      await pause();
+      return;
+    }
     if (state == AudioPlaybackState.ended) await seek(owner, 0);
     if (!owns(owner) || _nativeId != id) return;
-    if (await _call(running ? 'pause' : 'play', id) &&
-        _nativeId == id &&
-        !running) {
-      state = AudioPlaybackState.opening;
+    state = AudioPlaybackState.opening;
+    notifyListeners();
+    if (!await _call('play', id) && _nativeId == id) {
+      state = AudioPlaybackState.failed;
       notifyListeners();
     }
   }

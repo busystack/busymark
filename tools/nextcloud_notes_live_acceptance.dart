@@ -45,6 +45,8 @@ class _Connection extends http.BaseClient {
   bool discardNextCreate = false;
   bool loseNextSettingsResponse = false;
   bool loseNextUploadResponse = false;
+  int? rejectNextUploadStatus;
+  int? lostUploadStatus;
   int? nextCollectionFailure;
   bool rejectNextPutCredentials = false;
   String? nextPutRetryAfter;
@@ -97,10 +99,20 @@ class _Connection extends http.BaseClient {
     final creation =
         request.method == 'POST' && request.url.path.endsWith('/v1/notes');
     if (creation) noteCreates++;
-    if (request.method == 'POST' && request.url.path.contains('/attachment/')) {
+    final upload =
+        request.method == 'POST' && request.url.path.contains('/attachment/');
+    if (upload) {
       attachmentUploads++;
       final id = int.parse(request.url.pathSegments.last);
       attachmentUploadsById.update(id, (v) => v + 1, ifAbsent: () => 1);
+      if (rejectNextUploadStatus case final status?) {
+        rejectNextUploadStatus = null;
+        return http.StreamedResponse(
+          Stream.value(utf8.encode('{}')),
+          status,
+          request: request,
+        );
+      }
     }
     if (request.method == 'PUT' && request.url.path.contains('/v1/notes/')) {
       noteUpdates++;
@@ -153,9 +165,10 @@ class _Connection extends http.BaseClient {
     if ((loseNextSettingsResponse &&
             request.method == 'PUT' &&
             request.url.path.endsWith('/v1/settings')) ||
-        (loseNextUploadResponse &&
-            request.method == 'POST' &&
-            request.url.path.contains('/attachment/'))) {
+        (loseNextUploadResponse && upload)) {
+      if (loseNextUploadResponse && upload) {
+        lostUploadStatus = response.statusCode;
+      }
       loseNextSettingsResponse = false;
       loseNextUploadResponse = false;
       await response.stream.drain<void>();
@@ -810,11 +823,14 @@ Future<void> main(List<String> arguments) async {
         'checks': checks,
         'failureType': error.runtimeType.toString(),
         'failureStack': stack.toString(),
-        'failure': error is NotesException
-            ? error.message
-            : error is StateError
-            ? error.message
-            : 'Live acceptance failed.',
+        'failure': switch (error) {
+          NotesDeletionUncertain() =>
+            '${error.message} ${error.failure.message}',
+          NotesException() => error.message,
+          NextcloudCapabilityException() => error.message,
+          StateError() => error.message,
+          _ => 'Live acceptance failed.',
+        },
       }),
       flush: true,
     );
@@ -1084,20 +1100,108 @@ The recorded sample is a tone.
       checks['audioRemoteDeleteGatedOnOlderNotes'] = true;
     }
 
+    final conflictBase = active.noteById(localId)!;
+    final conflictServer = await api.get(first.serverId!);
+    final remotelyEdited = '${conflictServer.content}\nRemote edit.\n';
+    final locallyEdited = '${conflictBase.content}\nLocal edit.\n';
+    await api.update(
+      conflictBase.copyWith(etag: conflictServer.etag, content: remotelyEdited),
+    );
+    await active.save(localId, content: locallyEdited);
+    await active.synchronize(account.id);
+    final conflict = active.noteById(localId)!;
+    _require(
+      conflict.syncState == NoteSyncState.conflict &&
+          conflict.content == locallyEdited &&
+          conflict.remote?.content == remotelyEdited &&
+          reference(locallyEdited) == reference(remotelyEdited),
+      'The second actor’s edit did not retain both audio-note versions.',
+    );
+    await active.resolveConflict(
+      localId,
+      NoteConflictResolution.merge,
+      mergedContent: '$locallyEdited\nRemote edit.\n',
+    );
+    await active.synchronize(account.id);
+    final merged = active.noteById(localId)!;
+    _require(
+      merged.syncState == NoteSyncState.synced &&
+          merged.content.contains('Local edit.') &&
+          merged.content.contains('Remote edit.') &&
+          reference(merged.content) == reference(locallyEdited),
+      'Conflict resolution did not keep the recording and both edits.',
+    );
+    checks['audioNoteConflictAndMerge'] = true;
+
+    final mergedReference = reference(merged.content);
+    await active.save(localId, content: 'Transcript only.');
+    await active.synchronize(account.id);
+    final retainedPath = await active.resolveMedia(
+      account.id,
+      localId,
+      mergedReference,
+    );
+    _require(
+      retainedPath != null &&
+          base64Encode(await File(retainedPath).readAsBytes()) == expected,
+      'Removing the audio element deleted the recording.',
+    );
+    await active.delete(localId);
+    try {
+      await api.get(first.serverId!);
+      throw StateError('The explicitly deleted audio note remained on server.');
+    } on NotesException catch (error) {
+      _require(error.code == NotesFailureCode.missing, 'Wrong delete result.');
+    }
+    owned.remove(first.serverId!);
+    final tombstone = active.noteById(localId);
+    _require(
+      tombstone?.syncState == NoteSyncState.deletedRemotely &&
+          tombstone?.deletionEvidence == 'deliberate' &&
+          active.availableRecentNote(account.id, localId) == null,
+      'An explicitly deleted audio note did not enter the recovery state.',
+    );
+    checks['audioElementRemovalAndExplicitNoteDeletion'] = true;
+
+    final rejected = await stage(copy.localId, 'rejected.wav');
+    await active.save(copy.localId, content: markup(rejected));
+    connection.rejectNextUploadStatus = 413;
+    await active.synchronize(account.id);
+    final rejectedAudio = (await active.attachments(
+      copy.localId,
+    )).singleWhere((attachment) => attachment.reference == rejected);
+    _require(
+      rejectedAudio.state == 'rejected' &&
+          base64Encode(
+                (await active.store.attachmentBytes(rejectedAudio.id))!,
+              ) ==
+              expected &&
+          (await api.get(published.serverId!)).content == published.content,
+      'The rejected audio did not stay local or changed the server’s note.',
+    );
+    checks['audioRejectedUploadRetainsBytesAndServerNote'] = true;
+
     final uncertain = await stage(copy.localId, 'uncertain.wav');
     await active.save(copy.localId, content: markup(uncertain));
     connection.loseNextUploadResponse = true;
     await active.synchronize(account.id);
     final attempts = connection.attachmentUploads;
     await active.synchronize(account.id);
+    await active.dispose();
+    connection.offline = true;
+    active = await reopen();
+    final uncertainAudio = (await active.attachments(
+      copy.localId,
+    )).singleWhere((attachment) => attachment.reference == uncertain);
     _require(
-      connection.attachmentUploads == attempts &&
-          (await active.attachments(copy.localId)).any(
-            (attachment) =>
-                attachment.reference == uncertain &&
-                attachment.state == 'uncertain',
-          ),
-      'An uncertain audio upload was repeated without review.',
+      connection.lostUploadStatus == 200 &&
+          connection.attachmentUploads == attempts &&
+          uncertainAudio.state == 'uncertain' &&
+          base64Encode(
+                (await active.store.attachmentBytes(uncertainAudio.id))!,
+              ) ==
+              expected,
+      'An uncertain upload lost bytes on restart or was repeated without review.',
     );
     checks['audioUncertainUploadRemainsDurable'] = true;
   } finally {

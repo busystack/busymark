@@ -187,11 +187,11 @@ snapcraft --version
 snap list snapcraft
 snapcraft expand-extensions
 snapcraft clean
-snapcraft
+snapcraft pack
 sha256sum ./busymark_*.snap
 ```
 
-Inspect and test the exact file emitted by the final `snapcraft` command. A
+Inspect and test the exact file emitted by `snapcraft pack`. A
 failed build must not fall back to an older `.snap`. The `snap` job in
 [native acceptance](.github/workflows/flutter-linux-native.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
