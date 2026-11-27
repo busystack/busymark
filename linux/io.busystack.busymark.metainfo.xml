@@ -88,6 +88,7 @@
   <url type="bugtracker">https://github.com/busystack/busymark/issues</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="v0.8.0" date="2026-11-27" />
     <release version="v0.7.4" date="2026-11-23" />
     <release version="v0.7.3" date="2026-11-20" />
     <release version="0.7.2" date="2026-11-14" />

@@ -29,10 +29,10 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.7\.4$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.8\.0$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "v0\.7\.4"$', multiLine: true)),
+      contains(RegExp(r'^version: "v0\.8\.0"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -59,7 +59,7 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="v0.7.4"'));
+    expect(metainfo, contains('<release version="v0.8.0"'));
     expect(pubspec, isNot(contains('0.6.11')));
     expect(snapcraft, isNot(contains('0.6.11')));
   });
