@@ -62,6 +62,7 @@ import 'package:busymark/src/editor/markdown_image_permission_scope.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
@@ -23056,6 +23057,89 @@ Before [![Inline logo](${imageOrigin}inline-logo.png)](inline-guide.md) after.
     expect(find.text('Value'), findsOneWidget);
     expect(find.text('A'), findsOneWidget);
     expect(find.textContaining('<table>'), findsNothing);
+  });
+
+  testWidgets('reopened Preview renders normalized clipboard code and bold', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'busymark-preview-clipboard-code-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'pasted.md'))
+      ..writeAsStringSync('Draft\n');
+    final source = const WysiwygClipboardHtml()
+        .decode(
+          '<p>Before <strong>bold</strong> <code dir="ltr">file).md</code> after.</p>'
+          '<p>Next paragraph.</p>',
+          mode: MarkdownMode.gfm,
+        )!
+        .serializeFor(
+          destinationMode: MarkdownMode.gfm,
+          destinationFilePath: file.path,
+        );
+    expect(
+      source.trimRight(),
+      'Before **bold** `file).md` after.\n\nNext paragraph.',
+    );
+    await tester.runAsync(() async {
+      final writer = await DocumentHistoryHarness.create(path: file.path);
+      try {
+        writer.controller.updateActiveText(source);
+        expect(await writer.controller.saveActive(), isTrue);
+      } finally {
+        writer.dispose();
+      }
+    });
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        localSettingsStoreProvider.overrideWithValue(settings),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+        startupPathProvider.overrideWithValue(file.path),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final paragraph = find.text('Before bold file).md after.');
+    await pumpUntil(
+      tester,
+      () => paragraph.evaluate().isNotEmpty,
+      operation: 'render the saved clipboard document in Preview',
+    );
+    expect(
+      find.byKey(const ValueKey('preview-document-scroll')),
+      findsOneWidget,
+    );
+    expect(find.text('Next paragraph.'), findsOneWidget);
+    final spans = <TextSpan>[];
+    tester.widget<Text>(paragraph).textSpan!.visitChildren((span) {
+      if (span is TextSpan) spans.add(span);
+      return true;
+    });
+    expect(
+      spans.singleWhere((s) => s.text == 'bold').style?.fontWeight,
+      FontWeight.w700,
+    );
+    expect(
+      spans.singleWhere((s) => s.text == 'file).md').style?.fontFamily,
+      BusyMarkTypography.monoFontFamily,
+    );
   });
 
   testWidgets('reopened Preview renders and follows linked table blocks', (

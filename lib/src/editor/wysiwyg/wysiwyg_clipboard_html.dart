@@ -836,17 +836,18 @@ void _normalizeClipboardSemantics(dom.Element root) {
   void visit(
     dom.Element element,
     String? inheritedDirection,
-    bool inheritedAuto,
-  ) {
+    bool inheritedAuto, {
+    bool ltrInlineFlow = false,
+  }) {
     final tag = element.localName!;
     final attrs = element.attributes;
+    final block = isSafeBlockHtmlTag(tag);
     final direction = busyMarkHtmlDirection(attrs['dir']);
     if (direction == null ||
         (!inheritedAuto &&
             inheritedDirection != 'rtl' &&
             (direction == 'ltr' || direction == 'auto') &&
-            isSafeBlockHtmlTag(tag) &&
-            _hasOnlyLtrFlow(element))) {
+            (block ? _hasOnlyLtrFlow(element) : ltrInlineFlow))) {
       attrs.remove('dir');
     } else {
       attrs['dir'] = direction;
@@ -927,8 +928,19 @@ void _normalizeClipboardSemantics(dom.Element root) {
         attrs['dir'] == 'auto' ||
         tag == 'bdi' && attrs['dir'] == null ||
         effectiveDirection == null && inheritedAuto;
+    final flowDirection = effectiveDirection ?? inheritedDirection;
+    // Check the whole inline flow before removing an isolated direction.
+    // Each nested block establishes its own flow.
+    final sharedLtrFlow =
+        !automaticScope &&
+        flowDirection != 'rtl' &&
+        (block
+            ? tag != 'pre' &&
+                  element.querySelector('[dir]') != null &&
+                  _hasOnlyLtrFlow(element, inlineOnly: true)
+            : ltrInlineFlow);
     for (final child in element.children.toList()) {
-      visit(child, effectiveDirection ?? inheritedDirection, automaticScope);
+      visit(child, flowDirection, automaticScope, ltrInlineFlow: sharedLtrFlow);
     }
   }
 
@@ -938,42 +950,95 @@ void _normalizeClipboardSemantics(dom.Element root) {
 // Markdown resolves each visible block from its own first strong character.
 // A neutral, mixed, or independently scoped descendant can make removing a
 // browser direction change the result even if the wrapper starts with Latin.
-bool _hasOnlyLtrFlow(dom.Element element) {
+bool _hasOnlyLtrFlow(dom.Element element, {bool inlineOnly = false}) {
   var text = StringBuffer();
   var hasStrongText = false;
-  bool flush() {
-    final value = text.toString();
-    text = StringBuffer();
-    if (value.trim().isEmpty) return true;
-    hasStrongText = Bidi.startsWithLtr(value) && !Bidi.hasAnyRtl(value);
-    return hasStrongText;
+  var checkInlineIsolation = inlineOnly;
+  final breakOffsets = <int>[];
+
+  bool hasLtrLines(String value) {
+    if (breakOffsets.isEmpty) return true;
+    var start = 0;
+    bool through(int end) {
+      final line = value.substring(start, end);
+      start = end;
+      return line.trim().isEmpty || Bidi.startsWithLtr(line);
+    }
+
+    return breakOffsets.every(through) && through(value.length);
   }
 
-  for (final node in element.nodes) {
+  bool flush() {
+    final value = text.toString();
+    final checkIsolation = checkInlineIsolation;
+    text = StringBuffer();
+    checkInlineIsolation = inlineOnly;
+    final empty = value.trim().isEmpty;
+    final ltr =
+        empty ||
+        (Bidi.startsWithLtr(value) &&
+            !Bidi.hasAnyRtl(value) &&
+            (!checkIsolation ||
+                !_unprovenLtrFlow.hasMatch(value) && hasLtrLines(value)));
+    breakOffsets.clear();
+    if (!empty) hasStrongText = ltr;
+    return ltr;
+  }
+
+  bool appendInline(dom.Node node) {
     if (node is dom.Text) {
       text.write(node.data);
     } else if (node is dom.Element) {
       final tag = node.localName!;
       final direction = busyMarkHtmlDirection(node.attributes['dir']);
-      if (isSafeBlockHtmlTag(tag)) {
-        if (direction == 'rtl' || !flush() || !_hasOnlyLtrFlow(node)) {
+      if (isSafeBlockHtmlTag(tag) ||
+          const {'bdi', 'bdo', 'img'}.contains(tag) ||
+          direction == 'rtl') {
+        return false;
+      }
+      if (direction != null) {
+        if (voidHtmlTags.contains(tag) ||
+            (tag == 'code' &&
+                (node.children.isNotEmpty ||
+                    node.text.isEmpty ||
+                    node.text.contains(RegExp(r'[\r\n]'))))) {
+          return false;
+        }
+        checkInlineIsolation = true;
+      }
+      // Browser break runs can become separate Markdown paragraphs. Each
+      // must still have its own strong text once the direction is removed.
+      if (tag == 'br') breakOffsets.add(text.length);
+      return node.nodes.every(appendInline);
+    }
+    return true;
+  }
+
+  for (final node in element.nodes) {
+    if (node is dom.Element && isSafeBlockHtmlTag(node.localName!)) {
+      if (!flush()) return false;
+      if (!inlineOnly) {
+        if (busyMarkHtmlDirection(node.attributes['dir']) == 'rtl' ||
+            !_hasOnlyLtrFlow(node)) {
           return false;
         }
         hasStrongText = true;
-      } else {
-        if (tag == 'bdi' ||
-            tag == 'bdo' ||
-            tag == 'img' ||
-            direction != null ||
-            node.querySelector('[dir], bdi, bdo, img') != null) {
-          return false;
-        }
-        text.write(node.text);
       }
+    } else if (!appendInline(node)) {
+      return false;
     }
   }
   return flush() && hasStrongText;
 }
+
+// A first-strong heuristic alone cannot prove that removing bidi isolation
+// leaves the line unchanged. Limit that rewrite to known LTR scripts and
+// ordinary neutral characters, with authored bidi controls outside the set.
+final _unprovenLtrFlow = RegExp(
+  r'[^\x09-\x0d\x20-\x7e\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}'
+  r'\u00a0\u2000-\u200a\u2010-\u2027\u202f\u2030-\u205e]',
+  unicode: true,
+);
 
 void _unwrapWholeLabel(dom.Element element, String tag) {
   final label = element.children.singleOrNull;

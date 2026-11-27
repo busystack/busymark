@@ -22,13 +22,14 @@ import '../support/document_history_harness.dart';
 
 BusyMarkPastePlan _resolve(
   String html, {
+  String text = 'Interoperable plain text',
   String? native,
   BusyMarkPasteDestination destination =
       BusyMarkPasteDestination.markdownSource,
   BusyMarkPasteMode mode = BusyMarkPasteMode.normal,
 }) => const BusyMarkClipboardPasteResolver().resolve(
   snapshot: BusyMarkClipboardSnapshot(
-    text: 'Interoperable plain text',
+    text: text,
     html: html,
     richFragment: native,
     external: native == null,
@@ -59,6 +60,24 @@ String _paste(BusyMarkPastePlan plan) {
 }
 
 const _filePath = '/project/new.md';
+
+const _directedCodeHtml =
+    '<p>All <strong>95 independent checks passed</strong> against commit '
+    '<code dir="ltr">3cfba44</code> with Flutter 3.50.1 and Dart 3.14.0. '
+    'The run included all four corrected SVG observer cases and had zero failures or skips.</p>'
+    '<p>The audit confirmed caret offsets of 7 after plain formula paste and 11 after rich paste. '
+    'It also confirmed that <code dir="ltr">image).png</code> and its title survive '
+    'Markdown regeneration and reparsing.</p>'
+    '<p>All 1,940 tests across the guide’s 31 maintained suites passed, as did the production '
+    'Preview check. The working tree is clean.</p>';
+
+const _directedCodeMarkdown =
+    'All **95 independent checks passed** against commit `3cfba44` with Flutter 3.50.1 and Dart 3.14.0. '
+    'The run included all four corrected SVG observer cases and had zero failures or skips.\n\n'
+    'The audit confirmed caret offsets of 7 after plain formula paste and 11 after rich paste. '
+    'It also confirmed that `image).png` and its title survive Markdown regeneration and reparsing.\n\n'
+    'All 1,940 tests across the guide’s 31 maintained suites passed, as did the production '
+    'Preview check. The working tree is clean.';
 
 BusyDocument _parse(String source, {String path = _filePath}) =>
     const MarkdownParser()
@@ -105,14 +124,231 @@ void main() {
     BusyMarkPasteDestination.markdownSource,
     BusyMarkPasteDestination.editor,
   ]) {
-    String paste(String input) {
-      final plan = _resolve(input, destination: destination);
-      return destination == BusyMarkPasteDestination.editor
-          ? _pasteIntoEditor(plan)
-          : _paste(plan);
-    }
+    String insert(BusyMarkPastePlan plan) =>
+        destination == BusyMarkPasteDestination.editor
+        ? _pasteIntoEditor(plan)
+        : _paste(plan);
+
+    String paste(String input) =>
+        insert(_resolve(input, destination: destination));
 
     group(destination.name, () {
+      test(
+        'external directional code in English prose converts to Markdown',
+        () async {
+          final source = html.parseFragment(_directedCodeHtml);
+          final paragraphs = source.children
+              .map((paragraph) => paragraph.text)
+              .toList();
+          final inputs = [
+            _directedCodeHtml,
+            (source..querySelectorAll('code').last.attributes.remove('dir'))
+                .outerHtml,
+          ];
+          final outputs = <String>[];
+          for (final input in inputs) {
+            final plan = _resolve(
+              input,
+              text: paragraphs.join('\n\n'),
+              destination: destination,
+            );
+            final candidate =
+                plan.candidates.first as BusyMarkStructuredPasteCandidate;
+            expect(candidate.source, BusyMarkStructuredClipboardSource.html);
+            final output = insert(plan);
+            expect(
+              output.trimRight(),
+              _directedCodeMarkdown,
+              reason: candidate.fragment.documentBlocks
+                  .map(
+                    (block) =>
+                        '${block.kind.name}: ${block.rawSource ?? block.plainText}',
+                  )
+                  .join('\n'),
+            );
+            outputs.add(output);
+          }
+
+          final root = await Directory.systemTemp.createTemp(
+            'busymark-inline-code-paste-',
+          );
+          addTearDown(() => root.delete(recursive: true));
+          final file = await File(
+            '${root.path}/target.md',
+          ).writeAsString('Target\n');
+          final writer = await DocumentHistoryHarness.create(path: file.path);
+          addTearDown(writer.dispose);
+          writer.controller.updateActiveText(outputs.first);
+          expect(await writer.controller.saveActive(), isTrue);
+          final reopened = await DocumentHistoryHarness.create(path: file.path);
+          addTearDown(reopened.dispose);
+          expect(reopened.buffer.text.trimRight(), _directedCodeMarkdown);
+          final document = _parse(reopened.buffer.text, path: file.path);
+          expect(
+            document.blocks.map((block) => block.kind),
+            List.filled(3, BusyBlockKind.paragraph),
+          );
+          final preview = const BusyMarkPreviewBuilder().build(document);
+          expect(preview.blocks.map((block) => block.text), paragraphs);
+          expect(
+            preview.blocks
+                .expand((block) => block.inlines)
+                .where((inline) => inline.kind != PreviewInlineKind.text)
+                .map((inline) => (inline.kind, inline.text)),
+            [
+              (PreviewInlineKind.strong, '95 independent checks passed'),
+              (PreviewInlineKind.code, '3cfba44'),
+              (PreviewInlineKind.code, 'image).png'),
+            ],
+          );
+        },
+      );
+
+      test(
+        'redundant inline direction keeps rich formatting and line boundaries',
+        () {
+          for (final dir in ['ltr', 'auto']) {
+            final output = paste(
+              '<section dir="$dir"><p dir="$dir">Use '
+              '<strong dir="$dir">bold <code dir="$dir">path  name</code></strong> and '
+              '<em><code dir="auto">flag</code></em> '
+              '<a dir="$dir" href="https://example.test" title="Guide">here</a>. '
+              '<mark dir="$dir">Notice</mark>.</p>'
+              '<p>Next <code>ordinary</code> paragraph.</p></section>',
+            );
+            final rendered = html.parseFragment(md.markdownToHtml(output));
+            expect(output, isNot(contains('dir=')));
+            expect(output, isNot(contains('<p>')));
+            expect(output, isNot(contains('<code')));
+            expect(rendered.querySelectorAll('p'), hasLength(2));
+            expect(rendered.querySelector('strong')?.text, 'bold path  name');
+            expect(rendered.querySelector('strong code')?.text, 'path  name');
+            expect(rendered.querySelector('em code')?.text, 'flag');
+            expect(
+              rendered
+                  .querySelector(
+                    'a[href="https://example.test"][title="Guide"]',
+                  )
+                  ?.text,
+              'here',
+            );
+            expect(rendered.querySelector('mark')?.text, 'Notice');
+            expect(
+              rendered.querySelector('p:last-child code')?.text,
+              'ordinary',
+            );
+            expect(rendered.querySelectorAll('p').map((p) => p.text), [
+              'Use bold path  name and flag here. Notice.',
+              'Next ordinary paragraph.',
+            ]);
+          }
+          expect(
+            paste(
+              '<p>Example\n<code dir="ltr">123</code> text.</p>',
+            ).trimRight(),
+            'Example `123` text.',
+          );
+        },
+      );
+
+      test(
+        'inline isolation survives RTL, mixed, and directionally uncertain flow',
+        () {
+          for (final (input, selector, text) in [
+            (
+              '<p>Before <code dir="rtl">file !</code> after.</p>',
+              'code[dir=rtl]',
+              'file !',
+            ),
+            (
+              '<div dir="rtl"><p>Before <code dir="ltr">file !</code> after.</p></div>',
+              'div[dir=rtl] code[dir=ltr]',
+              'file !',
+            ),
+            (
+              '<div dir="auto"><p>العربية <code dir="ltr">file !</code></p></div>',
+              'div[dir=auto] code[dir=ltr]',
+              'file !',
+            ),
+            (
+              '<p>Before <code dir="auto">العربية !</code> after.</p>',
+              'code[dir=auto]',
+              'العربية !',
+            ),
+            (
+              '<p>Before <code dir="auto">file العربية !</code> after.</p>',
+              'code[dir=auto]',
+              'file العربية !',
+            ),
+            (
+              '<p>Before العربية <code dir="ltr">file !</code> after.</p>',
+              'code[dir=ltr]',
+              'file !',
+            ),
+            (
+              '<p>Before \u202e text\u202c <em dir="ltr">file !</em> after.</p>',
+              'em[dir=ltr]',
+              'file !',
+            ),
+            (
+              '<p>Before 𐤀 <span dir="ltr">file !</span> after.</p>',
+              'span[dir=ltr]',
+              'file !',
+            ),
+            (
+              '<p>Before <bdo dir="ltr">file !</bdo> after.</p>',
+              'bdo[dir=ltr]',
+              'file !',
+            ),
+            ('<p>Before <bdi>file !</bdi> after.</p>', 'bdi', 'file !'),
+            (
+              '<p>Before <mark dir="rtl">file !</mark> after.</p>',
+              'mark[dir=rtl]',
+              'file !',
+            ),
+            (
+              '<p>Before<br><br><code dir="ltr">123</code></p>',
+              'code[dir=ltr]',
+              '123',
+            ),
+          ]) {
+            final output = html.parseFragment(paste(input));
+            expect(output.querySelector(selector)?.text, text, reason: input);
+          }
+          final output = html.parseFragment(
+            paste(
+              '<section dir="rtl"><p dir="ltr">Before <code dir="ltr">file</code> after.</p></section>',
+            ),
+          );
+          expect(
+            output
+                .querySelector('section[dir=rtl] p[dir=ltr] code')
+                ?.attributes['dir'],
+            isNull,
+          );
+          expect(
+            output.querySelector('section[dir=rtl] p[dir=ltr] code')?.text,
+            'file',
+          );
+        },
+      );
+
+      test('native fragments retain authored inline direction', () {
+        const authored = '<p>Before <code dir="ltr">file</code> after.</p>';
+        final plan = _resolve(
+          authored,
+          native: _capture(_parse(authored)).encode(),
+          destination: destination,
+        );
+        final candidate =
+            plan.candidates.first as BusyMarkStructuredPasteCandidate;
+        expect(
+          candidate.source,
+          BusyMarkStructuredClipboardSource.richFragment,
+        );
+        expect(insert(plan).trimRight(), authored);
+      });
+
       test('expanded browser selection keeps prose and all five bullets', () {
         final items = [for (var i = 1; i <= 5; i++) '<li>Item $i</li>'].join();
         for (final input in [
