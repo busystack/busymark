@@ -4532,11 +4532,11 @@ class AppLocalizationsEt extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + ressursikaust';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback => 'Luba välise HTTPS-heli esitamine';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      'Väline heli vajab võrguühendust. Võrguühenduseta ekspordis säilivad salvestiste lingid.';
 
   @override
   String get exportCustomCss => 'Kohandatud laadileht…';
@@ -9088,332 +9088,334 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'Kuva külgpaneel';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Helisalvestis';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'Kas lubada väline heli?';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'Luba selles dokumendis';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => 'Proovi heli uuesti esitada';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'Peata ajutiselt';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => 'Esita';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      'Heli esitamine ebaõnnestus. Kontrolli faili, ühendust või koodekit ja proovi uuesti.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => 'Esituskoht';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'Lülita heli sisse';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'Vaigista';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'Helitugevus';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => 'Esituskiirus';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => 'Korda esitust';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => 'Lisa heli';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => 'Vali helifail';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'Heli HTTPS-aadress';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => 'Helikaust dokumendi suhtes';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst => 'Salvesta dokument enne helifaili lisamist.';
 
   @override
-  String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+  String get audioStaleTarget => 'Algne dokument on muutunud. Heli ei lisatud.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => 'Heli omadused';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'Heli HTML-märgendus';
 
   @override
-  String get speech => 'Speech';
+  String get speech => 'Kõnesüntees';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => 'Loe ette';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => 'Loo helifail';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => 'Kõnesünteesi teenusepakkuja';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'Süsteemi kõnesüntees';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => 'Kõnesünteesimudel';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => 'Hääl';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => 'Kõnesünteesi keel';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => 'Sünteesikiirus';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => 'Häälekõrgus';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'Otsi sünteesimootoreid ja hääli';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'Teenusepakkuja API-võti';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'Salvesta võti';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'Kustuta võti';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => 'Võti salvestati turvalisse hoidlasse.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => 'Võti eemaldati turvalisest hoidlast.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => 'Ettelugemise ulatus';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => 'Valik';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => 'Praegune plokk';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => 'Praegune jaotis';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => 'Kogu dokument';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => 'Väljajäetud sisu';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => 'Selles osas pole etteloetavat teksti.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      'Kas luua heli valitud pilveteenusega? Kuvatud tekst saadetakse teenusepakkujale. Tasu võib rakenduda ka päringu tühistamisel.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => 'Loo häälenäidis';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      'See on lühike BusyMarki häälenäidis. Lugemiskiirus ja hääl vastavad valitud kõnesünteesi seadetele.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable => 'Valitud kõnesünteesimootor pole saadaval.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => 'Heli sünteesimine';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => 'Salvesta heli';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => 'Sünteesitud ettelugemine';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => 'Loe pealkirjad ette';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'Loe koodiplokid ette';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'Loe tekstisisene kood ette';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => 'Loe tabelid ette';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => 'Loe tsitaadid ette';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => 'Loe pildikirjeldused ette';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => 'Loe allmärkused ette';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'Lingid';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'Loe lingitekstid ette';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'Loe lingitekstid ja aadressid ette';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'Jäta lingid vahele';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => 'Lõigupaus millisekundites';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => 'Pealkirjapaus millisekundites';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => 'Loodud heli failinimi';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'WAV-helifail';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => 'Tühista süntees';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => 'Lõpeta ettelugemine';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      'Valitud süsteemihääl võib kasutada võrguteenust. Kas lubada sellel kuvatud tekst ette lugeda?';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'Kohalik kõnesüntees';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'Kõnesüntees pilves';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => 'Kõnestiil';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Piperi häälemudel (.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Vali Piperi mudel';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady =>
+      'Heli on esitamiseks või salvestamiseks valmis.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => 'Ettelugemine on lõppenud.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => 'Sünteesi edenemine';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => 'Lõpetatud ülesanne.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => 'Lõpetamata ülesanne.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => 'Matemaatikavalemid';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => 'Olemasolev meedia';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => 'Peidetud või toetamata sisu';
 
   @override
   String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+      'Osa valitud tekstist ei saanud kindlalt lähtekohaga seostada.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Paigalda Piperi hääl';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => 'Eelmine tekstilõik';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => 'Järgmine tekstilõik';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'Kontrolli, et audio-elemendil oleks lõpumärgend ja iga source-element oleks vahetult audio-elemendi sees.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'Kontrolli audio atribuudi väärtust. Preload lubab väärtusi none, metadata ja auto. Crossorigin lubab väärtusi anonymous ja use-credentials.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside ei toeta interaktiivset heli märgendust. Paiguta salvestis ressursikausta ja lisa ressursi link.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => 'Lingi tööruumis oleva failiga';
 
   @override
   String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+      'Kopeeri valitud helifail dokumendi manuste hulka';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl =>
+      'Sisesta kehtiv HTTPS-aadress ilma sisselogimisandmeteta.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => 'Sisesta üks täielik HTML-i audio-element.';
 
   @override
   String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+      'See helifail asub väljaspool dokumendile lubatud kausta või pole saadaval.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => 'Ava heli teises rakenduses';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'Kuva kaustas';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => 'Eemalda heli';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'Teenusepakkuja hinnakiri';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      'Eelmine päring võis olla tasuline. Enne uuesti proovimist kontrolli teenusepakkuja kasutusandmeid.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage =>
+      'Teenusepakkuja ei esitanud täielikke kasutusandmeid.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'Teenusepakkuja esitatud kasutusandmed';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '$count sisendmärki';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '$count sisendtokenit';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '$count väljundtokenit';
   }
 }

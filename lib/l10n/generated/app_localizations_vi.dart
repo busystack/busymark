@@ -4531,11 +4531,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + thư mục tài nguyên';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback =>
+      'Cho phép phát âm thanh HTTPS bên ngoài';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      'Cần kết nối mạng để phát âm thanh bên ngoài. Bản xuất ngoại tuyến sẽ giữ liên kết đến các bản ghi đó.';
 
   @override
   String get exportCustomCss => 'Biểu định kiểu tùy chỉnh…';
@@ -9071,332 +9072,336 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'Hiện bảng điều khiển thanh bên';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Âm thanh';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'Cho phép phát âm thanh từ xa?';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'Cho phép trong tài liệu này';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => 'Thử phát lại âm thanh';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'Tạm dừng';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => 'Phát';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      'Không phát được âm thanh. Hãy kiểm tra tệp, kết nối hoặc bộ giải mã rồi thử lại.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => 'Vị trí phát';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'Bật tiếng';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'Tắt tiếng';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'Âm lượng';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => 'Tốc độ phát';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => 'Phát lặp lại';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => 'Chèn âm thanh';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => 'Chọn tệp âm thanh';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'URL HTTPS của âm thanh';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination =>
+      'Thư mục âm thanh theo đường dẫn tương đối với tài liệu';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst => 'Hãy lưu tài liệu trước khi thêm tệp âm thanh.';
 
   @override
   String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+      'Tài liệu gốc đã thay đổi nên âm thanh chưa được chèn.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => 'Thuộc tính âm thanh';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'Mã đánh dấu HTML cho âm thanh';
 
   @override
-  String get speech => 'Speech';
+  String get speech => 'Tổng hợp giọng nói';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => 'Đọc thành tiếng';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => 'Tạo âm thanh';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => 'Nhà cung cấp dịch vụ giọng nói';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'Giọng nói của hệ thống';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => 'Mô hình giọng nói';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => 'Giọng đọc';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => 'Ngôn ngữ đọc';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => 'Tốc độ tổng hợp';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => 'Cao độ';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'Tìm bộ tổng hợp và giọng đọc';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'Khóa API của nhà cung cấp';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'Lưu khóa';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'Xóa khóa';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => 'Đã lưu khóa trong kho lưu trữ bảo mật.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => 'Đã xóa khóa khỏi kho lưu trữ bảo mật.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => 'Phạm vi đọc';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => 'Phần đã chọn';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => 'Khối hiện tại';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => 'Mục hiện tại';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => 'Toàn bộ tài liệu';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => 'Nội dung đã bỏ qua';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => 'Không có văn bản để đọc trong phạm vi này.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      'Tạo âm thanh bằng nhà cung cấp đám mây đã chọn? Văn bản hiển thị sẽ được gửi cho nhà cung cấp. Yêu cầu có thể phát sinh phí ngay cả khi bị hủy.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => 'Tạo mẫu giọng đọc';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      'Đây là mẫu giọng đọc ngắn của BusyMark. Tốc độ đọc và giọng đọc được lấy từ cài đặt đã chọn.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable =>
+      'Bộ tổng hợp giọng nói đã chọn không khả dụng.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => 'Đang tổng hợp âm thanh';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => 'Lưu âm thanh';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => 'Bản đọc tổng hợp';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => 'Đọc tiêu đề';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'Đọc khối mã';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'Đọc mã nội dòng';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => 'Đọc bảng';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => 'Đọc trích dẫn';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => 'Đọc mô tả hình ảnh';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => 'Đọc chú thích cuối trang';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'Liên kết';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'Đọc văn bản liên kết';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'Đọc văn bản và URL của liên kết';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'Bỏ qua liên kết';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => 'Khoảng nghỉ giữa các đoạn (mili giây)';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => 'Khoảng nghỉ sau tiêu đề (mili giây)';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => 'Tên tệp âm thanh tạo ra';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'Tệp âm thanh WAV';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => 'Hủy tổng hợp';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => 'Dừng đọc';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      'Giọng hệ thống đã chọn có thể sử dụng dịch vụ qua mạng. Cho phép giọng này đọc văn bản hiển thị?';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'Giọng nói chạy trên máy';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'Giọng nói qua đám mây';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => 'Phong cách giọng đọc';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Mô hình giọng Piper (.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Chọn mô hình Piper';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => 'Đã có thể phát hoặc lưu âm thanh.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => 'Đã đọc xong.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => 'Tiến độ tổng hợp';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => 'Việc đã hoàn thành.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => 'Việc chưa hoàn thành.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => 'Nội dung toán học';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => 'Nội dung đa phương tiện có sẵn';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => 'Nội dung bị ẩn hoặc không được hỗ trợ';
 
   @override
   String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+      'Không thể đối chiếu an toàn một phần văn bản đã chọn với nguồn.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Cài đặt giọng Piper';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => 'Đoạn trước';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => 'Đoạn sau';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'Hãy kiểm tra xem audio có thẻ đóng và mỗi source có phải là phần tử con trực tiếp của audio hay không.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'Hãy kiểm tra giá trị thuộc tính của audio. preload nhận none, metadata hoặc auto. crossorigin nhận anonymous hoặc use-credentials.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside không hỗ trợ mã đánh dấu cho âm thanh tương tác. Hãy đặt bản ghi vào thư mục tài nguyên rồi thêm liên kết đến tệp.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile =>
+      'Liên kết đến một tệp trong không gian làm việc này';
 
   @override
   String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+      'Sao chép âm thanh đã chọn vào tài nguyên của tài liệu';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl =>
+      'Nhập URL HTTPS hợp lệ không chứa thông tin xác thực.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => 'Nhập một phần tử HTML audio hoàn chỉnh.';
 
   @override
   String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+      'Tệp âm thanh nằm ngoài thư mục được phép của tài liệu hoặc không khả dụng.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => 'Mở âm thanh bằng ứng dụng bên ngoài';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'Hiện trong thư mục';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => 'Xóa âm thanh';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'Bảng giá của nhà cung cấp';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      'Yêu cầu trước có thể đã phát sinh phí. Hãy kiểm tra mức sử dụng ở phía nhà cung cấp trước khi quyết định thử lại.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage => 'Nhà cung cấp không gửi số liệu sử dụng đầy đủ.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'Mức sử dụng do nhà cung cấp báo cáo';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '$count ký tự đầu vào';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '$count token đầu vào';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '$count token đầu ra';
   }
 }

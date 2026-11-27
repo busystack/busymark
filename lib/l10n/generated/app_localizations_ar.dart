@@ -4569,11 +4569,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + مجلد موارد';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback =>
+      'السماح بتشغيل الصوت الخارجي عبر HTTPS';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      'يتطلب الصوت الخارجي اتصالًا بالشبكة. تحتفظ التصديرات المعدة للاستخدام دون اتصال بروابط هذه التسجيلات.';
 
   @override
   String get exportCustomCss => 'ورقة أنماط مخصصة…';
@@ -9082,332 +9083,331 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'إظهار اللوحة الجانبية';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'تسجيل صوتي';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'هل تسمح بتشغيل الصوت البعيد؟';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'السماح في هذا المستند';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => 'إعادة محاولة التشغيل';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'إيقاف مؤقت';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => 'تشغيل';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      'تعذّر تشغيل الصوت. تحقّق من الملف أو الاتصال أو برنامج الترميز وحاول مجددًا.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => 'موضع التشغيل';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'إلغاء كتم الصوت';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'كتم الصوت';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'مستوى الصوت';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => 'سرعة التشغيل';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => 'تكرار';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => 'إدراج صوت';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => 'اختيار ملف صوتي';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'عنوان الصوت عبر HTTPS';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => 'مجلد الصوت بالنسبة إلى المستند';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst => 'احفظ المستند قبل إضافة ملف صوتي.';
 
   @override
-  String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+  String get audioStaleTarget => 'تغيّر المستند الأصلي. لم يُدرج الصوت.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => 'خصائص الصوت';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'ترميز الصوت في HTML';
 
   @override
-  String get speech => 'Speech';
+  String get speech => 'النطق';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => 'القراءة بصوت عالٍ';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => 'إنشاء تسجيل صوتي';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => 'مزود توليد الكلام';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'توليد الكلام في النظام';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => 'نموذج توليد الكلام';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => 'الصوت';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => 'لغة النطق';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => 'سرعة توليد الكلام';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => 'طبقة الصوت';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'البحث عن محركات وأصوات';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'مفتاح واجهة API للمزود';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'حفظ المفتاح';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'حذف المفتاح';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => 'حُفظ المفتاح في التخزين الآمن.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => 'أُزيل المفتاح من التخزين الآمن.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => 'نطاق القراءة';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => 'التحديد';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => 'الكتلة الحالية';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => 'القسم الحالي';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => 'المستند كله';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => 'المحتوى المتجاوز';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => 'لا يوجد نص قابل للقراءة في هذا النطاق.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      'هل تريد إنشاء الصوت بواسطة المزود السحابي المحدد؟ سيُرسل النص المعروض إلى المزود. قد تُحتسب رسوم حتى عند إلغاء الطلب.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => 'إنشاء عينة صوت';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      'هذه عينة صوت قصيرة من BusyMark. تحدد إعدادات النطق المختارة سرعة القراءة والصوت.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable => 'محرك توليد الكلام المحدد غير متاح.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => 'جارٍ توليد الصوت';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => 'حفظ الصوت';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => 'قراءة مولّدة';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => 'قراءة العناوين';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'قراءة كتل الشيفرة';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'قراءة الشيفرة المضمّنة';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => 'قراءة الجداول';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => 'قراءة الاقتباسات';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => 'قراءة أوصاف الصور';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => 'قراءة الحواشي';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'الروابط';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'قراءة نصوص الروابط';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'قراءة نصوص الروابط وعناوينها';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'تجاوز الروابط';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => 'مدة التوقف بعد الفقرة بالمللي ثانية';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => 'مدة التوقف بعد العنوان بالمللي ثانية';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => 'اسم ملف الصوت المولّد';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'ملف صوت WAV';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => 'إلغاء توليد الكلام';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => 'إيقاف القراءة';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      'قد يستخدم صوت النظام المحدد خدمة عبر الشبكة. هل تسمح له بقراءة النص المعروض؟';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'توليد الكلام محليًا';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'توليد الكلام سحابيًا';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => 'أسلوب الصوت';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'نموذج صوت Piper (.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'اختيار نموذج Piper';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => 'الصوت جاهز للتشغيل أو الحفظ.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => 'انتهت القراءة.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => 'تقدم توليد الكلام';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => 'مهمة مكتملة.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => 'مهمة غير مكتملة.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => 'التعبيرات الرياضية';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => 'الوسائط الموجودة';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => 'محتوى مخفي أو غير مدعوم';
 
   @override
   String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+      'تعذّر تحديد موضع بعض النص المحدد في المصدر بأمان.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'تثبيت صوت Piper';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => 'المقطع السابق';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => 'المقطع التالي';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'تحقّق من وجود وسم إغلاق لعنصر audio ومن إدراج كل عنصر source مباشرةً داخل audio.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'تحقّق من قيمة سمة audio. يقبل preload القيم none أو metadata أو auto. يقبل crossorigin القيمتين anonymous أو use-credentials.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'لا يدعم Writerside ترميز الصوت التفاعلي. ضع التسجيل في مجلد الموارد وأضف رابطًا إليه.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => 'ربط ملف في مساحة العمل هذه';
 
   @override
-  String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+  String get audioCopyFile => 'نسخ التسجيل المحدد إلى أصول المستند';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl =>
+      'أدخل عنوان HTTPS صالحًا لا يتضمن بيانات اعتماد.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => 'أدخل عنصر صوت HTML كاملًا.';
 
   @override
   String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+      'هذا الملف الصوتي خارج المجلد المسموح للمستند أو أنه غير متاح.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => 'فتح الصوت في تطبيق خارجي';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'إظهار في المجلد';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => 'إزالة الصوت';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'أسعار المزود';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      'ربما تسبب الطلب السابق في رسوم. تحقّق من الاستخدام لدى المزود قبل إعادة المحاولة.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage => 'لم يقدّم المزود إحصاءً كاملًا للاستخدام.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'الاستخدام الذي أبلغ عنه المزود';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return 'محارف الإدخال: ⁨$count⁩';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return 'رموز الإدخال: ⁨$count⁩';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return 'رموز الإخراج: ⁨$count⁩';
   }
 }

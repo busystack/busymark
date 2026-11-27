@@ -9182,7 +9182,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'Afficher le panneau latéral';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Enregistrement audio';
 
   @override
   String get audioRemotePermission => 'Autoriser l’audio distant ?';
@@ -9194,7 +9194,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get audioRetry => 'Réessayer la lecture';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'Mettre en pause';
 
   @override
   String get audioPlay => 'Lire';
@@ -9213,7 +9213,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get audioMute => 'Couper le son';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'Volume sonore';
 
   @override
   String get audioPlaybackRate => 'Vitesse de lecture';

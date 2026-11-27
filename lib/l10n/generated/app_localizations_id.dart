@@ -4543,11 +4543,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + folder aset';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback =>
+      'Izinkan pemutaran audio HTTPS eksternal';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      'Pemutaran audio eksternal memerlukan koneksi jaringan. Hasil ekspor luring tetap menyertakan tautan ke rekaman tersebut.';
 
   @override
   String get exportCustomCss => 'Lembar gaya khusus…';
@@ -9094,332 +9095,336 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'Tampilkan panel bilah sisi';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Media audio';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'Izinkan audio dari sumber jarak jauh?';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'Izinkan di dokumen ini';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => 'Coba putar audio lagi';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'Jeda';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => 'Putar';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      'Audio tidak dapat diputar. Periksa berkas, koneksi, atau kodek, lalu coba lagi.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => 'Posisi pemutaran';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'Aktifkan suara';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'Bisukan';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'Volume suara';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => 'Kecepatan pemutaran';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => 'Putar berulang';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => 'Sisipkan audio';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => 'Pilih berkas audio';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'URL HTTPS untuk audio';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => 'Folder audio relatif terhadap dokumen';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst =>
+      'Simpan dokumen sebelum menambahkan berkas audio.';
 
   @override
   String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+      'Dokumen asal telah berubah. Audio tidak disisipkan.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => 'Properti audio';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'Markah HTML untuk audio';
 
   @override
-  String get speech => 'Speech';
+  String get speech => 'Sintesis suara';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => 'Bacakan';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => 'Buat audio';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => 'Penyedia layanan suara';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'Suara sistem';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => 'Model suara';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => 'Jenis suara';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => 'Bahasa pembacaan';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => 'Kecepatan sintesis';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => 'Nada';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'Cari mesin dan suara';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'Kunci API penyedia';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'Simpan kunci';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'Hapus kunci';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => 'Kunci disimpan di penyimpanan aman.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => 'Kunci dihapus dari penyimpanan aman.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => 'Cakupan pembacaan';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => 'Bagian yang dipilih';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => 'Blok saat ini';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => 'Bagian saat ini';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => 'Seluruh dokumen';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => 'Konten yang dilewati';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText =>
+      'Tidak ada teks yang dapat dibacakan dalam cakupan ini.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      'Buat audio dengan penyedia layanan awan yang dipilih? Teks yang ditampilkan akan dikirim ke penyedia. Biaya mungkin tetap dikenakan jika permintaan dibatalkan.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => 'Buat sampel suara';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      'Ini adalah sampel suara singkat BusyMark. Kecepatan baca dan suara mengikuti pengaturan yang dipilih.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable => 'Mesin suara yang dipilih tidak tersedia.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => 'Sedang menyintesis audio';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => 'Simpan audio';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => 'Narasi hasil sintesis';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => 'Bacakan judul bagian';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'Bacakan blok kode';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'Bacakan kode sebaris';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => 'Bacakan tabel';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => 'Bacakan kutipan';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => 'Bacakan deskripsi gambar';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => 'Bacakan catatan kaki';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'Tautan';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'Bacakan teks tautan';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'Bacakan teks dan URL tautan';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'Lewati tautan';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => 'Jeda antarapagraf (milidetik)';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => 'Jeda setelah judul bagian (milidetik)';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => 'Nama berkas audio yang dihasilkan';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'Berkas audio WAV';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => 'Batalkan sintesis';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => 'Hentikan pembacaan';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      'Suara sistem yang dipilih mungkin menggunakan layanan jaringan. Izinkan suara tersebut membacakan teks yang ditampilkan?';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'Sintesis suara lokal';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'Sintesis suara melalui layanan awan';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => 'Gaya suara';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Model suara Piper (.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Pilih model Piper';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => 'Audio siap diputar atau disimpan.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => 'Pembacaan selesai.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => 'Progres sintesis';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => 'Tugas selesai.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => 'Tugas belum selesai.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => 'Konten matematika';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => 'Media yang sudah ada';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => 'Konten tersembunyi atau tidak didukung';
 
   @override
   String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+      'Sebagian teks yang dipilih tidak dapat dipetakan secara aman ke sumbernya.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Pasang suara Piper';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => 'Segmen sebelumnya';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => 'Segmen berikutnya';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'Pastikan elemen audio memiliki tag penutup dan setiap elemen source merupakan anak langsung dari audio.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'Periksa nilai atribut audio. Nilai preload yang diterima adalah none, metadata, atau auto. Nilai crossorigin yang diterima adalah anonymous atau use-credentials.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside tidak mendukung markah audio interaktif. Tempatkan rekaman dalam direktori sumber daya lalu tambahkan tautannya.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => 'Tautkan ke berkas di ruang kerja ini';
 
   @override
-  String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+  String get audioCopyFile => 'Salin audio yang dipilih ke aset dokumen';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl =>
+      'Masukkan URL HTTPS yang valid tanpa kredensial.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup =>
+      'Masukkan satu elemen audio HTML yang lengkap.';
 
   @override
   String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+      'Berkas audio ini berada di luar folder yang diizinkan untuk dokumen atau tidak tersedia.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => 'Buka audio di aplikasi eksternal';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'Tampilkan di folder';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => 'Hapus audio';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'Tarif penyedia';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      'Permintaan sebelumnya mungkin dikenai biaya. Periksa penggunaan pada penyedia sebelum memutuskan untuk mencoba lagi.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage =>
+      'Penyedia tidak memberikan jumlah penggunaan yang lengkap.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'Penggunaan yang dilaporkan penyedia';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '$count karakter masukan';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '$count token masukan';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '$count token keluaran';
   }
 }

@@ -4318,11 +4318,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + 资源目录';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback => '允许播放外部 HTTPS 音频';
 
   @override
-  String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+  String get exportRemoteAudioPlaybackNote => '播放外部音频需要网络连接。离线导出会保留这些录音的链接。';
 
   @override
   String get exportCustomCss => '自定义样式表…';
@@ -8703,333 +8702,325 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiShowSidebarPanel => '显示侧边栏面板';
 
   @override
-  String get audio => 'Audio';
+  String get audio => '音频';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => '允许播放远程音频吗？';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => '在此文档中允许';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => '重试播放音频';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => '暂停';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => '播放';
 
   @override
-  String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+  String get audioPlaybackFailure => '无法播放音频。请检查文件、网络连接或编解码器后重试。';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => '播放位置';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => '取消静音';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => '静音';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => '音量';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => '播放速度';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => '循环播放';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => '插入音频';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => '选择音频文件';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'HTTPS 音频网址';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => '相对于文档的音频文件夹';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst => '请先保存文档，再添加音频文件。';
 
   @override
-  String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+  String get audioStaleTarget => '原文档已更改，未插入音频。';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => '音频属性';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'HTML 音频标记';
 
   @override
-  String get speech => 'Speech';
+  String get speech => '语音';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => '朗读';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => '生成音频';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => '语音服务提供商';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => '系统语音';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => '语音模型';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => '声音';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => '朗读语言';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => '合成速度';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => '音高';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => '查找语音引擎和声音';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => '服务商 API 密钥';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => '保存密钥';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => '删除密钥';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => '密钥已存入安全存储。';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => '密钥已从安全存储中移除。';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => '朗读范围';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => '选中的内容';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => '当前内容块';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => '当前章节';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => '整个文档';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => '已省略的内容';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => '此范围内没有可朗读的文本。';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      '要使用所选云服务生成音频吗？界面显示的文本将发送给该服务商。即使取消请求，也可能产生费用。';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => '生成语音样本';
 
   @override
-  String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+  String get speechSampleText => '这是一段 BusyMark 语音样本。朗读速度和声音取自当前语音设置。';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable => '所选语音引擎不可用。';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => '正在合成音频';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => '保存音频';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => '合成的朗读音频';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => '朗读标题';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => '朗读代码块';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => '朗读行内代码';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => '朗读表格';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => '朗读引文';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => '朗读图像描述';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => '朗读脚注';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => '链接';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => '朗读链接文字';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => '朗读链接文字和网址';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => '跳过链接';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => '段落停顿时长（毫秒）';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => '标题停顿时长（毫秒）';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => '生成音频的文件名';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'WAV 音频';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => '取消合成';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => '停止朗读';
 
   @override
-  String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+  String get speechUnknownLocality => '所选系统语音可能使用网络服务。允许其朗读当前显示的文本吗？';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => '本地语音';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => '云端语音';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => '语音风格';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Piper 语音模型（.onnx）';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => '选择 Piper 模型';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => '音频已就绪，可以播放或保存。';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => '朗读结束。';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => '合成进度';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => '已完成的任务。';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => '未完成的任务。';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => '数学内容';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => '现有媒体';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => '隐藏或不受支持的内容';
 
   @override
-  String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+  String get speechSelectionUnmapped => '部分选中的文本无法安全地对应到源文档。';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => '安装 Piper 语音';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => '上一段';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => '下一段';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      '请检查 audio 元素是否有结束标签，以及每个 source 元素是否都是 audio 的直接子元素。';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      '请检查 audio 元素的属性值。preload 接受 none、metadata 或 auto。crossorigin 接受 anonymous 或 use-credentials。';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside 不支持交互式音频标记。请将录音放入资源目录并添加资源链接。';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => '链接到此工作区中的文件';
 
   @override
-  String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+  String get audioCopyFile => '将选中的音频复制到文档的资源目录';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl => '请输入不含凭据的有效 HTTPS 网址。';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => '请输入一个完整的 HTML audio 元素。';
 
   @override
-  String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+  String get audioCannotResolve => '此音频文件不在文档允许访问的目录内，或无法访问。';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => '在外部应用中打开音频';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => '在文件夹中显示';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => '移除音频';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => '服务商定价';
 
   @override
-  String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+  String get speechBillingUncertain => '上一次请求可能已产生费用。请先查看服务商的用量，再决定是否重试。';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage => '服务商未提供完整的用量数据。';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => '服务商报告的用量';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '$count 个输入字符';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '$count 个输入词元';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '$count 个输出词元';
   }
 }
 
@@ -13345,6 +13336,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get exportAssetsDirectory => 'HTML + 资源目录';
 
   @override
+  String get exportRemoteAudioPlayback => '允许播放外部 HTTPS 音频';
+
+  @override
+  String get exportRemoteAudioPlaybackNote => '播放外部音频需要网络连接。离线导出会保留这些录音的链接。';
+
+  @override
   String get exportCustomCss => '自定义样式表…';
 
   @override
@@ -17721,4 +17718,326 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiShowSidebarPanel => '显示侧边栏面板';
+
+  @override
+  String get audio => '音频';
+
+  @override
+  String get audioRemotePermission => '允许播放远程音频吗？';
+
+  @override
+  String get audioAllowForDocument => '在此文档中允许';
+
+  @override
+  String get audioRetry => '重试播放音频';
+
+  @override
+  String get audioPause => '暂停';
+
+  @override
+  String get audioPlay => '播放';
+
+  @override
+  String get audioPlaybackFailure => '无法播放音频。请检查文件、网络连接或编解码器后重试。';
+
+  @override
+  String get audioPosition => '播放位置';
+
+  @override
+  String get audioUnmute => '取消静音';
+
+  @override
+  String get audioMute => '静音';
+
+  @override
+  String get audioVolume => '音量';
+
+  @override
+  String get audioPlaybackRate => '播放速度';
+
+  @override
+  String get audioLoop => '循环播放';
+
+  @override
+  String get insertAudio => '插入音频';
+
+  @override
+  String get audioFile => '选择音频文件';
+
+  @override
+  String get audioUrl => 'HTTPS 音频网址';
+
+  @override
+  String get audioDestination => '相对于文档的音频文件夹';
+
+  @override
+  String get audioSaveFirst => '请先保存文档，再添加音频文件。';
+
+  @override
+  String get audioStaleTarget => '原文档已更改，未插入音频。';
+
+  @override
+  String get audioProperties => '音频属性';
+
+  @override
+  String get audioMarkup => 'HTML 音频标记';
+
+  @override
+  String get speech => '语音';
+
+  @override
+  String get readAloud => '朗读';
+
+  @override
+  String get generateAudio => '生成音频';
+
+  @override
+  String get speechProvider => '语音服务提供商';
+
+  @override
+  String get speechSystem => '系统语音';
+
+  @override
+  String get speechModel => '语音模型';
+
+  @override
+  String get speechVoice => '声音';
+
+  @override
+  String get speechLanguage => '朗读语言';
+
+  @override
+  String get speechSpeed => '合成速度';
+
+  @override
+  String get speechPitch => '音高';
+
+  @override
+  String get speechRefresh => '查找语音引擎和声音';
+
+  @override
+  String get speechKey => '服务商 API 密钥';
+
+  @override
+  String get speechStoreKey => '保存密钥';
+
+  @override
+  String get speechDeleteKey => '删除密钥';
+
+  @override
+  String get speechKeyStored => '密钥已存入安全存储。';
+
+  @override
+  String get speechKeyDeleted => '密钥已从安全存储中移除。';
+
+  @override
+  String get speechScope => '朗读范围';
+
+  @override
+  String get speechSelection => '选中的内容';
+
+  @override
+  String get speechBlock => '当前内容块';
+
+  @override
+  String get speechSection => '当前章节';
+
+  @override
+  String get speechDocument => '整个文档';
+
+  @override
+  String get speechOmissions => '已省略的内容';
+
+  @override
+  String get speechNoText => '此范围内没有可朗读的文本。';
+
+  @override
+  String get speechCloudConsent =>
+      '要使用所选云服务生成音频吗？界面显示的文本将发送给该服务商。即使取消请求，也可能产生费用。';
+
+  @override
+  String get speechSample => '生成语音样本';
+
+  @override
+  String get speechSampleText => '这是一段 BusyMark 语音样本。朗读速度和声音取自当前语音设置。';
+
+  @override
+  String get speechUnavailable => '所选语音引擎不可用。';
+
+  @override
+  String get speechSynthesizing => '正在合成音频';
+
+  @override
+  String get speechSaveAudio => '保存音频';
+
+  @override
+  String get speechGenerated => '合成的朗读音频';
+
+  @override
+  String get speechHeadings => '朗读标题';
+
+  @override
+  String get speechCodeBlocks => '朗读代码块';
+
+  @override
+  String get speechInlineCode => '朗读行内代码';
+
+  @override
+  String get speechTables => '朗读表格';
+
+  @override
+  String get speechQuotes => '朗读引文';
+
+  @override
+  String get speechImages => '朗读图像描述';
+
+  @override
+  String get speechFootnotes => '朗读脚注';
+
+  @override
+  String get speechLinks => '链接';
+
+  @override
+  String get speechLinksLabel => '朗读链接文字';
+
+  @override
+  String get speechLinksUrl => '朗读链接文字和网址';
+
+  @override
+  String get speechLinksSkip => '跳过链接';
+
+  @override
+  String get speechBlockPause => '段落停顿时长（毫秒）';
+
+  @override
+  String get speechSectionPause => '标题停顿时长（毫秒）';
+
+  @override
+  String get speechFilename => '生成音频的文件名';
+
+  @override
+  String get speechWav => 'WAV 音频';
+
+  @override
+  String get speechCancelJob => '取消合成';
+
+  @override
+  String get speechStop => '停止朗读';
+
+  @override
+  String get speechUnknownLocality => '所选系统语音可能使用网络服务。允许其朗读当前显示的文本吗？';
+
+  @override
+  String get speechLocalOnly => '本地语音';
+
+  @override
+  String get speechCloud => '云端语音';
+
+  @override
+  String get speechStyle => '语音风格';
+
+  @override
+  String get speechPiperModel => 'Piper 语音模型（.onnx）';
+
+  @override
+  String get speechPiperImport => '选择 Piper 模型';
+
+  @override
+  String get speechAudioReady => '音频已就绪，可以播放或保存。';
+
+  @override
+  String get speechReadComplete => '朗读结束。';
+
+  @override
+  String get speechProgress => '合成进度';
+
+  @override
+  String get speechTaskDone => '已完成的任务。';
+
+  @override
+  String get speechTaskOpen => '未完成的任务。';
+
+  @override
+  String get speechMathOmitted => '数学内容';
+
+  @override
+  String get speechMediaOmitted => '现有媒体';
+
+  @override
+  String get speechHiddenOmitted => '隐藏或不受支持的内容';
+
+  @override
+  String get speechSelectionUnmapped => '部分选中的文本无法安全地对应到源文档。';
+
+  @override
+  String get speechPiperInstall => '安装 Piper 语音';
+
+  @override
+  String get speechPreviousSegment => '上一段';
+
+  @override
+  String get speechNextSegment => '下一段';
+
+  @override
+  String get diagnosticMarkdownAudioInvalidStructure =>
+      '请检查 audio 元素是否有结束标签，以及每个 source 元素是否都是 audio 的直接子元素。';
+
+  @override
+  String get diagnosticMarkdownAudioInvalidAttribute =>
+      '请检查 audio 元素的属性值。preload 接受 none、metadata 或 auto。crossorigin 接受 anonymous 或 use-credentials。';
+
+  @override
+  String get diagnosticWritersideAudioUnsupported =>
+      'Writerside 不支持交互式音频标记。请将录音放入资源目录并添加资源链接。';
+
+  @override
+  String get audioLinkFile => '链接到此工作区中的文件';
+
+  @override
+  String get audioCopyFile => '将选中的音频复制到文档的资源目录';
+
+  @override
+  String get audioInvalidUrl => '请输入不含凭据的有效 HTTPS 网址。';
+
+  @override
+  String get audioInvalidMarkup => '请输入一个完整的 HTML audio 元素。';
+
+  @override
+  String get audioCannotResolve => '此音频文件不在文档允许访问的目录内，或无法访问。';
+
+  @override
+  String get audioExternalOpen => '在外部应用中打开音频';
+
+  @override
+  String get audioShowFolder => '在文件夹中显示';
+
+  @override
+  String get audioRemove => '移除音频';
+
+  @override
+  String get speechProviderPricing => '服务商定价';
+
+  @override
+  String get speechBillingUncertain => '上一次请求可能已产生费用。请先查看服务商的用量，再决定是否重试。';
+
+  @override
+  String get speechNoUsage => '服务商未提供完整的用量数据。';
+
+  @override
+  String get speechReportedUsage => '服务商报告的用量';
+
+  @override
+  String speechInputCharacters(int count) {
+    return '$count 个输入字符';
+  }
+
+  @override
+  String speechInputTokens(int count) {
+    return '$count 个输入词元';
+  }
+
+  @override
+  String speechOutputTokens(int count) {
+    return '$count 个输出词元';
+  }
 }

@@ -4410,11 +4410,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + アセットフォルダー';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback => '外部の HTTPS 音声の再生を許可';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      '外部の音声を再生するにはネットワーク接続が必要です。オフライン用のエクスポートには音声へのリンクが残ります。';
 
   @override
   String get exportCustomCss => 'カスタムスタイルシート…';
@@ -8839,332 +8839,327 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'サイドバーパネルを表示';
 
   @override
-  String get audio => 'Audio';
+  String get audio => '音声';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'リモートの音声を許可しますか？';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'この文書で許可';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => '音声の再生を再試行';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => '一時停止';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => '再生';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      '音声を再生できませんでした。ファイル、接続、またはコーデックを確認して再試行してください。';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => '再生位置';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'ミュートを解除';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'ミュート';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => '音量';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => '再生速度';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => '繰り返す';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => '音声を挿入';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => '音声ファイルを選択';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'HTTPS 音声の URL';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => '文書からの相対パスで指定する音声フォルダー';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst => '音声ファイルを追加する前に文書を保存してください。';
 
   @override
-  String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+  String get audioStaleTarget => '元の文書が変更されたため、音声を挿入できませんでした。';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => '音声のプロパティ';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'HTML の音声マークアップ';
 
   @override
-  String get speech => 'Speech';
+  String get speech => '音声合成';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => '読み上げ';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => '音声を生成';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => '音声合成サービス';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'システムの読み上げ';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => '音声合成モデル';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => '音声の種類';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => '読み上げ言語';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => '合成速度';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => '音の高さ';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'エンジンと音声を検索';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'サービスの API キー';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'キーを保存';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'キーを削除';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => 'キーを安全な保管領域に保存しました。';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => 'キーを安全な保管領域から削除しました。';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => '読み上げの範囲';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => '選択範囲';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => '現在のブロック';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => '現在のセクション';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => '文書全体';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => '省略された内容';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => 'この範囲には読み上げるテキストがありません。';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      '選択したクラウドサービスで音声を生成しますか？表示中のテキストがサービスに送信されます。要求を取り消した場合も料金が発生することがあります。';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => '音声サンプルを生成';
 
   @override
-  String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+  String get speechSampleText => 'BusyMark の短い音声サンプルです。読み上げの速度と音声は選択した設定に従います。';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable => '選択した音声合成エンジンは利用できません。';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => '音声を合成中';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => '音声を保存';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => '合成した読み上げ音声';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => '見出しを読む';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'コードブロックを読む';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'インラインコードを読む';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => '表を読む';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => '引用を読む';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => '画像の説明を読む';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => '脚注を読む';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'リンク';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'リンクの表示テキストを読む';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'リンクの表示テキストと URL を読む';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'リンクを読み飛ばす';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => '段落の間隔（ミリ秒）';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => '見出しの間隔（ミリ秒）';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => '生成する音声のファイル名';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'WAV 形式の音声';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => '音声合成を取り消す';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => '読み上げを停止';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      '選択したシステム音声はネットワーク上のサービスを利用する場合があります。表示中のテキストの読み上げを許可しますか？';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'ローカル音声合成';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'クラウド音声合成';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => '音声のスタイル';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Piper 音声モデル（.onnx）';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Piper モデルを選択';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => '音声を再生または保存できます。';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => '読み上げが終了しました。';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => '合成の進行状況';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => '完了したタスク。';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => '未完了のタスク。';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => '数式';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => '既存のメディア';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => '非表示または未対応の内容';
 
   @override
-  String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+  String get speechSelectionUnmapped => '選択したテキストの一部をソースに正確に対応付けられませんでした。';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Piper の音声をインストール';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => '前の区間';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => '次の区間';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'audio 要素に終了タグがあり、すべての source 要素が audio の直接の子になっていることを確認してください。';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'audio 要素の属性値を確認してください。preload に指定できる値は none、metadata、auto です。crossorigin には anonymous または use-credentials を指定できます。';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside は再生操作ができる音声マークアップに対応していません。音声ファイルをリソースディレクトリに置き、ファイルへのリンクを追加してください。';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => 'このワークスペース内のファイルにリンク';
 
   @override
-  String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+  String get audioCopyFile => '選択した音声を文書のアセットにコピー';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl => '認証情報を含まない有効な HTTPS URL を入力してください。';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => '完全な HTML audio 要素を 1 つ入力してください。';
 
   @override
-  String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+  String get audioCannotResolve => '音声ファイルが文書で許可されたフォルダーの外にあるか、利用できません。';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => '外部のアプリで音声を開く';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'フォルダーに表示';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => '音声を削除';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'サービスの料金';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      '直前の要求で料金が発生した可能性があります。再試行するかどうかを決める前に、サービスの利用量を確認してください。';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage => 'サービスから完全な利用量が報告されませんでした。';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'サービスが報告した利用量';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '入力 $count 文字';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '入力 $count トークン';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '出力 $count トークン';
   }
 }

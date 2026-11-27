@@ -4407,11 +4407,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + 리소스 폴더';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback => '외부 HTTPS 오디오 재생 허용';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      '외부 오디오를 재생하려면 네트워크에 연결해야 합니다. 오프라인으로 내보낼 때는 해당 녹음의 링크가 유지됩니다.';
 
   @override
   String get exportCustomCss => '사용자 지정 스타일시트…';
@@ -8836,332 +8836,328 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gitUiShowSidebarPanel => '사이드바 패널 표시';
 
   @override
-  String get audio => 'Audio';
+  String get audio => '오디오';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => '원격 오디오를 허용할까요?';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => '이 문서에서 허용';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => '오디오 재생 다시 시도';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => '일시 정지';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => '재생';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      '오디오를 재생할 수 없습니다. 파일, 연결 또는 코덱을 확인하고 다시 시도하세요.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => '재생 위치';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => '음소거 해제';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => '음소거';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => '음량';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => '재생 속도';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => '반복 재생';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => '오디오 삽입';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => '오디오 파일 선택';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'HTTPS 오디오 URL';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => '문서를 기준으로 한 오디오 폴더';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst => '오디오 파일을 추가하기 전에 문서를 저장하세요.';
 
   @override
-  String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+  String get audioStaleTarget => '원본 문서가 변경되어 오디오를 삽입하지 못했습니다.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => '오디오 속성';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'HTML 오디오 마크업';
 
   @override
-  String get speech => 'Speech';
+  String get speech => '음성 합성';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => '소리 내어 읽기';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => '오디오 생성';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => '음성 합성 제공업체';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => '시스템 음성';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => '음성 모델';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => '목소리';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => '읽기 언어';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => '합성 속도';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => '음높이';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => '엔진과 음성 찾기';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => '제공업체 API 키';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => '키 저장';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => '키 삭제';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => '키를 보안 저장소에 저장했습니다.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => '보안 저장소에서 키를 삭제했습니다.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => '읽기 범위';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => '선택 영역';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => '현재 블록';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => '현재 섹션';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => '문서 전체';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => '생략된 내용';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => '이 범위에는 읽을 텍스트가 없습니다.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      '선택한 클라우드 제공업체를 사용하여 오디오를 생성할까요? 화면에 표시된 텍스트가 해당 업체에 전송됩니다. 요청을 취소해도 요금이 발생할 수 있습니다.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => '음성 샘플 생성';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      '짧은 BusyMark 음성 샘플입니다. 읽기 속도와 목소리에 현재 선택한 음성 설정이 적용됩니다.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable => '선택한 음성 엔진을 사용할 수 없습니다.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => '오디오 합성 중';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => '오디오 저장';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => '합성된 읽기 음성';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => '제목 읽기';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => '코드 블록 읽기';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => '인라인 코드 읽기';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => '표 읽기';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => '인용문 읽기';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => '이미지 설명 읽기';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => '각주 읽기';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => '링크';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => '링크 텍스트 읽기';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => '링크 텍스트와 URL 읽기';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => '링크 건너뛰기';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => '단락 사이 간격(밀리초)';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => '제목 뒤 간격(밀리초)';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => '생성할 오디오 파일 이름';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'WAV 오디오';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => '합성 취소';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => '읽기 중지';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      '선택한 시스템 음성이 네트워크 서비스를 사용할 수 있습니다. 화면에 표시된 텍스트를 읽도록 허용할까요?';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => '로컬 음성 합성';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => '클라우드 음성 합성';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => '음성 스타일';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Piper 음성 모델(.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Piper 모델 선택';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => '오디오를 재생하거나 저장할 수 있습니다.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => '읽기가 끝났습니다.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => '합성 진행률';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => '완료된 작업.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => '미완료 작업.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => '수학 내용';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => '기존 미디어';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => '숨겨졌거나 지원되지 않는 콘텐츠';
 
   @override
-  String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+  String get speechSelectionUnmapped => '선택한 텍스트의 일부를 원문에 안전하게 대응시킬 수 없습니다.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Piper 음성 설치';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => '이전 구간';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => '다음 구간';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'audio의 닫는 태그가 있는지, 각 source가 audio의 직접적인 하위 요소인지 확인하세요.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'audio 속성값을 확인하세요. preload에는 none, metadata 또는 auto를 지정할 수 있고, crossorigin에는 anonymous 또는 use-credentials를 지정할 수 있습니다.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside는 재생 가능한 오디오 마크업을 지원하지 않습니다. 녹음 파일을 리소스 디렉터리에 넣고 리소스 링크를 추가하세요.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => '이 작업 공간의 파일에 연결';
 
   @override
-  String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+  String get audioCopyFile => '선택한 오디오를 문서의 에셋 폴더에 복사';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl => '인증 정보가 없는 유효한 HTTPS URL을 입력하세요.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => '완전한 HTML audio 요소 하나를 입력하세요.';
 
   @override
-  String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+  String get audioCannotResolve => '오디오 파일이 문서에서 허용한 폴더 밖에 있거나 사용할 수 없습니다.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => '외부 앱에서 오디오 열기';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => '폴더에서 보기';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => '오디오 제거';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => '제공업체 요금';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      '이전 요청으로 요금이 발생했을 수 있습니다. 다시 시도하기 전에 제공업체에서 사용량을 확인하세요.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage => '제공업체가 전체 사용량을 제공하지 않았습니다.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => '제공업체가 보고한 사용량';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '입력 문자 $count개';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '입력 토큰 $count개';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '출력 토큰 $count개';
   }
 }

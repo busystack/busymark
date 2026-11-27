@@ -4575,11 +4575,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + Ressourcenordner';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback =>
+      'Externe Audiowiedergabe über HTTPS zulassen';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      'Externe Audiodateien benötigen eine Netzwerkverbindung. Offline-Exporte behalten die Links zu diesen Aufnahmen bei.';
 
   @override
   String get exportCustomCss => 'Eigenes Stylesheet…';
@@ -9177,332 +9178,342 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'Seitenbereich anzeigen';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Tonaufnahme';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'Externe Audiodatei zulassen?';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'In diesem Dokument zulassen';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => 'Audiowiedergabe erneut versuchen';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'Pausieren';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => 'Abspielen';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      'Die Audiodatei konnte nicht abgespielt werden. Überprüfen Sie die Datei, die Verbindung oder den Codec und versuchen Sie es erneut.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => 'Wiedergabeposition';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'Ton einschalten';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'Stummschalten';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'Lautstärke';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => 'Wiedergabegeschwindigkeit';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => 'Wiederholen';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => 'Audio einfügen';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => 'Audiodatei auswählen';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'HTTPS-Adresse der Audiodatei';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => 'Audioordner relativ zum Dokument';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst =>
+      'Speichern Sie das Dokument, bevor Sie eine Audiodatei hinzufügen.';
 
   @override
   String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+      'Das ursprüngliche Dokument wurde geändert. Die Audiodatei wurde nicht eingefügt.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => 'Audioeigenschaften';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'HTML-Markup für Audio';
 
   @override
-  String get speech => 'Speech';
+  String get speech => 'Sprachausgabe';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => 'Vorlesen';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => 'Audio erzeugen';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => 'Anbieter für Sprachausgabe';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'Sprachausgabe des Systems';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => 'Sprachsynthesemodell';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => 'Stimme';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => 'Sprache der Sprachausgabe';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => 'Sprechgeschwindigkeit';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => 'Tonhöhe';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'Sprachsysteme und Stimmen suchen';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'API-Schlüssel des Anbieters';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'Schlüssel speichern';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'Schlüssel löschen';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored =>
+      'Der Schlüssel wurde im sicheren Speicher abgelegt.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted =>
+      'Der Schlüssel wurde aus dem sicheren Speicher entfernt.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => 'Vorlesebereich';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => 'Auswahl';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => 'Aktueller Block';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => 'Aktueller Abschnitt';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => 'Gesamtes Dokument';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => 'Ausgelassene Inhalte';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText =>
+      'In diesem Bereich gibt es keinen Text zum Vorlesen.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      'Mit dem ausgewählten Cloud-Anbieter erzeugen? Der angezeigte Text wird an den Anbieter gesendet. Kosten können auch beim Abbrechen einer Anfrage anfallen.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => 'Stimmprobe erzeugen';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      'Dies ist eine kurze Stimmprobe von BusyMark. Sprechgeschwindigkeit und Stimme entsprechen den gewählten Einstellungen für die Sprachausgabe.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable =>
+      'Das ausgewählte Sprachsystem ist nicht verfügbar.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => 'Audio wird erzeugt';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => 'Audio speichern';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => 'Synthetische Sprachausgabe';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => 'Überschriften vorlesen';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'Codeblöcke vorlesen';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'Code im Text vorlesen';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => 'Tabellen vorlesen';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => 'Zitate vorlesen';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => 'Bildbeschreibungen vorlesen';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => 'Fußnoten vorlesen';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'Verknüpfungen';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'Linktexte vorlesen';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'Linktexte und Adressen vorlesen';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'Links überspringen';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => 'Absatzpause in Millisekunden';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => 'Überschriftenpause in Millisekunden';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => 'Dateiname für erzeugtes Audio';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'WAV-Audiodatei';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => 'Audioerzeugung abbrechen';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => 'Vorlesen beenden';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      'Die ausgewählte Systemstimme verwendet möglicherweise einen Netzwerkdienst. Darf sie den angezeigten Text vorlesen?';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'Lokale Sprachausgabe';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'Sprachausgabe aus der Cloud';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => 'Sprechstil';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Piper-Stimmenmodell (.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Piper-Modell auswählen';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady =>
+      'Die Audiodatei kann abgespielt oder gespeichert werden.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => 'Vorlesen abgeschlossen.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => 'Fortschritt der Sprachsynthese';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => 'Erledigte Aufgabe.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => 'Offene Aufgabe.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => 'Mathematische Formeln';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => 'Vorhandene Medien';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted =>
+      'Ausgeblendete oder nicht unterstützte Inhalte';
 
   @override
   String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+      'Teile des ausgewählten Texts konnten nicht eindeutig zugeordnet werden.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Piper-Stimme installieren';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => 'Vorheriger Abschnitt';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => 'Nächster Abschnitt';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'Prüfen Sie, ob das audio-Element ein schließendes Tag hat und jedes source-Element direkt in audio enthalten ist.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'Prüfen Sie den Wert des Audioattributs. Für preload sind none, metadata und auto zulässig. Für crossorigin sind anonymous und use-credentials zulässig.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside unterstützt kein interaktives Audio-Markup. Legen Sie die Aufnahme im Ressourcenverzeichnis ab und fügen Sie einen Ressourcenlink hinzu.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile => 'Datei im Arbeitsbereich verknüpfen';
 
   @override
   String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+      'Ausgewählte Audiodatei zu den Dokumentressourcen kopieren';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl =>
+      'Geben Sie eine gültige HTTPS-Adresse ohne Zugangsdaten ein.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup =>
+      'Geben Sie genau ein vollständiges HTML-audio-Element ein.';
 
   @override
   String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+      'Diese Audiodatei befindet sich außerhalb des für das Dokument zulässigen Ordners oder ist nicht verfügbar.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => 'Audio extern öffnen';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'Im Ordner anzeigen';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => 'Audio entfernen';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'Preise des Anbieters';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      'Die vorherige Anfrage kann Kosten verursacht haben. Prüfen Sie die Nutzungsdaten beim Anbieter, bevor Sie entscheiden, ob Sie es erneut versuchen.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage =>
+      'Der Anbieter hat keine vollständigen Nutzungsdaten geliefert.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'Vom Anbieter gemeldete Nutzung';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return '$count Eingabezeichen';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return '$count Eingabetoken';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return '$count Ausgabetoken';
   }
 }

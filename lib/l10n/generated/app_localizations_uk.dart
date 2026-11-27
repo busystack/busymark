@@ -4598,11 +4598,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + папка ресурсів';
 
   @override
-  String get exportRemoteAudioPlayback => 'Allow external HTTPS audio playback';
+  String get exportRemoteAudioPlayback =>
+      'Дозволити відтворення зовнішнього аудіо через HTTPS';
 
   @override
   String get exportRemoteAudioPlaybackNote =>
-      'External audio requires a network connection. Offline exports keep links to those recordings.';
+      'Для зовнішнього аудіо потрібне з’єднання з мережею. Автономний експорт зберігає посилання на ці записи.';
 
   @override
   String get exportCustomCss => 'Власний файл стилів…';
@@ -9173,332 +9174,336 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiShowSidebarPanel => 'Показати бічну панель';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Аудіозапис';
 
   @override
-  String get audioRemotePermission => 'Allow remote audio?';
+  String get audioRemotePermission => 'Дозволити зовнішнє аудіо?';
 
   @override
-  String get audioAllowForDocument => 'Allow in this document';
+  String get audioAllowForDocument => 'Дозволити в цьому документі';
 
   @override
-  String get audioRetry => 'Retry audio';
+  String get audioRetry => 'Повторити відтворення';
 
   @override
-  String get audioPause => 'Pause';
+  String get audioPause => 'Пауза';
 
   @override
-  String get audioPlay => 'Play';
+  String get audioPlay => 'Відтворити';
 
   @override
   String get audioPlaybackFailure =>
-      'Audio could not be played. Check the file, connection, or codec and retry.';
+      'Не вдалося відтворити аудіо. Перевірте файл, з’єднання або кодек і повторіть спробу.';
 
   @override
-  String get audioPosition => 'Playback position';
+  String get audioPosition => 'Позиція відтворення';
 
   @override
-  String get audioUnmute => 'Unmute';
+  String get audioUnmute => 'Увімкнути звук';
 
   @override
-  String get audioMute => 'Mute';
+  String get audioMute => 'Вимкнути звук';
 
   @override
-  String get audioVolume => 'Volume';
+  String get audioVolume => 'Гучність';
 
   @override
-  String get audioPlaybackRate => 'Playback speed';
+  String get audioPlaybackRate => 'Швидкість відтворення';
 
   @override
-  String get audioLoop => 'Loop';
+  String get audioLoop => 'Повторювати';
 
   @override
-  String get insertAudio => 'Insert audio';
+  String get insertAudio => 'Вставити аудіо';
 
   @override
-  String get audioFile => 'Choose audio file';
+  String get audioFile => 'Вибрати аудіофайл';
 
   @override
-  String get audioUrl => 'HTTPS audio URL';
+  String get audioUrl => 'HTTPS-адреса аудіо';
 
   @override
-  String get audioDestination => 'Audio folder relative to the document';
+  String get audioDestination => 'Папка аудіо відносно документа';
 
   @override
-  String get audioSaveFirst => 'Save the document before adding an audio file.';
+  String get audioSaveFirst =>
+      'Збережіть документ, перш ніж додавати аудіофайл.';
 
   @override
   String get audioStaleTarget =>
-      'The original document changed. The audio was not inserted.';
+      'Початковий документ змінився. Аудіо не вставлено.';
 
   @override
-  String get audioProperties => 'Audio properties';
+  String get audioProperties => 'Властивості аудіо';
 
   @override
-  String get audioMarkup => 'HTML audio markup';
+  String get audioMarkup => 'Розмітка аудіо HTML';
 
   @override
-  String get speech => 'Speech';
+  String get speech => 'Мовлення';
 
   @override
-  String get readAloud => 'Read aloud';
+  String get readAloud => 'Читати вголос';
 
   @override
-  String get generateAudio => 'Generate audio';
+  String get generateAudio => 'Створити аудіо';
 
   @override
-  String get speechProvider => 'Speech provider';
+  String get speechProvider => 'Постачальник синтезу мовлення';
 
   @override
-  String get speechSystem => 'System speech';
+  String get speechSystem => 'Системний синтез мовлення';
 
   @override
-  String get speechModel => 'Speech model';
+  String get speechModel => 'Модель синтезу мовлення';
 
   @override
-  String get speechVoice => 'Voice';
+  String get speechVoice => 'Голос';
 
   @override
-  String get speechLanguage => 'Speech language';
+  String get speechLanguage => 'Мова мовлення';
 
   @override
-  String get speechSpeed => 'Synthesis speed';
+  String get speechSpeed => 'Швидкість синтезу';
 
   @override
-  String get speechPitch => 'Pitch';
+  String get speechPitch => 'Висота голосу';
 
   @override
-  String get speechRefresh => 'Discover engines and voices';
+  String get speechRefresh => 'Знайти рушії та голоси';
 
   @override
-  String get speechKey => 'Provider API key';
+  String get speechKey => 'Ключ API постачальника';
 
   @override
-  String get speechStoreKey => 'Store key';
+  String get speechStoreKey => 'Зберегти ключ';
 
   @override
-  String get speechDeleteKey => 'Delete key';
+  String get speechDeleteKey => 'Видалити ключ';
 
   @override
-  String get speechKeyStored => 'The key was saved in secure storage.';
+  String get speechKeyStored => 'Ключ збережено в захищеному сховищі.';
 
   @override
-  String get speechKeyDeleted => 'The key was removed from secure storage.';
+  String get speechKeyDeleted => 'Ключ видалено із захищеного сховища.';
 
   @override
-  String get speechScope => 'Narration scope';
+  String get speechScope => 'Обсяг озвучення';
 
   @override
-  String get speechSelection => 'Selection';
+  String get speechSelection => 'Виділення';
 
   @override
-  String get speechBlock => 'Current block';
+  String get speechBlock => 'Поточний блок';
 
   @override
-  String get speechSection => 'Current section';
+  String get speechSection => 'Поточний розділ';
 
   @override
-  String get speechDocument => 'Whole document';
+  String get speechDocument => 'Увесь документ';
 
   @override
-  String get speechOmissions => 'Omitted content';
+  String get speechOmissions => 'Пропущений вміст';
 
   @override
-  String get speechNoText => 'There is no narratable text in this scope.';
+  String get speechNoText => 'У цій області немає тексту для озвучення.';
 
   @override
   String get speechCloudConsent =>
-      'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.';
+      'Створити аудіо через вибраного хмарного постачальника? Йому буде надіслано показаний текст. Запит може бути платним, навіть якщо його скасувати.';
 
   @override
-  String get speechSample => 'Generate voice sample';
+  String get speechSample => 'Створити зразок голосу';
 
   @override
   String get speechSampleText =>
-      'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.';
+      'Це короткий зразок голосу BusyMark. Швидкість читання та голос визначаються налаштуваннями мовлення.';
 
   @override
-  String get speechUnavailable => 'The selected speech engine is unavailable.';
+  String get speechUnavailable =>
+      'Вибраний рушій синтезу мовлення недоступний.';
 
   @override
-  String get speechSynthesizing => 'Synthesizing audio';
+  String get speechSynthesizing => 'Синтез аудіо';
 
   @override
-  String get speechSaveAudio => 'Save audio';
+  String get speechSaveAudio => 'Зберегти аудіо';
 
   @override
-  String get speechGenerated => 'Synthesized narration';
+  String get speechGenerated => 'Синтезоване мовлення';
 
   @override
-  String get speechHeadings => 'Read headings';
+  String get speechHeadings => 'Читати заголовки';
 
   @override
-  String get speechCodeBlocks => 'Read code blocks';
+  String get speechCodeBlocks => 'Читати блоки коду';
 
   @override
-  String get speechInlineCode => 'Read inline code';
+  String get speechInlineCode => 'Читати вбудований код';
 
   @override
-  String get speechTables => 'Read tables';
+  String get speechTables => 'Читати таблиці';
 
   @override
-  String get speechQuotes => 'Read quotations';
+  String get speechQuotes => 'Читати цитати';
 
   @override
-  String get speechImages => 'Read image descriptions';
+  String get speechImages => 'Читати описи зображень';
 
   @override
-  String get speechFootnotes => 'Read footnotes';
+  String get speechFootnotes => 'Читати виноски';
 
   @override
-  String get speechLinks => 'Links';
+  String get speechLinks => 'Посилання';
 
   @override
-  String get speechLinksLabel => 'Read labels';
+  String get speechLinksLabel => 'Читати підписи посилань';
 
   @override
-  String get speechLinksUrl => 'Read labels and URLs';
+  String get speechLinksUrl => 'Читати підписи й адреси URL';
 
   @override
-  String get speechLinksSkip => 'Skip links';
+  String get speechLinksSkip => 'Пропускати посилання';
 
   @override
-  String get speechBlockPause => 'Paragraph pause in milliseconds';
+  String get speechBlockPause => 'Пауза після абзацу в мілісекундах';
 
   @override
-  String get speechSectionPause => 'Heading pause in milliseconds';
+  String get speechSectionPause => 'Пауза після заголовка в мілісекундах';
 
   @override
-  String get speechFilename => 'Generated audio filename';
+  String get speechFilename => 'Назва файлу створеного аудіо';
 
   @override
-  String get speechWav => 'WAV audio';
+  String get speechWav => 'Аудіо WAV';
 
   @override
-  String get speechCancelJob => 'Cancel synthesis';
+  String get speechCancelJob => 'Скасувати синтез';
 
   @override
-  String get speechStop => 'Stop narration';
+  String get speechStop => 'Зупинити озвучення';
 
   @override
   String get speechUnknownLocality =>
-      'The selected system voice may use a network service. Allow it to read the displayed text?';
+      'Вибраний системний голос може використовувати мережеву службу. Дозволити читання показаного тексту?';
 
   @override
-  String get speechLocalOnly => 'Local speech';
+  String get speechLocalOnly => 'Локальний синтез мовлення';
 
   @override
-  String get speechCloud => 'Cloud speech';
+  String get speechCloud => 'Хмарний синтез мовлення';
 
   @override
-  String get speechStyle => 'Voice style';
+  String get speechStyle => 'Стиль голосу';
 
   @override
-  String get speechPiperModel => 'Piper voice model (.onnx)';
+  String get speechPiperModel => 'Модель голосу Piper (.onnx)';
 
   @override
-  String get speechPiperImport => 'Choose Piper model';
+  String get speechPiperImport => 'Вибрати модель Piper';
 
   @override
-  String get speechAudioReady => 'Audio is ready for playback or saving.';
+  String get speechAudioReady => 'Аудіо готове до відтворення або збереження.';
 
   @override
-  String get speechReadComplete => 'Narration finished.';
+  String get speechReadComplete => 'Озвучення завершено.';
 
   @override
-  String get speechProgress => 'Synthesis progress';
+  String get speechProgress => 'Перебіг синтезу';
 
   @override
-  String get speechTaskDone => 'Completed task.';
+  String get speechTaskDone => 'Завдання виконано.';
 
   @override
-  String get speechTaskOpen => 'Incomplete task.';
+  String get speechTaskOpen => 'Завдання не виконано.';
 
   @override
-  String get speechMathOmitted => 'Mathematics';
+  String get speechMathOmitted => 'Математичні вирази';
 
   @override
-  String get speechMediaOmitted => 'Existing media';
+  String get speechMediaOmitted => 'Наявні медіадані';
 
   @override
-  String get speechHiddenOmitted => 'Hidden or unsupported content';
+  String get speechHiddenOmitted => 'Прихований або непідтримуваний вміст';
 
   @override
   String get speechSelectionUnmapped =>
-      'Some selected text could not be mapped safely.';
+      'Частину виділеного тексту не вдалося надійно зіставити з джерелом.';
 
   @override
-  String get speechPiperInstall => 'Install a Piper voice';
+  String get speechPiperInstall => 'Установити голос Piper';
 
   @override
-  String get speechPreviousSegment => 'Previous segment';
+  String get speechPreviousSegment => 'Попередній фрагмент';
 
   @override
-  String get speechNextSegment => 'Next segment';
+  String get speechNextSegment => 'Наступний фрагмент';
 
   @override
   String get diagnosticMarkdownAudioInvalidStructure =>
-      'Check that the audio tag has a closing tag and that each source is a direct child of audio.';
+      'Перевірте, що елемент audio має кінцевий тег і що кожен source вкладено безпосередньо в audio.';
 
   @override
   String get diagnosticMarkdownAudioInvalidAttribute =>
-      'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.';
+      'Перевірте значення атрибута audio. Для preload дозволено none, metadata та auto. Для crossorigin дозволено anonymous і use-credentials.';
 
   @override
   String get diagnosticWritersideAudioUnsupported =>
-      'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.';
+      'Writerside не підтримує інтерактивну розмітку аудіо. Помістіть запис до папки ресурсів і додайте посилання на ресурс.';
 
   @override
-  String get audioLinkFile => 'Link to a file in this workspace';
+  String get audioLinkFile =>
+      'Створити посилання на файл у цьому робочому просторі';
 
   @override
-  String get audioCopyFile =>
-      'Copy the selected audio into the document’s assets';
+  String get audioCopyFile => 'Скопіювати вибране аудіо до ресурсів документа';
 
   @override
-  String get audioInvalidUrl => 'Enter a valid HTTPS URL without credentials.';
+  String get audioInvalidUrl =>
+      'Введіть дійсну HTTPS-адресу без облікових даних.';
 
   @override
-  String get audioInvalidMarkup => 'Enter one complete HTML audio element.';
+  String get audioInvalidMarkup => 'Введіть один повний елемент audio HTML.';
 
   @override
   String get audioCannotResolve =>
-      'This audio file is outside the document’s allowed folder or is unavailable.';
+      'Цей аудіофайл розташований поза дозволеною папкою документа або недоступний.';
 
   @override
-  String get audioExternalOpen => 'Open audio externally';
+  String get audioExternalOpen => 'Відкрити аудіо в зовнішній програмі';
 
   @override
-  String get audioShowFolder => 'Show in Folder';
+  String get audioShowFolder => 'Показати в папці';
 
   @override
-  String get audioRemove => 'Remove audio';
+  String get audioRemove => 'Вилучити аудіо';
 
   @override
-  String get speechProviderPricing => 'Provider pricing';
+  String get speechProviderPricing => 'Тарифи постачальника';
 
   @override
   String get speechBillingUncertain =>
-      'The previous request may have incurred charges. Check provider usage before deciding whether to retry.';
+      'Попередній запит міг бути платним. Перш ніж повторити спробу, перевірте використання в постачальника.';
 
   @override
-  String get speechNoUsage => 'The provider supplied no complete usage count.';
+  String get speechNoUsage =>
+      'Постачальник не надав повних даних про використання.';
 
   @override
-  String get speechReportedUsage => 'Provider-reported usage';
+  String get speechReportedUsage => 'Використання за даними постачальника';
 
   @override
   String speechInputCharacters(int count) {
-    return '$count input characters';
+    return 'Вхідні символи: $count';
   }
 
   @override
   String speechInputTokens(int count) {
-    return '$count input tokens';
+    return 'Вхідні токени: $count';
   }
 
   @override
   String speechOutputTokens(int count) {
-    return '$count output tokens';
+    return 'Вихідні токени: $count';
   }
 }
