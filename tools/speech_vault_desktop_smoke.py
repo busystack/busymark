@@ -61,7 +61,11 @@ def pause_empty_fixture_service(paused):
 
 def open_speech(app, document):
     app.launch(document)
-    app.key('ctrl+alt+s')
+    if app.backend == 'wayland':
+        app.focus_wayland_seat()
+        app.menu('Settings')
+    else:
+        app.key('ctrl+alt+s')
     app.accessibility('click', 'Speech', role='button')
     app.accessibility('wait', 'Store key', role='button')
 

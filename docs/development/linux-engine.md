@@ -61,6 +61,16 @@ from the engine's call to `g_mutex_clear()`. The mapped engine SHA-256 was
 `8fc5c4ee6a20215f54c332c7b8910c482434247e451f24cfd7d3225f0a28066b`.
 See the [related Linux shutdown report in Flutter issue #189379](https://github.com/flutter/flutter/issues/189379).
 
+On Ubuntu 26.04.1, a disposable, animated Flutter debug application reproduced
+the diagnostic in 5 of 30 X11 closes. It used the official pinned SDK and
+unmodified `window_manager` 0.5.2 with the prevent-close and close sequence.
+The official empty template closed normally in 30 X11 and 12 Wayland runs.
+BusyMark also tried the public Flutter application exit API after its save and
+resource guards. That experiment recorded 8 PASS and 4 `SIGSEGV` failures in
+the shipping debug close probe, so the established close path was restored.
+[Tagged OpenGL renderer](https://raw.githubusercontent.com/flutter/flutter/3.50.1/engine/src/flutter/shell/platform/linux/fl_view_renderer_opengl.cc) ·
+[Flutter application exit API](https://api.flutter.dev/flutter/services/ServicesBinding/exitApplication.html)
+
 BusyMark Linux x64 acceptance can explicitly enable
 `--xfail-flutter-3.50.1-shutdown` for this release engine. XFAIL requires a
 verified BusyMark process, all scenario assertions, a normal close request,

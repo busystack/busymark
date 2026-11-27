@@ -169,6 +169,8 @@ def main():
         with DesktopApp(['snap', 'run', 'busymark'], root, args.sink, args.backend, True, report) as app:
             try:
                 app.launch(document)
+                if app.backend == 'wayland':
+                    app.focus_wayland_seat()
                 if args.cancel_synthesis:
                     exercise_cancellation(app, document, report)
                 else:

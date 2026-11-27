@@ -212,6 +212,13 @@ class DesktopApp:
         self.accessibility('click', 'Main menu')
         self.accessibility('click', label, role='menu item')
 
+    def focus_wayland_seat(self):
+        # The sole native client opens a synthetic document without links.
+        # A real pointer event gives its surface the compositor's seat.
+        window = os.environ['BUSYMARK_INPUT_WINDOW']
+        self.accessibility('wait', 'Main menu')
+        self._send_input('mousemove', '--window', window, '600', '425', 'click', '1')
+
     def close(self):
         # Use the actual titlebar action on both backends, including Wayland.
         self.report['closeTarget'] = self.accessibility('click', 'Close')

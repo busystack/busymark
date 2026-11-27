@@ -216,8 +216,25 @@ PY
 }
 
 failed=0
+wait_for_idle_profile() {
+  local case_name="$1" attempt streams
+  # A previous close can fail before its last thread retires. Keep that case's
+  # deadline and outcome, then allow its owned resources to drain before reuse.
+  for attempt in {1..45}; do
+    if ! pgrep -u "$(id -u)" -x busymark >/dev/null \
+        && streams="$(timeout 5s pactl list short sink-inputs)" && [[ -z "$streams" ]]; then
+      return 0
+    fi
+    sleep 1
+  done
+  printf '%s\n' 'The previous application or Pulse stream still owns the disposable session.' \
+    | tee "$output/$case_name-bootstrap-failure.txt" >&2
+  failed=1
+  return 1
+}
 run_vault() {
   local backend="$1"
+  if ! wait_for_idle_profile "vault-$backend"; then return 0; fi
   if [[ "$password_manager" == '-' ]]; then sudo -n snap connect busymark:password-manager-service; fi
   seed_settings editor elevenLabs
   /usr/bin/python3 "$script_dir/speech_vault_desktop_smoke.py" \
@@ -228,6 +245,7 @@ run_vault() {
 
 run_audio() {
   local backend="$1" mode="$2"
+  if ! wait_for_idle_profile "audio-$backend-$mode"; then return 0; fi
   seed_settings "$mode" espeak
   /usr/bin/python3 "$script_dir/audio_desktop_smoke.py" \
     --output "$output/audio-$backend-$mode" --mode "$mode" --backend "$backend" \
@@ -236,11 +254,13 @@ run_audio() {
 run_speech() {
   local backend="$1" engine
   for engine in espeak piper; do
+    if ! wait_for_idle_profile "speech-$backend-$engine"; then continue; fi
     seed_settings editor "$engine"
     /usr/bin/python3 "$script_dir/speech_desktop_smoke.py" \
       --output "$output/speech-$backend-$engine" --sink "$PULSE_SINK" \
       --backend "$backend" --engine "$engine" || failed=1
   done
+  if ! wait_for_idle_profile "speech-$backend-cancel"; then return 0; fi
   seed_settings editor piper
   /usr/bin/python3 "$script_dir/speech_desktop_smoke.py" --output "$output/speech-$backend-cancel" \
     --sink "$PULSE_SINK" --backend "$backend" --engine piper --cancel-synthesis || failed=1
@@ -259,7 +279,7 @@ fi
 wayland_socket="$socket"
 # The desktop shell needs a real seat to post GTK menus. Weston receives its
 # seat from the test X server. BusyMark itself only sees the Wayland socket.
-weston --backend=x11-backend.so --renderer=pixman --width=1200 --height=850 \
+weston --no-config --backend=x11-backend.so --renderer=pixman --width=1200 --height=850 \
   --socket="$WAYLAND_DISPLAY" --idle-time=0 \
   --log="$output/weston.log" &
 session_pids+=("$!")
@@ -274,11 +294,17 @@ if ! test -S "$wayland_socket"; then
 fi
 export BUSYMARK_INPUT_DISPLAY="$DISPLAY" BUSYMARK_INPUT_XAUTHORITY="$XAUTHORITY"
 for attempt in {1..40}; do
-  if BUSYMARK_INPUT_WINDOW="$(xdotool search --onlyvisible --name '^Weston Compositor - screen0$')"; then break; fi
+  BUSYMARK_INPUT_WINDOW="$(awk '/ x11 output [0-9]+x[0-9]+, window id [0-9]+$/ { print $NF }' "$output/weston.log")"
+  if [[ "$BUSYMARK_INPUT_WINDOW" =~ ^[0-9]+$ ]] \
+      && timeout 3s xwininfo -id "$BUSYMARK_INPUT_WINDOW" >"$output/wayland-input-window.txt" 2>/dev/null \
+      && grep -Fq 'Map State: IsViewable' "$output/wayland-input-window.txt"; then
+    break
+  fi
   kill -0 "${session_pids[-1]}"
   sleep 0.25
 done
-if ! [[ "$BUSYMARK_INPUT_WINDOW" =~ ^[0-9]+$ ]]; then
+if ! [[ "$BUSYMARK_INPUT_WINDOW" =~ ^[0-9]+$ ]] \
+    || ! grep -Fq 'Map State: IsViewable' "$output/wayland-input-window.txt"; then
   echo 'The disposable compositor has no uniquely identified input window.' >&2
   exit 1
 fi
