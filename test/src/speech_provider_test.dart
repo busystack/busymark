@@ -330,6 +330,106 @@ void main() {
   );
 
   test(
+    'ElevenLabs resolves persisted model limits before sending text',
+    () async {
+      final support = await Directory.systemTemp.createTemp(
+        'elevenlabs-cold-start-',
+      );
+      addTearDown(() => support.delete(recursive: true));
+      final calls = <(String, String)>[];
+      final input = List.filled(1500, 'a').join();
+      final sent = <String>[];
+      var metadataAccess = false;
+      final service = SpeechService(
+        credentials: const _ColdStartSpeechCredentials(),
+        usageLedger: SpeechUsageLedger(supportDirectory: () async => support),
+        client: () => MockClient((request) async {
+          expect(
+            request.headers['xi-api-key'],
+            'cold-start-fixture-credential',
+          );
+          calls.add((request.method, request.url.path));
+          if (request.url.path == '/v1/models') {
+            expect(request.body, isEmpty);
+            if (!metadataAccess) return http.Response('', 403);
+            return http.Response(
+              jsonEncode([
+                {
+                  'model_id': 'persisted-model',
+                  'can_do_text_to_speech': true,
+                  'maximum_text_length_per_request': 1250,
+                },
+              ]),
+              200,
+            );
+          }
+          expect(request.url.path, '/v1/text-to-speech/kept-voice/stream');
+          final body = jsonDecode(request.body) as Map;
+          expect(body['model_id'], 'persisted-model');
+          final text = body['text'] as String;
+          expect(utf8.encode(text).length, lessThanOrEqualTo(1250));
+          sent.add(text);
+          return http.Response.bytes(
+            [1, 0],
+            200,
+            headers: {
+              'content-type': 'audio/pcm',
+              'character-cost': text.length.toString(),
+            },
+          );
+        }),
+      );
+      final options = SpeechPreferences.fromJson({
+        'backend': 'elevenLabs',
+        'providers': {
+          'elevenLabs': {'model': 'persisted-model', 'voice': 'kept-voice'},
+        },
+      }).options;
+
+      final usage = File('${support.path}/speech-usage.json');
+      await expectLater(
+        service.generate(
+          [SpeechSegment(input)],
+          options,
+          cancellationToken: token,
+        ),
+        throwsA(
+          isA<AiException>()
+              .having((error) => error.statusCode, 'statusCode', 403)
+              .having(
+                (error) => error.message,
+                'message',
+                contains('ElevenLabs model limits'),
+              ),
+        ),
+      );
+      expect(calls, [('GET', '/v1/models')]);
+      expect(service.latestSynthesisWasSent, isFalse);
+      expect(await usage.exists(), isFalse);
+
+      metadataAccess = true;
+      final result = await service.generate(
+        [SpeechSegment(input)],
+        options,
+        cancellationToken: token,
+      );
+      expect(calls, [
+        ('GET', '/v1/models'),
+        ('GET', '/v1/models'),
+        ('POST', '/v1/text-to-speech/kept-voice/stream'),
+        ('POST', '/v1/text-to-speech/kept-voice/stream'),
+      ]);
+      expect(sent.map((part) => utf8.encode(part).length), [1250, 250]);
+      expect(sent.join(), input);
+      expect(decodeSpeechWave(result.wavBytes).bytes, [1, 0, 1, 0]);
+      expect(jsonDecode(await usage.readAsString())['elevenLabs'], {
+        'requests': 2,
+        'characters': 1500,
+      });
+    },
+  );
+
+  test(
     'Realtime requires correlated final status and faithful transcript',
     () async {
       for (final (status, transcript, failure) in [
@@ -651,6 +751,14 @@ SpeechService _realtimeService(
     connect: (model, key, token) => WebSocket.connect(fixture.url),
   ),
 );
+
+class _ColdStartSpeechCredentials extends SpeechCredentials {
+  const _ColdStartSpeechCredentials();
+
+  @override
+  Future<String?> read(SpeechBackend backend) async =>
+      'cold-start-fixture-credential';
+}
 
 class _ResumableSpeech implements SpeechProvider, SpeechSession {
   _ResumableSpeech({this.failSecondOnce = true});

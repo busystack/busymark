@@ -51,6 +51,9 @@ class SpeechService {
   _SpeechResume? _resume;
   AiCancellationToken? _active;
   SystemSpeech? _system;
+  bool _latestSynthesisWasSent = false;
+
+  bool get latestSynthesisWasSent => _latestSynthesisWasSent;
 
   static const _maxSegments = 256;
   static const _maxTextBytes = 256 * 1024;
@@ -133,11 +136,15 @@ class SpeechService {
     bool resumeCompletedChunks = false,
   }) async {
     _reserve(cancellationToken);
+    _latestSynthesisWasSent = false;
     final client = _client();
     SpeechSession? session;
     try {
       _validateOptions(options);
       final provider = await _provider(options, client, cancellationToken);
+      if (provider is ElevenLabsSpeechProvider) {
+        await provider.prepareGeneration(cancellationToken);
+      }
       final planned = planSpeechChunks(segments, provider.maximumInputBytes);
       final identity = _identity(planned, options);
       final resume = resumeCompletedChunks && _resume?.identity == identity
@@ -221,6 +228,7 @@ class SpeechService {
     SpeechOptions options,
     AiCancellationToken cancellationToken,
   ) async {
+    _latestSynthesisWasSent = false;
     final requestUsage = options.backend.isCloud ? SpeechRequestUsage() : null;
     try {
       return await session.synthesize(
@@ -233,6 +241,7 @@ class SpeechService {
       );
     } finally {
       if (requestUsage != null && requestUsage.sent) {
+        _latestSynthesisWasSent = true;
         try {
           await _usageLedger.recordRequest(
             options.backend,

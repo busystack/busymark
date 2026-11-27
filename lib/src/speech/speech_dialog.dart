@@ -193,7 +193,7 @@ class _SpeechDialogState extends State<SpeechDialog> {
         setState(() {
           _resumeChunks = true;
           _uncertainCloud =
-              widget.options.backend.isCloud &&
+              _service.latestSynthesisWasSent &&
               (job.isCancelled ||
                   error.code == AiFailureCode.timeout ||
                   error.code == AiFailureCode.connection ||
@@ -204,7 +204,7 @@ class _SpeechDialogState extends State<SpeechDialog> {
     } on IOException {
       if (mounted) {
         setState(() {
-          _uncertainCloud = widget.options.backend.isCloud;
+          _uncertainCloud = _service.latestSynthesisWasSent;
           _error = context.l10n.speechUnavailable;
         });
       }

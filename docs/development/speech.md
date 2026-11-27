@@ -52,8 +52,10 @@ transcript check. Interrupted requests without provider counters remain
 unreported. Replaying a whole result or resuming from a cached chunk emits no
 second usage record. Existing monthly job totals are retained alongside the
 new request totals. ElevenLabs account discovery is shared across Settings and
-generation for the same credential during the session. The model's documented
-character limit is applied conservatively as a UTF-8 byte limit. [Realtime
+generation for the same credential during the session. If the account catalog
+is absent when the user first starts generation, BusyMark reads model metadata
+before preparing any synthesis requests. The model's documented character
+limit is applied conservatively as a UTF-8 byte limit. [Realtime
 server events](https://developers.openai.com/api/reference/resources/realtime/server-events) ·
 [ElevenLabs model discovery](https://elevenlabs.io/docs/api-reference/models/list)
 

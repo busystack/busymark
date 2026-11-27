@@ -12,19 +12,15 @@ import 'speech_provider.dart';
 /// In-memory model bounds for the account that last refreshed its catalog.
 class ElevenLabsModelLimits {
   String? _credentialFingerprint;
-  Map<String, int> _limits = const {};
+  Map<String, int?> _limits = const {};
 
-  int? lookup(String credential, String model) =>
-      _credentialFingerprint == _fingerprint(credential)
-      ? _limits[model]
-      : null;
+  Map<String, int?>? _forCredential(String credential) =>
+      _credentialFingerprint == _fingerprint(credential) ? _limits : null;
 
-  void publish(String credential, List<SpeechChoice> models) {
+  Map<String, int?> _publish(String credential, List<SpeechChoice> models) {
     _credentialFingerprint = _fingerprint(credential);
-    _limits = {
-      for (final model in models)
-        if (model.maximumInputBytes case final limit? when limit > 0)
-          model.id: limit,
+    return _limits = {
+      for (final model in models) model.id: model.maximumInputBytes,
     };
   }
 
@@ -42,7 +38,7 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
     ElevenLabsModelLimits? modelLimits,
   }) : _http = SpeechHttp(client, 'ElevenLabs'),
        _accountLimit = accountLimit,
-       _modelLimits = modelLimits;
+       _modelLimits = modelLimits ?? ElevenLabsModelLimits();
 
   static const _host = 'api.elevenlabs.io';
   static const defaultModel = 'eleven_multilingual_v2';
@@ -53,33 +49,40 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
   final SpeechOptions options;
   final bool streaming;
   final int? _accountLimit;
-  final ElevenLabsModelLimits? _modelLimits;
+  final ElevenLabsModelLimits _modelLimits;
+  int? _plannedLimit;
 
   String get _model => options.model.isEmpty ? defaultModel : options.model;
 
   @override
   int get maximumInputBytes =>
-      (_accountLimit ?? _modelLimits?.lookup(key, _model) ?? 1800).clamp(
-        1,
-        1800,
-      );
+      _plannedLimit ??
+      _bound(_accountLimit ?? _modelLimits._forCredential(key)?[_model]);
+
+  static int _bound(int? maximum) => (maximum ?? 1800).clamp(1, 1800);
 
   Map<String, String> get _headers => {'xi-api-key': key};
 
-  @override
-  Future<SpeechCatalog> discover(AiCancellationToken cancellationToken) async {
-    final deadline = AiDeadline(const Duration(seconds: 30));
-    Future<Object?> get(String path, [Map<String, String>? query]) async {
-      final response = await _http.request(
-        Uri.https(_host, path, query),
-        _headers,
-        cancellationToken,
-        deadline,
-      );
-      return _http.json(response, cancellationToken, deadline);
-    }
+  Future<Object?> _metadata(
+    String path,
+    AiCancellationToken token,
+    AiDeadline deadline, {
+    Map<String, String>? query,
+  }) async {
+    final response = await _http.request(
+      Uri.https(_host, path, query),
+      _headers,
+      token,
+      deadline,
+    );
+    return _http.json(response, token, deadline);
+  }
 
-    final rawModels = await get('/v1/models');
+  Future<List<SpeechChoice>> _loadModels(
+    AiCancellationToken token,
+    AiDeadline deadline,
+  ) async {
+    final rawModels = await _metadata('/v1/models', token, deadline);
     if (rawModels is! List<Object?>) invalidSpeechResponse();
     final models = <SpeechChoice>[];
     for (final model in rawModels.map(objectMap)) {
@@ -90,7 +93,7 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
         SpeechChoice(
           id,
           textValue(model['name']) ?? id,
-          maximumInputBytes: maximum,
+          maximumInputBytes: maximum == 0 ? null : maximum,
           languages: List.unmodifiable(
             objectList(model['languages'])
                 .map(objectMap)
@@ -100,16 +103,63 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
         ),
       );
     }
+    return List.unmodifiable(models);
+  }
+
+  /// A fresh process has no account catalog. Resolve its model cap before the
+  /// caller plans any synthesis, without fetching voices or sending text.
+  Future<void> prepareGeneration(AiCancellationToken token) async {
+    token.throwIfCancelled();
+    _validateVoice();
+    if (_accountLimit != null || _plannedLimit != null) return;
+    var catalog = _modelLimits._forCredential(key);
+    if (catalog == null) {
+      try {
+        final models = await _loadModels(
+          token,
+          AiDeadline(const Duration(seconds: 30)),
+        );
+        token.throwIfCancelled();
+        catalog = _modelLimits._publish(key, models);
+      } on AiException catch (error) {
+        if (error.code == AiFailureCode.cancelled) rethrow;
+        throw AiException(
+          error.code,
+          'Could not load ElevenLabs model limits. ${error.message}',
+          retryable: error.retryable,
+          retryAfter: error.retryAfter,
+          statusCode: error.statusCode,
+        );
+      }
+    }
+    if (!catalog.containsKey(_model)) {
+      throw const AiException(
+        AiFailureCode.invalidConfiguration,
+        'The selected ElevenLabs model is unavailable. Refresh the catalog in Settings and choose an available model.',
+      );
+    }
+    _plannedLimit = _bound(catalog[_model]);
+  }
+
+  @override
+  Future<SpeechCatalog> discover(AiCancellationToken cancellationToken) async {
+    final deadline = AiDeadline(const Duration(seconds: 30));
+    final models = await _loadModels(cancellationToken, deadline);
     final voices = <String, SpeechChoice>{};
     final visited = <String>{};
     String? page;
     do {
       final data = objectMap(
-        await get('/v2/voices', {
-          'page_size': '100',
-          'include_total_count': 'false',
-          if (page != null) 'next_page_token': page,
-        }),
+        await _metadata(
+          '/v2/voices',
+          cancellationToken,
+          deadline,
+          query: {
+            'page_size': '100',
+            'include_total_count': 'false',
+            if (page != null) 'next_page_token': page,
+          },
+        ),
       );
       if (data['voices'] is! List || data['has_more'] is! bool) {
         invalidSpeechResponse();
@@ -130,9 +180,9 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
       }
     } while (true);
     cancellationToken.throwIfCancelled();
-    _modelLimits?.publish(key, models);
+    _modelLimits._publish(key, models);
     return SpeechCatalog(
-      models: List.unmodifiable(models),
+      models: models,
       voices: List.unmodifiable(voices.values),
     );
   }
@@ -140,13 +190,17 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
   @override
   Future<SpeechSession> open(AiCancellationToken cancellationToken) async {
     cancellationToken.throwIfCancelled();
+    _validateVoice();
+    return this;
+  }
+
+  void _validateVoice() {
     if (!RegExp(r'^[A-Za-z0-9_-]{1,100}$').hasMatch(options.voice)) {
       throw const AiException(
         AiFailureCode.invalidConfiguration,
         'Select an ElevenLabs voice before generating speech.',
       );
     }
-    return this;
   }
 
   @override
