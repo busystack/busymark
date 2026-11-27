@@ -14377,6 +14377,8 @@ class _PreviewBlockView extends ConsumerWidget {
       level: block.level,
       language: block.language,
       visualization: block.visualization,
+      posterSpan: block.posterSpan,
+      audio: block.audio,
       attributes: block.attributes,
       inlines: block.inlines,
       children: block.children,

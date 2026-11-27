@@ -143,6 +143,43 @@ void main() {
     );
   });
 
+  testWidgets('unlabelled audio in Preview retains its player and consent', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 850);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final harness = await _pumpSearchRegression(tester, {
+      'a.md':
+          '# Audio\n\n'
+          '<audio controls preload="metadata" autoplay '
+          'src="https://media.example.test/intro.wav"></audio>\n\n'
+          '<audio autoplay src="https://media.example.test/hidden.wav"></audio>\n',
+    }, mode: DocumentViewModePreference.preview);
+    harness.container
+        .read(searchSessionProvider.notifier)
+        .close(restoreFocus: false);
+    await tester.pumpAndSettle();
+
+    final play = _findExcludedTooltip(l10n.audioPlay);
+    expect(play, findsOneWidget);
+    expect(find.text(l10n.audioRemotePermission), findsNothing);
+    await tester.tap(play);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(l10n.audioRemotePermission), findsOneWidget);
+    expect(find.text('https://media.example.test'), findsOneWidget);
+
+    await tester.tap(find.text(l10n.cancel).last);
+    await tester.pumpAndSettle();
+    expect(_findExcludedTooltip(l10n.audioRetry), findsOneWidget);
+    expect(
+      harness.container.read(workspaceControllerProvider).isDirty,
+      isFalse,
+    );
+  });
+
   testWidgets(
     'workspace selectors reveal the sidebar and follow configured bindings',
     (tester) async {

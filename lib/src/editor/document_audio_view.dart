@@ -21,6 +21,14 @@ typedef AudioDocumentIdentity = ({
   String? mediaIdentity,
 });
 
+final _documentAudioScopes = <_DocumentAudioScopeState>{};
+
+Future<void> settleDocumentAudioForWindowClose() async {
+  await Future.wait([
+    for (final scope in _documentAudioScopes.toList()) scope._reset(),
+  ]);
+}
+
 class DocumentAudioScope extends StatefulWidget {
   const DocumentAudioScope({
     super.key,
@@ -58,11 +66,19 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
   final states = <Object, ValueNotifier<AudioPlaybackState>>{};
   final approvedOrigins = <String>{};
   HttpClient? _client;
+  Future<File?>? _downloading;
+  Future<void> _retiring = Future.value();
   Directory? _downloaded;
   Object? owner;
   AudioDocumentIdentity? _boundDocument;
   bool _confirmed = false;
   int _version = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _documentAudioScopes.add(this);
+  }
 
   @override
   void didUpdateWidget(DocumentAudioScope oldWidget) {
@@ -95,14 +111,24 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
     ++_version;
     _client?.close(force: true);
     _client = null;
+    final pending = _downloading;
+    _downloading = null;
     final current = owner;
     owner = null;
     _boundDocument = null;
     _confirmed = false;
     final download = _downloaded;
     _downloaded = null;
-    if (current != null) await playback.close(current);
-    if (download != null) await _deleteDownload(download);
+    _retiring = _retiring.then((_) async {
+      if (current != null) await playback.close(current);
+      if (pending != null) {
+        // The request owner handles its errors. Wait for the private partial
+        // file to be closed and removed, including on cancellation.
+        await pending.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+      }
+      if (download != null) await _deleteDownload(download);
+    });
+    await _retiring;
   }
 
   Future<void> cancel(
@@ -124,7 +150,7 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
 
   @override
   void dispose() {
-    unawaited(_reset());
+    unawaited(_reset().whenComplete(() => _documentAudioScopes.remove(this)));
     super.dispose();
   }
 
@@ -265,7 +291,13 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
             if (allowed != true) continue;
             approvedOrigins.add(uri.origin);
           }
-          target = await _remote(uri, version);
+          final pending = _remote(uri, version);
+          _downloading = pending;
+          try {
+            target = await pending;
+          } finally {
+            if (identical(_downloading, pending)) _downloading = null;
+          }
         } else {
           target = await _local(candidate.destination, media);
         }
