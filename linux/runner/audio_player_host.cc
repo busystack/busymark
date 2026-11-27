@@ -13,6 +13,7 @@ struct BusyMarkAudioPlayerHost {
   gint64 id = 0;
   bool playing = false;
   bool looping = false;
+  bool ended = false;
   double rate = 1;
 };
 
@@ -31,6 +32,7 @@ void stop(BusyMarkAudioPlayerHost* host) {
     host->player = nullptr;
   }
   host->playing = false;
+  host->ended = false;
   host->id = 0;
   host->rate = 1;
 }
@@ -43,6 +45,19 @@ void notify(BusyMarkAudioPlayerHost* host, const char* state) {
                                   nullptr, nullptr);
 }
 
+bool seek_to(BusyMarkAudioPlayerHost* host, double position, double rate) {
+  const bool ok = gst_element_seek(
+      host->player, rate, GST_FORMAT_TIME,
+      static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
+      GST_SEEK_TYPE_SET, static_cast<gint64>(position * GST_SECOND),
+      GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
+  if (ok) {
+    host->rate = rate;
+    host->ended = false;
+  }
+  return ok;
+}
+
 gboolean on_message(GstBus*, GstMessage* message, gpointer data) {
   auto* host = static_cast<BusyMarkAudioPlayerHost*>(data);
   switch (GST_MESSAGE_TYPE(message)) {
@@ -52,12 +67,11 @@ gboolean on_message(GstBus*, GstMessage* message, gpointer data) {
       notify(host, "failed");
       break;
     case GST_MESSAGE_EOS:
-      if (host->looping && host->playing &&
-          gst_element_seek_simple(host->player, GST_FORMAT_TIME,
-                                  GST_SEEK_FLAG_FLUSH, 0)) {
+      if (host->looping && host->playing && seek_to(host, 0, host->rate)) {
         break;
       }
       host->playing = false;
+      host->ended = true;
       gst_element_set_state(host->player, GST_STATE_PAUSED);
       notify(host, "ended");
       break;
@@ -182,6 +196,17 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
     reply(call, true);
   } else if (g_str_equal(method, "play") || g_str_equal(method, "pause")) {
     host->playing = g_str_equal(method, "play");
+    if (host->playing && host->ended && !seek_to(host, 0, host->rate)) {
+      // Reopen a stream which cannot seek after reaching its end.
+      if (gst_element_set_state(host->player, GST_STATE_READY) ==
+          GST_STATE_CHANGE_FAILURE) {
+        host->playing = false;
+        reply(call, false);
+        return;
+      }
+      host->ended = false;
+      host->rate = 1;
+    }
     reply(call, gst_element_set_state(host->player, host->playing
                      ? GST_STATE_PLAYING : GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
   } else if (g_str_equal(method, "position")) {
@@ -219,13 +244,7 @@ void on_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
       reply(call, false);
       return;
     }
-    const bool ok = gst_element_seek(
-        host->player, rate, GST_FORMAT_TIME,
-        static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
-        GST_SEEK_TYPE_SET, static_cast<gint64>(position * GST_SECOND),
-        GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
-    if (ok) host->rate = rate;
-    reply(call, ok);
+    reply(call, seek_to(host, position, rate));
   } else {
     fl_method_call_respond_not_implemented(call, nullptr);
   }

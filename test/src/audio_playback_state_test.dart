@@ -13,7 +13,7 @@ void main() {
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final calls = <String>[];
-    Future<void> send(int id, String state) => messenger.handlePlatformMessage(
+    Future<void> send(int? id, String state) => messenger.handlePlatformMessage(
       channel.name,
       codec.encodeMethodCall(MethodCall('state', {'id': id, 'state': state})),
       (_) {},
@@ -53,5 +53,8 @@ void main() {
       'pause',
       'play',
     ]);
+    await playback.close(owner);
+    await send(null, 'playing');
+    expect(playback.state, AudioPlaybackState.ready);
   });
 }

@@ -1356,6 +1356,21 @@ static void first_frame_cb(MyApplication*, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+static void shutdown_owned_media(MyApplication* self) {
+  if (self->visualization_host != nullptr)
+    busymark_web_render_host_shutdown(self->visualization_host);
+  if (self->video_player_host != nullptr)
+    busymark_video_player_host_shutdown(self->video_player_host);
+  busymark_audio_player_host_destroy(self->audio_player_host);
+  self->audio_player_host = nullptr;
+}
+
+static void main_window_destroy_cb(GtkWidget*, gpointer user_data) {
+  // GtkWidget::destroy runs these handlers before the GTK container tears
+  // down its children. The render hosts still own their view and channels.
+  shutdown_owned_media(MY_APPLICATION(user_data));
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
@@ -1428,6 +1443,7 @@ static void my_application_activate(GApplication* application) {
       busymark_video_player_host_new(self->flutter_overlay);
   busymark_video_player_host_register_channel(self->video_player_host, view);
   self->audio_player_host = busymark_audio_player_host_new(view);
+  g_signal_connect(window, "destroy", G_CALLBACK(main_window_destroy_cb), self);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
@@ -1461,14 +1477,13 @@ static void my_application_startup(GApplication* application) {
 
 // Implements GApplication::shutdown.
 static void my_application_shutdown(GApplication* application) {
-  auto* self = MY_APPLICATION(application);
-  busymark_audio_player_host_destroy(self->audio_player_host);
-  self->audio_player_host = nullptr;
+  shutdown_owned_media(MY_APPLICATION(application));
   G_APPLICATION_CLASS(my_application_parent_class)->shutdown(application);
 }
 
 static void my_application_dispose(GObject* object) {
   MyApplication* self = MY_APPLICATION(object);
+  shutdown_owned_media(self);
   busymark_linux_chrome_host_free(self->chrome_host);
   self->chrome_host = nullptr;
   busymark_gtk_accent_host_free(self->gtk_accent_host);
@@ -1484,12 +1499,8 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->asset_input_channel);
   g_clear_object(&self->rich_clipboard_channel);
   g_clear_object(&self->secure_credential_channel);
-  if (self->visualization_host != nullptr) busymark_web_render_host_shutdown(self->visualization_host);
   g_clear_object(&self->visualization_host);
-  if (self->video_player_host != nullptr) busymark_video_player_host_shutdown(self->video_player_host);
   g_clear_object(&self->video_player_host);
-  busymark_audio_player_host_destroy(self->audio_player_host);
-  self->audio_player_host = nullptr;
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
 }

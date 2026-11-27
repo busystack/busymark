@@ -221,12 +221,18 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
     ValueNotifier<AudioPlaybackState> status,
   ) async {
     final media = DocumentMediaScope.of(context);
+    final document = widget.document;
     final reset = _reset();
     final version = _version;
     await reset;
-    if (!mounted || !context.mounted || _version != version) return;
+    if (!mounted ||
+        !context.mounted ||
+        _version != version ||
+        widget.document != document) {
+      return;
+    }
     owner = key;
-    _boundDocument = widget.document;
+    _boundDocument = document;
     status.value = AudioPlaybackState.opening;
     for (final candidate in audio.playbackSources) {
       if (_version != version || !context.mounted) break;
@@ -292,7 +298,8 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
               await ready.future.timeout(
                 const Duration(seconds: 20),
                 onTimeout: () => false,
-              )) {
+              ) &&
+              _version == version) {
             _confirmed = true;
             status.value = AudioPlaybackState.ready;
             return;

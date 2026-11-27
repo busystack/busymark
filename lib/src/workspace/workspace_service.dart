@@ -2422,7 +2422,12 @@ class WorkspaceService {
   ) async {
     final context = resolveWorkspaceDocumentContext(workspace, buffer);
     if (context.isWritersideOwned) {
-      return _buildWritersideDocument(workspace, context, buffer.text);
+      return _buildWritersideDocument(
+        workspace,
+        context,
+        buffer.text,
+        forNarration: true,
+      );
     }
     if (context.kind != DocumentKind.markdown) return null;
     final parsed = await markdownParser.parseAsync(
@@ -2549,8 +2554,9 @@ class WorkspaceService {
   BusyDocument? _buildWritersideDocument(
     Workspace workspace,
     WorkspaceDocumentContext context,
-    String source,
-  ) {
+    String source, {
+    bool forNarration = false,
+  }) {
     final module = context.writersideModule;
     final originalTopic = context.writersideTopic;
     final active = context.diskPath;
@@ -2603,6 +2609,7 @@ class WorkspaceService {
     return writersideDocumentRenderer.toBusyDocument(
       resolved.document,
       title: resolved.title ?? topic.title ?? topic.fileName,
+      forNarration: forNarration,
     );
   }
 

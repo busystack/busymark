@@ -19,7 +19,8 @@ class WritersideDocumentRenderer {
     String? title,
     bool includeTitleHeading = false,
     int titleHeadingLevel = 1,
-  }) => _WritersideRenderSession().toBusyDocument(
+    bool forNarration = false,
+  }) => _WritersideRenderSession(forNarration: forNarration).toBusyDocument(
     document,
     title: title,
     includeTitleHeading: includeTitleHeading,
@@ -28,6 +29,9 @@ class WritersideDocumentRenderer {
 }
 
 class _WritersideRenderSession {
+  _WritersideRenderSession({required this.forNarration});
+
+  final bool forNarration;
   int _nextListOccurrence = 0;
 
   BusyDocument toBusyDocument(
@@ -124,6 +128,10 @@ class _WritersideRenderSession {
         ),
         for (final original in blocks)
           (() {
+            if (forNarration &&
+                document.format == WritersideDocumentFormat.xmlTopic) {
+              return annotate(original);
+            }
             var block = original;
             if (block.kind == BusyBlockKind.heading) {
               final level = int.tryParse(block.attributes['level'] ?? '') ?? 1;
@@ -157,7 +165,12 @@ class _WritersideRenderSession {
       title: title,
       blocks: List.unmodifiable(blocks),
       source: document.source,
+      resolvedWritersideXml:
+          forNarration && document.format == WritersideDocumentFormat.xmlTopic,
       frontMatter: {
+        if (forNarration)
+          if (document.rootElement?.attributes['lang'] case final lang?)
+            'lang': lang,
         for (final element in document.elements)
           if ({
             'link-summary',
@@ -232,7 +245,7 @@ class _WritersideRenderSession {
             BusyBlock(
               id: _id('text', node.span.startOffset),
               kind: BusyBlockKind.paragraph,
-              inlines: [BusyInline(kind: BusyInlineKind.text, text: node.text)],
+              inlines: [_textInline(node)],
               sourceSpan: node.span,
             ),
           );
@@ -260,7 +273,25 @@ class _WritersideRenderSession {
         case WritersideSemanticKind.condition:
         case WritersideSemanticKind.container:
         case WritersideSemanticKind.snippet:
-          result.addAll(_blocks(element.children, headingLevel: headingLevel));
+          final children = _blocks(
+            element.children,
+            headingLevel: headingLevel,
+          );
+          if (forNarration &&
+              (attributes.containsKey('switcher-key') ||
+                  attributes.containsKey('lang'))) {
+            result.add(
+              BusyBlock(
+                id: _nodeId(element),
+                kind: BusyBlockKind.htmlBlock,
+                attributes: attributes,
+                children: children,
+                sourceSpan: element.span,
+              ),
+            );
+          } else {
+            result.addAll(children);
+          }
         case WritersideSemanticKind.startingPage:
         case WritersideSemanticKind.section:
         case WritersideSemanticKind.seealso:
@@ -296,10 +327,7 @@ class _WritersideRenderSession {
                     id: '${_nodeId(element)}-title',
                     kind: BusyBlockKind.heading,
                     inlines: [
-                      BusyInline(
-                        kind: BusyInlineKind.text,
-                        text: title.isEmpty ? 'See also' : title,
-                      ),
+                      _titleInline(element, title.isEmpty ? 'See also' : title),
                     ],
                     attributes: {'level': '${headingLevel.clamp(1, 6)}'},
                     sourceSpan: element.span,
@@ -416,10 +444,7 @@ class _WritersideRenderSession {
             BusyBlock(
               id: _nodeId(element),
               kind: BusyBlockKind.heading,
-              inlines: [
-                if (title.isNotEmpty)
-                  BusyInline(kind: BusyInlineKind.text, text: title),
-              ],
+              inlines: [if (title.isNotEmpty) _titleInline(element, title)],
               children: _blocks(
                 _contentChildren(element),
                 headingLevel: headingLevel + 1,
@@ -439,10 +464,7 @@ class _WritersideRenderSession {
               kind: BusyBlockKind.writersideProcedure,
               inlines: [
                 if (_elementTitle(element).isNotEmpty)
-                  BusyInline(
-                    kind: BusyInlineKind.text,
-                    text: _elementTitle(element),
-                  ),
+                  _titleInline(element, _elementTitle(element)),
               ],
               children: _blocks(
                 _contentChildren(element),
@@ -575,10 +597,7 @@ class _WritersideRenderSession {
               kind: BusyBlockKind.writersideTabs,
               inlines: [
                 if (_elementTitle(element).isNotEmpty)
-                  BusyInline(
-                    kind: BusyInlineKind.text,
-                    text: _elementTitle(element),
-                  ),
+                  _titleInline(element, _elementTitle(element)),
               ],
               children: _blocks(
                 _contentChildren(element),
@@ -642,9 +661,10 @@ class _WritersideRenderSession {
               kind: BusyBlockKind.writersideRawXml,
               inlines: [
                 if (_elementTitle(element).isNotEmpty)
-                  BusyInline(
+                  _titleInline(
+                    element,
+                    _elementTitle(element),
                     kind: BusyInlineKind.strong,
-                    text: _elementTitle(element),
                   ),
               ],
               children: _blocks(
@@ -1073,7 +1093,7 @@ class _WritersideRenderSession {
     for (final node in nodes) {
       if (node is WritersideTextNode) {
         if (node.text.isNotEmpty) {
-          result.add(BusyInline(kind: BusyInlineKind.text, text: node.text));
+          result.add(_textInline(node));
         }
         continue;
       }
@@ -1082,6 +1102,7 @@ class _WritersideRenderSession {
       }
       final children = _inlines(node.children, owner);
       final text = node.plainText;
+      final before = result.length;
       switch (node.semanticKind) {
         case WritersideSemanticKind.strong:
           result.add(
@@ -1112,6 +1133,7 @@ class _WritersideRenderSession {
                   ? node.attributes['resolved-label'] ?? ''
                   : text,
               attributes: _attributes(node),
+              children: forNarration ? children : const [],
             ),
           );
         case WritersideSemanticKind.tooltip:
@@ -1165,7 +1187,11 @@ class _WritersideRenderSession {
           );
         case WritersideSemanticKind.lineBreak:
           result.add(
-            const BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'),
+            BusyInline(
+              kind: BusyInlineKind.hardBreak,
+              text: '\n',
+              attributes: forNarration ? _attributes(node) : const {},
+            ),
           );
         case WritersideSemanticKind.title:
         case WritersideSemanticKind.metadata:
@@ -1174,14 +1200,58 @@ class _WritersideRenderSession {
         case WritersideSemanticKind.include:
           break;
         default:
-          result.addAll(
-            children.isEmpty && text.isNotEmpty
-                ? [BusyInline(kind: BusyInlineKind.text, text: text)]
-                : children,
-          );
+          if (forNarration && node.attributes.containsKey('switcher-key')) {
+            result.add(
+              BusyInline(
+                kind: BusyInlineKind.text,
+                text: text,
+                attributes: _attributes(node),
+                children: children,
+              ),
+            );
+          } else {
+            result.addAll(
+              children.isEmpty && text.isNotEmpty
+                  ? [BusyInline(kind: BusyInlineKind.text, text: text)]
+                  : children,
+            );
+            continue;
+          }
+      }
+      if (forNarration && result.length == before + 1) {
+        result[before] = result[before].copyWith(sourceSpan: node.span);
       }
     }
     return result;
+  }
+
+  BusyInline _textInline(WritersideTextNode node) => BusyInline(
+    kind: BusyInlineKind.text,
+    text: node.text,
+    sourceSpan: forNarration ? node.span : null,
+  );
+
+  BusyInline _titleInline(
+    WritersideElementNode owner,
+    String text, {
+    BusyInlineKind kind = BusyInlineKind.text,
+  }) {
+    if (!forNarration) return BusyInline(kind: kind, text: text);
+    final title = owner.children
+        .whereType<WritersideElementNode>()
+        .where(
+          (child) =>
+              child.semanticKind == WritersideSemanticKind.title &&
+              child.plainText.trim().isNotEmpty,
+        )
+        .firstOrNull;
+    return BusyInline(
+      kind: kind,
+      text: text,
+      sourceSpan: title?.span ?? owner.attributeSpans['title'],
+      attributes: title == null ? const {} : _attributes(title),
+      children: title == null ? const [] : _inlines(title.children, title),
+    );
   }
 
   BusyInline _imageInline(WritersideElementNode image) {

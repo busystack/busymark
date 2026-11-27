@@ -112,6 +112,7 @@ class BusyDocument {
     this.source,
     this.imageSource,
     this.authoredXml,
+    this.resolvedWritersideXml = false,
   });
 
   final String filePath;
@@ -126,6 +127,7 @@ class BusyDocument {
 
   /// The unresolved authored XML tree. Presentation resolution never owns saves.
   final WritersideDocument? authoredXml;
+  final bool resolvedWritersideXml;
   bool get isXmlTopic => authoredXml != null;
   bool get isWriterside =>
       isXmlTopic || mode == MarkdownMode.writersideMarkdown;
@@ -151,6 +153,7 @@ class BusyDocument {
       source: source ?? this.source,
       imageSource: imageSource ?? this.imageSource,
       authoredXml: authoredXml ?? this.authoredXml,
+      resolvedWritersideXml: resolvedWritersideXml,
     );
   }
 }
@@ -285,6 +288,7 @@ class BusyInline {
     required this.text,
     this.destination,
     this.imageSpan,
+    this.sourceSpan,
     this.audio,
     this.children = const [],
     this.attributes = const {},
@@ -294,6 +298,7 @@ class BusyInline {
   final String text;
   final String? destination;
   final SourceSpan? imageSpan;
+  final SourceSpan? sourceSpan;
   final BusyAudio? audio;
   final List<BusyInline> children;
   final Map<String, String> attributes;
@@ -312,6 +317,7 @@ class BusyInline {
     List<BusyInline>? children,
     Map<String, String>? attributes,
     SourceSpan? imageSpan,
+    SourceSpan? sourceSpan,
     BusyAudio? audio,
     bool clearImageSpan = false,
   }) {
@@ -320,6 +326,7 @@ class BusyInline {
       text: text ?? this.text,
       destination: destination ?? this.destination,
       imageSpan: clearImageSpan ? null : imageSpan ?? this.imageSpan,
+      sourceSpan: sourceSpan ?? this.sourceSpan,
       audio: audio ?? this.audio,
       children: children ?? this.children,
       attributes: attributes ?? this.attributes,

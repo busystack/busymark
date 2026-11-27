@@ -129,10 +129,16 @@ def main():
                 found = subprocess.run(('xdotool', 'search', '--onlyvisible', '--pid', str(pid)),
                                        capture_output=True, timeout=5, check=False)
                 if found.returncode == 0:
-                    return found.stdout.decode().splitlines()[0]
+                    return pid, found.stdout.decode().splitlines()[0]
             return None
 
-        window = until(native_window, 55, 'BusyMark window never became visible')
+        pid, window = until(native_window, 55, 'BusyMark window never became visible')
+        if args.installed:
+            confinement = Path(f'/proc/{pid}/attr/current').read_text().strip()
+            if not re.fullmatch(r'snap\.busymark(?:_[a-z0-9]+)?\.busymark \(enforce\)',
+                                confinement):
+                raise RuntimeError('The window owner is not a strictly confined BusyMark')
+            report['confinement'] = confinement
         run('xdotool', 'windowactivate', '--sync', window)
         time.sleep(5)
         if owned_streams():

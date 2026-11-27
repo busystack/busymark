@@ -16,6 +16,18 @@ content and existing media. A transcript linked or written next to a recording
 remains ordinary document text. Change the rules and pause lengths in
 **Settings → Speech**.
 
+Writerside narration uses the active instance’s resolved content, including
+variables and includes. In XML topics, **Block** selects the innermost block
+at the cursor and **Section** selects the enclosing chapter. The transcript
+uses the topic switcher’s default variant. It starts with the first available
+tab and uses the same tab key in later sets with the same group name. It
+includes text in collapsed sections and applies the usual code-block rule to
+collapsed code. Partial XML selections use the authored text positions. When
+an expansion or encoded value cannot be mapped safely, the transcript reports
+the omission. [Writerside conditional content](https://www.jetbrains.com/help/writerside/conditional-content.html),
+[tabs](https://www.jetbrains.com/help/writerside/tabs.html),
+[collapsible elements](https://www.jetbrains.com/help/writerside/collapsible-elements.html).
+
 A completed file is available for repeated playback without another synthesis
 request. Use **Save audio** for a separate WAV file. In an editable Markdown
 document, **Insert audio** adds a standard HTML audio reference after the

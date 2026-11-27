@@ -141,23 +141,23 @@ class NarrationProjection {
       incompleteTask: incompleteTask,
     );
     final blocks = document.blocks;
-    bool owns(SourceSpan? span) =>
-        span != null &&
-        span.filePath == document.filePath &&
-        span.startOffset >= 0 &&
-        span.endOffset <= capturedSource.length;
     var start = 0;
     var end = capturedSource.length;
+    final xmlScope =
+        document.resolvedWritersideXml &&
+        (scope == NarrationScope.block || scope == NarrationScope.section);
     if (scope == NarrationScope.selection) {
       start = selectionStart.clamp(0, capturedSource.length);
       end = selectionEnd.clamp(start, capturedSource.length);
+    } else if (xmlScope) {
+      end = run.visitXmlScope(anchor, section: scope == NarrationScope.section);
     } else if (scope == NarrationScope.block ||
         scope == NarrationScope.section) {
       if (scope == NarrationScope.block) {
         final match = blocks
             .where((block) {
               final span = block.sourceSpan;
-              return owns(span) &&
+              return run.owns(span) &&
                   span!.startOffset <= anchor &&
                   anchor <= span.endOffset;
             })
@@ -169,7 +169,8 @@ class NarrationProjection {
         final headings = blocks
             .where(
               (block) =>
-                  block.kind == BusyBlockKind.heading && owns(block.sourceSpan),
+                  block.kind == BusyBlockKind.heading &&
+                  run.owns(block.sourceSpan),
             )
             .toList();
         final current = headings.lastIndexWhere(
@@ -191,12 +192,15 @@ class NarrationProjection {
       }
     }
 
-    if (start < end || scope == NarrationScope.document) {
+    if (!xmlScope && (start < end || scope == NarrationScope.document)) {
       for (final block in blocks) {
         final span = block.sourceSpan;
         if (scope == NarrationScope.document) {
           run.visit(block);
-        } else if (owns(span) &&
+        } else if (scope == NarrationScope.selection &&
+            document.resolvedWritersideXml) {
+          run.visitXmlSelection(block, start, end);
+        } else if (run.owns(span) &&
             span!.startOffset < end &&
             span.endOffset > start) {
           if (scope == NarrationScope.selection &&
@@ -240,6 +244,125 @@ class _NarrationRun {
   final omissions = <NarrationOmission>{};
   late final _inlineParser = const MarkdownSourceMapper()
       .createInlineParserContext(documentSource: source, mode: document.mode);
+  late final _tabSelection = _selectTabs(document.blocks);
+
+  bool owns(SourceSpan? span) =>
+      span != null &&
+      span.filePath == document.filePath &&
+      span.startOffset >= 0 &&
+      span.endOffset <= source.length;
+
+  bool _activeVariant(Map<String, String> attributes) {
+    final selected = attributes['switcher-default'];
+    final keys = attributes['switcher-key'];
+    return selected == null ||
+        keys == null ||
+        keys.split(',').any((key) => key.trim() == selected);
+  }
+
+  bool _tabGroup(BusyBlock block) =>
+      block.kind == BusyBlockKind.writersideTabs &&
+      block.attributes['element'] == 'tabs';
+
+  Map<BusyBlock, BusyBlock> _selectTabs(List<BusyBlock> roots) {
+    final selected = <BusyBlock, BusyBlock>{};
+    final groups = <String, String>{};
+    void walk(BusyBlock block) {
+      if (_hidden(block)) return;
+      if (!_tabGroup(block)) {
+        block.children.forEach(walk);
+        return;
+      }
+      final panels = block.children.where(
+        (panel) => panel.attributes['element'] == 'tab' && !_hidden(panel),
+      );
+      final first = panels.firstOrNull;
+      if (first == null) return;
+      final group = block.attributes['group'];
+      String key(BusyBlock panel) =>
+          panel.attributes['group-key'] ?? panel.plainText;
+      final shared = group == null
+          ? null
+          : groups.putIfAbsent(group, () => key(first));
+      final panel =
+          panels.where((panel) => key(panel) == shared).firstOrNull ?? first;
+      selected[block] = panel;
+      walk(panel);
+    }
+
+    roots.forEach(walk);
+    return selected;
+  }
+
+  bool _hidden(BusyBlock block) =>
+      block.attributes['topic-switcher'] == 'true' ||
+      !_activeVariant(block.attributes);
+
+  Iterable<BusyBlock> _children(BusyBlock block) {
+    if (!_tabGroup(block)) return block.children;
+    final panel = _tabSelection[block];
+    if (block.children.any((child) => !identical(child, panel))) {
+      omissions.add(NarrationOmission.hidden);
+    }
+    return [if (panel != null) panel];
+  }
+
+  int visitXmlScope(int anchor, {required bool section}) {
+    List<BusyBlock> pathAt(List<BusyBlock> blocks) {
+      for (final block in blocks) {
+        final span = block.sourceSpan;
+        if (owns(span) &&
+            span!.startOffset <= anchor &&
+            anchor < span.endOffset) {
+          return [block, ...pathAt(block.children)];
+        }
+      }
+      return const [];
+    }
+
+    bool isSection(BusyBlock block) =>
+        block.attributes['element'] == 'chapter' ||
+        block.attributes['writerside-section'] == 'true';
+
+    final path = pathAt(document.blocks);
+    final target = section ? path.lastIndexWhere(isSection) : path.length - 1;
+    if (target < 0) {
+      if (!section) return anchor.clamp(0, source.length);
+      final first = document.blocks.where(isSection).firstOrNull;
+      final firstStart = first?.sourceSpan?.startOffset ?? source.length;
+      if (anchor > firstStart) {
+        final block = path.firstOrNull;
+        if (block != null) visit(block);
+        return block?.sourceSpan?.endOffset ?? anchor.clamp(0, source.length);
+      }
+      for (final block in document.blocks.takeWhile(
+        (block) => !isSection(block),
+      )) {
+        visit(block);
+      }
+      return firstStart;
+    }
+    final end = path[target].sourceSpan!.endOffset;
+    String? inheritedLanguage;
+    for (final (index, block) in path.take(target + 1).indexed) {
+      final omission = skip(block);
+      if (omission != null && omission != NarrationOmission.headings) {
+        omissions.add(omission);
+        return end;
+      }
+      if (_tabGroup(block) &&
+          index < target &&
+          !identical(path[index + 1], _tabSelection[block])) {
+        omissions.add(NarrationOmission.hidden);
+        return end;
+      }
+      if (index < target) {
+        inheritedLanguage = block.attributes['lang'] ?? inheritedLanguage;
+      }
+    }
+    visit(path[target], inheritedLanguage: inheritedLanguage);
+    return end;
+  }
 
   void add(
     String text,
@@ -266,9 +389,12 @@ class _NarrationRun {
   }
 
   NarrationOmission? skip(BusyBlock block) {
-    if (block.isSourceOnly ||
+    if (_hidden(block) ||
+        block.isSourceOnly ||
         block.kind == BusyBlockKind.frontMatter ||
-        block.kind == BusyBlockKind.writersideRawXml ||
+        block.attributes['unsupported'] == 'true' ||
+        block.kind == BusyBlockKind.writersideRawXml &&
+            !const {'deflist', 'def'}.contains(block.attributes['element']) ||
         block.attributes['htmlTag'] == 'summary' && block.plainText.isEmpty) {
       return NarrationOmission.hidden;
     }
@@ -295,11 +421,16 @@ class _NarrationRun {
 
   void visit(BusyBlock block, {String? inheritedLanguage}) {
     final omission = skip(block);
+    final lang = block.attributes['lang'] ?? inheritedLanguage;
     if (omission != null) {
       omissions.add(omission);
+      if (omission == NarrationOmission.headings) {
+        for (final child in _children(block)) {
+          visit(child, inheritedLanguage: lang);
+        }
+      }
       return;
     }
-    final lang = block.attributes['lang'] ?? inheritedLanguage;
     if (block.kind == BusyBlockKind.table) {
       table(block, lang);
       return;
@@ -329,7 +460,7 @@ class _NarrationRun {
       lang,
       heading: block.kind == BusyBlockKind.heading,
     );
-    for (final child in block.children) {
+    for (final child in _children(block)) {
       visit(child, inheritedLanguage: lang);
     }
   }
@@ -338,6 +469,10 @@ class _NarrationRun {
     final headers = <int, String>{};
     final covered = <int, int>{};
     for (final (rowIndex, row) in table.children.indexed) {
+      if (_hidden(row)) {
+        omissions.add(NarrationOmission.hidden);
+        continue;
+      }
       var column = 0;
       final parts = <String>[];
       final header = row.attributes['header'] == 'true';
@@ -349,7 +484,9 @@ class _NarrationRun {
             .clamp(1, 100);
         final rows = (int.tryParse(cell.attributes['rowspan'] ?? '') ?? 1)
             .clamp(1, 100);
-        final text = inlineText(cell.inlines).trim();
+        final hidden = _hidden(cell);
+        if (hidden) omissions.add(NarrationOmission.hidden);
+        final text = hidden ? '' : inlineText(cell.inlines).trim();
         final labels = <String>{};
         for (var offset = 0; offset < span; offset++) {
           covered[column + offset] = rowIndex + rows;
@@ -376,30 +513,33 @@ class _NarrationRun {
 
   String inlineText(List<BusyInline> inlines) => inlines.map(inline).join();
 
+  NarrationOmission? _inlineOmission(BusyInline value) {
+    if (!_activeVariant(value.attributes)) return NarrationOmission.hidden;
+    return switch (value.kind) {
+      BusyInlineKind.math => NarrationOmission.math,
+      BusyInlineKind.audio => NarrationOmission.media,
+      BusyInlineKind.html ||
+      BusyInlineKind.unknown ||
+      BusyInlineKind.writersideVariable => NarrationOmission.hidden,
+      BusyInlineKind.image when !rules.images => NarrationOmission.images,
+      BusyInlineKind.code when !rules.inlineCode => NarrationOmission.code,
+      BusyInlineKind.link when value.destination?.startsWith('#fn') == true =>
+        NarrationOmission.footnotes,
+      _ => null,
+    };
+  }
+
   String inline(BusyInline value) {
-    String omit(NarrationOmission omission) {
+    final omission = _inlineOmission(value);
+    if (omission != null) {
       omissions.add(omission);
       return '';
     }
-
     String label() =>
         value.children.isEmpty ? value.text : inlineText(value.children);
-    final href = value.destination;
     return switch (value.kind) {
-      BusyInlineKind.math => omit(NarrationOmission.math),
-      BusyInlineKind.audio => omit(NarrationOmission.media),
-      BusyInlineKind.html ||
-      BusyInlineKind.unknown ||
-      BusyInlineKind.writersideVariable => omit(NarrationOmission.hidden),
-      BusyInlineKind.image when !rules.images => omit(NarrationOmission.images),
-      BusyInlineKind.code when !rules.inlineCode => omit(
-        NarrationOmission.code,
-      ),
-      BusyInlineKind.link when href?.startsWith('#fn') == true => omit(
-        NarrationOmission.footnotes,
-      ),
       BusyInlineKind.link when rules.links == NarrationLinks.skip => '',
-      BusyInlineKind.link => _link(label(), href),
+      BusyInlineKind.link => _link(label(), value.destination),
       BusyInlineKind.softBreak || BusyInlineKind.hardBreak => ' ',
       _ => label(),
     };
@@ -418,6 +558,99 @@ class _NarrationRun {
       return bare ? href : '$label $href';
     }
     return bare ? '' : label;
+  }
+
+  void visitXmlSelection(
+    BusyBlock block,
+    int start,
+    int end, {
+    String? inheritedLanguage,
+  }) {
+    final span = block.sourceSpan;
+    if (!owns(span) || span!.startOffset >= end || span.endOffset <= start) {
+      return;
+    }
+    if (start <= span.startOffset && span.endOffset <= end) {
+      visit(block, inheritedLanguage: inheritedLanguage);
+      return;
+    }
+    final omission = skip(block);
+    if (omission != null) {
+      omissions.add(omission);
+      if (omission != NarrationOmission.headings) return;
+    }
+    final lang = block.attributes['lang'] ?? inheritedLanguage;
+    if (block.kind == BusyBlockKind.codeBlock) {
+      omissions.add(NarrationOmission.unmappedSelection);
+      return;
+    }
+    if (omission == null) {
+      add(
+        block.inlines.map((value) => _clipXml(value, start, end)).join(),
+        SourceSpan.fromOffsets(
+          filePath: span.filePath,
+          source: source,
+          startOffset: start.clamp(span.startOffset, span.endOffset),
+          endOffset: end.clamp(span.startOffset, span.endOffset),
+        ),
+        lang,
+        heading: block.kind == BusyBlockKind.heading,
+      );
+    }
+    for (final child in _children(block)) {
+      visitXmlSelection(child, start, end, inheritedLanguage: lang);
+    }
+  }
+
+  String _clipXml(BusyInline value, int start, int end) {
+    final span = value.sourceSpan;
+    if (span == null) return '';
+    if (!owns(span)) {
+      omissions.add(NarrationOmission.unmappedSelection);
+      return '';
+    }
+    if (span.startOffset >= end || span.endOffset <= start) return '';
+    final omission = _inlineOmission(value);
+    if (omission != null) {
+      omissions.add(omission);
+      return '';
+    }
+    final fullySelected = start <= span.startOffset && span.endOffset <= end;
+    if (value.kind == BusyInlineKind.link &&
+        (rules.links == NarrationLinks.skip ||
+            _link(value.plainText, value.destination).isEmpty)) {
+      return '';
+    }
+    if (value.children.isNotEmpty) {
+      final text = value.children
+          .map((child) => _clipXml(child, start, end))
+          .join();
+      return value.kind == BusyInlineKind.link &&
+              fullySelected &&
+              text.isNotEmpty
+          ? _link(text, value.destination)
+          : text;
+    }
+    if (value.kind == BusyInlineKind.hardBreak) return fullySelected ? ' ' : '';
+    if (value.kind == BusyInlineKind.image) {
+      return fullySelected ? inline(value) : '';
+    }
+    if (source.substring(span.startOffset, span.endOffset) != value.text) {
+      omissions.add(NarrationOmission.unmappedSelection);
+      return '';
+    }
+    final result = StringBuffer();
+    var offset = span.startOffset;
+    for (final character in value.text.characters) {
+      final boundary = offset + character.length;
+      if (offset >= start && boundary <= end) {
+        result.write(character);
+      } else if (offset < end && boundary > start) {
+        omissions.add(NarrationOmission.unmappedSelection);
+      }
+      offset = boundary;
+    }
+    return result.toString();
   }
 
   void partial(BusyBlock block, int start, int end) {

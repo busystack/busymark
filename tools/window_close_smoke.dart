@@ -499,9 +499,20 @@ Future<void> main(List<String> args) async {
         await choose('discard');
       } else if (scenario == 'dirty-cancel') {
         final cancel = await decision('cancel');
+        final cancelRoute = ModalRoute.of(
+          _elements().firstWhere(
+            (element) => identical(element.widget, cancel),
+          ),
+        );
+        if (cancelRoute == null) {
+          throw StateError('The close decision has no containing route.');
+        }
         final cancelling = window.requestClose();
         cancel.onPressed!();
         await cancelling;
+        // The dismissed route can still contain its Discard button while
+        // playing the reverse transition. Wait until its overlay is removed.
+        await cancelRoute.completed.timeout(const Duration(seconds: 15));
         await binding.endOfFrame;
         if (!await windowManager.isVisible() ||
             !container.read(workspaceControllerProvider).hasUnsavedChanges ||

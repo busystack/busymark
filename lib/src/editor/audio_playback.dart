@@ -81,8 +81,6 @@ class AudioPlayback extends ChangeNotifier {
       await pause();
       return;
     }
-    if (state == AudioPlaybackState.ended) await seek(owner, 0);
-    if (!owns(owner) || _nativeId != id) return;
     state = AudioPlaybackState.opening;
     notifyListeners();
     if (!await _call('play', id) && _nativeId == id) {
@@ -159,9 +157,11 @@ class AudioPlayback extends ChangeNotifier {
 
   Future<void> _nativeEvent(MethodCall call) async {
     final payload = call.arguments;
+    final id = _nativeId;
     if (call.method != 'state' ||
+        id == null ||
         payload is! Map ||
-        payload['id'] != _nativeId) {
+        payload['id'] != id) {
       return;
     }
     final next = AudioPlaybackState.values
@@ -169,7 +169,6 @@ class AudioPlayback extends ChangeNotifier {
         .firstOrNull;
     if (next == null) return;
     state = next;
-    final id = _nativeId!;
     _poll?.cancel();
     _poll =
         next == AudioPlaybackState.playing ||
