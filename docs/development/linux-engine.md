@@ -31,7 +31,8 @@ run `flutter pub get --enforce-lockfile` with the configured SDK, then reload th
 project so the IDE refreshes its package roots. Generated `.dart_tool` and IDE
 package metadata can otherwise retain paths to an SDK that has been removed.
 
-CI selects the same official version. Snapcraft downloads the checksum-pinned
+Ubuntu 26.04 amd64 is the primary build and acceptance environment.
+CI selects the same official Flutter version. Snapcraft downloads the checksum-pinned
 SDK and packages its unmodified release engine. Follow the README's clean
 Snapcraft procedure in a disposable supported environment; do not replace an
 installed application for acceptance. The local scaffold repack helper is not
@@ -41,10 +42,11 @@ Standalone smoke checks use disposable D-Bus sessions to retire desktop helpers.
 
 `Flutter Linux` automatically runs bounded GTK/WebKit, compiled visualization/PDF,
 dictionary installation/offline restart, Wayland and strict-Snap build/install
-checks for PRs to `main` and `release/v0.7.0`, and pushes to `main`. It reuses
-`Linux native acceptance` with `run-stress: false`. Run that workflow manually
-with `run-stress` enabled for hundred-close, compiled document/media and
-debug/profile campaigns. See [compiled application checks](application-smoke-tests.md).
+checks for PRs and pushes to `main` and `release/v0.8.0`. A push to the
+release branch also runs the full `Linux native acceptance` stress campaign
+for the exact pushed commit. The workflow can be dispatched with stress
+enabled for hundred-close, compiled document/media and debug/profile campaigns.
+See [compiled application checks](application-smoke-tests.md).
 A widget-suite pass does not validate the GTK embedder.
 
 Yaru uses the unmodified dependencies in `pubspec.lock` through Flutter's

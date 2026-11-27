@@ -13,6 +13,7 @@ import '../core/linux_atomic_file_api.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_service.dart';
 import '../workspace/text_format_metadata.dart';
+import '../writerside/writerside_html_reference_scanner.dart';
 import 'markdown_references.dart';
 
 class MarkdownDestinationEdit {
@@ -189,11 +190,8 @@ class MarkdownMoveService {
             .join('/');
         if (uri.hasQuery) replacement += '?${uri.query}';
         if (uri.hasFragment) replacement += '#${uri.fragment}';
-        if (ref.kind == AuthoredReferenceKind.htmlLink ||
-            ref.kind == AuthoredReferenceKind.htmlMedia) {
-          replacement = const HtmlEscape(
-            HtmlEscapeMode.attribute,
-          ).convert(replacement);
+        if (ref.htmlQuote case final quote?) {
+          replacement = escapeAuthoredHtmlAttribute(replacement, quote);
         }
         final before = text.substring(span.startOffset, span.endOffset);
         if (before != replacement) {

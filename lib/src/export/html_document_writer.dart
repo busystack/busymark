@@ -3,6 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:path/path.dart' as p;
+import '../markdown/audio_media.dart';
 import '../markdown/busymark_document.dart';
 import '../core/path_utils.dart';
 import '../core/uri_utils.dart';
@@ -67,6 +68,7 @@ class HtmlDocumentWriter {
   final Set<String> _emittedIds = {};
   final Map<dom.Element, String> _headingTargets = {};
   int _rawNodes = 0;
+  final Set<String> _remoteMediaOrigins = {};
 
   void _warn(String code, String message, BusyBlock? block) => warnings.add(
     HtmlExportWarning(
@@ -160,8 +162,9 @@ class HtmlDocumentWriter {
     final embeddedSource = options.packaging == HtmlPackaging.singleFile
         ? ' data:'
         : '';
+    final remoteMedia = _remoteMediaOrigins.map((origin) => ' $origin').join();
     final csp =
-        "default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; font-src 'none'; img-src 'self' file:$embeddedSource; media-src 'self' file:$embeddedSource; style-src 'sha256-${base64.encode(sha256.convert(utf8.encode(css)).bytes)}'";
+        "default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; font-src 'none'; img-src 'self' file:$embeddedSource; media-src 'self' file:$embeddedSource$remoteMedia; style-src 'sha256-${base64.encode(sha256.convert(utf8.encode(css)).bytes)}'";
     final metadata = const ExportMetadataMapper().map(
       page.document,
       titleOverride: page.title,
@@ -171,6 +174,7 @@ class HtmlDocumentWriter {
       'head',
       children: [
         _el('meta', attrs: {'charset': 'utf-8'}),
+        _el('meta', attrs: {'name': 'referrer', 'content': 'no-referrer'}),
         _el(
           'meta',
           attrs: {'http-equiv': 'Content-Security-Policy', 'content': csp},
@@ -570,6 +574,13 @@ class HtmlDocumentWriter {
         if (b.attributes['caption'] case final caption?) {
           element.nodes.add(_el('figcaption', text: caption));
         }
+      case BusyBlockKind.audio:
+        element = await _audio(
+          b.audio,
+          await _inlines(b.inlines, b),
+          b,
+          b.attributes,
+        );
       case BusyBlockKind.video:
         final src = b.attributes['src'] ?? '';
         final external = HtmlExportLinks.external(src);
@@ -814,6 +825,126 @@ class HtmlDocumentWriter {
     );
   }
 
+  Future<dom.Element> _audio(
+    BusyAudio? audio,
+    List<dom.Node> fallback,
+    BusyBlock block,
+    Map<String, String> attributes,
+  ) async {
+    final label = audio?.accessibleName ?? 'Audio recording';
+    final playable = <(String, String?)>[];
+    final writerside = page.topic != null;
+    final linksOnly = <String>[];
+    if (audio != null) {
+      for (final source in audio.playbackSources) {
+        final raw = source.destination;
+        final reference = Uri.tryParse(raw);
+        if (reference == null) continue;
+        if (reference.scheme == 'https') {
+          final remote = HtmlExportLinks.external(raw);
+          if (remote == null || reference.userInfo.isNotEmpty) continue;
+          if (!writerside && options.allowRemoteAudio) {
+            _remoteMediaOrigins.add(reference.origin);
+            playable.add((remote, source.type));
+          } else {
+            linksOnly.add(remote);
+          }
+          continue;
+        }
+        final url = await links.assets.local(
+          raw,
+          sourcePath: links.source(page, attributes),
+          searchRoots: links.roots(page, attributes),
+          line: block.sourceSpan?.startLine ?? 1,
+          audio: true,
+        );
+        if (url == null) continue;
+        final withSuffix = links.assets.ownsEmbeddedUrl(url)
+            ? reference.hasFragment
+                  ? '$url#${reference.fragment}'
+                  : url
+            : withReferenceSuffix(Uri.parse(url), reference).toString();
+        if (links.assets.ownsEmbeddedUrl(url) && reference.hasQuery) {
+          _warn(
+            'asset.embedded-query',
+            'A query was omitted for embedded audio.',
+            block,
+          );
+        }
+        playable.add((withSuffix, source.type));
+      }
+    }
+    final external = [
+      for (final url in linksOnly)
+        _el('a', text: label, attrs: {'href': url, 'class': 'audio-external'}),
+    ];
+    if (linksOnly.isNotEmpty) {
+      _warn('asset.remote', 'External audio remains a network link.', block);
+    } else if (playable.any((source) => source.$1.startsWith('https://'))) {
+      _warn(
+        'asset.remote',
+        'External audio playback requires a network connection.',
+        block,
+      );
+    }
+    if (writerside) {
+      _warn(
+        'writerside.audio.unsupported',
+        'Writerside uses resources for downloadable recordings.',
+        block,
+      );
+      return _el(
+        'span',
+        children: [
+          for (final (location, _) in playable)
+            _el('a', text: label, attrs: {'href': location, 'download': ''}),
+          ...fallback,
+          ...external,
+          if (playable.isEmpty && fallback.isEmpty && external.isEmpty)
+            dom.Text(label),
+        ],
+      );
+    }
+    if (playable.isEmpty) {
+      return _el(
+        'span',
+        children: [
+          if (fallback.isEmpty && external.isEmpty) dom.Text(label),
+          ...fallback,
+          ...external,
+        ],
+      );
+    }
+
+    final direct = audio!.directSource != null;
+    final player = _el(
+      'audio',
+      attrs: {
+        'preload': 'none',
+        if (audio.controls) 'controls': '',
+        if (audio.muted) 'muted': '',
+        if (audio.loop) 'loop': '',
+        if (direct) 'src': playable.single.$1,
+        if (playable.any((source) => source.$1.startsWith('https://')))
+          'crossorigin': 'anonymous',
+        for (final entry in audio.attributes.entries)
+          if (entry.key.startsWith('aria-') ||
+              const {'class', 'role', 'tabindex'}.contains(entry.key))
+            entry.key: entry.value,
+      },
+      children: [
+        if (!direct)
+          for (final (url, type) in playable)
+            _el('source', attrs: {'src': url, if (type != null) 'type': type}),
+        ...fallback,
+      ],
+    );
+    _attributes(player, audio.attributes);
+    return external.isEmpty
+        ? player
+        : _el('span', children: [player, ...external]);
+  }
+
   void _dimension(dom.Element element, String? value, String name) {
     if (value == null ||
         !RegExp(r'^\d{1,5}(?:\.\d{1,3})?(?:px|%)?$').hasMatch(value)) {
@@ -893,6 +1024,8 @@ class HtmlDocumentWriter {
           node = dom.Text('\n');
         case BusyInlineKind.hardBreak:
           node = _el('br');
+        case BusyInlineKind.audio:
+          node = await _audio(value.audio, nodes, block, a);
         case BusyInlineKind.image:
           node = await _image(value.destination ?? '', value.text, a, block);
         case BusyInlineKind.link:
@@ -1042,7 +1175,7 @@ class HtmlDocumentWriter {
     BusyBlock block, {
     Map<String, String> inherited = const {},
   }) async {
-    final fragment = parser.parseFragment(source);
+    final fragment = parser.parseFragment(source, generateSpans: true);
     Future<List<dom.Node>> nodes(Iterable<dom.Node> values, int depth) async {
       if (depth > limits.depth) {
         throw const HtmlExportException(
@@ -1060,7 +1193,11 @@ class HtmlDocumentWriter {
         }
         if (value is! dom.Element) continue;
         final tag = value.localName!;
-        if (!safeHtmlTags.contains(tag)) {
+        if (!safeHtmlTags.contains(tag) ||
+            tag == 'source' ||
+            tag == 'audio' &&
+                (!isWellFormedAudioElement(value) ||
+                    hasUnsafeAuthoredHtml(value.outerHtml))) {
           _warn(
             'html.unsupported',
             'Unsafe or unsupported HTML is shown as source.',
@@ -1085,6 +1222,20 @@ class HtmlDocumentWriter {
             'Active HTML attributes were omitted.',
             block,
           );
+        }
+        if (tag == 'audio') {
+          final fallback = value.nodes.where(
+            (node) => node is! dom.Element || node.localName != 'source',
+          );
+          out.add(
+            await _audio(
+              BusyAudio.fromHtml(value),
+              await nodes(fallback, depth + 1),
+              block,
+              referenceAttributes,
+            ),
+          );
+          continue;
         }
         if (tag == 'img') {
           out.add(
@@ -1368,6 +1519,18 @@ class HtmlDocumentWriter {
             continue;
           }
           final uri = Uri.tryParse(value);
+          if (key == 'src' &&
+              options.allowRemoteAudio &&
+              uri?.scheme == 'https' &&
+              uri!.hasAuthority &&
+              uri.userInfo.isEmpty &&
+              HtmlExportLinks.external(value) != null &&
+              _remoteMediaOrigins.contains(uri.origin) &&
+              (element.localName == 'audio' ||
+                  element.localName == 'source' &&
+                      element.parent?.localName == 'audio')) {
+            continue;
+          }
           if (uri == null ||
               uri.hasScheme ||
               uri.hasAuthority ||

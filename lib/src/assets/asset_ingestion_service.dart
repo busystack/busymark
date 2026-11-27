@@ -1,17 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:characters/characters.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
 
 import '../core/atomic_file_writer.dart';
 import 'asset_limits.dart';
+import 'audio_asset_format.dart';
 
 enum AssetIngestionOrigin {
   imagePicker,
+  audioPicker,
+  speechGeneration,
   screenshotPaste,
   clipboardImageFile,
   dragAndDrop,
@@ -44,6 +49,7 @@ class AssetIngestionRequest {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.audioDir = '',
   });
 
   final String documentFilePath;
@@ -51,6 +57,7 @@ class AssetIngestionRequest {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final String audioDir;
 }
 
 class IngestedAsset {
@@ -180,6 +187,57 @@ class AssetIngestionService {
     );
   }
 
+  Future<IngestedAsset> ingestAudioFile({
+    required String sourcePath,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) async {
+    final source = File(await File(sourcePath).resolveSymbolicLinks());
+    if (await AudioAssetFormat.inspect(source) == null) {
+      throw const AssetIngestionException(
+        'asset.invalid-audio-type',
+        'The file is not a supported audio container or exceeds the size limit.',
+      );
+    }
+    final handle = await source.open();
+    final Uint8List bytes;
+    try {
+      bytes = await handle.read(maximumAssetBytes + 1);
+    } finally {
+      await handle.close();
+    }
+    return ingestAudioBytes(
+      bytes: bytes,
+      suggestedFileName: p.basename(sourcePath),
+      request: request,
+      origin: origin,
+    );
+  }
+
+  Future<IngestedAsset> ingestAudioBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) async {
+    _validateBytes(bytes, request: request);
+    final format = AudioAssetFormat.identify(bytes);
+    if (format == null) {
+      throw const AssetIngestionException(
+        'asset.invalid-audio-type',
+        'The file is not a supported audio container.',
+      );
+    }
+    return _publishBytes(
+      bytes: bytes,
+      suggestedFileName: suggestedFileName,
+      request: request,
+      origin: origin,
+      type: _DetectedAssetType(format.extension, format.mimeType),
+      audio: true,
+    );
+  }
+
   /// Restores media captured from a rich clipboard fragment.
   ///
   /// Rich fragments can own both images and local Writerside videos. Ordinary
@@ -192,7 +250,16 @@ class AssetIngestionService {
     required AssetIngestionOrigin origin,
   }) async {
     _validateBytes(bytes, request: request);
-    final type = _detectImageType(bytes) ?? _videoType(suggestedFileName);
+    final video = _videoType(suggestedFileName);
+    if (video == null && AudioAssetFormat.identify(bytes) != null) {
+      return ingestAudioBytes(
+        bytes: bytes,
+        suggestedFileName: suggestedFileName,
+        request: request,
+        origin: origin,
+      );
+    }
+    final type = video ?? _detectImageType(bytes);
     if (type == null) {
       throw const AssetIngestionException(
         'asset.invalid-media-type',
@@ -215,6 +282,7 @@ class AssetIngestionService {
       bytes.isNotEmpty &&
       bytes.length <= maximumAssetBytes &&
       (_videoType(suggestedFileName) != null ||
+          AudioAssetFormat.identify(bytes) != null ||
           _detectImageType(bytes) != null);
 
   void _validateBytes(
@@ -238,11 +306,14 @@ class AssetIngestionService {
     required AssetIngestionRequest request,
     required AssetIngestionOrigin origin,
     required _DetectedAssetType type,
+    bool audio = false,
   }) async {
-    final destination = await _destinationDirectory(request);
+    final destination = await _destinationDirectory(request, audio: audio);
     final result = await _withDirectoryOperation(destination.path, () async {
       final pending = await _pendingPublications(destination);
-      final contentHash = sha256.convert(bytes).toString();
+      final contentHash = await Isolate.run(
+        () => sha256.convert(bytes).toString(),
+      );
       final existing = await _identicalAsset(
         destination,
         bytes.length,
@@ -255,7 +326,8 @@ class AssetIngestionService {
       if (existing != null) {
         published = existing;
       } else {
-        final stem = _safeStem(p.basenameWithoutExtension(suggestedFileName));
+        final name = p.basenameWithoutExtension(suggestedFileName);
+        final stem = audio ? _safeAudioStem(name) : _safeStem(name);
         publicationId =
             '$pid-${DateTime.now().microsecondsSinceEpoch}-'
             '${_nextPublicationId++}';
@@ -369,10 +441,13 @@ class AssetIngestionService {
     );
   }
 
-  Future<Directory> _destinationDirectory(AssetIngestionRequest request) async {
+  Future<Directory> _destinationDirectory(
+    AssetIngestionRequest request, {
+    required bool audio,
+  }) async {
     final documentPath = p.normalize(p.absolute(request.documentFilePath));
     late final String allowedRootPath;
-    late final String destinationPath;
+    late String destinationPath;
     switch (request.workspaceKind) {
       case AssetWorkspaceKind.writerside:
         final writersideRoot = request.writersideRoot;
@@ -399,6 +474,13 @@ class AssetIngestionService {
         allowedRootPath = p.dirname(documentPath);
         destinationPath = p.join(allowedRootPath, 'images');
     }
+    if (audio) {
+      final folder = request.audioDir.trim();
+      final relative = folder.isEmpty
+          ? ''
+          : _safeRelativeDirectory(folder, audio: true);
+      destinationPath = p.join(p.dirname(documentPath), relative);
+    }
     final allowedRoot = Directory(allowedRootPath);
     if (!await allowedRoot.exists()) {
       throw const AssetIngestionException(
@@ -408,6 +490,27 @@ class AssetIngestionService {
     }
     final canonicalRoot = p.normalize(await allowedRoot.resolveSymbolicLinks());
     final destination = Directory(destinationPath);
+    if (audio) {
+      var ancestor = destination;
+      while (!await ancestor.exists()) {
+        if (await FileSystemEntity.type(ancestor.path, followLinks: false) !=
+            FileSystemEntityType.notFound) {
+          throw const AssetIngestionException(
+            'asset.destination-outside-workspace',
+            'The configured audio directory is not accessible.',
+          );
+        }
+        ancestor = ancestor.parent;
+      }
+      final canonicalAncestor = await ancestor.resolveSymbolicLinks();
+      if (!p.equals(canonicalRoot, canonicalAncestor) &&
+          !p.isWithin(canonicalRoot, canonicalAncestor)) {
+        throw const AssetIngestionException(
+          'asset.destination-outside-workspace',
+          'The configured audio directory resolves outside the project.',
+        );
+      }
+    }
     await destination.create(recursive: true);
     final canonicalDestination = p.normalize(
       await destination.resolveSymbolicLinks(),
@@ -422,17 +525,22 @@ class AssetIngestionService {
     return Directory(canonicalDestination);
   }
 
-  String _safeRelativeDirectory(String value) {
+  String _safeRelativeDirectory(String value, {bool audio = false}) {
     final normalized = p.normalize(value.trim());
     if (normalized.isEmpty ||
         normalized == '.' ||
         p.isAbsolute(normalized) ||
         normalized == '..' ||
         normalized.startsWith('..${p.separator}')) {
-      throw const AssetIngestionException(
-        'asset.images-dir-invalid',
-        'The configured Writerside images directory is invalid.',
-      );
+      throw audio
+          ? const AssetIngestionException(
+              'asset.audio-dir-invalid',
+              'Use an audio folder relative to the document.',
+            )
+          : const AssetIngestionException(
+              'asset.images-dir-invalid',
+              'The configured Writerside images directory is invalid.',
+            );
     }
     return normalized;
   }
@@ -463,7 +571,7 @@ class AssetIngestionService {
       if (stat.size != size) {
         continue;
       }
-      final digest = sha256.convert(await entity.readAsBytes()).toString();
+      final digest = (await sha256.bind(entity.openRead()).first).toString();
       if (digest == expectedHash) {
         return entity;
       }
@@ -636,6 +744,15 @@ class AssetIngestionService {
     } on FileSystemException {
       // A stale reservation is safer than making uncertain bytes reusable.
     }
+  }
+
+  String _safeAudioStem(String value) {
+    final name = value
+        .replaceAll(RegExp(r'[\x00-\x1f\x7f/\\:]+'), '-')
+        .trim()
+        .replaceFirst(RegExp(r'^\.+'), '');
+    if (name.isEmpty) return 'audio';
+    return name.characters.take(50).toString();
   }
 
   String _safeStem(String value) {

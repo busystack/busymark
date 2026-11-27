@@ -4579,6 +4579,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get exportAssetsDirectory => 'HTML + dossier de ressources';
 
   @override
+  String get exportRemoteAudioPlayback =>
+      'Autoriser la lecture audio HTTPS externe';
+
+  @override
+  String get exportRemoteAudioPlaybackNote =>
+      'Les fichiers audio externes nécessitent une connexion réseau. Les exports hors connexion conservent les liens vers ces enregistrements.';
+
+  @override
   String get exportCustomCss => 'Feuille de style personnalisée…';
 
   @override
@@ -9172,4 +9180,338 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gitUiShowSidebarPanel => 'Afficher le panneau latéral';
+
+  @override
+  String get audio => 'Audio';
+
+  @override
+  String get audioRemotePermission => 'Autoriser l’audio distant ?';
+
+  @override
+  String get audioAllowForDocument => 'Autoriser dans ce document';
+
+  @override
+  String get audioRetry => 'Réessayer la lecture';
+
+  @override
+  String get audioPause => 'Pause';
+
+  @override
+  String get audioPlay => 'Lire';
+
+  @override
+  String get audioPlaybackFailure =>
+      'Impossible de lire l’audio. Vérifiez le fichier, la connexion ou le codec, puis réessayez.';
+
+  @override
+  String get audioPosition => 'Position de lecture';
+
+  @override
+  String get audioUnmute => 'Rétablir le son';
+
+  @override
+  String get audioMute => 'Couper le son';
+
+  @override
+  String get audioVolume => 'Volume';
+
+  @override
+  String get audioPlaybackRate => 'Vitesse de lecture';
+
+  @override
+  String get audioLoop => 'Répéter';
+
+  @override
+  String get insertAudio => 'Insérer un élément audio';
+
+  @override
+  String get audioFile => 'Choisir un fichier audio';
+
+  @override
+  String get audioUrl => 'URL audio HTTPS';
+
+  @override
+  String get audioDestination => 'Dossier audio relatif au document';
+
+  @override
+  String get audioSaveFirst =>
+      'Enregistrez le document avant d’ajouter un fichier audio.';
+
+  @override
+  String get audioStaleTarget =>
+      'Le document d’origine a changé. L’audio n’a pas été inséré.';
+
+  @override
+  String get audioProperties => 'Propriétés audio';
+
+  @override
+  String get audioMarkup => 'Balisage HTML audio';
+
+  @override
+  String get speech => 'Synthèse vocale';
+
+  @override
+  String get readAloud => 'Lire à voix haute';
+
+  @override
+  String get generateAudio => 'Générer un fichier audio';
+
+  @override
+  String get speechProvider => 'Fournisseur de synthèse vocale';
+
+  @override
+  String get speechSystem => 'Voix du système';
+
+  @override
+  String get speechModel => 'Modèle vocal';
+
+  @override
+  String get speechVoice => 'Voix';
+
+  @override
+  String get speechLanguage => 'Langue de synthèse';
+
+  @override
+  String get speechSpeed => 'Vitesse de synthèse';
+
+  @override
+  String get speechPitch => 'Hauteur de la voix';
+
+  @override
+  String get speechRefresh => 'Rechercher les moteurs et les voix';
+
+  @override
+  String get speechKey => 'Clé API du fournisseur';
+
+  @override
+  String get speechStoreKey => 'Enregistrer la clé';
+
+  @override
+  String get speechDeleteKey => 'Supprimer la clé';
+
+  @override
+  String get speechKeyStored =>
+      'La clé a été enregistrée dans le coffre sécurisé.';
+
+  @override
+  String get speechKeyDeleted => 'La clé a été supprimée du coffre sécurisé.';
+
+  @override
+  String get speechScope => 'Portée de la lecture';
+
+  @override
+  String get speechSelection => 'Sélection';
+
+  @override
+  String get speechBlock => 'Bloc actuel';
+
+  @override
+  String get speechSection => 'Section actuelle';
+
+  @override
+  String get speechDocument => 'Document entier';
+
+  @override
+  String get speechOmissions => 'Contenu omis';
+
+  @override
+  String get speechNoText => 'Cette partie ne contient aucun texte à lire.';
+
+  @override
+  String get speechCloudConsent =>
+      'Générer avec le fournisseur en ligne sélectionné ? Le texte affiché lui sera envoyé. Des frais peuvent s’appliquer, même si la requête est annulée.';
+
+  @override
+  String get speechSample => 'Générer un exemple vocal';
+
+  @override
+  String get speechSampleText =>
+      'Ceci est un exemple vocal de BusyMark. La voix et la vitesse de lecture proviennent des paramètres de synthèse vocale.';
+
+  @override
+  String get speechUnavailable =>
+      'Le moteur vocal sélectionné est indisponible.';
+
+  @override
+  String get speechSynthesizing => 'Synthèse en cours';
+
+  @override
+  String get speechSaveAudio => 'Enregistrer l’audio';
+
+  @override
+  String get speechGenerated => 'Narration de synthèse';
+
+  @override
+  String get speechHeadings => 'Lire les titres';
+
+  @override
+  String get speechCodeBlocks => 'Lire les blocs de code';
+
+  @override
+  String get speechInlineCode => 'Lire le code en ligne';
+
+  @override
+  String get speechTables => 'Lire les tableaux';
+
+  @override
+  String get speechQuotes => 'Lire les citations';
+
+  @override
+  String get speechImages => 'Lire les descriptions d’images';
+
+  @override
+  String get speechFootnotes => 'Lire les notes de bas de page';
+
+  @override
+  String get speechLinks => 'Liens';
+
+  @override
+  String get speechLinksLabel => 'Lire les libellés';
+
+  @override
+  String get speechLinksUrl => 'Lire les libellés et les URL';
+
+  @override
+  String get speechLinksSkip => 'Ignorer les liens';
+
+  @override
+  String get speechBlockPause => 'Pause entre les paragraphes en millisecondes';
+
+  @override
+  String get speechSectionPause => 'Pause après un titre en millisecondes';
+
+  @override
+  String get speechFilename => 'Nom du fichier audio généré';
+
+  @override
+  String get speechWav => 'Audio WAV';
+
+  @override
+  String get speechCancelJob => 'Annuler la synthèse';
+
+  @override
+  String get speechStop => 'Arrêter la narration';
+
+  @override
+  String get speechUnknownLocality =>
+      'La voix système sélectionnée peut utiliser un service en ligne. L’autoriser à lire le texte affiché ?';
+
+  @override
+  String get speechLocalOnly => 'Synthèse vocale locale';
+
+  @override
+  String get speechCloud => 'Synthèse vocale en ligne';
+
+  @override
+  String get speechStyle => 'Style de la voix';
+
+  @override
+  String get speechPiperModel => 'Modèle vocal Piper (.onnx)';
+
+  @override
+  String get speechPiperImport => 'Choisir un modèle Piper';
+
+  @override
+  String get speechAudioReady => 'L’audio est prêt à être lu ou enregistré.';
+
+  @override
+  String get speechReadComplete => 'Lecture terminée.';
+
+  @override
+  String get speechProgress => 'Progression de la synthèse';
+
+  @override
+  String get speechTaskDone => 'Tâche terminée.';
+
+  @override
+  String get speechTaskOpen => 'Tâche inachevée.';
+
+  @override
+  String get speechMathOmitted => 'Mathématiques';
+
+  @override
+  String get speechMediaOmitted => 'Médias existants';
+
+  @override
+  String get speechHiddenOmitted => 'Contenu masqué ou non pris en charge';
+
+  @override
+  String get speechSelectionUnmapped =>
+      'Une partie de la sélection n’a pas pu être associée au texte source.';
+
+  @override
+  String get speechPiperInstall => 'Installer une voix Piper';
+
+  @override
+  String get speechPreviousSegment => 'Segment précédent';
+
+  @override
+  String get speechNextSegment => 'Segment suivant';
+
+  @override
+  String get diagnosticMarkdownAudioInvalidStructure =>
+      'Vérifiez que la balise audio est fermée et que chaque élément source est un enfant direct de audio.';
+
+  @override
+  String get diagnosticMarkdownAudioInvalidAttribute =>
+      'Vérifiez la valeur de l’attribut audio. Preload accepte none, metadata ou auto. Crossorigin accepte anonymous ou use-credentials.';
+
+  @override
+  String get diagnosticWritersideAudioUnsupported =>
+      'Writerside ne prend pas en charge le balisage audio interactif. Placez l’enregistrement dans le dossier resources et ajoutez un lien de ressource.';
+
+  @override
+  String get audioLinkFile => 'Lier un fichier de cet espace de travail';
+
+  @override
+  String get audioCopyFile => 'Copier l’audio dans les ressources du document';
+
+  @override
+  String get audioInvalidUrl =>
+      'Saisissez une URL HTTPS valide sans identifiants.';
+
+  @override
+  String get audioInvalidMarkup => 'Saisissez un élément audio HTML complet.';
+
+  @override
+  String get audioCannotResolve =>
+      'Ce fichier audio est absent ou se trouve hors du dossier autorisé.';
+
+  @override
+  String get audioExternalOpen => 'Ouvrir l’audio dans une autre application';
+
+  @override
+  String get audioShowFolder => 'Afficher dans le dossier';
+
+  @override
+  String get audioRemove => 'Supprimer l’élément audio';
+
+  @override
+  String get speechProviderPricing => 'Tarifs du fournisseur';
+
+  @override
+  String get speechBillingUncertain =>
+      'La requête précédente a pu être facturée. Consultez l’utilisation chez le fournisseur avant de réessayer.';
+
+  @override
+  String get speechNoUsage =>
+      'Le fournisseur n’a pas communiqué de décompte complet.';
+
+  @override
+  String get speechReportedUsage => 'Utilisation déclarée par le fournisseur';
+
+  @override
+  String speechInputCharacters(int count) {
+    return '$count caractères en entrée';
+  }
+
+  @override
+  String speechInputTokens(int count) {
+    return '$count jetons en entrée';
+  }
+
+  @override
+  String speechOutputTokens(int count) {
+    return '$count jetons en sortie';
+  }
 }

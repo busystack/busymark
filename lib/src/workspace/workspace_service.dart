@@ -2416,6 +2416,25 @@ class WorkspaceService {
       ) ??
       false;
 
+  Future<BusyDocument?> buildNarrationDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
+    if (context.isWritersideOwned) {
+      return _buildWritersideDocument(workspace, context, buffer.text);
+    }
+    if (context.kind != DocumentKind.markdown) return null;
+    final parsed = await markdownParser.parseAsync(
+      filePath: context.parserPath,
+      source: buffer.text,
+      mode: context.markdownMode,
+      workspaceRoot: workspace.filesystemRootPath,
+      validateLocalReferences: false,
+    );
+    return parsed.busyDocument;
+  }
+
   PreviewDocument? buildDocumentPreview(
     Workspace workspace,
     DocumentBuffer buffer,

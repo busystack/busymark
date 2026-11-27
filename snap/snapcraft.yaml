@@ -11,8 +11,8 @@ description: |
 
   Connect Nextcloud Notes remote workspaces with offline-safe synchronization, categories, favorites, and attachments.
 
-license: Apache-2.0 AND GPL-2.0-only
-base: core24
+license: Apache-2.0 AND GPL-2.0-only AND GPL-3.0-or-later
+base: core26
 grade: stable
 confinement: strict
 icon: assets/branding/busymark_logo.svg
@@ -28,18 +28,18 @@ platforms:
 
 # Declare the official archives over TLS instead of inheriting the provider's
 # HTTP transport. Snapcraft refreshes their signed indexes before resolving
-# build/stage packages. Preserve every Noble pocket and the Ubuntu archive key;
+# build/stage packages. Preserve every Resolute pocket and the Ubuntu archive key;
 # snap/keys/991BC93C.asc is exported from Ubuntu's ubuntu-archive-keyring.gpg.
 package-repositories:
   - type: apt
     url: https://archive.ubuntu.com/ubuntu
-    suites: [noble, noble-updates, noble-backports]
+    suites: [resolute, resolute-updates, resolute-backports]
     components: [main, restricted, universe, multiverse]
     architectures: [amd64]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
   - type: apt
     url: https://security.ubuntu.com/ubuntu
-    suites: [noble-security]
+    suites: [resolute-security]
     components: [main, restricted, universe, multiverse]
     architectures: [amd64]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
@@ -78,6 +78,7 @@ apps:
       XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
       LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/lapack:$SNAP/usr/lib/x86_64-linux-gnu/blas:$LD_LIBRARY_PATH
       BUSYMARK_SPELLING_INSTALL_ROOT: $SNAP_USER_COMMON/spelling/dictionaries
+      ESPEAK_DATA_PATH: $SNAP/usr/lib/x86_64-linux-gnu
 
 parts:
   flutter-sdk:
@@ -122,6 +123,7 @@ parts:
       - ninja-build
       - pkg-config
       - libgtk-3-dev
+      - libgstreamer1.0-dev
       - git
       - unzip
       - rsync
@@ -137,11 +139,16 @@ parts:
       - libexpat1-dev
       - zlib1g-dev
       - libwebkit2gtk-4.1-dev
+      - python3
       - xz-utils
+    # GNOME core26 supplies the GStreamer base and good plugins.
     stage-packages:
+      - espeak-ng
+      - espeak-ng-data
       - gstreamer1.0-libav
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-tools
       - git
       - fonts-dejavu-core
       - fonts-dejavu-mono
@@ -165,6 +172,7 @@ parts:
       export FLUTTER_ROOT="$CRAFT_STAGE/flutter-sdk"
       export PATH="$FLUTTER_ROOT/bin:$PATH"
       export CI=true
+      pkg-config --modversion gtk+-3.0 webkit2gtk-4.1 gstreamer-1.0
       python3 tools/checkout_shared_dependencies.py
       flutter pub get --enforce-lockfile
       flutter build linux --release --no-pub --verbose \
@@ -216,6 +224,18 @@ parts:
       gpgconf.ctl: usr/bin/gpgconf.ctl
       pinentry: usr/bin/pinentry
 
+  piper-runtime:
+    plugin: nil
+    source: snap/speech-python
+    build-attributes: [no-patchelf]
+    build-packages:
+      - python3-venv
+    stage-packages:
+      - python3.14
+    override-build: |
+      bash "$CRAFT_PROJECT_DIR/tools/install_piper_runtime.sh" \
+        "$CRAFT_PART_INSTALL" "$CRAFT_PART_SRC"
+
   desktop-integration:
     after: [busymark]
     plugin: nil
@@ -224,31 +244,15 @@ parts:
       craftctl default
       # Third-party binaries retain their official bytes. Plugin RPATH is
       # configured through CMake; the GNOME launcher supplies library paths.
-      # The retained codec packages depend on GNOME/GStreamer packages already
-      # supplied by the connected platform. Remove only the revision-validated
-      # package-owned paths; a missing path signals that this audit is stale.
-      while IFS= read -r runtime_path; do
-        case "$runtime_path" in
-          ""|\#*) continue ;;
-        esac
-        private_path="$CRAFT_PRIME/$runtime_path"
-        if [ ! -e "$private_path" ] && [ ! -L "$private_path" ]; then
-          echo "missing audited GNOME runtime duplicate: $runtime_path" >&2
-          exit 1
-        fi
-        rm -f "$private_path"
-      done < \
-        "$CRAFT_PROJECT_DIR/snap/gnome-46-2404-prime-exclusions.amd64"
+      # The core26 GNOME and GPU extension cleanup owns duplicate libraries,
+      # including the matching GNOME image loader libraries. The installed
+      # runtime audit checks which provider owns each required decoder.
 
       # libcaca's optional OpenGL backend is unused and pulls in GLUT/GLU.
       rm -f \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so" \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0" \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0.0.0"
-      # GStreamer stages the core24 librsvg, but the GNOME runtime supplies
-      # the matching SVG pixbuf loader and a newer librsvg. Let that pair stay
-      # together; otherwise every SVG-backed GTK symbolic icon fails to load.
-      rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
 
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
@@ -264,7 +268,7 @@ parts:
       # The GNOME launcher otherwise regenerates every bundled theme cache in
       # each fresh profile. These are portable indices of packaged icons;
       # generate and validate them with the existing GNOME SDK at build time.
-      icon_cache_tool=/snap/gnome-46-2404-sdk/current/usr/bin/gtk-update-icon-cache
+      icon_cache_tool="${SNAPCRAFT_GNOME_SDK:?}/usr/bin/gtk-update-icon-cache"
       test -x "$icon_cache_tool"
       for icon_theme in \
         "$CRAFT_PRIME"/usr/share/icons/* "$CRAFT_PRIME"/share/icons/*; do

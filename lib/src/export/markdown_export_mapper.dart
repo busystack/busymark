@@ -1,6 +1,7 @@
 import '../markdown/table_grid.dart';
 
 import '../core/uri_utils.dart';
+import '../markdown/audio_media.dart';
 import '../markdown/busymark_document.dart';
 import '../writerside/writerside_video.dart';
 import 'markdown_export_document.dart';
@@ -221,6 +222,10 @@ class MarkdownExportMapper {
       ),
       BusyBlockKind.image => _mapImageBlock(block),
       BusyBlockKind.video => _mapVideoBlock(block),
+      BusyBlockKind.audio => MarkdownExportBlock(
+        kind: MarkdownExportBlockKind.paragraph,
+        inlines: [_audioFallback(block.audio, _mapInlines(block.inlines))],
+      ),
       BusyBlockKind.table => _mapTable(block, blockOverrides),
       BusyBlockKind.htmlBlock when block.children.isNotEmpty =>
         MarkdownExportBlock(
@@ -428,6 +433,46 @@ class MarkdownExportMapper {
     );
   }
 
+  MarkdownExportInline _audioFallback(
+    BusyAudio? audio,
+    List<MarkdownExportInline> fallback,
+  ) {
+    final label =
+        audio?.accessibleName ??
+        audio?.attributes['aria-description'] ??
+        'Audio recording';
+    final destination = audio?.playbackSources
+        .map((source) => Uri.tryParse(source.destination))
+        .whereType<Uri>()
+        .where(
+          (uri) =>
+              uri.scheme == 'https' &&
+              uri.host.isNotEmpty &&
+              uri.userInfo.isEmpty,
+        )
+        .firstOrNull;
+    return MarkdownExportInline(
+      kind: destination == null
+          ? MarkdownExportInlineKind.text
+          : MarkdownExportInlineKind.link,
+      text: label,
+      destination: destination?.toString(),
+      children: destination == null && fallback.isNotEmpty
+          ? [
+              MarkdownExportInline(
+                kind: MarkdownExportInlineKind.text,
+                text: '$label — ',
+              ),
+              for (final inline in fallback)
+                MarkdownExportInline(
+                  kind: MarkdownExportInlineKind.text,
+                  text: inline.text,
+                ),
+            ]
+          : const [],
+    );
+  }
+
   List<MarkdownExportInline> _mapInlines(List<BusyInline> inlines) {
     return List.unmodifiable(inlines.map(_mapInline));
   }
@@ -500,6 +545,7 @@ class MarkdownExportMapper {
             'summary': summary,
         },
       ),
+      BusyInlineKind.audio => _audioFallback(inline.audio, children),
       BusyInlineKind.image => MarkdownExportInline(
         kind: MarkdownExportInlineKind.image,
         text: inline.text,

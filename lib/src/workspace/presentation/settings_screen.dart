@@ -1,3 +1,4 @@
+import '../../speech/speech_settings.dart';
 import '../../app/busymark_resource_menu.dart';
 import 'keyboard_shortcuts_settings.dart';
 import '../../nextcloud_notes/presentation/nextcloud_settings.dart';
@@ -419,6 +420,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       SettingsPage.nextcloudNotes => const NextcloudNotesSettings(),
       SettingsPage.ai => const _AiSettingsPage(),
+      SettingsPage.speech => const SpeechSettings(),
       SettingsPage.privacy => BusyMarkGroupedList(
         title: l10n.privacy,
         filled: true,
@@ -628,6 +630,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case BusyMarkMainMenuAction.save:
       case BusyMarkMainMenuAction.saveAs:
         break;
+      case BusyMarkMainMenuAction.insertAudio:
+      case BusyMarkMainMenuAction.readAloud:
+      case BusyMarkMainMenuAction.generateAudio:
+        return;
       case BusyMarkMainMenuAction.export:
         return;
       case BusyMarkMainMenuAction.fullScreen:
@@ -1259,6 +1265,7 @@ enum SettingsPage {
   validation,
   history,
   ai,
+  speech,
   nextcloudNotes,
   privacy,
 }
@@ -1270,6 +1277,7 @@ const _primarySettingsPages = <SettingsPage>[
   SettingsPage.validation,
   SettingsPage.history,
   SettingsPage.ai,
+  SettingsPage.speech,
   SettingsPage.nextcloudNotes,
   SettingsPage.privacy,
 ];
@@ -1290,6 +1298,7 @@ SettingsPage settingsPageFromRouteValue(String? value) {
     'history' => SettingsPage.history,
     'nextcloudNotes' => SettingsPage.nextcloudNotes,
     'ai' => SettingsPage.ai,
+    'speech' => SettingsPage.speech,
     // Preserve links to the former Window settings page.
     'window' => SettingsPage.history,
     'privacy' => SettingsPage.privacy,
@@ -1312,6 +1321,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
     SettingsPage.history => l10n.settingsHistory,
     SettingsPage.nextcloudNotes => l10n.nextcloudNotes,
     SettingsPage.ai => l10n.ai,
+    SettingsPage.speech => l10n.speech,
     SettingsPage.privacy => l10n.privacy,
   };
 }
@@ -1326,6 +1336,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.history => BusyMarkGlyphs.documentHistory,
     SettingsPage.nextcloudNotes => BusyMarkGlyphs.documentHistory,
     SettingsPage.ai => BusyMarkGlyphs.ai,
+    SettingsPage.speech => Icons.record_voice_over_outlined,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,
   };
 }

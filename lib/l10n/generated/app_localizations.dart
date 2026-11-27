@@ -7662,6 +7662,18 @@ abstract class AppLocalizations {
   /// **'HTML + assets directory'**
   String get exportAssetsDirectory;
 
+  /// No description provided for @exportRemoteAudioPlayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow external HTTPS audio playback'**
+  String get exportRemoteAudioPlayback;
+
+  /// No description provided for @exportRemoteAudioPlaybackNote.
+  ///
+  /// In en, this message translates to:
+  /// **'External audio requires a network connection. Offline exports keep links to those recordings.'**
+  String get exportRemoteAudioPlaybackNote;
+
   /// No description provided for @exportCustomCss.
   ///
   /// In en, this message translates to:
@@ -15404,6 +15416,630 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show sidebar panel'**
   String get gitUiShowSidebarPanel;
+
+  /// No description provided for @audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audio;
+
+  /// No description provided for @audioRemotePermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow remote audio?'**
+  String get audioRemotePermission;
+
+  /// No description provided for @audioAllowForDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow in this document'**
+  String get audioAllowForDocument;
+
+  /// No description provided for @audioRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry audio'**
+  String get audioRetry;
+
+  /// No description provided for @audioPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get audioPause;
+
+  /// No description provided for @audioPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get audioPlay;
+
+  /// No description provided for @audioPlaybackFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio could not be played. Check the file, connection, or codec and retry.'**
+  String get audioPlaybackFailure;
+
+  /// No description provided for @audioPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback position'**
+  String get audioPosition;
+
+  /// No description provided for @audioUnmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get audioUnmute;
+
+  /// No description provided for @audioMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get audioMute;
+
+  /// No description provided for @audioVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get audioVolume;
+
+  /// No description provided for @audioPlaybackRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback speed'**
+  String get audioPlaybackRate;
+
+  /// No description provided for @audioLoop.
+  ///
+  /// In en, this message translates to:
+  /// **'Loop'**
+  String get audioLoop;
+
+  /// No description provided for @insertAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert audio'**
+  String get insertAudio;
+
+  /// No description provided for @audioFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose audio file'**
+  String get audioFile;
+
+  /// No description provided for @audioUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS audio URL'**
+  String get audioUrl;
+
+  /// No description provided for @audioDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio folder relative to the document'**
+  String get audioDestination;
+
+  /// No description provided for @audioSaveFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the document before adding an audio file.'**
+  String get audioSaveFirst;
+
+  /// No description provided for @audioStaleTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'The original document changed. The audio was not inserted.'**
+  String get audioStaleTarget;
+
+  /// No description provided for @audioProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio properties'**
+  String get audioProperties;
+
+  /// No description provided for @audioMarkup.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML audio markup'**
+  String get audioMarkup;
+
+  /// No description provided for @speech.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech'**
+  String get speech;
+
+  /// No description provided for @readAloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get readAloud;
+
+  /// No description provided for @generateAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate audio'**
+  String get generateAudio;
+
+  /// No description provided for @speechProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech provider'**
+  String get speechProvider;
+
+  /// No description provided for @speechSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System speech'**
+  String get speechSystem;
+
+  /// No description provided for @speechModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech model'**
+  String get speechModel;
+
+  /// No description provided for @speechVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get speechVoice;
+
+  /// No description provided for @speechLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech language'**
+  String get speechLanguage;
+
+  /// No description provided for @speechSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesis speed'**
+  String get speechSpeed;
+
+  /// No description provided for @speechPitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pitch'**
+  String get speechPitch;
+
+  /// No description provided for @speechRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover engines and voices'**
+  String get speechRefresh;
+
+  /// No description provided for @speechKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider API key'**
+  String get speechKey;
+
+  /// No description provided for @speechStoreKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Store key'**
+  String get speechStoreKey;
+
+  /// No description provided for @speechDeleteKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete key'**
+  String get speechDeleteKey;
+
+  /// No description provided for @speechKeyStored.
+  ///
+  /// In en, this message translates to:
+  /// **'The key was saved in secure storage.'**
+  String get speechKeyStored;
+
+  /// No description provided for @speechKeyDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'The key was removed from secure storage.'**
+  String get speechKeyDeleted;
+
+  /// No description provided for @speechScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Narration scope'**
+  String get speechScope;
+
+  /// No description provided for @speechSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection'**
+  String get speechSelection;
+
+  /// No description provided for @speechBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Current block'**
+  String get speechBlock;
+
+  /// No description provided for @speechSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Current section'**
+  String get speechSection;
+
+  /// No description provided for @speechDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole document'**
+  String get speechDocument;
+
+  /// No description provided for @speechOmissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Omitted content'**
+  String get speechOmissions;
+
+  /// No description provided for @speechNoText.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no narratable text in this scope.'**
+  String get speechNoText;
+
+  /// No description provided for @speechCloudConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate with the selected cloud provider? The displayed text will be sent to the provider. Charges may apply, including when a request is cancelled.'**
+  String get speechCloudConsent;
+
+  /// No description provided for @speechSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate voice sample'**
+  String get speechSample;
+
+  /// No description provided for @speechSampleText.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a short BusyMark voice sample. The reading speed and voice come from the selected speech settings.'**
+  String get speechSampleText;
+
+  /// No description provided for @speechUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected speech engine is unavailable.'**
+  String get speechUnavailable;
+
+  /// No description provided for @speechSynthesizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesizing audio'**
+  String get speechSynthesizing;
+
+  /// No description provided for @speechSaveAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Save audio'**
+  String get speechSaveAudio;
+
+  /// No description provided for @speechGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesized narration'**
+  String get speechGenerated;
+
+  /// No description provided for @speechHeadings.
+  ///
+  /// In en, this message translates to:
+  /// **'Read headings'**
+  String get speechHeadings;
+
+  /// No description provided for @speechCodeBlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Read code blocks'**
+  String get speechCodeBlocks;
+
+  /// No description provided for @speechInlineCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Read inline code'**
+  String get speechInlineCode;
+
+  /// No description provided for @speechTables.
+  ///
+  /// In en, this message translates to:
+  /// **'Read tables'**
+  String get speechTables;
+
+  /// No description provided for @speechQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Read quotations'**
+  String get speechQuotes;
+
+  /// No description provided for @speechImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Read image descriptions'**
+  String get speechImages;
+
+  /// No description provided for @speechFootnotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Read footnotes'**
+  String get speechFootnotes;
+
+  /// No description provided for @speechLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get speechLinks;
+
+  /// No description provided for @speechLinksLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Read labels'**
+  String get speechLinksLabel;
+
+  /// No description provided for @speechLinksUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Read labels and URLs'**
+  String get speechLinksUrl;
+
+  /// No description provided for @speechLinksSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip links'**
+  String get speechLinksSkip;
+
+  /// No description provided for @speechBlockPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Paragraph pause in milliseconds'**
+  String get speechBlockPause;
+
+  /// No description provided for @speechSectionPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading pause in milliseconds'**
+  String get speechSectionPause;
+
+  /// No description provided for @speechFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated audio filename'**
+  String get speechFilename;
+
+  /// No description provided for @speechWav.
+  ///
+  /// In en, this message translates to:
+  /// **'WAV audio'**
+  String get speechWav;
+
+  /// No description provided for @speechCancelJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel synthesis'**
+  String get speechCancelJob;
+
+  /// No description provided for @speechStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop narration'**
+  String get speechStop;
+
+  /// No description provided for @speechUnknownLocality.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected system voice may use a network service. Allow it to read the displayed text?'**
+  String get speechUnknownLocality;
+
+  /// No description provided for @speechLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Local speech'**
+  String get speechLocalOnly;
+
+  /// No description provided for @speechCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud speech'**
+  String get speechCloud;
+
+  /// No description provided for @speechStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice style'**
+  String get speechStyle;
+
+  /// No description provided for @speechPiperModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Piper voice model (.onnx)'**
+  String get speechPiperModel;
+
+  /// No description provided for @speechPiperImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Piper model'**
+  String get speechPiperImport;
+
+  /// No description provided for @speechAudioReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio is ready for playback or saving.'**
+  String get speechAudioReady;
+
+  /// No description provided for @speechReadComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Narration finished.'**
+  String get speechReadComplete;
+
+  /// No description provided for @speechProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesis progress'**
+  String get speechProgress;
+
+  /// No description provided for @speechTaskDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed task.'**
+  String get speechTaskDone;
+
+  /// No description provided for @speechTaskOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Incomplete task.'**
+  String get speechTaskOpen;
+
+  /// No description provided for @speechMathOmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mathematics'**
+  String get speechMathOmitted;
+
+  /// No description provided for @speechMediaOmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing media'**
+  String get speechMediaOmitted;
+
+  /// No description provided for @speechHiddenOmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden or unsupported content'**
+  String get speechHiddenOmitted;
+
+  /// No description provided for @speechSelectionUnmapped.
+  ///
+  /// In en, this message translates to:
+  /// **'Some selected text could not be mapped safely.'**
+  String get speechSelectionUnmapped;
+
+  /// No description provided for @speechPiperInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install a Piper voice'**
+  String get speechPiperInstall;
+
+  /// No description provided for @speechPreviousSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous segment'**
+  String get speechPreviousSegment;
+
+  /// No description provided for @speechNextSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'Next segment'**
+  String get speechNextSegment;
+
+  /// No description provided for @diagnosticMarkdownAudioInvalidStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the audio tag has a closing tag and that each source is a direct child of audio.'**
+  String get diagnosticMarkdownAudioInvalidStructure;
+
+  /// No description provided for @diagnosticMarkdownAudioInvalidAttribute.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the audio attribute value. Preload accepts none, metadata or auto. Crossorigin accepts anonymous or use-credentials.'**
+  String get diagnosticMarkdownAudioInvalidAttribute;
+
+  /// No description provided for @diagnosticWritersideAudioUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside does not support interactive audio markup. Put the recording in the resources directory and add a resource link.'**
+  String get diagnosticWritersideAudioUnsupported;
+
+  /// No description provided for @audioLinkFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to a file in this workspace'**
+  String get audioLinkFile;
+
+  /// No description provided for @audioCopyFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the selected audio into the document’s assets'**
+  String get audioCopyFile;
+
+  /// No description provided for @audioInvalidUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid HTTPS URL without credentials.'**
+  String get audioInvalidUrl;
+
+  /// No description provided for @audioInvalidMarkup.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter one complete HTML audio element.'**
+  String get audioInvalidMarkup;
+
+  /// No description provided for @audioCannotResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'This audio file is outside the document’s allowed folder or is unavailable.'**
+  String get audioCannotResolve;
+
+  /// No description provided for @audioExternalOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open audio externally'**
+  String get audioExternalOpen;
+
+  /// No description provided for @audioShowFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Folder'**
+  String get audioShowFolder;
+
+  /// No description provided for @audioRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove audio'**
+  String get audioRemove;
+
+  /// No description provided for @speechProviderPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider pricing'**
+  String get speechProviderPricing;
+
+  /// No description provided for @speechBillingUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous request may have incurred charges. Check provider usage before deciding whether to retry.'**
+  String get speechBillingUncertain;
+
+  /// No description provided for @speechNoUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'The provider supplied no complete usage count.'**
+  String get speechNoUsage;
+
+  /// No description provided for @speechReportedUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider-reported usage'**
+  String get speechReportedUsage;
+
+  /// No description provided for @speechInputCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} input characters'**
+  String speechInputCharacters(int count);
+
+  /// No description provided for @speechInputTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} input tokens'**
+  String speechInputTokens(int count);
+
+  /// No description provided for @speechOutputTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} output tokens'**
+  String speechOutputTokens(int count);
 }
 
 class _AppLocalizationsDelegate

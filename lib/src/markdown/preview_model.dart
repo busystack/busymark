@@ -1,6 +1,7 @@
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import '../visualization/visualization_models.dart';
+import 'audio_media.dart';
 import 'busymark_document.dart';
 import 'document_outline.dart';
 import 'markdown_model.dart';
@@ -19,6 +20,7 @@ enum PreviewBlockKind {
   thematicBreak,
   image,
   video,
+  audio,
   table,
   container,
   raw,
@@ -42,6 +44,7 @@ class PreviewBlock {
     this.children = const [],
     this.attributes = const {},
     this.posterSpan,
+    this.audio,
     this.sourceStartLine,
     this.sourceEndLine,
     this.sourceStartOffset,
@@ -57,6 +60,7 @@ class PreviewBlock {
   final List<PreviewBlock> children;
   final Map<String, String> attributes;
   final SourceSpan? posterSpan;
+  final BusyAudio? audio;
   final int? sourceStartLine;
   final int? sourceEndLine;
   final int? sourceStartOffset;
@@ -72,6 +76,7 @@ enum PreviewInlineKind {
   code,
   link,
   image,
+  audio,
   math,
 }
 
@@ -81,6 +86,7 @@ class PreviewInline {
     required this.text,
     this.destination,
     this.imageSpan,
+    this.audio,
     this.children = const [],
     this.attributes = const {},
   });
@@ -89,6 +95,7 @@ class PreviewInline {
   final String text;
   final String? destination;
   final SourceSpan? imageSpan;
+  final BusyAudio? audio;
   final List<PreviewInline> children;
   final Map<String, String> attributes;
 }
@@ -278,6 +285,13 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.video,
         posterSpan: block.posterSpan,
         text: block.attributes['src'] ?? block.plainText,
+        attributes: {...block.attributes, 'editorBlockId': block.id},
+      ),
+      BusyBlockKind.audio => PreviewBlock(
+        kind: PreviewBlockKind.audio,
+        text: block.audio?.accessibleName ?? _plainText(block.inlines),
+        audio: block.audio,
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: {...block.attributes, 'editorBlockId': block.id},
       ),
       BusyBlockKind.table => PreviewBlock(
@@ -484,6 +498,7 @@ class BusyMarkPreviewBuilder {
     children: block.children,
     attributes: attributes,
     posterSpan: block.posterSpan,
+    audio: block.audio,
     sourceStartLine: block.sourceStartLine,
     sourceEndLine: block.sourceEndLine,
     sourceStartOffset: block.sourceStartOffset,
@@ -555,6 +570,7 @@ class BusyMarkPreviewBuilder {
       children: block.children,
       attributes: block.attributes,
       posterSpan: block.posterSpan,
+      audio: block.audio,
       sourceStartLine: span.startLine,
       sourceEndLine: span.endLine,
       sourceStartOffset: span.startOffset,
@@ -590,10 +606,12 @@ class BusyMarkPreviewBuilder {
         BusyInlineKind.code => PreviewInlineKind.code,
         BusyInlineKind.link => PreviewInlineKind.link,
         BusyInlineKind.image => PreviewInlineKind.image,
+        BusyInlineKind.audio => PreviewInlineKind.audio,
       },
       text: inline.kind == BusyInlineKind.softBreak ? ' ' : inline.text,
       destination: inline.destination,
       imageSpan: inline.imageSpan,
+      audio: inline.audio,
       children: _inlines(inline.children, '$path.i'),
       attributes: {
         ...inline.attributes,

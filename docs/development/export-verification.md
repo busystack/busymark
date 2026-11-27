@@ -124,13 +124,25 @@ evidence by themselves.
 `tools/verify_html_export_browser.py` copies the generated HTML away from its
 source location, opens it through both `file:` and a local HTTP server, and
 checks offline resources, navigation, anchors, print behavior, color schemes,
-custom CSS, CSP enforcement, and layout. It requires Selenium, Chromium or
+custom CSS, CSP enforcement, layout, and actual decoding of the generated WAV. It requires Selenium, Chromium or
 Chrome, Firefox with geckodriver, and `pdftotext`:
 
 ```bash
 browser_output="$verification_dir/browser"
 python3 tools/verify_html_export_browser.py "$verification_dir" \
   --output "$browser_output"
+```
+
+The browser report includes the observed audio duration, advancing playback
+position and pause state for each Markdown packaging variant. The audio is
+muted in this browser check. The native acceptance session verifies the
+application's own acoustic output through a test-owned sink.
+
+Verify the Writerside downloadable audio convention with the pinned official
+builder and a fresh temporary project.
+
+```bash
+tools/verify_writerside_audio_resource.sh
 ```
 
 Review `browser-report.json` and representative screenshots in the output
@@ -142,7 +154,7 @@ do not certify physical-printer or assistive-technology behavior.
 
 The automatic `.github/workflows/flutter-linux.yml` workflow runs bounded X11
 host, renderer and compiled visualization/PDF checks on pull requests to `main`
-and `release/v0.7.0`, and pushes to `main`. The same job reuses its release build for dictionary and Wayland checks. It
+and `release/v0.8.0`, and pushes to both branches. The same job reuses its release build for dictionary and Wayland checks. It
 calls `.github/workflows/flutter-linux-native.yml` for genuine strict-Snap
 checks; hundred-close and debug/profile campaigns remain opt-in.
 Each workflow declares its native

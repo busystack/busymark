@@ -4,10 +4,11 @@ on:
   pull_request:
     branches:
       - main
-      - release/v0.7.0
+      - release/v0.8.0
   push:
     branches:
       - main
+      - release/v0.8.0
 
 permissions:
   contents: read
@@ -16,10 +17,10 @@ jobs:
   native-product:
     uses: ./.github/workflows/flutter-linux-native.yml
     with:
-      run-stress: false
+      run-stress: ${{ github.ref == 'refs/heads/release/v0.8.0' }}
 
   writerside-conformance:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out repository
@@ -29,7 +30,7 @@ jobs:
         run: tools/validate_writerside_conformance.sh
 
   verify:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out repository
@@ -52,9 +53,16 @@ jobs:
             fonts-noto-core \
             fonts-noto-cjk \
             fonts-noto-mono \
+            espeak-ng \
+            gstreamer1.0-libav \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-ugly \
             ninja-build \
             pkg-config \
             libgtk-3-dev \
+            libgstreamer1.0-dev \
             libglib2.0-dev \
             libpango1.0-dev \
             libhandy-1-dev \

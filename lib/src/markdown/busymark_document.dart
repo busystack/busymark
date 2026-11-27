@@ -1,5 +1,6 @@
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
+import 'audio_media.dart';
 import 'markdown_model.dart';
 import '../writerside/writerside_document.dart';
 
@@ -166,6 +167,7 @@ enum BusyBlockKind {
   thematicBreak,
   image,
   video,
+  audio,
   table,
   htmlBlock,
   writersideAdmonition,
@@ -186,6 +188,7 @@ class BusyBlock {
     this.rawSource,
     this.sourceSpan,
     this.posterSpan,
+    this.audio,
     this.preserveRaw = false,
     this.isSourceOnly = false,
     this.isGenerated = false,
@@ -201,6 +204,7 @@ class BusyBlock {
   final String? rawSource;
   final SourceSpan? sourceSpan;
   final SourceSpan? posterSpan;
+  final BusyAudio? audio;
   final bool preserveRaw;
   final bool isSourceOnly;
   final bool isGenerated;
@@ -212,6 +216,7 @@ class BusyBlock {
   bool get isAtomicSelectionBlock =>
       kind == BusyBlockKind.image ||
       kind == BusyBlockKind.video ||
+      kind == BusyBlockKind.audio ||
       kind == BusyBlockKind.table ||
       kind == BusyBlockKind.thematicBreak ||
       preserveRaw && rawSource?.isNotEmpty == true;
@@ -225,6 +230,7 @@ class BusyBlock {
     String? rawSource,
     SourceSpan? sourceSpan,
     SourceSpan? posterSpan,
+    BusyAudio? audio,
     bool clearPosterSpan = false,
     bool? preserveRaw,
     bool? isSourceOnly,
@@ -241,6 +247,7 @@ class BusyBlock {
       rawSource: rawSource ?? this.rawSource,
       sourceSpan: sourceSpan ?? this.sourceSpan,
       posterSpan: clearPosterSpan ? null : posterSpan ?? this.posterSpan,
+      audio: audio ?? this.audio,
       preserveRaw: preserveRaw ?? this.preserveRaw,
       isSourceOnly: isSourceOnly ?? this.isSourceOnly,
       isGenerated: isGenerated ?? this.isGenerated,
@@ -260,6 +267,7 @@ enum BusyInlineKind {
   code,
   link,
   image,
+  audio,
   softBreak,
   hardBreak,
   html,
@@ -277,6 +285,7 @@ class BusyInline {
     required this.text,
     this.destination,
     this.imageSpan,
+    this.audio,
     this.children = const [],
     this.attributes = const {},
   });
@@ -285,6 +294,7 @@ class BusyInline {
   final String text;
   final String? destination;
   final SourceSpan? imageSpan;
+  final BusyAudio? audio;
   final List<BusyInline> children;
   final Map<String, String> attributes;
 
@@ -302,6 +312,7 @@ class BusyInline {
     List<BusyInline>? children,
     Map<String, String>? attributes,
     SourceSpan? imageSpan,
+    BusyAudio? audio,
     bool clearImageSpan = false,
   }) {
     return BusyInline(
@@ -309,6 +320,7 @@ class BusyInline {
       text: text ?? this.text,
       destination: destination ?? this.destination,
       imageSpan: clearImageSpan ? null : imageSpan ?? this.imageSpan,
+      audio: audio ?? this.audio,
       children: children ?? this.children,
       attributes: attributes ?? this.attributes,
     );

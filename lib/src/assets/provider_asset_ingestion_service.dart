@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'asset_ingestion_service.dart';
+import 'audio_asset_format.dart';
+import 'package:path/path.dart' as p;
 
 class ManagedAssetPublication {
   const ManagedAssetPublication({
@@ -74,6 +76,33 @@ class ProviderAssetIngestionService extends AssetIngestionService {
     request: request,
     origin: origin,
   );
+
+  @override
+  Future<IngestedAsset> ingestAudioBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) async {
+    final format = AudioAssetFormat.identify(bytes);
+    if (format == null || bytes.length > maximumAssetBytes) {
+      throw const AssetIngestionException(
+        'asset.invalid-audio-type',
+        'The file is not a supported audio container or exceeds the size limit.',
+      );
+    }
+    final filename =
+        '${p.basenameWithoutExtension(suggestedFileName)}.${format.extension}';
+    final publication = await publish(bytes, filename);
+    return IngestedAsset(
+      absolutePath: publication.cachedPath,
+      markdownPath: publication.reference,
+      mimeType: format.mimeType,
+      reusedExisting: false,
+      origin: origin,
+      publicationId: publication.id,
+    );
+  }
 
   @override
   Future<void> commit(IngestedAsset asset) async {}

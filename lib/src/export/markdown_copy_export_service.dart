@@ -52,7 +52,9 @@ class MarkdownCopyExportService {
         final path = await media.resolve(reference);
         if (path == null) {
           if (onMissing != null &&
-              (occurrences.any((r) => r.reference == reference && r.image) ||
+              (occurrences.any(
+                    (r) => r.reference == reference && (r.image || r.audio),
+                  ) ||
                   reference.startsWith('busymark-attachment:') ||
                   RegExp(r'^\.attachments\.\d+/').hasMatch(reference))) {
             onMissing(reference);

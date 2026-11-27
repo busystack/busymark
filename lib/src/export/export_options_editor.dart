@@ -628,6 +628,12 @@ class HtmlExportOptionsEditor extends StatelessWidget {
                 : l.exportAssetsDirectory,
             onSelected: (v) => onChanged(o.copyWith(packaging: v)),
           ),
+          BusyMarkSwitchRow(
+            title: l.exportRemoteAudioPlayback,
+            subtitle: l.exportRemoteAudioPlaybackNote,
+            value: o.allowRemoteAudio,
+            onChanged: (v) => onChanged(o.copyWith(allowRemoteAudio: v)),
+          ),
           BusyMarkActionRow(
             title: l.exportCustomCss,
             subtitle: o.customCssPath ?? l.exportNone,

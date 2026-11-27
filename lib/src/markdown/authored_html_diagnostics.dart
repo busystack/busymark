@@ -8,6 +8,7 @@ import 'package:markdown/markdown.dart' as md;
 
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
+import 'audio_syntax.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
@@ -45,6 +46,7 @@ class _LocatedDocument extends md.Document {
           _Paragraph(),
         ],
         inlineSyntaxes: [
+          _LocatedAudioSyntax(),
           BusyDollarMathSyntax(),
           if (mode == MarkdownMode.writersideMarkdown)
             BusyWritersideMathSyntax(),
@@ -112,13 +114,18 @@ class _LocatedDocument extends md.Document {
       prepareInlines(node);
     }
 
-    void warn(_LocatedText text, int start, int end) {
+    void warn(
+      _LocatedText text,
+      int start,
+      int end, {
+      String code = 'markdown.raw-html.unsafe',
+    }) {
       final offsets = text.offsets;
       final hasLocation =
           offsets != null && start >= 0 && end > start && end <= offsets.length;
       diagnostics.add(
         Diagnostic(
-          code: 'markdown.raw-html.unsafe',
+          code: code,
           severity: DiagnosticSeverity.warning,
           filePath: filePath,
           // Location mapping is auxiliary to validation. If a source transform
@@ -136,9 +143,14 @@ class _LocatedDocument extends md.Document {
       );
     }
 
-    void warnHtmlTag(_LocatedText text, int? start, int? end) {
+    void warnHtmlTag(
+      _LocatedText text,
+      int? start,
+      int? end, {
+      String code = 'markdown.raw-html.unsafe',
+    }) {
       if (start == null || end == null) {
-        warn(text, 0, text.text.length);
+        warn(text, 0, text.text.length, code: code);
         return;
       }
       // HTML token spans can exclude '<' after a malformed prefix such as
@@ -149,7 +161,7 @@ class _LocatedDocument extends md.Document {
       final name = RegExp(
         r'</?\s*[A-Za-z][A-Za-z0-9_-]*\b',
       ).matchAsPrefix(text.text, start);
-      warn(text, start, name?.end ?? end);
+      warn(text, start, name?.end ?? end, code: code);
     }
 
     void inspectInlineHtml(_LocatedText text) {
@@ -165,6 +177,14 @@ class _LocatedDocument extends md.Document {
         if (token is! StartTagToken) continue;
         final tag = token.name ?? '';
         if (mode == MarkdownMode.writersideMarkdown && tag == 'video') continue;
+        if (tag == 'audio' || tag == 'source') {
+          warnHtmlTag(
+            text,
+            token.span?.start.offset,
+            token.span?.end.offset,
+            code: 'markdown.audio.invalid-structure',
+          );
+        }
         if (isUnsafeHtmlTag(tag) ||
             (isSafeHtmlTag(tag) &&
                 sanitizeHtmlAttributes(tag, token.data) == null)) {
@@ -191,6 +211,42 @@ class _LocatedDocument extends md.Document {
         if (node is html.Element) {
           final tag = node.localName ?? '';
           if (mode == MarkdownMode.writersideMarkdown && tag == 'video') return;
+          if (tag == 'audio' || tag == 'source') {
+            final span = node.sourceSpan;
+            final structureValid = tag == 'audio'
+                ? isWellFormedAudioElement(node)
+                : node.parent?.localName == 'audio';
+            if (!structureValid) {
+              warnHtmlTag(
+                text,
+                span?.start.offset,
+                span?.end.offset,
+                code: 'markdown.audio.invalid-structure',
+              );
+            } else if (tag == 'audio' &&
+                mode == MarkdownMode.writersideMarkdown) {
+              warnHtmlTag(
+                text,
+                span?.start.offset,
+                span?.end.offset,
+                code: 'writerside.audio.unsupported',
+              );
+            }
+            if (tag == 'audio') {
+              for (final attr in node.attributes.entries) {
+                if (isValidAudioAttribute(attr.key.toString(), attr.value)) {
+                  continue;
+                }
+                final attribute = node.attributeSpans?[attr.key];
+                warn(
+                  text,
+                  attribute?.start.offset ?? span?.start.offset ?? 0,
+                  attribute?.end.offset ?? span?.end.offset ?? text.text.length,
+                  code: 'markdown.audio.invalid-attribute',
+                );
+              }
+            }
+          }
           if (isUnsafeHtmlTag(tag) ||
               (isSafeHtmlTag(tag) &&
                   sanitizeHtmlAttributes(tag, node.attributes) == null)) {
@@ -554,6 +610,17 @@ class _HtmlBlock extends md.HtmlBlockSyntax with _TrackNonNull {
 
 class _Paragraph extends md.ParagraphSyntax with _Track {
   const _Paragraph();
+}
+
+class _LocatedAudioSyntax extends BusyAudioInlineSyntax {
+  @override
+  void addAudioNode(md.InlineParser parser, int start, int end) {
+    final document = parser.document as _LocatedDocument;
+    final location = document._inlineSource!.slice(start, end);
+    final node = md.Element.text('busymark-authored-html', location.text);
+    document._html[node] = location;
+    parser.addNode(node);
+  }
 }
 
 class _InlineHtml extends md.InlineHtmlSyntax {

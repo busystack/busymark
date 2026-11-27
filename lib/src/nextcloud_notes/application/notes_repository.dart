@@ -603,7 +603,7 @@ class NotesRepository {
             await store.attachmentSize(attachment.id) != null) {
           available.add(reference);
         }
-      } else if (occurrence.image) {
+      } else if (occurrence.image || occurrence.audio) {
         external.add(reference);
       }
     }
@@ -2298,7 +2298,7 @@ class NotesRepository {
       }
       if (known == null &&
           !managed &&
-          !(occurrence.image && canonical != null)) {
+          !((occurrence.image || occurrence.audio) && canonical != null)) {
         continue;
       }
       final key = known?.id ?? canonical!;
@@ -2336,18 +2336,11 @@ class NotesRepository {
       }
       replacements[reference] = publication.attachment.reference;
     }
-    var rewritten = source;
-    var previousStart = source.length;
-    for (final occurrence in references.reversed) {
-      final replacement = replacements[occurrence.reference];
-      if (replacement == null || occurrence.end > previousStart) continue;
-      rewritten = rewritten.replaceRange(
-        occurrence.start,
-        occurrence.end,
-        replacement,
-      );
-      previousStart = occurrence.start;
-    }
+    final rewritten = replaceNotesAttachmentReferences(
+      source,
+      references,
+      replacements,
+    );
     final recovered = NextcloudNote(
       creationNeverSent: true,
       localActivityMicros: clock().microsecondsSinceEpoch,
@@ -2526,18 +2519,11 @@ class NotesRepository {
         references: <String, String>{},
       );
     }
-    var restored = source;
-    var previousStart = source.length;
-    for (final occurrence in occurrences.reversed) {
-      final replacement = replacements[occurrence.reference];
-      if (replacement == null || occurrence.end > previousStart) continue;
-      restored = restored.replaceRange(
-        occurrence.start,
-        occurrence.end,
-        replacement,
-      );
-      previousStart = occurrence.start;
-    }
+    final restored = replaceNotesAttachmentReferences(
+      source,
+      occurrences,
+      replacements,
+    );
     return (
       content: restored,
       attachments: staged.values.toList(),

@@ -350,6 +350,7 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.thematicBreak => '---',
       BusyBlockKind.image => _image(block),
       BusyBlockKind.video => block.rawSource ?? _inlineMarkdown(block.inlines),
+      BusyBlockKind.audio => block.audio?.rawSource ?? block.rawSource ?? '',
       BusyBlockKind.table => _withBlockAttributes(block, _table(block)),
       BusyBlockKind.writersideAdmonition => _writersideAdmonition(block),
       BusyBlockKind.writersideTabs ||
@@ -1534,6 +1535,7 @@ class BusyMarkMarkdownSerializer {
             : '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
       BusyInlineKind.image =>
         '![${_escapeInlineText(inline.text)}](${_linkTarget(inline)})',
+      BusyInlineKind.audio => inline.audio?.rawSource ?? '',
       BusyInlineKind.softBreak => ' ',
       BusyInlineKind.hardBreak => '  \n',
       BusyInlineKind.writersideVariable => '%${inline.text}%',

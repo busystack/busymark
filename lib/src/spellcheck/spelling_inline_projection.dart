@@ -157,6 +157,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     }
     switch (inline.kind) {
       case BusyInlineKind.math:
+      case BusyInlineKind.audio:
       case BusyInlineKind.html
           when semanticHtmlInlineTag(inline.attributes) == null ||
               spellingTechnicalHtmlInlineTags.contains(

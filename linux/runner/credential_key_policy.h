@@ -34,6 +34,7 @@ inline bool is_allowed_key(const char* key) {
   return key != nullptr &&
          (std::strcmp(key, "busymark.ai.provider-key.openai") == 0 ||
           std::strcmp(key, "busymark.ai.provider-key.gemini") == 0 ||
+          std::strcmp(key, "busymark.speech.provider-key.elevenlabs") == 0 ||
           is_nextcloud_key(key));
 }
 

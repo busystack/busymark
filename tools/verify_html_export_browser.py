@@ -23,6 +23,47 @@ from selenium.webdriver.common.print_page_options import PrintOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 
 
+def verify_audio(browser, *, embedded):
+    browser.set_script_timeout(7)
+    browser.find_element(By.CSS_SELECTOR, 'article h1').click()
+    result = browser.execute_async_script("""
+        const done = arguments[0];
+        const player = document.querySelector('audio[controls]');
+        if (!player) return done({error: 'missing audio'});
+        const timer = setTimeout(() => finish('playback timeout'), 5000);
+        let finished = false;
+        function finish(error) {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timer);
+            const beforePause = player.currentTime;
+            player.pause();
+            done({
+                error, position: beforePause, duration: player.duration,
+                source: player.currentSrc.startsWith('data:audio/wav;base64,')
+                    ? 'embedded' : new URL(player.currentSrc || location.href).protocol,
+                paused: player.paused, readyState: player.readyState
+            });
+        }
+        if (!player.paused || player.getAttribute('preload') !== 'none' ||
+                player.hasAttribute('autoplay')) {
+            return finish('incorrect initial state');
+        }
+        player.muted = true;
+        player.addEventListener('timeupdate', () => {
+            if (player.currentTime >= 0.2) finish(null);
+        });
+        player.addEventListener('error', () => finish('decoder error'));
+        player.play().catch(error => finish('play rejected: ' + error.name));
+    """)
+    assert result['error'] is None and result['paused'], result
+    assert 0.9 <= result['duration'] <= 1.1 and result['readyState'] >= 2, result
+    assert result['position'] >= 0.2, result
+    expected_sources = ('embedded',) if embedded else ('file:', 'http:')
+    assert result['source'] in expected_sources, result
+    return [result]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('export_root', type=Path)
@@ -133,7 +174,9 @@ def main():
                             summary.send_keys(Keys.SPACE)
                             assert browser.execute_script('return arguments[0].parentElement.open', summary) != before
                             browser.execute_script('arguments[0].parentElement.open=false', summary)
+                        audio = []
                         if relative in ('offline.html', 'automatic-single.html', 'dark-assets.html'):
+                            audio = verify_audio(browser, embedded=embedded)
                             assert browser.find_elements(By.CSS_SELECTOR, 'sup a[href="#fn-one"]')
                             assert browser.find_elements(By.CSS_SELECTOR, '.footnotes #fn-one a[href="#fnref-one"]')
                             assert 'Footnote[^one]' not in browser.find_element(By.TAG_NAME, 'article').text
@@ -159,7 +202,7 @@ def main():
                         assert not blocked, blocked
                         report['checks'].append({'engine':engine,'version':browser.capabilities['browserVersion'],
                                                  'mode':mode,'page':relative,'browser_color_scheme':firefox_scheme,'images':len(values['images']),
-                                                 'requests':list(requests),'print_bytes':pdf.stat().st_size})
+                                                 'requests':list(requests),'print_bytes':pdf.stat().st_size,'audio':audio})
                         print(engine, mode, relative, 'PASS', flush=True)
             finally:
                 browser.quit()

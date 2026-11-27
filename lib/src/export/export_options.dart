@@ -366,6 +366,7 @@ class HtmlExportOptions {
     this.accentColor = '#1559aa',
     this.customCssPath,
     this.packaging = HtmlPackaging.assetsDirectory,
+    this.allowRemoteAudio = false,
   });
   final ExportContentOptions content;
   final HtmlExportTheme theme;
@@ -374,6 +375,7 @@ class HtmlExportOptions {
   final String accentColor;
   final String? customCssPath;
   final HtmlPackaging packaging;
+  final bool allowRemoteAudio;
   static const maximumCssBytes = 256 * 1024;
   double headingFontSize(int level) =>
       baseFontSize *
@@ -389,6 +391,7 @@ class HtmlExportOptions {
     String? accentColor,
     Object? customCssPath = _unset,
     HtmlPackaging? packaging,
+    bool? allowRemoteAudio,
   }) => HtmlExportOptions(
     content: content ?? this.content,
     theme: theme ?? this.theme,
@@ -400,6 +403,7 @@ class HtmlExportOptions {
         ? this.customCssPath
         : customCssPath as String?,
     packaging: packaging ?? this.packaging,
+    allowRemoteAudio: allowRemoteAudio ?? this.allowRemoteAudio,
   );
   List<ExportOptionIssue> validate() => [
     ...content.validate(),
@@ -430,6 +434,7 @@ class HtmlExportOptions {
     'accentColor': accentColor,
     'customCssPath': customCssPath,
     'packaging': packaging.name,
+    'allowRemoteAudio': allowRemoteAudio,
   };
   factory HtmlExportOptions.fromJson(Object? source) {
     final j = _map(source);
@@ -460,6 +465,7 @@ class HtmlExportOptions {
           ? j['customCssPath'] as String
           : null,
       packaging: _enum(HtmlPackaging.values, j['packaging'], d.packaging),
+      allowRemoteAudio: _bool(j['allowRemoteAudio'], d.allowRemoteAudio),
     );
   }
 }

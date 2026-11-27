@@ -31,12 +31,16 @@ class AuthoredReference {
     this.label = '',
     this.origin,
     this.moduleId,
+    this.htmlQuote,
+    this.isAudio = false,
   });
   final String destination, label;
   final AuthoredReferenceKind kind;
   final SourceSpan occurrence;
   final SourceSpan? destinationSpan;
   final String? origin, moduleId;
+  final WritersideHtmlAttributeQuote? htmlQuote;
+  final bool isAudio;
 }
 
 ({int start, int end})? markdownDestinationRange(
@@ -230,6 +234,7 @@ List<AuthoredReference> markdownReferences({
                 html.innerContentSpan!.endOffset,
               ),
         origin: html.origin,
+        htmlQuote: html.quote,
       ),
     );
   }
@@ -238,6 +243,7 @@ List<AuthoredReference> markdownReferences({
         filePath: identity,
         source: source,
         protectedSource: mask,
+        mode: mode,
       )) {
     result.add(
       AuthoredReference(
@@ -245,6 +251,8 @@ List<AuthoredReference> markdownReferences({
         kind: AuthoredReferenceKind.htmlMedia,
         occurrence: media.span,
         destinationSpan: media.span,
+        htmlQuote: media.quote,
+        isAudio: media.tag == 'audio' || media.tag == 'source',
       ),
     );
   }

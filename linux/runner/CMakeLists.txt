@@ -8,6 +8,7 @@ project(runner LANGUAGES CXX)
 # Any new source files that you add to the application should be added here.
 add_executable(${BINARY_NAME}
   "main.cc"
+  "audio_player_host.cc"
   "my_application.cc"
   "gtk_accent.cc"
   "gtk_accent_host.cc"
@@ -37,5 +38,6 @@ target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::HANDY)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::LIBSECRET)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::WEBKIT)
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GSTREAMER)
 
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")

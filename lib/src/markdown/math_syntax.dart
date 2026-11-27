@@ -1,5 +1,6 @@
 import 'package:markdown/markdown.dart' as md;
 
+import 'audio_syntax.dart';
 import 'busymark_document.dart';
 import 'markdown_model.dart';
 import 'markdown_source_annotation.dart';
@@ -45,6 +46,7 @@ md.Document busyMarkMarkdownDocument(
         const WritersideDefinitionListSyntax(),
     ],
     inlineSyntaxes: [
+      BusyAudioInlineSyntax(),
       ...leadingInlineSyntaxes,
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideSemanticInlineSyntax(),

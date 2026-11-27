@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
+import '../markdown/audio_media.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/raw_html_policy.dart';
@@ -353,6 +354,7 @@ class HtmlExportService {
       Map<String, String> attributes,
       int line, {
       bool download = false,
+      bool audio = false,
     }) async {
       if (value != null) {
         await links.assets.local(
@@ -361,7 +363,20 @@ class HtmlExportService {
           searchRoots: links.roots(page, attributes),
           line: line,
           download: download,
+          audio: audio,
         );
+      }
+    }
+
+    Future<void> captureAudio(
+      BusyAudio value,
+      Map<String, String> attributes,
+      int line,
+    ) async {
+      for (final source in value.playbackSources) {
+        if (HtmlExportLinks.external(source.destination) == null) {
+          await capture(source.destination, attributes, line, audio: true);
+        }
       }
     }
 
@@ -371,13 +386,26 @@ class HtmlExportService {
       int line,
     ) async {
       for (final element
-          in html.parseFragment(source).querySelectorAll('img, a, [cite]')) {
+          in html
+              .parseFragment(source, generateSpans: true)
+              .querySelectorAll('audio, img, a, [cite]')) {
         final tag = element.localName!;
         final attrs = {
           ...inherited,
           ...element.attributes.map((k, v) => MapEntry(k.toString(), v)),
         };
-        if (tag == 'img') {
+        if (tag == 'audio') {
+          if (isWellFormedAudioElement(element) &&
+              !hasUnsafeAuthoredHtml(element.outerHtml)) {
+            var parent = element.parent;
+            while (parent != null && isSafeHtmlTag(parent.localName!)) {
+              parent = parent.parent;
+            }
+            if (parent == null) {
+              await captureAudio(BusyAudio.fromHtml(element), attrs, line);
+            }
+          }
+        } else if (tag == 'img') {
           await capture(element.attributes['src'], attrs, line);
         } else if (tag == 'a') {
           await links.resolve(
@@ -409,6 +437,9 @@ class HtmlExportService {
     ) async {
       for (final value in values) {
         final attrs = {...inherited, ...value.attributes};
+        if (value.audio case final audio?) {
+          await captureAudio(audio, attrs, line);
+        }
         if (value.kind == BusyInlineKind.image) {
           await capture(value.destination, attrs, line);
         }
@@ -437,6 +468,9 @@ class HtmlExportService {
     for (final block in blocks) {
       token.check();
       final line = block.sourceSpan?.startLine ?? 1;
+      if (block.audio case final audio?) {
+        await captureAudio(audio, block.attributes, line);
+      }
       await inlines(block.inlines, block.attributes, line);
       if ({BusyBlockKind.video, BusyBlockKind.image}.contains(block.kind)) {
         await capture(block.attributes['src'], block.attributes, line);

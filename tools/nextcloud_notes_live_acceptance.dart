@@ -7,12 +7,21 @@ import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:busymark/src/assets/asset_ingestion_service.dart';
+import 'package:busymark/src/export/html_export_models.dart';
+import 'package:busymark/src/export/html_export_service.dart';
+import 'package:busymark/src/export/markdown_copy_export_service.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_media.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_attachment_references.dart';
+import 'package:busymark/src/speech/speech_pcm.dart';
+import 'package:busymark/src/speech/speech_provider.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_capabilities.dart';
@@ -175,9 +184,11 @@ void _require(bool condition, String message) {
 Future<void> main(List<String> arguments) async {
   final attachmentReads =
       arguments.length == 4 && arguments[3] == '--attachment-reads';
-  if (arguments.length < 2 || arguments.length > 3 && !attachmentReads) {
+  final audio = arguments.length == 4 && arguments[3] == '--audio';
+  if (arguments.length < 2 ||
+      arguments.length > 3 && !attachmentReads && !audio) {
     stderr.writeln(
-      'Usage: dart run tools/nextcloud_notes_live_acceptance.dart <private-credentials.json> <report.json> [test-ca.pem [--attachment-reads]]',
+      'Usage: dart run tools/nextcloud_notes_live_acceptance.dart <private-credentials.json> <report.json> [test-ca.pem [--attachment-reads|--audio]]',
     );
     exitCode = 64;
     return;
@@ -244,6 +255,20 @@ Future<void> main(List<String> arguments) async {
 
     repository = await reopen();
     await repository.upsertAccount(account);
+    if (audio) {
+      await _audioChecks(
+        connection,
+        account,
+        api(account),
+        repository,
+        reopen,
+        createdIds,
+        directory,
+        checks,
+      );
+      await _writeLiveSuccess(arguments[1], checks);
+      return;
+    }
     if (attachmentReads) {
       await _attachmentReadChecks(
         connection,
@@ -843,6 +868,242 @@ Future<void> _writeLiveSuccess(String path, Map<String, Object?> checks) async {
   stdout.writeln(
     'Live Nextcloud Notes acceptance passed (${checks.length} checks).',
   );
+}
+
+Future<void> _audioChecks(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient api,
+  NotesRepository repository,
+  Future<NotesRepository> Function() reopen,
+  Set<int> owned,
+  Directory directory,
+  Map<String, Object?> checks,
+) async {
+  const rate = 16000;
+  const count = rate ~/ 5;
+  final samples = ByteData(count * 2);
+  for (var frame = 0; frame < count; frame++) {
+    final phase = frame * 2 * math.pi * 440 / rate;
+    samples.setInt16(
+      frame * 2,
+      (math.sin(phase) * 2000).round(),
+      Endian.little,
+    );
+  }
+  final wav = encodeSpeechWave(
+    SpeechPcm(samples.buffer.asUint8List(), sampleRate: rate),
+  );
+  final expected = base64Encode(wav);
+  const category = 'BusyMark-audio-acceptance';
+  var active = repository;
+  final creation = await active.create(
+    account.id,
+    title: 'Audio acceptance',
+    category: category,
+  );
+  final localId = creation.localId;
+  const request = AssetIngestionRequest(
+    documentFilePath: 'audio.md',
+    workspaceKind: AssetWorkspaceKind.standalone,
+  );
+  Future<String> stage(String id, String name) async {
+    final media = NextcloudDocumentMedia(active, account.id, id);
+    final asset = await media.ingestion.ingestAudioBytes(
+      bytes: wav,
+      suggestedFileName: name,
+      request: request,
+      origin: AssetIngestionOrigin.audioPicker,
+    );
+    await media.ingestion.commit(asset);
+    _require(asset.mimeType == 'audio/wav', 'Wrong staged audio MIME type.');
+    return asset.markdownPath;
+  }
+
+  String markup(String reference) =>
+      '''
+<audio controls preload="none">
+  <source src='$reference#t=0.01' type="audio/wav">
+  <source src=$reference type=audio/wav>
+</audio>
+
+The recorded sample is a tone.
+''';
+  String reference(String content) {
+    final references = notesAttachmentReferences(content);
+    _require(
+      references.length == 2 && references.every((item) => item.audio),
+      'The note lost or duplicated authored audio references.',
+    );
+    return references.first.reference;
+  }
+
+  final staged = await stage(localId, 'Voix (été) #1.wav');
+  await active.save(localId, content: markup(staged));
+  await active.synchronize(account.id);
+  final first = active.noteById(localId)!;
+  if (first.serverId case final serverId?) owned.add(serverId);
+  _require(
+    first.syncState == NoteSyncState.synced,
+    'The note with audio failed to synchronize.',
+  );
+  final canonical = reference(first.content);
+  _require(
+    !canonical.startsWith('busymark-attachment:') &&
+        first.content.contains('#t=0.01') &&
+        (await api.get(first.serverId!)).content == first.content &&
+        connection.attachmentUploadsById[first.serverId] == 1,
+    'The server did not publish the first note and exactly one recording.',
+  );
+  final remote = (await active.attachments(localId)).single.remotePath!;
+  final fetched = await api.fetchAttachment(
+    first.serverId!,
+    remote,
+    category: category,
+    destination: File('${directory.path}/remote.wav'),
+  );
+  _require(
+    base64Encode(await fetched.readAsBytes()) == expected,
+    'The real Notes endpoint changed the recording bytes.',
+  );
+  checks['audioStageUploadDownloadAndReferenceSuffix'] = true;
+
+  await active.dispose();
+  connection.offline = true;
+  active = await reopen();
+  try {
+    final media = NextcloudDocumentMedia(active, account.id, localId);
+    final path = await media.resolve(canonical);
+    _require(
+      path != null &&
+          base64Encode(await File(path).readAsBytes()) == expected &&
+          await media.resolve('file:///outside-must-not-resolve.wav') == null,
+      'Offline restart lost audio bytes or accepted a filesystem reference.',
+    );
+    checks['audioOfflineRestartAndProviderIsolation'] = true;
+    final markdown = '${directory.path}/copy.md';
+    await const MarkdownCopyExportService().export(
+      source: first.content,
+      destinationPath: markdown,
+      media: media.context,
+    );
+    final exported = await File(markdown).readAsString();
+    final local = reference(exported);
+    _require(
+      exported.contains('#t=0.01') &&
+          !exported.contains('busymark-attachment:') &&
+          base64Encode(
+                await File(
+                  '${directory.path}/${Uri.decodeComponent(local)}',
+                ).readAsBytes(),
+              ) ==
+              expected,
+      'The local Markdown copy could not play its companion file.',
+    );
+    final html =
+        await HtmlExportService(
+          stylesheetLoader: () => File('assets/export/html.css').readAsString(),
+        ).exportMarkdown(
+          MarkdownHtmlExportRequest(
+            source: first.content,
+            filePath: '${directory.path}/audio.md',
+            workspaceRoot: directory.path,
+            destinationPath: '${directory.path}/audio.html',
+            media: media.context,
+            options: const HtmlExportOptions(
+              packaging: HtmlPackaging.singleFile,
+            ),
+          ),
+        );
+    final output = await File(html.entryPointPath).readAsString();
+    _require(
+      output.contains('data:audio/wav;base64,$expected') &&
+          !output.contains('busymark-attachment:'),
+      'HTML export did not embed the provider-owned recording.',
+    );
+    checks['audioMarkdownAndHtmlOfflineExports'] = true;
+
+    final copy = await active.recoverAsNew(localId);
+    _require(
+      copy.localId != localId &&
+          copy.content.contains('#t=0.01') &&
+          (await active.attachments(copy.localId)).length == 1,
+      'Cross-note copy lost the reference suffix or duplicated the recording.',
+    );
+    connection.offline = false;
+    await active.synchronize(account.id);
+    final published = active.noteById(copy.localId)!;
+    if (published.serverId case final serverId?) owned.add(serverId);
+    _require(
+      published.syncState == NoteSyncState.synced &&
+          published.content != first.content &&
+          (await api.get(first.serverId!)).content == first.content,
+      'Copied recording overwrote or rebound its source note.',
+    );
+    checks['audioCrossNoteCopyPreservesOriginal'] = true;
+
+    if (account.supportsAttachmentDeletion) {
+      await active.deleteAttachment(localId, canonical, retainForHistory: true);
+      await active.synchronize(account.id);
+      _require(
+        await active.resolveCachedMedia(account.id, localId, canonical) == null,
+        'A deleted recording remained live in the cache.',
+      );
+      final restored = await active.prepareRestoredContent(
+        localId,
+        first.content,
+      );
+      _require(
+        restored.contains('#t=0.01') &&
+            reference(restored).startsWith('busymark-attachment:'),
+        'Historical audio was not staged as a new owned attachment.',
+      );
+      await active.save(localId, content: restored);
+      await active.synchronize(account.id);
+      _require(
+        active.noteById(localId)!.syncState == NoteSyncState.synced,
+        'The historical audio copy did not synchronize.',
+      );
+      checks['audioRemoteDeleteAndHistoricalRestoration'] = true;
+    } else {
+      try {
+        await active.deleteAttachment(
+          localId,
+          canonical,
+          retainForHistory: true,
+        );
+        throw StateError(
+          'An older server was allowed remote attachment deletion.',
+        );
+      } on NotesException catch (error) {
+        _require(
+          error.code == NotesFailureCode.unsupported,
+          'The older server reported the wrong deletion capability.',
+        );
+      }
+      checks['audioRemoteDeleteGatedOnOlderNotes'] = true;
+    }
+
+    final uncertain = await stage(copy.localId, 'uncertain.wav');
+    await active.save(copy.localId, content: markup(uncertain));
+    connection.loseNextUploadResponse = true;
+    await active.synchronize(account.id);
+    final attempts = connection.attachmentUploads;
+    await active.synchronize(account.id);
+    _require(
+      connection.attachmentUploads == attempts &&
+          (await active.attachments(copy.localId)).any(
+            (attachment) =>
+                attachment.reference == uncertain &&
+                attachment.state == 'uncertain',
+          ),
+      'An uncertain audio upload was repeated without review.',
+    );
+    checks['audioUncertainUploadRemainsDurable'] = true;
+  } finally {
+    connection.offline = false;
+    await active.dispose();
+  }
 }
 
 Future<void> _attachmentReadChecks(

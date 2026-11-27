@@ -93,6 +93,19 @@ class ActiveDocumentOutline {
 /// A workspace describes the open project/container. This context describes
 /// the actual document being edited and must therefore always be resolved from
 /// a concrete [DocumentBuffer].
+bool busyMarkCanUseDocumentSpeech(
+  WorkspaceState state, {
+  required bool inserting,
+}) {
+  final workspace = state.workspace;
+  final buffer = state.activeBuffer;
+  if (workspace == null || buffer == null) return false;
+  final kind = resolveWorkspaceDocumentContext(workspace, buffer).kind;
+  return inserting
+      ? kind == DocumentKind.markdown && !buffer.readonly
+      : kind.supportsVisualEditing;
+}
+
 class WorkspaceDocumentContext {
   const WorkspaceDocumentContext({
     required this.kind,

@@ -8,6 +8,10 @@ int main() {
   using busymark_credentials::is_nextcloud_key;
   assert(is_allowed_key("busymark.ai.provider-key.openai"));
   assert(is_allowed_key("busymark.ai.provider-key.gemini"));
+  assert(is_allowed_key("busymark.speech.provider-key.elevenlabs"));
+  assert(!is_allowed_key("busymark.ai.provider-key.elevenlabs"));
+  assert(!is_allowed_key("busymark.speech.provider-key.openai"));
+  assert(!is_allowed_key("busymark.speech.provider-key.elevenlabs.other"));
   const std::string prefix = busymark_credentials::kNextcloudPrefix;
   const std::string id = "f85b9c8d-bc26-4cc9-920c-7f7765597f19";
   assert(is_allowed_key((prefix + id).c_str()));

@@ -31,6 +31,7 @@ BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   BusyInline snapshotInline(BusyInline inline) {
     return BusyInline(
       kind: inline.kind,
+      audio: inline.audio,
       text: inline.text,
       destination: inline.destination,
       children: List.unmodifiable([
@@ -43,6 +44,7 @@ BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   return BusyBlock(
     id: block.id,
     kind: block.kind,
+    audio: block.audio,
     inlines: List.unmodifiable([
       for (final inline in block.inlines) snapshotInline(inline),
     ]),
@@ -5474,7 +5476,11 @@ bool busyMarkClipboardRequiresCompleteBlockInsertion(
   BusyWysiwygStyledBlock styled,
 ) {
   final block = styled.completeBlock;
-  return block != null && block.kind != BusyBlockKind.paragraph;
+  bool containsAudio(List<BusyInline> inlines) => inlines.any(
+    (inline) => inline.audio != null || containsAudio(inline.children),
+  );
+  return block != null &&
+      (block.kind != BusyBlockKind.paragraph || containsAudio(block.inlines));
 }
 
 class _OutdentResult {

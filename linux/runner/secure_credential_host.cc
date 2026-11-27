@@ -9,6 +9,8 @@ namespace {
 
 constexpr char kChannelName[] = "com.busymark.app/secure_credentials";
 constexpr char kOpenAiCredential[] = "busymark.ai.provider-key.openai";
+constexpr char kElevenLabsCredential[] =
+    "busymark.speech.provider-key.elevenlabs";
 constexpr gsize kMaximumCredentialBytes = 16 * 1024;
 
 struct CredentialRequest {
@@ -51,6 +53,9 @@ const gchar* credential_label(const gchar* key) {
   }
   if (g_strcmp0(key, kOpenAiCredential) == 0) {
     return "BusyMark OpenAI API key";
+  }
+  if (g_strcmp0(key, kElevenLabsCredential) == 0) {
+    return "BusyMark ElevenLabs API key";
   }
   return "BusyMark Google Gemini API key";
 }

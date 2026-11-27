@@ -47,6 +47,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../ai/ai_edit_ui.dart';
+import '../../ai/ai_markdown_edit_resolver.dart';
+import '../../assets/audio_asset_format.dart';
+import '../../editor/audio_authoring.dart';
+import '../../editor/audio_dialogs.dart';
+import '../../markdown/audio_media.dart';
+import '../../speech/narration.dart';
+import '../../speech/speech_dialog.dart';
 import '../../git/application/shared_git_integration.dart';
 import '../../ai/ai_models.dart';
 import '../../assets/asset_ingestion_service.dart';
@@ -95,6 +102,7 @@ import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../editor/wysiwyg/writerside_editing_adapter.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../editor/writerside_video_view.dart';
+import '../../editor/document_audio_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../export/workspace_export_ui.dart';
 import '../../git/application/git_controller.dart';
@@ -156,6 +164,20 @@ import '../../writerside/writerside_document_resolver.dart';
 import '../../writerside/writerside_document_renderer.dart';
 import '../../writerside/writerside_title_editor.dart';
 import '../workspace_service.dart' show WritersideTitleEditSession;
+
+final _outlineSpeechProvider =
+    NotifierProvider<_OutlineSpeechController, (Object, int, bool, int)?>(
+      _OutlineSpeechController.new,
+    );
+
+class _OutlineSpeechController extends Notifier<(Object, int, bool, int)?> {
+  @override
+  (Object, int, bool, int)? build() => null;
+
+  void request(DocumentBuffer target, int offset, {required bool readAloud}) {
+    state = (target.opening, offset, readAloud, (state?.$4 ?? 0) + 1);
+  }
+}
 
 final _problemsPresentationProvider =
     NotifierProvider<_ProblemsPresentation, bool>(_ProblemsPresentation.new);
@@ -967,6 +989,10 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       case BusyMarkMainMenuAction.save:
       case BusyMarkMainMenuAction.saveAs:
         break;
+      case BusyMarkMainMenuAction.insertAudio:
+      case BusyMarkMainMenuAction.readAloud:
+      case BusyMarkMainMenuAction.generateAudio:
+        return;
       case BusyMarkMainMenuAction.export:
         unawaited(exportWorkspace(context, ref));
       case BusyMarkMainMenuAction.fullScreen:
@@ -8226,6 +8252,18 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
       case _OutlineSectionAction.refineWithAi:
         await _refineActiveSourceRangesWithAi(context, ref, ranges);
         return;
+      case _OutlineSectionAction.readAloud:
+      case _OutlineSectionAction.generateAudio:
+        if (singleSection != null) {
+          ref
+              .read(_outlineSpeechProvider.notifier)
+              .request(
+                buffer,
+                singleSection.startOffset,
+                readAloud: action == _OutlineSectionAction.readAloud,
+              );
+        }
+        return;
       case _OutlineSectionAction.delete:
         final confirmed = await _confirmDeleteOutlineSection(
           context,
@@ -8394,6 +8432,8 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
 }
 
 enum _OutlineSectionAction {
+  readAloud,
+  generateAudio,
   copy,
   cut,
   refineWithAi,
@@ -8465,6 +8505,18 @@ List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
       label: context.l10n.aiRefineWithAi,
       icon: BusyMarkGlyphs.ai,
     ),
+    if (!multipleSelection) ...[
+      BusyMarkPopupMenuItem(
+        value: _OutlineSectionAction.readAloud,
+        label: context.l10n.readAloud,
+        icon: Icons.record_voice_over_outlined,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _OutlineSectionAction.generateAudio,
+        label: context.l10n.generateAudio,
+        icon: Icons.graphic_eq,
+      ),
+    ],
     if (!multipleSelection) ...[
       const PopupMenuDivider(height: BusyMarkSpacing.sm),
       BusyMarkPopupMenuItem(
@@ -9423,8 +9475,425 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
+  AudioDocumentIdentity _audioIdentity(DocumentBuffer buffer) => (
+    opening: buffer.opening,
+    identity: buffer.identity,
+    path: buffer.filePath,
+    revision: buffer.revision,
+    mediaIdentity: _remoteMedia[buffer.remoteNote?.identity]?.context.identity,
+  );
+
+  bool _audioTargetIsCurrent(DocumentBuffer base, Workspace workspace) {
+    if (!mounted) return false;
+    final state = ref.read(workspaceControllerProvider);
+    final current = state.activeBuffer;
+    return current != null &&
+        state.workspace?.id == workspace.id &&
+        identical(current.opening, base.opening) &&
+        current.id == base.id &&
+        current.identity == base.identity &&
+        current.revision == base.revision &&
+        current.text == base.text &&
+        !current.readonly;
+  }
+
+  ({TextSelection selection, bool anchored}) _narrationSelection(
+    DocumentBuffer buffer,
+  ) {
+    if (widget.viewMode == DocumentViewModePreference.editor) {
+      final snapshot = _wysiwygEditorKey.currentState?.narrationSelection();
+      if (snapshot != null &&
+          snapshot.targetId == buffer.id &&
+          snapshot.documentSource == buffer.text) {
+        return (
+          selection: snapshot.hasSelection
+              ? TextSelection(
+                  baseOffset: snapshot.selectionStart,
+                  extentOffset: snapshot.selectionEnd,
+                )
+              : TextSelection.collapsed(offset: snapshot.anchorOffset),
+          anchored: true,
+        );
+      }
+      return (
+        selection: TextSelection.collapsed(offset: buffer.text.length),
+        anchored: false,
+      );
+    }
+    final extent = buffer.editorState.selection;
+    return (
+      selection: extent.isValid && extent.end <= buffer.text.length
+          ? extent
+          : TextSelection.collapsed(offset: buffer.text.length),
+      anchored:
+          extent.isValid &&
+          widget.viewMode != DocumentViewModePreference.preview,
+    );
+  }
+
+  bool _writeAudioMarkup(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    String markup, {
+    required int offset,
+    SourceSpan? replace,
+  }) {
+    if (!_audioTargetIsCurrent(buffer, workspace)) return false;
+    final document = resolveWorkspaceDocumentContext(workspace, buffer);
+    final String next;
+    final int cursor;
+    if (replace != null) {
+      next = buffer.text.replaceRange(
+        replace.startOffset,
+        replace.endOffset,
+        markup,
+      );
+      cursor = replace.startOffset + markup.length;
+    } else {
+      final place = const AiMarkdownEditResolver().blockInsertion(
+        buffer.text,
+        offset,
+      );
+      final text = '${place.prefix}$markup${place.suffix}';
+      next = buffer.text.replaceRange(place.offset, place.offset, text);
+      cursor = place.offset + text.length;
+    }
+    if (next == buffer.text) return true;
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveSourceText(
+          next,
+          sourceBufferId: buffer.id,
+          sourceFilePath: document.parserPath,
+          expectedSource: buffer.text,
+          expectedRevision: buffer.revision,
+          previousSelection: buffer.editorState.selection,
+          selection: TextSelection.collapsed(offset: cursor),
+        );
+    return ref.read(workspaceControllerProvider).activeBuffer?.text == next;
+  }
+
+  AssetIngestionRequest _audioIngestionRequest(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    String folder,
+  ) => AssetIngestionRequest(
+    documentFilePath: buffer.filePath ?? '',
+    workspaceKind: workspace.kind == WorkspaceKind.markdownFolder
+        ? AssetWorkspaceKind.markdownWorkspace
+        : AssetWorkspaceKind.standalone,
+    workspaceRoot: workspace.filesystemRootPath,
+    audioDir: folder,
+  );
+
+  AssetIngestionService _audioIngestionService(DocumentBuffer buffer) {
+    final note = buffer.remoteNote;
+    if (note == null) return const AssetIngestionService();
+    final repository = ref.read(nextcloudNotesRepositoryProvider).value;
+    if (repository == null) return ProviderAssetIngestionService.unavailable;
+    return _remoteMedia
+        .putIfAbsent(
+          note.identity,
+          () =>
+              NextcloudDocumentMedia(repository, note.accountId, note.localId),
+        )
+        .ingestion;
+  }
+
+  Future<bool> _publishAudio(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    Future<IngestedAsset> Function(AssetIngestionService service) ingest, {
+    required int offset,
+    String? accessibleName,
+  }) async {
+    if (!_audioTargetIsCurrent(buffer, workspace)) return false;
+    final service = _audioIngestionService(buffer);
+    if (buffer.filePath == null && buffer.remoteNote == null) {
+      throw AssetPublicationUiException(context.l10n.audioSaveFirst);
+    }
+    final IngestedAsset asset;
+    try {
+      asset = await ingest(service);
+    } on AssetIngestionException catch (error) {
+      throw AssetPublicationUiException(error.message);
+    } on IOException {
+      if (!mounted) return false;
+      throw AssetPublicationUiException(context.l10n.audioCannotResolve);
+    }
+    final applied = _writeAudioMarkup(
+      workspace,
+      buffer,
+      audioReferenceMarkup(
+        asset.markdownPath,
+        localPath: !buffer.isRemote,
+        accessibleName: accessibleName,
+      ),
+      offset: offset,
+    );
+    if (applied) {
+      await service.commit(asset);
+    } else {
+      await service.rollback(asset);
+    }
+    return applied;
+  }
+
+  void _audioToast(String message) {
+    if (mounted) {
+      BusyMarkToastOverlay.maybeShow(
+        context,
+        message: message,
+        priority: BusyMarkToastPriority.high,
+      );
+    }
+  }
+
+  Future<void> _insertAudio() async {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null ||
+        buffer == null ||
+        !busyMarkCanUseDocumentSpeech(state, inserting: true)) {
+      return;
+    }
+    final offset = _narrationSelection(buffer).selection.end;
+    final folder = ref
+        .read(appSettingsControllerProvider)
+        .speech
+        .audioDirectory;
+    final choice = await showDialog<AudioInsertion>(
+      context: context,
+      builder: (_) => InsertAudioDialog(
+        canLinkFile: !buffer.isRemote && buffer.filePath != null,
+      ),
+    );
+    if (choice == null || !_audioTargetIsCurrent(buffer, workspace)) return;
+    if (choice.url != null) {
+      _writeAudioMarkup(
+        workspace,
+        buffer,
+        audioReferenceMarkup(choice.url!),
+        offset: offset,
+      );
+      return;
+    }
+    final selected = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(extensions: AudioAssetFormat.extensions),
+      ],
+    );
+    if (selected == null || !_audioTargetIsCurrent(buffer, workspace)) return;
+    try {
+      if (choice.link) {
+        final document = buffer.filePath!;
+        final relative = p.relative(selected.path, from: p.dirname(document));
+        final encoded = relative.split('/').map(Uri.encodeComponent).join('/');
+        final path = await resolveDocumentAudioPath(
+          encoded,
+          documentPath: document,
+          rootPath: workspace.filesystemRootPath ?? p.dirname(document),
+        );
+        if (path == null ||
+            await AudioAssetFormat.inspect(File(path)) == null) {
+          if (mounted) _audioToast(context.l10n.audioCannotResolve);
+          return;
+        }
+        _writeAudioMarkup(
+          workspace,
+          buffer,
+          audioReferenceMarkup(relative, localPath: true),
+          offset: offset,
+        );
+      } else {
+        final inserted = await _publishAudio(
+          workspace,
+          buffer,
+          (service) => service.ingestAudioFile(
+            sourcePath: selected.path,
+            request: _audioIngestionRequest(workspace, buffer, folder),
+            origin: AssetIngestionOrigin.audioPicker,
+          ),
+          offset: offset,
+        );
+        if (!inserted && mounted) _audioToast(context.l10n.audioStaleTarget);
+      }
+    } on AssetPublicationUiException catch (error) {
+      _audioToast(error.message);
+    } on IOException {
+      if (mounted) _audioToast(context.l10n.audioCannotResolve);
+    }
+  }
+
+  Future<void> _editAudio(BusyAudio audio) async {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    final span = audio.sourceSpan;
+    if (workspace == null ||
+        buffer == null ||
+        span == null ||
+        !busyMarkCanUseDocumentSpeech(state, inserting: true) ||
+        span.startOffset < 0 ||
+        span.endOffset > buffer.text.length ||
+        span.filePath !=
+            resolveWorkspaceDocumentContext(workspace, buffer).parserPath ||
+        buffer.text.substring(span.startOffset, span.endOffset) !=
+            audio.rawSource) {
+      return;
+    }
+    final target = audio.playbackSources.firstOrNull?.destination;
+    final local = buffer.filePath == null || target == null
+        ? null
+        : await () async {
+            try {
+              return await resolveDocumentAudioPath(
+                target,
+                documentPath: buffer.filePath!,
+                rootPath:
+                    workspace.filesystemRootPath ?? p.dirname(buffer.filePath!),
+              );
+            } on IOException {
+              return null;
+            } on FormatException {
+              return null;
+            }
+          }();
+    if (!mounted || !_audioTargetIsCurrent(buffer, workspace)) return;
+    final changed = await showDialog<String>(
+      context: context,
+      builder: (_) => AudioPropertiesDialog(audio: audio, localPath: local),
+    );
+    if (changed == null) return;
+    if (!_writeAudioMarkup(
+          workspace,
+          buffer,
+          changed,
+          offset: span.endOffset,
+          replace: span,
+        ) &&
+        mounted) {
+      _audioToast(context.l10n.audioStaleTarget);
+    }
+  }
+
+  Future<void> _narrate({
+    required bool readAloud,
+    (Object, int)? outlineTarget,
+  }) async {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null ||
+        buffer == null ||
+        !busyMarkCanUseDocumentSpeech(state, inserting: false)) {
+      return;
+    }
+    if (outlineTarget != null && !identical(outlineTarget.$1, buffer.opening)) {
+      return;
+    }
+    final selection = outlineTarget == null
+        ? _narrationSelection(buffer)
+        : (
+            selection: TextSelection.collapsed(offset: outlineTarget.$2),
+            anchored: true,
+          );
+    final preferences = ref.read(appSettingsControllerProvider).speech;
+    final document = await ref
+        .read(workspaceServiceProvider)
+        .buildNarrationDocument(workspace, buffer);
+    if (!mounted || document == null) return;
+    final current = ref.read(workspaceControllerProvider).activeBuffer;
+    if (!identical(current?.opening, buffer.opening) ||
+        current?.revision != buffer.revision ||
+        current?.identity != buffer.identity) {
+      return;
+    }
+    final canSelect = selection.anchored && !selection.selection.isCollapsed;
+    final scopes = [
+      if (canSelect) NarrationScope.selection,
+      if (selection.anchored) ...[NarrationScope.block, NarrationScope.section],
+      NarrationScope.document,
+    ];
+    final l10n = context.l10n;
+    final outputName = preferences.outputName.isEmpty
+        ? '${p.basenameWithoutExtension(buffer.displayName)}-narration.wav'
+        : p.basename(preferences.outputName);
+    final mayInsert =
+        !readAloud && busyMarkCanUseDocumentSpeech(state, inserting: true);
+    await showDialog<void>(
+      context: context,
+      builder: (_) => SpeechDialog(
+        options: preferences.options,
+        planForScope: (scope) => const NarrationProjection().project(
+          document: document,
+          capturedSource: buffer.text,
+          documentId: buffer.id,
+          providerId: buffer.remoteNote?.accountId ?? 'filesystem',
+          revision: buffer.revision,
+          scope: scope,
+          anchor: selection.selection.extentOffset,
+          selectionStart: selection.selection.start,
+          selectionEnd: selection.selection.end,
+          rules: preferences.narration,
+          language: preferences.options.language,
+          completedTask: l10n.speechTaskDone,
+          incompleteTask: l10n.speechTaskOpen,
+        ),
+        initialScope: outlineTarget != null
+            ? NarrationScope.section
+            : canSelect
+            ? NarrationScope.selection
+            : NarrationScope.document,
+        scopes: scopes,
+        suggestedFilename: p.setExtension(outputName, '.wav'),
+        readAloud: readAloud,
+        insert: mayInsert
+            ? (plan, bytes) => _publishAudio(
+                workspace,
+                buffer,
+                (service) => service.ingestAudioBytes(
+                  bytes: bytes,
+                  suggestedFileName: p.setExtension(outputName, '.wav'),
+                  request: _audioIngestionRequest(
+                    workspace,
+                    buffer,
+                    preferences.audioDirectory,
+                  ),
+                  origin: AssetIngestionOrigin.speechGeneration,
+                ),
+                offset: plan.insertionOffset,
+                accessibleName:
+                    '${l10n.speechGenerated} · ${buffer.displayName}',
+              )
+            : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(_outlineSpeechProvider, (_, request) {
+      if (request != null) {
+        unawaited(
+          _narrate(
+            readAloud: request.$3,
+            outlineTarget: (request.$1, request.$2),
+          ),
+        );
+      }
+    });
+    ref.listen(workspaceNavigationCommandProvider, (_, request) {
+      switch (request?.$1) {
+        case BusyMarkCommandIds.insertAudio:
+          unawaited(_insertAudio());
+        case BusyMarkCommandIds.readAloud:
+          unawaited(_narrate(readAloud: true));
+        case BusyMarkCommandIds.generateAudio:
+          unawaited(_narrate(readAloud: false));
+      }
+    });
     ref.listen(outlineNavigationTargetProvider, (previous, next) {
       if (next == null) {
         return;
@@ -9773,6 +10242,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                       ?.writersideModule
                                       ?.effectiveImagesDir ??
                                   'images',
+                              audioDirectory: settings.speech.audioDirectory,
                               assetWorkspaceKind:
                                   switch (widget.state.workspace?.kind) {
                                     WorkspaceKind.writersideModule =>
@@ -9926,6 +10396,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                       ?.writersideModule
                                       ?.effectiveImagesDir ??
                                   'images',
+                              audioDirectory: settings.speech.audioDirectory,
                               assetWorkspaceKind:
                                   switch (widget.state.workspace?.kind) {
                                     WorkspaceKind.writersideModule =>
@@ -10203,7 +10674,18 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           : media?.context ?? DocumentMediaContext.unavailable,
       child: DocumentReadOnlyScope(
         readOnly: activeBuffer?.readonly ?? false,
-        child: _withProperties(editor),
+        child: DocumentAudioScope(
+          document: activeBuffer == null ? null : _audioIdentity(activeBuffer),
+          openDocuments: {
+            for (final buffer in widget.state.documentBuffers)
+              buffer.opening: _audioIdentity(buffer),
+          },
+          rootPath: _imageWorkspaceRoot(workspace),
+          editAudio: activeBuffer?.readonly == false
+              ? (audio) => unawaited(_editAudio(audio))
+              : null,
+          child: _withProperties(editor),
+        ),
       ),
     );
     return ListenableBuilder(
@@ -13434,6 +13916,10 @@ class _PreviewBlockView extends ConsumerWidget {
         block: displayBlock,
         workspace: workspace,
       ),
+      PreviewBlockKind.audio =>
+        displayBlock.audio == null
+            ? const SizedBox.shrink()
+            : BusyMarkDocumentAudioView(audio: displayBlock.audio!),
       PreviewBlockKind.video => _PreviewVideoBlock(
         block: displayBlock,
         workspace: workspace,
@@ -13864,6 +14350,7 @@ class _PreviewBlockView extends ConsumerWidget {
       PreviewBlockKind.code => context.l10n.codeBlock,
       PreviewBlockKind.image => context.l10n.image,
       PreviewBlockKind.video => context.l10n.video,
+      PreviewBlockKind.audio => context.l10n.audio,
       PreviewBlockKind.admonition => switch (block.attributes['style']) {
         'warning' => context.l10n.warning,
         'tip' => context.l10n.tip,
@@ -14783,6 +15270,12 @@ InlineSpan _previewInlineSpan(
                 childSpan(child, mergeStyle(null)),
             ],
       style: mergeStyle(null),
+    ),
+    PreviewInlineKind.audio => WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: inline.audio == null
+          ? const SizedBox.shrink()
+          : BusyMarkDocumentAudioView(audio: inline.audio!),
     ),
     PreviewInlineKind.image => _previewInlineImageSpan(
       context,

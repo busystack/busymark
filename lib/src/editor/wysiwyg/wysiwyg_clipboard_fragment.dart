@@ -14,6 +14,8 @@ import '../../platform/rich_clipboard_service.dart';
 import '../../writerside/writerside_html_reference_scanner.dart';
 import '../../writerside/writerside_video.dart';
 import '../inline_semantics.dart';
+import '../audio_authoring.dart';
+import '../../markdown/audio_media.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
 
@@ -38,6 +40,31 @@ class WysiwygClipboardFragment {
   List<BusyBlock> get documentBlocks => [
     for (final block in blocks) busyMarkWysiwygClipboardBlock(block),
   ];
+
+  Set<String> get audioReferences {
+    final references = <String>{};
+    void add(BusyAudio? audio) {
+      if (audio != null) {
+        references.addAll(
+          audio.authoredSources.map((source) => source.destination),
+        );
+      }
+    }
+
+    void inline(BusyInline value) {
+      add(value.audio);
+      value.children.forEach(inline);
+    }
+
+    void block(BusyBlock value) {
+      add(value.audio);
+      value.inlines.forEach(inline);
+      value.children.forEach(block);
+    }
+
+    documentBlocks.forEach(block);
+    return references;
+  }
 
   String get markdown => const BusyMarkMarkdownSerializer().serialize(
     BusyDocument(filePath: sourcePath, mode: mode, blocks: documentBlocks),
@@ -280,8 +307,17 @@ class WysiwygClipboardFragment {
                   entry.value
             : entry.value,
     };
+    BusyAudio? rebaseAudio(BusyAudio? value) => value == null
+        ? null
+        : rebaseAuthoredAudio(
+            value,
+            (source) =>
+                destination(source, media: true, rawHtml: true) ?? source,
+          );
+
     BusyInline inline(BusyInline value, bool rawHtml) => BusyInline(
       kind: value.kind,
+      audio: rebaseAudio(value.audio),
       text: value.text,
       destination: destination(
         value.destination,
@@ -307,7 +343,9 @@ class WysiwygClipboardFragment {
           if (previous == null) continue;
           final updated = destination(
             previous,
-            media: tag == 'img' && attribute == 'src',
+            media:
+                const {'img', 'audio', 'source'}.contains(tag) &&
+                attribute == 'src',
             rawHtml: true,
           );
           if (updated != null && updated != previous) {
@@ -333,13 +371,16 @@ class WysiwygClipboardFragment {
       ];
       bool referencesChanged(BusyInline before, BusyInline after) =>
           before.destination != after.destination ||
+          before.audio?.rawSource != after.audio?.rawSource ||
           !mapEquals(before.attributes, after.attributes) ||
           [
             for (var i = 0; i < before.children.length; i++)
               referencesChanged(before.children[i], after.children[i]),
           ].any((v) => v);
       final source = value.rawSource;
+      final audio = rebaseAudio(value.audio);
       final rawSource = switch (value.kind) {
+        BusyBlockKind.audio => audio?.rawSource ?? source,
         BusyBlockKind.video when source != null =>
           const WritersideAuthoredHtmlReferenceScanner()
               .rewriteAttributeValues(source, 'video', {
@@ -354,6 +395,7 @@ class WysiwygClipboardFragment {
       return BusyBlock(
         id: value.id,
         kind: value.kind,
+        audio: audio,
         inlines: rebasedInlines,
         children: [
           for (final child in value.children)
@@ -411,6 +453,7 @@ class WysiwygClipboardFragment {
 Map<String, Object?> _encodeInline(BusyInline inline) => {
   'kind': inline.kind.name,
   'text': inline.text,
+  if (inline.audio case final audio?) 'audio': audio.rawSource,
   if (inline.destination != null) 'destination': inline.destination,
   'attributes': inline.attributes,
   'children': [for (final child in inline.children) _encodeInline(child)],
@@ -418,6 +461,7 @@ Map<String, Object?> _encodeInline(BusyInline inline) => {
 
 Map<String, Object?> _encodeBlock(BusyBlock block) => {
   'kind': block.kind.name,
+  if (block.audio case final audio?) 'audio': audio.rawSource,
   'inlines': [for (final inline in block.inlines) _encodeInline(inline)],
   'children': [for (final child in block.children) _encodeBlock(child)],
   'attributes': block.attributes,
@@ -459,6 +503,7 @@ BusyBlock _destinationSerializationBlock(
 }) => BusyBlock(
   id: block.id,
   kind: block.kind,
+  audio: block.audio,
   inlines: block.inlines,
   children: [
     for (final child in block.children)
@@ -530,6 +575,7 @@ class _FragmentReader {
     final data = map(value);
     return BusyInline(
       kind: BusyInlineKind.values.byName(string(data['kind'])),
+      audio: parseAuthoredAudio(optionalString(data['audio'])),
       text: string(data['text']),
       destination: optionalString(data['destination']),
       attributes: attributes(data['attributes']),
@@ -546,6 +592,7 @@ class _FragmentReader {
     return BusyBlock(
       id: id,
       kind: BusyBlockKind.values.byName(string(data['kind'])),
+      audio: parseAuthoredAudio(optionalString(data['audio'])),
       inlines: List.unmodifiable([
         for (final child in list(data['inlines'])) inline(child, depth + 1),
       ]),

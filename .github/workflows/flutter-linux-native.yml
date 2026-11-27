@@ -22,7 +22,7 @@ jobs:
   verify:
     name: Standalone release stress
     if: ${{ inputs.run-stress }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out repository
@@ -36,6 +36,7 @@ jobs:
             apparmor-profiles \
             at-spi2-core \
             bubblewrap \
+            binutils \
             clang \
             cmake \
             dbus-daemon \
@@ -44,15 +45,25 @@ jobs:
             fonts-noto-core \
             fonts-noto-cjk \
             fonts-noto-mono \
+            espeak-ng \
+            ffmpeg \
+            gstreamer1.0-libav \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-ugly \
+            gstreamer1.0-tools \
             ninja-build \
             pkg-config \
             libgtk-3-dev \
+            libgstreamer1.0-dev \
             libglib2.0-dev \
             libpango1.0-dev \
             libhandy-1-dev \
             libsecret-1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             libwebkit2gtk-4.1-dev \
             python3-gi \
+            python3-venv \
             rsync \
             xvfb \
             xz-utils
@@ -116,6 +127,10 @@ jobs:
 
       # Explicit status conditions keep independent checks running after a
       # native failure. Failed checks still fail the job; none is optional.
+      - name: Decode required audio formats on Ubuntu 26.04
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
+        run: bash tools/verify_audio_decoders.sh standalone
+
       - name: Verify 100 shutdowns of the shipping release
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: |
@@ -148,6 +163,55 @@ jobs:
             --video test/fixtures/media/close-testsrc.mp4 -- \
             build/linux/x64/release/bundle/busymark
 
+      - name: Restore shipping entry point and stage the Ubuntu 26.04 bundle
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        id: release-bundle
+        run: |
+          flutter build linux --release --no-pub --target lib/main.dart
+          bundle=build/linux/x64/release/bundle
+          bash tools/install_piper_runtime.sh "$bundle"
+          "$bundle/bin/busymark-piper-python" -c 'import onnxruntime, piper; from importlib.metadata import version; assert version("piper-tts") == "1.8.0"'
+          test ! -e "$bundle/lib/libdartjni.so"
+          evidence="${RUNNER_TEMP}/ubuntu-26.04-bundle"
+          mkdir -p "$evidence"
+          for elf in "$bundle/busymark" "$bundle"/lib/*.so; do
+            readelf --version-info "$elf"
+            ldd "$elf"
+          done > "$evidence/elf-dependencies.txt"
+          if grep -F 'not found' "$evidence/elf-dependencies.txt"; then
+            exit 1
+          fi
+          cat /etc/os-release > "$evidence/os-release.txt"
+          sha="$(git rev-parse HEAD)"
+          printf '%s\n' "$sha" > "$evidence/source-commit.txt"
+          version="$(sed -n 's/^version: //p' pubspec.yaml)"
+          archive="$evidence/busymark-$version-ubuntu26.04-amd64.tar.gz"
+          tar -C "$bundle" -czf "$archive" .
+          sha256sum "$archive" > "$evidence/sha256sum.txt"
+
+      - name: Exercise the archived standalone release under X11
+        id: release-bundle-smoke
+        if: ${{ !cancelled() && steps.release-bundle.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        run: |
+          evidence="${RUNNER_TEMP}/ubuntu-26.04-bundle"
+          unpacked="$(mktemp -d)"
+          trap 'rm -rf -- "$unpacked"' EXIT
+          tar -xf "$evidence"/busymark-*-ubuntu26.04-amd64.tar.gz -C "$unpacked"
+          report="$evidence/standalone-x11.json"
+          timeout --signal=TERM 300s xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_CONFIG_HOME="$unpacked/profile/config" XDG_CACHE_HOME="$unpacked/profile/cache" \
+            XDG_DATA_HOME="$unpacked/profile/data" LIBGL_ALWAYS_SOFTWARE=1 \
+            "$unpacked/busymark" --visualization-release-smoke="$report"
+          /usr/bin/python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+
+      - name: Upload Ubuntu 26.04 standalone bundle
+        if: ${{ !cancelled() && steps.release-bundle-smoke.outcome == 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: busymark-ubuntu-26.04-amd64
+          path: ${{ runner.temp }}/ubuntu-26.04-bundle
+
       - name: Preserve natural-close evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -161,7 +225,7 @@ jobs:
 
   snap:
     name: Native release acceptance (snap)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out repository
@@ -171,17 +235,18 @@ jobs:
         id: snap-inspection
         run: |
           sudo apt-get update
-          sudo apt-get install -y squashfs-tools
+          sudo apt-get install -y squashfs-tools python3-yaml binutils
 
       - name: Prepare clean Snap artifact selection
         run: |
           rm -f ./*.snap
           touch "${RUNNER_TEMP}/busymark-snap-build-start"
 
-      - name: Build strict Snap from a clean core24 environment (attempt 1)
+      - name: Build strict Snap from a clean core26 environment (attempt 1)
         id: snapcraft
         uses: snapcore/action-build@v1
         with:
+          snapcraft-channel: latest/stable
           snapcraft-args: --verbosity=debug
         continue-on-error: true
 
@@ -190,6 +255,7 @@ jobs:
         if: steps.snapcraft.outcome == 'failure'
         uses: snapcore/action-build@v1
         with:
+          snapcraft-channel: latest/stable
           snapcraft-args: --verbosity=debug
 
       - name: Collect official Snapcraft and Snapd failure diagnostics
@@ -317,23 +383,47 @@ jobs:
             "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
           echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Snap artifact
+      - name: Inspect build metadata and official engine
+        id: snap-metadata
         if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' }}
+        env:
+          SNAP_PATH: ${{ steps.snap-artifact.outputs.snap }}
+        run: |
+          evidence="${RUNNER_TEMP}/core26-build"
+          mkdir -p "$evidence"
+          snapcraft --version | tee "$evidence/snapcraft-version.txt"
+          snap list snapcraft | tee "$evidence/snapcraft-channel.txt"
+          snapcraft expand-extensions > "$evidence/expanded.yaml"
+          unsquashfs -cat "$SNAP_PATH" meta/snap.yaml > "$evidence/meta.yaml"
+          unsquashfs -cat "$SNAP_PATH" snap/manifest.yaml > "$evidence/manifest.yaml"
+          /usr/bin/python3 tools/verify_core26_recipe.py "$evidence/expanded.yaml" "$evidence/meta.yaml"
+          unsquashfs -cat "$SNAP_PATH" lib/libflutter_linux_gtk.so > "$evidence/engine.so"
+          expected_hash="$(PYTHONPATH=tools /usr/bin/python3 -c 'from native_shutdown import RELEASE_ENGINE_SHA256; print(RELEASE_ENGINE_SHA256)')"
+          printf '%s  %s\n' "$expected_hash" "$evidence/engine.so" | sha256sum --check
+          readelf --notes "$evidence/engine.so" > "$evidence/engine-notes.txt"
+          rm "$evidence/engine.so"
+          sha256sum "$SNAP_PATH" | tee "$evidence/snap.sha256"
+
+      - name: Upload Snap artifact
+        if: ${{ !cancelled() && steps.snap-metadata.outcome == 'success' }}
         uses: actions/upload-artifact@v7
         with:
           name: busymark-snap
-          path: ${{ steps.snap-artifact.outputs.snap }}
+          path: |
+            ${{ steps.snap-artifact.outputs.snap }}
+            ${{ runner.temp }}/core26-build
+
 
       - name: Install desktop smoke dependencies
         id: strict-desktop
         if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session at-spi2-core xdg-desktop-portal-gtk
+          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session at-spi2-core xdg-desktop-portal-gtk ffmpeg
 
       - name: Install strict Snap
         id: strict-install
-        if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' && steps.strict-desktop.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' && steps.snap-metadata.outcome == 'success' && steps.strict-desktop.outcome == 'success' }}
         run: >-
           sudo snap install --dangerous
           "${{ steps.snap-artifact.outputs.snap }}"
@@ -382,9 +472,12 @@ jobs:
             set -eu
             test ! -e \
               "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2"
-            query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
-            loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
-            "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
+            test -x /usr/libexec/glycin-loaders/2+/glycin-svg
+            output="$(mktemp -d)"
+            trap "rm -rf -- \"\$output\"" EXIT
+            "$SNAP_DESKTOP_RUNTIME/usr/bin/gtk-encode-symbolic-svg" \
+              -o "$output" "$SNAP/meta/gui/icon.svg" 24x24
+            test -s "$output/icon.symbolic.png"
             cache_tool="$SNAP_DESKTOP_RUNTIME/usr/bin/gtk-update-icon-cache"
             test -x "$cache_tool"
             for icon_theme in \
@@ -439,15 +532,16 @@ jobs:
               fi
             }
             app_lib="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            test ! -e "$SNAP/lib/libdartjni.so"
             inspect_dependencies "$SNAP/busymark"
             for library in \
               libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 \
-              libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+              libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0 libgstreamer-1.0.so.0; do
               test ! -e "$app_lib/$library"
               require_resolution "$library" \
                 "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
             done
-            graphics_lib="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            graphics_lib="$SNAP/gpu-2604/mesa-2604/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
             for library in \
               libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 \
               libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 \
@@ -464,21 +558,20 @@ jobs:
             test -x "$SNAP/usr/bin/setsid"
             inspect_dependencies "$SNAP/usr/lib/git-core/git-remote-http"
             require_resolution libcurl-gnutls.so.4 \
-              "$app_lib/libcurl-gnutls.so.4"
+              "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/libcurl-gnutls.so.4"
             GIT_EXEC_PATH="$SNAP/usr/lib/git-core" \
               "$SNAP/usr/bin/git" --exec-path | grep -Fx "$SNAP/usr/lib/git-core"
             "$SNAP/usr/bin/ssh" -V
             provider_plugins="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
             for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
-              libgstogg.so libgsttheora.so libgstvpx.so; do
+              libgstogg.so libgsttheora.so libgstvpx.so libgstwavparse.so \
+              libgstplayback.so libgstvorbis.so libgstopus.so libgstflac.so \
+              libgstmpg123.so libgstpulseaudio.so; do
               test -f "$provider_plugins/$plugin"
               inspect_dependencies "$provider_plugins/$plugin"
+              test ! -e "$app_lib/gstreamer-1.0/$plugin"
             done
-            private_plugins="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
-            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
-              libgstogg.so libgsttheora.so libgstvpx.so; do
-              test ! -e "$private_plugins/$plugin"
-            done
+            private_plugins="$app_lib/gstreamer-1.0"
             for plugin in libgstlibav.so libgstvideoparsersbad.so \
               libgstmpeg2dec.so; do
               test -f "$private_plugins/$plugin"
@@ -498,6 +591,27 @@ jobs:
               done
             done
           '
+
+      - name: Verify packaged local speech runtime and content connections
+        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
+        run: |
+          snap list core26 gnome-core26 mesa-2604 gtk-common-themes
+          snap connections busymark | tee "${RUNNER_TEMP}/core26-build/connections.txt"
+          for plug in audio-playback gsettings gnome-core26 gpu-2604; do
+            awk -v target="busymark:$plug" '$2 == target && $3 != "-" { connected=1 } END { exit !connected }' \
+              "${RUNNER_TEMP}/core26-build/connections.txt"
+          done
+          snap run --shell busymark -c '
+            set -eu
+            sample="$(mktemp)"
+            trap "rm -f -- \"\$sample\"" EXIT
+            printf "BusyMark offline speech.\n" | "$SNAP/usr/bin/espeak-ng" --stdin -v en -w "$sample"
+            "$SNAP/bin/busymark-piper-python" -c "import onnxruntime, piper, sys, wave; from importlib.metadata import version; assert version(\"piper-tts\") == \"1.8.0\"; assert wave.open(sys.argv[1]).getnframes() > 0" "$sample"
+          '
+
+      - name: Decode required audio formats with the installed strict Snap
+        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
+        run: bash tools/verify_audio_decoders.sh snap
 
       - name: Install one strict-Snap dictionary and verify refresh/offline use
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
@@ -646,6 +760,8 @@ jobs:
         if: ${{ !cancelled() && inputs.run-stress && steps.strict-fixture-source.outcome == 'success' }}
         id: close-fixture-snap
         uses: snapcore/action-build@v1
+        with:
+          snapcraft-channel: latest/stable
       - name: Install strict compiled-close fixture
         if: ${{ !cancelled() && inputs.run-stress && steps.close-fixture-snap.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-fixture-install
@@ -679,6 +795,27 @@ jobs:
             ~/snap/busymark_fixture/common/close-live
           if-no-files-found: ignore
 
+      - name: Restore shipping Snap recipe and archive
+        if: ${{ always() && inputs.run-stress && steps.strict-fixture-source.outcome != 'skipped' }}
+        env:
+          SHIPPING_SNAP: ${{ steps.snap-artifact.outputs.snap }}
+        run: |
+          if [ -f "${RUNNER_TEMP}/shipping-snapcraft.yaml" ]; then
+            cp "${RUNNER_TEMP}/shipping-snapcraft.yaml" snap/snapcraft.yaml
+          fi
+          if [ -f "${RUNNER_TEMP}/shipping-main.snap" ]; then
+            cp "${RUNNER_TEMP}/shipping-main.snap" "$SHIPPING_SNAP"
+            sha256sum --check "${RUNNER_TEMP}/core26-build/snap.sha256"
+          fi
+
+      - name: Preserve installed content connection evidence
+        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: core26-installed-connections
+          path: ${{ runner.temp }}/core26-build/connections.txt
+          if-no-files-found: error
+
       - name: Stop strict-Snap desktop session
         if: always()
         run: |
@@ -701,7 +838,7 @@ jobs:
   development-modes:
     name: Native release acceptance (${{ matrix.mode }})
     if: ${{ inputs.run-stress }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -714,6 +851,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y apparmor-profiles bubblewrap clang cmake ninja-build pkg-config curl xz-utils \
             libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
+            libgstreamer1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly espeak-ng \
             fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
         id: web-sandbox
@@ -780,6 +918,9 @@ jobs:
             --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
             --video test/fixtures/media/close-testsrc.mp4 -- \
             build/linux/x64/${{ matrix.mode }}/bundle/busymark
+      - name: Restore the ordinary application entry point
+        if: ${{ !cancelled() && steps.mode-build.outcome == 'success' }}
+        run: flutter build linux --${{ matrix.mode }} --no-pub --target lib/main.dart
       - uses: actions/upload-artifact@v7
         if: always()
         with:

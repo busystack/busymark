@@ -26,7 +26,7 @@ editor and preview theme:
 - **Layout:** a maximum content width from 320–1920 px. Pages still adapt to
   smaller screens; wide code blocks and tables scroll within the page.
 - **Output:** a single HTML file or HTML with an assets directory, plus an
-  optional custom stylesheet.
+  optional custom stylesheet. External HTTPS audio playback is off by default.
 
 Defaults are a light theme, 17 px sans-serif text, a maximum width of 918 px,
 blue links, an assets directory when needed, and no custom stylesheet.
@@ -82,6 +82,17 @@ are prepared during export. Remote video remains a link. Missing or unsupported
 content produces an actionable diagnostic and readable fallback where possible.
 HTML does not automatically export other linked Markdown documents or crawl
 other Writerside instances.
+
+Local Markdown audio retains its authored controls, loop and mute properties.
+The export uses `preload="none"` and suppresses autoplay. Child sources retain
+their order when the element has no direct `src`. With assets packaging,
+local recordings travel with the companion directory. Single-file exports
+embed the recordings within the export size limit.
+
+Remote audio remains an external link unless you select **Allow external HTTPS
+audio playback**. Enabling playback requires a network connection in the
+reader's browser. BusyMark does not download those recordings during export.
+Writerside resources use downloadable links in the exported site.
 
 Choose the destination after confirming settings. BusyMark asks before replacing
 existing output. A Writerside destination can replace only an unmodified export

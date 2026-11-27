@@ -316,6 +316,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case BusyMarkMainMenuAction.save:
       case BusyMarkMainMenuAction.saveAs:
         break;
+      case BusyMarkMainMenuAction.insertAudio:
+      case BusyMarkMainMenuAction.readAloud:
+      case BusyMarkMainMenuAction.generateAudio:
+        return;
       case BusyMarkMainMenuAction.export:
         return;
       case BusyMarkMainMenuAction.fullScreen:

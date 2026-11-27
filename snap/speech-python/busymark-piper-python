@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+if [ -n "${SNAP:-}" ]; then
+  bundle_root="$SNAP"
+  export PYTHONHOME="$SNAP/usr"
+  python="$SNAP/usr/bin/python3.14"
+else
+  bundle_root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+  unset PYTHONHOME
+  python=/usr/bin/python3.14
+fi
+export PYTHONPATH="$bundle_root/libexec/busymark/piper"
+export PYTHONNOUSERSITE=1
+export PYTHONDONTWRITEBYTECODE=1
+exec "$python" -s -P "$@"

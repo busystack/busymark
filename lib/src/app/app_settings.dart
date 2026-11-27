@@ -1,3 +1,4 @@
+import '../speech/speech_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -133,6 +134,7 @@ class AppSettings {
     required this.localHistoryRetentionDays,
     required this.localHistoryMaximumStorageMiB,
     required this.localHistoryExcludedPaths,
+    this.speech = const SpeechPreferences(),
     required this.aiProviderPreference,
     required this.aiOllamaEndpoint,
     required this.aiOllamaModel,
@@ -274,6 +276,7 @@ class AppSettings {
       localHistoryExcludedPaths: _historyExclusionPathListFromJson(
         json['localHistoryExcludedPaths'],
       ),
+      speech: SpeechPreferences.fromJson(json['speech']),
       aiProviderPreference: _enumFromName(
         AiProviderPreference.values,
         json['aiProviderPreference'],
@@ -357,6 +360,7 @@ class AppSettings {
   final int localHistoryRetentionDays;
   final int localHistoryMaximumStorageMiB;
   final List<String> localHistoryExcludedPaths;
+  final SpeechPreferences speech;
   final AiProviderPreference aiProviderPreference;
   final String aiOllamaEndpoint;
   final String aiOllamaModel;
@@ -407,6 +411,7 @@ class AppSettings {
     'localHistoryRetentionDays': localHistoryRetentionDays,
     'localHistoryMaximumStorageMiB': localHistoryMaximumStorageMiB,
     'localHistoryExcludedPaths': localHistoryExcludedPaths,
+    'speech': speech.toJson(),
     'aiProviderPreference': aiProviderPreference.name,
     'aiOllamaEndpoint': aiOllamaEndpoint,
     'aiOllamaModel': aiOllamaModel,
@@ -493,6 +498,7 @@ class AppSettings {
     int? localHistoryRetentionDays,
     int? localHistoryMaximumStorageMiB,
     List<String>? localHistoryExcludedPaths,
+    SpeechPreferences? speech,
     AiProviderPreference? aiProviderPreference,
     String? aiOllamaEndpoint,
     String? aiOllamaModel,
@@ -550,6 +556,7 @@ class AppSettings {
           localHistoryMaximumStorageMiB ?? this.localHistoryMaximumStorageMiB,
       localHistoryExcludedPaths:
           localHistoryExcludedPaths ?? this.localHistoryExcludedPaths,
+      speech: speech ?? this.speech,
       aiProviderPreference: aiProviderPreference ?? this.aiProviderPreference,
       aiOllamaEndpoint: aiOllamaEndpoint ?? this.aiOllamaEndpoint,
       aiOllamaModel: aiOllamaModel ?? this.aiOllamaModel,
@@ -939,6 +946,9 @@ class AppSettingsController extends Notifier<AppSettings> {
       (settings) => settings.copyWith(localHistoryExcludedPaths: normalized),
     );
   }
+
+  Future<void> setSpeechPreferences(SpeechPreferences preferences) =>
+      _mutate((settings) => settings.copyWith(speech: preferences));
 
   Future<void> setAiProviderPreference(AiProviderPreference preference) {
     return _mutate(

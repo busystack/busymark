@@ -12,8 +12,24 @@ import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_ast_adapter.dart';
 import '../markdown/markdown_model.dart';
+import '../markdown/raw_html_policy.dart';
 
 enum WritersideHtmlAttributeQuote { doubleQuoted, singleQuoted, unquoted }
+
+String escapeAuthoredHtmlAttribute(
+  String value,
+  WritersideHtmlAttributeQuote quote,
+) {
+  final escaped = HtmlEscape(
+    quote == WritersideHtmlAttributeQuote.singleQuoted
+        ? HtmlEscapeMode.sqAttribute
+        : const HtmlEscapeMode(escapeLtGt: true, escapeQuot: true),
+  ).convert(value);
+  return quote == WritersideHtmlAttributeQuote.unquoted &&
+          RegExp(r'''[\s"'`=<>]''').hasMatch(value)
+      ? '"$escaped"'
+      : escaped;
+}
 
 class WritersideAuthoredHtmlAnchorReference {
   const WritersideAuthoredHtmlAnchorReference({
@@ -91,12 +107,29 @@ class WritersideAuthoredHtmlReferenceScanner {
     return source;
   }
 
-  List<({String destination, SourceSpan span})> scanMarkdownMedia({
+  List<
+    ({
+      String destination,
+      SourceSpan span,
+      String tag,
+      WritersideHtmlAttributeQuote quote,
+    })
+  >
+  scanMarkdownMedia({
     required String filePath,
     required String source,
     required List<bool> protectedSource,
+    MarkdownMode mode = MarkdownMode.commonMark,
   }) {
-    final candidates = <({String destination, SourceSpan span})>[];
+    final candidates =
+        <
+          ({
+            String destination,
+            SourceSpan span,
+            String tag,
+            WritersideHtmlAttributeQuote quote,
+          })
+        >[];
     final tokenizer = HtmlTokenizer(
       source,
       generateSpans: true,
@@ -108,19 +141,26 @@ class WritersideAuthoredHtmlReferenceScanner {
           !{'img', 'video', 'source', 'audio'}.contains(token.name)) {
         continue;
       }
+      final tag = token.name!;
       for (final attribute in token.attributeSpans ?? []) {
-        if (!{'src', 'preview-src', 'poster'}.contains(attribute.name)) {
+        if (attribute.name != 'src' &&
+            !(tag == 'video' &&
+                {'preview-src', 'poster'}.contains(attribute.name))) {
           continue;
         }
         final start = attribute.startValue, end = attribute.endValue;
         if (start == null ||
             end == null ||
             start >= end ||
+            ((tag == 'audio' || tag == 'source') &&
+                !isSafeHtmlUrlAttribute(tag, 'src', attribute.value)) ||
             _rangeIsProtected(protectedSource, start, end)) {
           continue;
         }
         candidates.add((
           destination: attribute.value,
+          tag: tag,
+          quote: _attributeQuote(source, start, end),
           span: SourceSpan.fromOffsets(
             filePath: filePath,
             source: source,
@@ -130,11 +170,14 @@ class WritersideAuthoredHtmlReferenceScanner {
         ));
       }
     }
+    if (candidates.isEmpty) return const [];
     var probed = source;
-    final probes = <String>{};
+    var prefix = 'https://busymark-media-';
+    while (source.contains(prefix)) {
+      prefix += 'x';
+    }
     for (var i = candidates.length - 1; i >= 0; i--) {
-      final probe = 'https://busymark-media-$i.invalid/asset.png';
-      probes.add(probe);
+      final probe = '$prefix$i.invalid/asset.png';
       probed = probed.replaceRange(
         candidates[i].span.startOffset,
         candidates[i].span.endOffset,
@@ -146,10 +189,20 @@ class WritersideAuthoredHtmlReferenceScanner {
       if (value.kind == BusyInlineKind.image && value.destination != null) {
         rendered.add(value.destination!);
       }
+      if (value.audio case final audio?) {
+        rendered.addAll(
+          audio.authoredSources.map((source) => source.destination),
+        );
+      }
       value.children.forEach(inline);
     }
 
     void block(BusyBlock value) {
+      if (value.audio case final audio?) {
+        rendered.addAll(
+          audio.authoredSources.map((source) => source.destination),
+        );
+      }
       for (final name in ['src', 'preview-src', 'poster']) {
         if (value.attributes[name] case final String destination) {
           rendered.add(destination);
@@ -160,17 +213,12 @@ class WritersideAuthoredHtmlReferenceScanner {
     }
 
     const MarkdownAstAdapter()
-        .parse(
-          filePath: filePath,
-          source: probed,
-          mode: MarkdownMode.commonMark,
-        )
+        .parse(filePath: filePath, source: probed, mode: mode)
         .blocks
         .forEach(block);
     return [
       for (var i = 0; i < candidates.length; i++)
-        if (rendered.contains('https://busymark-media-$i.invalid/asset.png'))
-          candidates[i],
+        if (rendered.contains('$prefix$i.invalid/asset.png')) candidates[i],
     ];
   }
 
@@ -365,15 +413,7 @@ class WritersideAuthoredHtmlReferenceScanner {
         destination.isEmpty) {
       return _OpenHtmlAnchor(reference: null);
     }
-    final quote = switch (hrefStart > tagSpan.start.offset
-        ? source[hrefStart - 1]
-        : null) {
-      '"' when hrefEnd < tagSpan.end.offset && source[hrefEnd] == '"' =>
-        WritersideHtmlAttributeQuote.doubleQuoted,
-      "'" when hrefEnd < tagSpan.end.offset && source[hrefEnd] == "'" =>
-        WritersideHtmlAttributeQuote.singleQuoted,
-      _ => WritersideHtmlAttributeQuote.unquoted,
-    };
+    final quote = _attributeQuote(source, hrefStart, hrefEnd);
     final origin = token.data['origin']?.trim();
     return _OpenHtmlAnchor(
       reference: WritersideAuthoredHtmlAnchorReference(
@@ -397,6 +437,19 @@ class WritersideAuthoredHtmlReferenceScanner {
     );
   }
 }
+
+WritersideHtmlAttributeQuote _attributeQuote(
+  String source,
+  int start,
+  int end,
+) =>
+    switch (start > 0 && end < source.length && source[start - 1] == source[end]
+    ? source[end]
+    : null) {
+      '"' => WritersideHtmlAttributeQuote.doubleQuoted,
+      "'" => WritersideHtmlAttributeQuote.singleQuoted,
+      _ => WritersideHtmlAttributeQuote.unquoted,
+    };
 
 /// Builds the literal mask shared by topic rename and topic removal.
 ///

@@ -1,3 +1,4 @@
+import '../assets/audio_asset_format.dart';
 import '../assets/document_media_context.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -5,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 import '../core/local_image_resolver.dart';
+import '../markdown/audio_media.dart';
 import '../visualization/generated_svg_normalizer.dart';
 import 'markdown_export_assets.dart';
 import 'html_export_models.dart';
@@ -50,15 +52,22 @@ class HtmlExportAssets {
     List<String> searchRoots = const [],
     int line = 1,
     bool download = false,
+    bool audio = false,
   }) async {
     token.check();
-    final key =
-        '$sourcePath\u0000${searchRoots.join('\u0000')}\u0000$download\u0000$reference';
+    final location =
+        '$sourcePath\u0000${searchRoots.join('\u0000')}\u0000$reference';
+    final key = '$location\u0000$download\u0000$audio';
+    if (download && _references['$location\u0000false\u0000true'] != null) {
+      return _references['$location\u0000false\u0000true'];
+    }
     if (_references.containsKey(key)) return _references[key];
     String? result;
     try {
       if (media != null) {
-        final path = await media!.resolve(reference);
+        final path = await media!.resolve(
+          audio ? busyMarkAudioResourcePath(reference) : reference,
+        );
         if (path == null) {
           throw const HtmlExportException(
             'Resource is not an available attachment of this note.',
@@ -74,6 +83,7 @@ class HtmlExportAssets {
           await file.readAsBytes(),
           p.extension(path).toLowerCase(),
           download: download,
+          audio: audio,
         );
         _references[key] = result;
         return result;
@@ -127,6 +137,7 @@ class HtmlExportAssets {
         bytes,
         p.extension(found.path).toLowerCase(),
         download: download,
+        audio: audio,
       );
     } on Object catch (error) {
       token.check();
@@ -147,9 +158,29 @@ class HtmlExportAssets {
     List<int> input,
     String extension, {
     bool download = false,
+    bool audio = false,
   }) async {
     token.check();
     if (extension == '.jpeg') extension = '.jpg';
+    final audioFormat =
+        audio ||
+            download &&
+                const {
+                  '.mp3',
+                  '.wav',
+                  '.ogg',
+                  '.oga',
+                  '.opus',
+                  '.flac',
+                  '.aac',
+                  '.m4a',
+                }.contains(extension)
+        ? AudioAssetFormat.identify(input)
+        : null;
+    if (audio && audioFormat == null) {
+      throw const HtmlExportException('Unsupported or invalid audio format.');
+    }
+    if (audioFormat != null) extension = '.${audioFormat.extension}';
     var bytes = input;
     if (extension == '.svg') bytes = utf8.encode(safeSvg(utf8.decode(input)));
     final signature = const MarkdownExportAssetStager().hasExpectedFormat(
@@ -182,7 +213,7 @@ class HtmlExportAssets {
               '.yaml',
               '.yml',
             }.contains(extension));
-    if (!signature && !media && !attachment) {
+    if (audioFormat == null && !signature && !media && !attachment) {
       throw const HtmlExportException(
         'Unsupported or invalid resource format.',
       );
@@ -197,20 +228,23 @@ class HtmlExportAssets {
         throw const HtmlExportException('The export asset limit was reached.');
       }
       if (packaging == HtmlPackaging.singleFile) {
-        final mime = switch (extension) {
-          '.png' => 'image/png',
-          '.jpg' => 'image/jpeg',
-          '.gif' => 'image/gif',
-          '.svg' => 'image/svg+xml',
-          '.webp' => 'image/webp',
-          '.mp4' => 'video/mp4',
-          '.webm' => 'video/webm',
-          '.pdf' => 'application/pdf',
-          '.zip' => 'application/zip',
-          '.json' => 'application/json',
-          '.csv' => 'text/csv',
-          _ => this.media != null ? 'application/octet-stream' : 'text/plain',
-        };
+        final mime =
+            audioFormat?.mimeType ??
+            switch (extension) {
+              '.png' => 'image/png',
+              '.jpg' => 'image/jpeg',
+              '.gif' => 'image/gif',
+              '.svg' => 'image/svg+xml',
+              '.webp' => 'image/webp',
+              '.mp4' => 'video/mp4',
+              '.webm' => 'video/webm',
+              '.pdf' => 'application/pdf',
+              '.zip' => 'application/zip',
+              '.json' => 'application/json',
+              '.csv' => 'text/csv',
+              _ =>
+                this.media != null ? 'application/octet-stream' : 'text/plain',
+            };
         final url = 'data:$mime;base64,${base64.encode(bytes)}';
         _embedded[name] = url;
         _ownedEmbeddedUrls.add(url);

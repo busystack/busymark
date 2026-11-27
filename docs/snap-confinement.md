@@ -1,8 +1,9 @@
 # Snap confinement
 
-The Snap Store build uses strict confinement. BusyMark bundles Git, OpenSSH,
-Typst, D2, WebKitGTK, and its other runtime dependencies rather than executing
-arbitrary host programs.
+The v0.8.0 Snap recipe uses strict confinement and the `core26` base. BusyMark
+bundles Git, OpenSSH, Typst, D2, eSpeak NG and the Piper Python runtime.
+The connected GNOME and Mesa snaps supply GTK, WebKitGTK, the graphics
+libraries and core GStreamer plugins. Piper voice data is installed separately.
 
 The build generates and validates portable GTK icon-theme caches with the GNOME
 SDK. The GNOME launcher can reuse each bundled theme's index on first launch.

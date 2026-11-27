@@ -290,6 +290,7 @@ bool _hasUsableClipboardBlockContent(BusyBlock block) {
   if (block.plainText.isNotEmpty ||
       block.kind == BusyBlockKind.image ||
       block.kind == BusyBlockKind.video ||
+      block.kind == BusyBlockKind.audio ||
       block.kind == BusyBlockKind.thematicBreak ||
       block.kind == BusyBlockKind.table ||
       block.inlines.any(_hasUsableClipboardInlineContent)) {
@@ -300,6 +301,7 @@ bool _hasUsableClipboardBlockContent(BusyBlock block) {
 
 bool _hasUsableClipboardInlineContent(BusyInline inline) =>
     inline.kind == BusyInlineKind.image ||
+    inline.kind == BusyInlineKind.audio ||
     inline.children.any(_hasUsableClipboardInlineContent);
 
 String? _available(String? value) =>

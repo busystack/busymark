@@ -120,12 +120,8 @@ void main() {
       '.github/workflows/flutter-linux-native.yml',
     ).readAsStringSync();
 
-    expect(
-      snapcraft,
-      contains(
-        r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
-      ),
-    );
+    expect(snapcraft, contains('core26 GNOME and GPU extension cleanup'));
+    expect(snapcraft, isNot(contains(r'librsvg-2.so.2')));
     expect(
       localSnapBuilder,
       contains(r'rm -f "$SNAP_ROOT/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*'),
@@ -134,12 +130,13 @@ void main() {
       localSnapBuilder,
       contains('squashfs-root/usr/lib/x86_64-linux-gnu/librsvg-2.so.2'),
     );
-    expect(workflow, contains('libpixbufloader_svg.so'));
+    expect(workflow, contains('/usr/libexec/glycin-loaders/2+/glycin-svg'));
+    expect(workflow, contains('gtk-encode-symbolic-svg'));
     expect(
       workflow,
       contains(r'$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2'),
     );
-    expect(workflow, contains(r'\"svg\" 6 \"gdk-pixbuf\"'));
+    expect(workflow, contains('icon.symbolic.png'));
   });
 
   test('local snap builder stages bundled Git tools', () {
@@ -171,7 +168,7 @@ void main() {
     expect(
       script,
       contains(
-        'Retaining core24-compatible Git and OpenSSH tools from the snap scaffold',
+        r'Retaining $scaffold_base Git and OpenSSH tools from the snap scaffold',
       ),
     );
     expect(script, contains('--no-install'));
@@ -538,38 +535,21 @@ void main() {
   });
   test('Snap packaging hooks consolidate resources and keep required fixes', () {
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
-    final exclusions = File(
-      'snap/gnome-46-2404-prime-exclusions.amd64',
-    ).readAsLinesSync();
-
-    expect(snapcraft, contains('missing audited GNOME runtime duplicate'));
-    expect(snapcraft, contains('gnome-46-2404-prime-exclusions.amd64'));
-    expect(exclusions, contains(contains('revision 153')));
+    expect(snapcraft, contains('base: core26'));
+    expect(snapcraft, isNot(contains('gnome-46-2404-prime-exclusions')));
     expect(
-      exclusions,
-      contains('usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstisomp4.so'),
+      snapcraft,
+      contains(
+        r'icon_cache_tool="${SNAPCRAFT_GNOME_SDK:?}/usr/bin/gtk-update-icon-cache"',
+      ),
     );
-    for (final runtimeLibrary in {
-      'libgdk-3.so.0',
-      'libgtk-3.so.0',
-      'libpango-1.0.so.0',
-      'libpangocairo-1.0.so.0',
-      'libpangoft2-1.0.so.0',
-      'libX11.so.6',
-      'libXdamage.so.1',
-      'libXext.so.6',
-      'libXfixes.so.3',
-      'libxcb-shm.so.0',
-      'libxcb.so.1',
-      'libwayland-client.so.0',
-      'libwayland-cursor.so.0',
-      'libwayland-egl.so.1',
-    }) {
-      expect(exclusions, contains('usr/lib/x86_64-linux-gnu/$runtimeLibrary'));
-    }
-    expect(exclusions, isNot(contains(contains('libgstlibav.so'))));
-    expect(exclusions, isNot(contains(contains('libgstvideoparsersbad.so'))));
-    expect(exclusions.where((line) => line.contains('*')), isEmpty);
+    expect(snapcraft, contains('- audio-playback'));
+    expect(snapcraft, contains('- gsettings'));
+    expect(snapcraft, contains('- espeak-ng'));
+    expect(snapcraft, contains('- python3.14'));
+    expect(snapcraft, contains('- gstreamer1.0-libav'));
+    expect(snapcraft, contains('- gstreamer1.0-plugins-bad'));
+    expect(snapcraft, contains('- gstreamer1.0-plugins-ugly'));
     expect(snapcraft, contains(r'cmp -s "$bundled_font" "$staged_font"'));
     expect(snapcraft, contains('ln -s ../../usr/share/fonts/truetype/noto'));
     expect(
@@ -585,18 +565,15 @@ void main() {
     expect(snapcraft, contains('caca/libgl_plugin.so.0.0.0'));
     expect(
       snapcraft,
-      contains(
-        r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
-      ),
-    );
-    expect(
-      snapcraft,
       isNot(contains('libflutter_secure_storage_linux_plugin.so')),
     );
     final workflow = File(
       '.github/workflows/flutter-linux-native.yml',
     ).readAsStringSync();
-    expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
+    expect(
+      workflow,
+      contains(r'graphics_lib="$SNAP/gpu-2604/mesa-2604/usr/lib/'),
+    );
     expect(workflow, contains('libwayland-egl.so.1'));
     expect(workflow, contains('usr/share/doc/fonts-noto-core/copyright'));
   });
@@ -772,7 +749,7 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
     );
     _writeFixtureFile(
       '$project/snap/snapcraft.yaml',
-      'name: busymark\nicon: icon.svg\napps:\n  busymark:\n    plugs:\n      - home\n',
+      'name: busymark\nbase: core26\nicon: icon.svg\napps:\n  busymark:\n    plugs:\n      - home\n',
     );
     _writeFixtureFile('$project/icon.svg', '<svg/>\n');
     _writeFixtureFile(
@@ -785,7 +762,7 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
     );
     _writeFixtureFile(
       '$scaffold/meta/snap.yaml',
-      'name: busymark\nversion: 0.5.0\napps:\n  busymark:\n    command: busymark\n',
+      'name: busymark\nbase: core26\nversion: 0.5.0\napps:\n  busymark:\n    command: busymark\n',
     );
     _writeFixtureFile(stagedFont, 'scaffold font bytes');
     if (linkedScaffold) {
@@ -911,7 +888,7 @@ ProcessResult _runSharedRuntimeValidation(String mode, String shell) {
     final snap = '${fixture.path}/snap';
     final gnome = '${fixture.path}/gnome';
     final triplet = 'x86_64-linux-gnu';
-    final graphics = '$snap/gpu-2404/usr/lib/$triplet';
+    final graphics = '$snap/gpu-2604/mesa-2604/usr/lib/$triplet';
     final providerPlugins = '$gnome/usr/lib/$triplet/gstreamer-1.0';
     final privatePlugins = '$snap/usr/lib/$triplet/gstreamer-1.0';
     final stubBin = '${fixture.path}/bin';
@@ -944,10 +921,11 @@ ProcessResult _runSharedRuntimeValidation(String mode, String shell) {
       'libgtk-3.so.0',
       'libglib-2.0.so.0',
       'libpango-1.0.so.0',
+      'libgstreamer-1.0.so.0',
     ]) {
       _writeFixtureFile('$gnome/usr/lib/$triplet/$library', 'fixture');
     }
-    _writeFixtureFile('$snap/usr/lib/$triplet/libcurl-gnutls.so.4', 'fixture');
+    _writeFixtureFile('$gnome/usr/lib/$triplet/libcurl-gnutls.so.4', 'fixture');
     for (final helper in [
       'WebKitWebProcess',
       'WebKitNetworkProcess',
@@ -965,6 +943,13 @@ ProcessResult _runSharedRuntimeValidation(String mode, String shell) {
       'libgstogg.so',
       'libgsttheora.so',
       'libgstvpx.so',
+      'libgstwavparse.so',
+      'libgstplayback.so',
+      'libgstvorbis.so',
+      'libgstopus.so',
+      'libgstflac.so',
+      'libgstmpg123.so',
+      'libgstpulseaudio.so',
     ]) {
       _writeFixtureFile('$providerPlugins/$plugin', 'fixture');
     }
@@ -1003,19 +988,19 @@ if [ "$STUB_LDD_MODE" = inspection-error ] && [ "$object" = "$SNAP/busymark" ]; 
   exit 7
 fi
 if [ "$object" = "$SNAP/busymark" ]; then
-  for library in libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+  for library in libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0 libgstreamer-1.0.so.0; do
     path="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
     if [ "$STUB_LDD_MODE" = wrong-gnome ] && [ "$library" = libgtk-3.so.0 ]; then path="/unexpected/$library"; fi
     printf '%s => %s (0x1234)\n' "$library" "$path"
   done
   for library in libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1; do
-    path="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+    path="$SNAP/gpu-2604/mesa-2604/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
     if [ "$STUB_LDD_MODE" = wrong-mesa ] && [ "$library" = libX11.so.6 ]; then path="/unexpected/$library"; fi
     printf '%s => %s (0x1234)\n' "$library" "$path"
   done
   if [ "$STUB_LDD_MODE" = missing-zero ]; then printf 'libmissing.so.1 => not found\n'; fi
 elif [ "$object" = "$SNAP/usr/lib/git-core/git-remote-http" ]; then
-  path="$SNAP/usr/lib/git-core/../$SNAP_LAUNCHER_ARCH_TRIPLET/libcurl-gnutls.so.4"
+  path="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/libcurl-gnutls.so.4"
   if [ "$STUB_LDD_MODE" = wrong-curl ]; then path=/unexpected/libcurl-gnutls.so.4; fi
   printf 'libcurl-gnutls.so.4 => %s (0x1234)\n' "$path"
 else

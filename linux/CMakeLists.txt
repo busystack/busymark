@@ -58,6 +58,7 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 pkg_check_modules(HANDY REQUIRED IMPORTED_TARGET libhandy-1)
 pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
 pkg_check_modules(WEBKIT REQUIRED IMPORTED_TARGET webkit2gtk-4.1)
+pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
@@ -205,6 +206,10 @@ set_target_properties(${BINARY_NAME}
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
+# The transitive Android path provider brings in JNI. Linux uses its own
+# path provider and has no JVM integration. Skip optional JNI discovery so
+# a developer or runner JDK cannot become a bundle dependency.
+set(CMAKE_DISABLE_FIND_PACKAGE_JNI TRUE)
 include(flutter/generated_plugins.cmake)
 
 # Configure upstream plugin builds through CMake's supported target properties.

@@ -398,6 +398,21 @@ class _BusyMarkEditorTextMenuPresentation {
         ),
       );
     }
+    for (final (id, icon) in [
+      (BusyMarkCommandIds.insertAudio, Icons.audio_file_outlined),
+      (BusyMarkCommandIds.readAloud, Icons.record_voice_over_outlined),
+      (BusyMarkCommandIds.generateAudio, Icons.graphic_eq),
+    ]) {
+      if (commands[id] case final command? when command.canExecute) {
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: () => unawaited(commands.execute(id)),
+            label: command.label(context),
+            icon: icon,
+          ),
+        );
+      }
+    }
     items.add(const PopupMenuDivider(height: BusyMarkSpacing.sm));
     for (final entry in [
       (BusyMarkCommandIds.clipboardHistory, BusyMarkGlyphs.copy),

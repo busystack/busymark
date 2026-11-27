@@ -1,3 +1,4 @@
+import '../../markdown/audio_media.dart';
 import 'dart:convert';
 
 import 'package:html/dom.dart' as dom;
@@ -355,6 +356,8 @@ class _HtmlWriter {
           } else {
             out.add(image(b.attributes['src'], b.attributes['alt'] ?? ''));
           }
+        case BusyBlockKind.audio:
+          out.addAll(audio(b.audio, depth + 1));
         case BusyBlockKind.video:
           final href = url(b.attributes['src'], 'a', 'href');
           out.add(
@@ -389,6 +392,16 @@ class _HtmlWriter {
       }
     }
     return out;
+  }
+
+  List<dom.Node> audio(BusyAudio? audio, int depth) {
+    if (audio == null) return const [];
+    final fragment = const RawHtmlAdapter().parseSafeRawHtml(audio.rawSource);
+    if (fragment == null) return const [];
+    for (final node in fragment.nodes) {
+      _prepareRawNode(node, depth);
+    }
+    return fragment.nodes.toList();
   }
 
   void _prepareRawNode(dom.Node node, int depth) {
@@ -458,6 +471,8 @@ class _HtmlWriter {
           out.add(dom.Element.tag('br'));
         case BusyInlineKind.softBreak:
           out.add(dom.Text('\n'));
+        case BusyInlineKind.audio:
+          out.addAll(audio(value.audio, depth + 1));
         case BusyInlineKind.image:
           out.add(
             image(value.destination, value.text, value.attributes['title']),

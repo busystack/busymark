@@ -386,6 +386,9 @@ class BusyMarkCommandRegistry {
         BusyMarkCommandIds.save,
         BusyMarkCommandIds.saveAs,
         BusyMarkCommandIds.export,
+        BusyMarkCommandIds.insertAudio,
+        BusyMarkCommandIds.readAloud,
+        BusyMarkCommandIds.generateAudio,
         BusyMarkCommandIds.closeTab,
         BusyMarkCommandIds.elementProperties,
         BusyMarkCommandIds.references,
@@ -526,6 +529,9 @@ abstract final class BusyMarkCommandIds {
   static const textInsertIndentation = 'text.insertIndentation';
   static const textOutdentSource = 'text.outdentSource';
   static const textEscape = 'text.escape';
+  static const insertAudio = 'document.insertAudio';
+  static const readAloud = 'document.readAloud';
+  static const generateAudio = 'document.generateAudio';
   static const editorRefineWithAi = 'editor.refineWithAi';
   static const checkSpelling = 'spelling.check';
   static const references = 'sidebar.references';
@@ -609,6 +615,17 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      for (final (id, label) in <(String, BusyMarkCommandLabel)>[
+        (BusyMarkCommandIds.insertAudio, (c) => c.l10n.insertAudio),
+        (BusyMarkCommandIds.readAloud, (c) => c.l10n.readAloud),
+        (BusyMarkCommandIds.generateAudio, (c) => c.l10n.generateAudio),
+      ])
+        command(
+          id: id,
+          label: label,
+          category: (c) => c.l10n.speech,
+          scope: BusyMarkCommandScope.documentView,
+        ),
       command(
         id: BusyMarkCommandIds.sourceDeclaration,
         label: (c) => c.l10n.goToDeclaration,

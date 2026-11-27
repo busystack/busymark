@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "audio_player_host.h"
 #include "flutter/generated_plugin_registrant.h"
 #include "gtk_accent_host.h"
 #include "linux_chrome_host.h"
@@ -66,6 +67,7 @@ struct _MyApplication {
   FlMethodChannel* rich_clipboard_channel;
   BusyMarkWebRenderHost* visualization_host;
   BusyMarkVideoPlayerHost* video_player_host;
+  BusyMarkAudioPlayerHost* audio_player_host;
   GtkCssProvider* native_surface_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
@@ -1425,6 +1427,7 @@ static void my_application_activate(GApplication* application) {
   self->video_player_host =
       busymark_video_player_host_new(self->flutter_overlay);
   busymark_video_player_host_register_channel(self->video_player_host, view);
+  self->audio_player_host = busymark_audio_player_host_new(view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
@@ -1458,6 +1461,9 @@ static void my_application_startup(GApplication* application) {
 
 // Implements GApplication::shutdown.
 static void my_application_shutdown(GApplication* application) {
+  auto* self = MY_APPLICATION(application);
+  busymark_audio_player_host_destroy(self->audio_player_host);
+  self->audio_player_host = nullptr;
   G_APPLICATION_CLASS(my_application_parent_class)->shutdown(application);
 }
 
@@ -1482,6 +1488,8 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->visualization_host);
   if (self->video_player_host != nullptr) busymark_video_player_host_shutdown(self->video_player_host);
   g_clear_object(&self->video_player_host);
+  busymark_audio_player_host_destroy(self->audio_player_host);
+  self->audio_player_host = nullptr;
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
 }

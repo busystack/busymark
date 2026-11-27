@@ -10,6 +10,7 @@ import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'busymark_document.dart';
+import 'audio_source_binding.dart';
 import 'authored_html_diagnostics.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
@@ -394,6 +395,10 @@ class MarkdownParser {
         renderedDocument,
         sortDiagnostics(diagnostics),
       ),
+    );
+    busyDocument = bindBusyMarkAudioSpans(
+      busyDocument,
+      codeBlocks.map((block) => block.span),
     );
     final canonicalHeadings = _canonicalizeHeadings(
       document: busyDocument,
@@ -836,6 +841,7 @@ class MarkdownParser {
             );
             break;
           case BusyInlineKind.text:
+          case BusyInlineKind.audio:
           case BusyInlineKind.math:
           case BusyInlineKind.strong:
           case BusyInlineKind.emphasis:

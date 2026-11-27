@@ -436,7 +436,12 @@ flutter test --no-pub tools/nextcloud_notes_live_acceptance_test.dart
 
 Set `BUSYMARK_NOTES_LIVE_CA` to the path to a private test CA if needed.
 Set `BUSYMARK_NOTES_LIVE_ATTACHMENT_READS=1` with the CA to run the focused
-category-relative attachment checks, including offline reopening.
+category-relative attachment checks, including offline reopening. Set
+`BUSYMARK_NOTES_LIVE_AUDIO=1` with the CA to run the focused WAV case against
+a disposable official server. This case covers staging and a byte-exact Notes
+API download, offline restart, provider isolation, Markdown and HTML copies,
+cross-note recovery, attachment deletion capability, historical restoration
+where supported and an uncertain upload. Repeat it with Notes 6.0.2 and 6.1.1.
 It exercises disposable notes and attachments, including conflicts, offline
 saves, restart, and explicit adoption after uncertain creation. Repeat against
 the supported Notes 6.0.x and 6.1.x baselines when changing the API contract;

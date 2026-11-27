@@ -40,6 +40,11 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
     'markdown.front-matter.malformed' =>
       l10n.diagnosticMarkdownFrontMatterMalformed,
     'markdown.raw-html.unsafe' => l10n.diagnosticMarkdownRawHtmlUnsafe,
+    'markdown.audio.invalid-structure' =>
+      l10n.diagnosticMarkdownAudioInvalidStructure,
+    'markdown.audio.invalid-attribute' =>
+      l10n.diagnosticMarkdownAudioInvalidAttribute,
+    'writerside.audio.unsupported' => l10n.diagnosticWritersideAudioUnsupported,
     'markdown.link.unresolved-target' =>
       args.containsKey('destination')
           ? l10n.diagnosticWritersideTopicLinkUnresolved(value('destination'))

@@ -83,11 +83,13 @@ const safeInlineHtmlTags = {
   'rp',
   'a',
   'img',
+  'audio',
+  'source',
 };
 
 const safeHtmlTags = {...safeBlockHtmlTags, ...safeInlineHtmlTags};
 
-const voidHtmlTags = {'br', 'hr', 'img', 'wbr', 'col'};
+const voidHtmlTags = {'br', 'hr', 'img', 'wbr', 'col', 'source'};
 
 const unsafeHtmlTags = {
   'script',
@@ -145,6 +147,17 @@ const globalAllowedAttributes = {'id', 'class', 'title', 'lang', 'dir', 'role'};
 const perTagAllowedAttributes = <String, Set<String>>{
   'a': {'href', 'title', 'target', 'rel'},
   'img': {'src', 'alt', 'title', 'width', 'height', 'loading'},
+  'audio': {
+    'src',
+    'controls',
+    'autoplay',
+    'loop',
+    'muted',
+    'preload',
+    'crossorigin',
+    'tabindex',
+  },
+  'source': {'src', 'type'},
   'table': {'summary'},
   'th': {'colspan', 'rowspan', 'scope', 'align'},
   'td': {'colspan', 'rowspan', 'align'},
@@ -245,9 +258,37 @@ Map<String, String>? sanitizeHtmlAttributes(
     if (!_isSafeHtmlUrlAttribute(normalizedTag, name, value)) {
       return null;
     }
+    if (normalizedTag == 'audio' && !isValidAudioAttribute(name, value)) {
+      continue;
+    }
     sanitized[name] = value;
   }
   return sanitized;
+}
+
+bool isValidAudioAttribute(String name, String value) => switch (name) {
+  'preload' => const {
+    '',
+    'none',
+    'metadata',
+    'auto',
+  }.contains(value.toLowerCase()),
+  'crossorigin' => const {
+    '',
+    'anonymous',
+    'use-credentials',
+  }.contains(value.toLowerCase()),
+  'dir' => busyMarkHtmlDirection(value) != null,
+  'tabindex' => int.tryParse(value) != null,
+  _ => true,
+};
+
+bool isWellFormedAudioElement(html.Element element) {
+  if (element.endSourceSpan == null) return false;
+  for (var parent = element.parent; parent != null; parent = parent.parent) {
+    if (parent.localName == 'audio') return false;
+  }
+  return true;
 }
 
 bool isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
@@ -308,7 +349,8 @@ bool _hasUnsafeHtmlNode(
   }
   if (node is html.Element) {
     final tag = node.localName?.toLowerCase() ?? '';
-    if (isUnsafeHtmlTag(tag)) {
+    if (isUnsafeHtmlTag(tag) ||
+        tag == 'source' && node.parent?.localName != 'audio') {
       return true;
     }
     if (isSafeHtmlTag(tag) &&
@@ -372,6 +414,16 @@ bool _isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
   final scheme = parsed.scheme.toLowerCase();
   if (scheme.isEmpty) {
     return !parsed.hasAuthority && _isSafeRelativeHtmlPath(parsed.path);
+  }
+  if (attribute == 'src' && (tag == 'audio' || tag == 'source')) {
+    return scheme == 'https' &&
+            parsed.host.isNotEmpty &&
+            parsed.userInfo.isEmpty ||
+        scheme == 'busymark-attachment' &&
+            !parsed.hasAuthority &&
+            RegExp(
+              r'^[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$',
+            ).hasMatch(parsed.path);
   }
   if (attribute == 'href') {
     return isLaunchableExternalUriScheme(scheme);

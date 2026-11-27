@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'busymark_design.dart';
@@ -13,6 +13,9 @@ enum BusyMarkMainMenuAction {
   save,
   saveAs,
   export,
+  insertAudio,
+  readAloud,
+  generateAudio,
   fullScreen,
   settings,
   syntaxReference,
@@ -65,6 +68,29 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           ).shortcut?.gtkAccelerator,
           enabled: canExport,
         ),
+        for (final (action, id, icon) in [
+          (
+            BusyMarkMainMenuAction.insertAudio,
+            BusyMarkCommandIds.insertAudio,
+            Icons.audio_file_outlined,
+          ),
+          (
+            BusyMarkMainMenuAction.readAloud,
+            BusyMarkCommandIds.readAloud,
+            Icons.record_voice_over_outlined,
+          ),
+          (
+            BusyMarkMainMenuAction.generateAudio,
+            BusyMarkCommandIds.generateAudio,
+            Icons.graphic_eq,
+          ),
+        ])
+          if (command(id).canExecute)
+            BusyMarkPopupMenuItem(
+              value: action,
+              label: command(id).label(context),
+              icon: icon,
+            ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.fullScreen,
           label: command(BusyMarkCommandIds.fullScreen).label(context),
@@ -111,6 +137,10 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           BusyMarkMainMenuAction.save => BusyMarkCommandIds.save,
           BusyMarkMainMenuAction.saveAs => BusyMarkCommandIds.saveAs,
           BusyMarkMainMenuAction.export => BusyMarkCommandIds.export,
+          BusyMarkMainMenuAction.insertAudio => BusyMarkCommandIds.insertAudio,
+          BusyMarkMainMenuAction.readAloud => BusyMarkCommandIds.readAloud,
+          BusyMarkMainMenuAction.generateAudio =>
+            BusyMarkCommandIds.generateAudio,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
           BusyMarkMainMenuAction.syntaxReference =>

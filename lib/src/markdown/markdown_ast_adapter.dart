@@ -7,6 +7,7 @@ import 'package:xml/xml.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
+import 'audio_syntax.dart';
 import 'busymark_document.dart';
 import 'markdown_fence.dart';
 import 'markdown_front_matter.dart';
@@ -395,6 +396,16 @@ class MarkdownAstAdapter {
         }
         final html = _rawHtmlAdapter.parseRawHtmlBlock(segment.text, nextId);
         if (html != null) {
+          final audio = html.safe ? html.blocks.singleOrNull : null;
+          if (audio?.kind == BusyBlockKind.audio) {
+            blocks.add(
+              audio!.copyWith(
+                rawSource: segment.text.trimRight(),
+                preserveRaw: true,
+              ),
+            );
+            continue;
+          }
           blocks.add(
             BusyBlock(
               id: nextId(),
@@ -471,6 +482,10 @@ class MarkdownAstAdapter {
       }
       final html = _rawHtmlAdapter.parseRawHtmlBlock(rawText, nextId);
       if (html != null) {
+        final audio = html.safe ? html.blocks.singleOrNull : null;
+        if (audio?.kind == BusyBlockKind.audio) {
+          return [audio!.copyWith(rawSource: rawText, preserveRaw: true)];
+        }
         return [
           BusyBlock(
             id: nextId(),
@@ -1245,6 +1260,9 @@ class MarkdownAstAdapter {
     );
     final text = node.textContent;
     final inlines = switch (tag) {
+      busyMarkAudioInlineTag =>
+        _rawHtmlAdapter.parseRawHtmlInlineFragment(text) ??
+            [BusyInline(kind: BusyInlineKind.html, text: text)],
       'control' || 'path' || 'ui-path' || 'shortcut' => [
         BusyInline(
           kind: switch (tag) {
@@ -2287,6 +2305,15 @@ class MarkdownAstAdapter {
       fence = MarkdownFence.parse(line);
       if (fence != null) {
         index += 1;
+        continue;
+      }
+
+      if (RegExp(r'^ {0,3}<!--').hasMatch(line)) {
+        index += 1;
+        if (!line.contains('-->')) {
+          while (index < lines.length &&
+              !lines[index++].line.contains('-->')) {}
+        }
         continue;
       }
 

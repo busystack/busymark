@@ -26,6 +26,13 @@ import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../assets/asset_ingestion_service.dart';
+import '../../assets/audio_asset_format.dart';
+import '../../markdown/audio_media.dart';
+import '../../markdown/busymark_document.dart';
+import '../../markdown/markdown_parser.dart';
+import '../wysiwyg/wysiwyg_document_controller.dart'
+    show BusyWysiwygStyledBlock;
+import '../audio_authoring.dart';
 import '../../assets/asset_input_service.dart';
 import '../../clipboard/clipboard_insertion.dart';
 import '../../clipboard/clipboard_models.dart';
@@ -119,6 +126,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.audioDirectory = '',
     this.assetWorkspaceKind,
     this.assetIngestionService = const AssetIngestionService(),
     this.assetInputService,
@@ -171,6 +179,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final String audioDirectory;
   final AssetWorkspaceKind? assetWorkspaceKind;
   final AssetIngestionService assetIngestionService;
   final AssetInputService? assetInputService;
@@ -352,6 +361,26 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   MarkdownMode get _destinationMarkdownMode =>
       widget.markdownMode ?? MarkdownMode.commonMark;
 
+  StreamSubscription<List<String>>? _audioDrops;
+
+  Future<void> _insertDroppedAudio(List<String> paths) async {
+    if (!_focusNode.hasFocus ||
+        _clipboardReadOnly ||
+        _documentFormat != SourceDocumentFormat.markdown) {
+      return;
+    }
+    for (final path in paths) {
+      if (!mounted || !_focusNode.hasFocus) return;
+      if (!AudioAssetFormat.extensions.contains(
+        p.extension(path).toLowerCase().replaceFirst('.', ''),
+      )) {
+        continue;
+      }
+      final target = _captureClipboardTarget();
+      await _pasteImageFile(path, target: target);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -366,6 +395,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _historyInsertionTarget = _SourceClipboardInsertionTarget(this);
     widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
+    _audioDrops = (widget.assetInputService ?? busyMarkAssetInputService)
+        .droppedFiles
+        .listen((paths) => unawaited(_insertDroppedAudio(paths)));
     _scrollController = BusyMarkCaretScrollController();
     _horizontalScrollController = ScrollController();
     _undoController = UndoHistoryController();
@@ -513,6 +545,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     widget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
     _searchDebounce?.cancel();
     _foldRefreshDebounce?.cancel();
+    unawaited(_audioDrops?.cancel());
     _searchWorker.dispose();
     _replacementWorker.dispose();
     _controller.removeListener(_handleControllerActivity);
@@ -2571,6 +2604,145 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     filePath: target.filePath,
   );
 
+  Future<RichClipboardData> _captureSourceAudio(
+    _SourceClipboardOperationTarget target,
+    String selected,
+    BusyMarkClipboardOrigin origin,
+    int start,
+    int end,
+  ) async {
+    final plain = RichClipboardData(
+      text: selected,
+      sourceText: selected,
+      origin: origin,
+    );
+    if (target.format != SourceDocumentFormat.markdown ||
+        !selected.toLowerCase().contains('<audio')) {
+      return plain;
+    }
+    final filePath = widget.filePath;
+    if (filePath == null) return plain;
+    final media = DocumentMediaScope.of(context);
+    final workspaceRoot = widget.workspaceRoot ?? p.dirname(filePath);
+    final document = const MarkdownParser()
+        .parse(
+          filePath: filePath,
+          source: target.text,
+          mode: target.markdownMode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final authorized = <String>{};
+    void collect(BusyAudio? audio) {
+      if (audio == null) return;
+      final span = audio.sourceSpan;
+      if (span != null && span.startOffset >= start && span.endOffset <= end) {
+        authorized.addAll(
+          audio.authoredSources.map((source) => source.destination),
+        );
+      }
+    }
+
+    void inline(BusyInline value) {
+      collect(value.audio);
+      value.children.forEach(inline);
+    }
+
+    void block(BusyBlock value) {
+      collect(value.audio);
+      value.inlines.forEach(inline);
+      value.children.forEach(block);
+    }
+
+    document.blocks.forEach(block);
+    if (authorized.isEmpty) return plain;
+    final parsed = const MarkdownParser()
+        .parse(
+          filePath: filePath,
+          source: selected,
+          mode: target.markdownMode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final blocks = [
+      for (final block in parsed.blocks)
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: const [],
+          attributes: block.attributes,
+          completeBlock: block,
+        ),
+    ];
+    final fragment = WysiwygClipboardFragment(
+      blocks: blocks,
+      mode: target.markdownMode,
+      sourcePath: filePath,
+    );
+    final destinations = fragment.audioReferences;
+    if (destinations.isEmpty || !authorized.containsAll(destinations)) {
+      return plain;
+    }
+    final paths = <String, String>{};
+    final bytes = <String, Uint8List>{};
+    var remaining = maxRichClipboardOwnershipBytes;
+    var complete = true;
+    for (final destination in destinations) {
+      final scheme = Uri.tryParse(destination)?.scheme;
+      if (scheme == 'http' || scheme == 'https') continue;
+      try {
+        final path = media != null
+            ? await media.resolve(busyMarkAudioResourcePath(destination))
+            : await resolveDocumentAudioPath(
+                destination,
+                documentPath: filePath,
+                rootPath: workspaceRoot,
+              );
+        if (path == null || paths.length >= maxClipboardFragmentMediaPaths) {
+          complete = false;
+          continue;
+        }
+        final file = File(path);
+        final length = await file.length();
+        if (length <= 0 || length > remaining) {
+          complete = false;
+          continue;
+        }
+        final handle = await file.open();
+        try {
+          final captured = await handle.read(length + 1);
+          if (captured.length != length) {
+            complete = false;
+            continue;
+          }
+          paths[destination] = path;
+          bytes[destination] = captured;
+          remaining -= length;
+        } finally {
+          await handle.close();
+        }
+      } on IOException {
+        complete = false;
+      } on FormatException {
+        complete = false;
+      }
+    }
+    final model = WysiwygClipboardFragment(
+      blocks: blocks,
+      mode: target.markdownMode,
+      sourcePath: filePath,
+      mediaPaths: paths,
+    );
+    return RichClipboardData(
+      text: selected,
+      sourceText: selected,
+      origin: origin,
+      richFragment: model.encode(),
+      mediaBytes: bytes,
+      mediaComplete: complete,
+    );
+  }
+
   Future<bool> _copyOrCutSource({required bool cut}) async {
     if (_hasActiveComposition) return false;
     final target = _captureClipboardTarget();
@@ -2580,9 +2752,15 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final end = selection.end.clamp(start, target.text.length).toInt();
     final selected = target.text.substring(start, end);
     final origin = _clipboardOrigin;
-    final success = await _clipboard.write(
-      RichClipboardData(text: selected, sourceText: selected, origin: origin),
+    final data = await _captureSourceAudio(
+      target,
+      selected,
+      origin,
+      start,
+      end,
     );
+    if (!mounted) return false;
+    final success = await _clipboard.write(data);
     if (!success) {
       if (mounted) {
         BusyMarkToastOverlay.show(
@@ -2594,9 +2772,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     widget.onClipboardCaptured?.call(
       BusyMarkClipboardCapture(
-        kind: BusyMarkClipboardContentKind.text,
+        kind: data.richFragment == null
+            ? BusyMarkClipboardContentKind.text
+            : BusyMarkClipboardContentKind.richText,
         text: selected,
         sourceText: selected,
+        richFragment: data.richFragment,
+        mediaBytes: data.mediaBytes,
+        mediaComplete: data.mediaComplete,
         origin: origin,
       ),
     );
@@ -2921,6 +3104,32 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     ValueChanged<Uint8List>? onInserted,
   }) async {
     try {
+      final localMedia = DocumentMediaScope.of(context) == null;
+      if (target.format == SourceDocumentFormat.markdown &&
+          widget.writersideRoot == null &&
+          await AudioAssetFormat.inspect(File(sourcePath)) != null) {
+        if (!_isClipboardTargetCurrent(target)) {
+          return ClipboardPasteResult.staleTarget;
+        }
+        final service = widget.assetIngestionService;
+        final asset = await service.ingestAudioFile(
+          sourcePath: sourcePath,
+          request: _assetIngestionRequest,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        );
+        final result = _isClipboardTargetCurrent(target)
+            ? _insertClipboardText(
+                target,
+                audioReferenceMarkup(asset.markdownPath, localPath: localMedia),
+              )
+            : ClipboardPasteResult.staleTarget;
+        if (result == ClipboardPasteResult.inserted) {
+          await _finalizeInsertedAssets([asset]);
+        } else {
+          await service.rollback(asset);
+        }
+        return result;
+      }
       final snapshot = await widget.assetIngestionService.ingestFileSnapshot(
         sourcePath: sourcePath,
         request: _assetIngestionRequest,
@@ -3072,6 +3281,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   ) async {
     final destinations = <String, String>{};
     final assets = <IngestedAsset>[];
+    final audio = fragment.audioReferences;
     try {
       for (final entry in fragment.mediaPaths.entries) {
         final bytes = snapshot.mediaBytes[entry.key];
@@ -3079,7 +3289,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        final asset = await widget.assetIngestionService.ingestMediaBytes(
+        final ingest = audio.contains(entry.key)
+            ? widget.assetIngestionService.ingestAudioBytes
+            : widget.assetIngestionService.ingestMediaBytes;
+        final asset = await ingest(
           bytes: bytes,
           suggestedFileName: p.basename(entry.value),
           request: _assetIngestionRequest,
@@ -3090,7 +3303,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        destinations[entry.key] = asset.markdownPath;
+        destinations[entry.key] =
+            audio.contains(entry.key) &&
+                mounted &&
+                DocumentMediaScope.of(context) == null
+            ? asset.markdownPath.split('/').map(Uri.encodeComponent).join('/')
+            : asset.markdownPath;
       }
       return (
         fragment: fragment.rebase(
@@ -3124,6 +3342,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     workspaceRoot: widget.workspaceRoot,
     writersideRoot: widget.writersideRoot,
     imagesDir: widget.imagesDir,
+    audioDir: widget.audioDirectory,
   );
 
   Future<void> _deleteUncommittedClipboardAssets(

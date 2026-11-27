@@ -46,6 +46,12 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             self.assertEqual(selection['channel'], 'stable')
         self.assertEqual(self.native['jobs']['development-modes']['strategy']['matrix']['mode'], ['debug', 'profile'])
         self.assertEqual(self.recipe['confinement'], 'strict')
+        self.assertEqual(self.recipe['base'], 'core26')
+        self.assertEqual(self.recipe['platforms'], {'amd64': {'build-on': ['amd64'], 'build-for': ['amd64']}})
+        self.assertTrue(all('/' not in name for name in self.recipe['parts']))
+        self.assertTrue(all(job['runs-on'] == 'ubuntu-26.04'
+                            for workflow in [self.workflow, self.native]
+                            for job in workflow['jobs'].values() if 'runs-on' in job))
 
     def test_snap_runtime_copies_unmodified_official_sdk_payload(self):
         script = self.recipe['parts']['flutter-runtime']['override-build']
@@ -57,6 +63,57 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             library.write_bytes(b'\x7fELFowned official-payload control')
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
+
+    def test_core26_inspection_rejects_wrong_base_provider_or_playback_plug(self):
+        for defect in (None, 'base', 'provider', 'playback', 'version'):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                expected = {
+                    'name': 'busymark',
+                    'base': 'core26',
+                    'confinement': 'strict',
+                    'version': self.recipe['version'],
+                    'apps': {'busymark': {
+                        'command': 'busymark',
+                        'plugs': ['gsettings', 'audio-playback'],
+                        'command-chain': [
+                            'snap/command-chain/gpu-2604-wrapper',
+                            'snap/command-chain/desktop-launch',
+                        ],
+                    }},
+                    'plugs': {
+                        name: {'interface': 'content', 'default-provider': provider}
+                        for name, provider in [('gnome-core26', 'gnome-core26'), ('gpu-2604', 'mesa-2604')]
+                    },
+                }
+                expanded = {
+                    **expected,
+                    'platforms': self.recipe['platforms'],
+                    'layout': {'/usr/libexec/glycin-loaders': {
+                        'bind': '$SNAP/gnome-platform/usr/libexec/glycin-loaders',
+                    }},
+                    'parts': {
+                        'gnome/sdk': {'build-snaps': ['gnome-core26-sdk']},
+                        'gnome/cleanup': {'override-prime': 'use gnome-core26-sdk'},
+                        'gnome/gpu/cleanup': {'override-prime': 'use mesa-2604'},
+                    },
+                }
+                source = root / 'expanded.yaml'
+                source.write_text(yaml.safe_dump(expanded))
+                if defect == 'base':
+                    expected['base'] = 'core24'
+                if defect == 'provider':
+                    expected['plugs']['gpu-2604']['default-provider'] = 'mesa-2404'
+                if defect == 'playback':
+                    expected['apps']['busymark']['plugs'].remove('audio-playback')
+                if defect == 'version':
+                    expected['version'] = 'v0.7.4'
+                metadata = root / 'meta.yaml'
+                metadata.write_text(yaml.safe_dump(expected))
+                result = subprocess.run(
+                    [sys.executable, ROOT / 'tools/verify_core26_recipe.py', source, metadata],
+                    capture_output=True, text=True, check=False)
+                self.assertEqual(result.returncode == 0, defect is None, result.stderr)
 
     def test_shutdown_exception_requires_reassessment_on_flutter_upgrade(self):
         jobs = [job for workflow in (self.workflow, self.native) for job in workflow['jobs'].values()]
@@ -81,8 +138,8 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         repositories = self.recipe['package-repositories']
         self.assertEqual(len(repositories), 2)
         expected = {
-            'https://archive.ubuntu.com/ubuntu': {'noble', 'noble-updates', 'noble-backports'},
-            'https://security.ubuntu.com/ubuntu': {'noble-security'},
+            'https://archive.ubuntu.com/ubuntu': {'resolute', 'resolute-updates', 'resolute-backports'},
+            'https://security.ubuntu.com/ubuntu': {'resolute-security'},
         }
         fingerprint = 'F6ECB3762474EDA9D21B7022871920D1991BC93C'
         for repository in repositories:
@@ -128,6 +185,9 @@ with open(os.environ['BUILD_CALLS'], 'a') as output:
 raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
 ''')
             spy.chmod(0o700)
+            pkg_config = sdk / 'bin/pkg-config'
+            pkg_config.write_text('#!/bin/sh\nexit 0\n')
+            pkg_config.chmod(0o700)
             calls = root / 'calls.jsonl'
             application = root / 'busymark'
             application.mkdir()
@@ -157,7 +217,7 @@ raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
         # Run the helper, stopping at dependency resolution. No scaffold is
         # consumed, compiled payload staged, or installed application touched.
         cases = ['default', 'command', 'absolute', 'relative', 'missing',
-                 'nonexecutable', 'wrong-version']
+                 'nonexecutable', 'wrong-version', 'wrong-base']
         for case in cases:
             with self.subTest(selection=case), tempfile.TemporaryDirectory() as temp:
                 root = Path(temp)
@@ -166,6 +226,12 @@ raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
                 for name in ['tools/build_install_snap_local.sh', 'pubspec.yaml',
                              'linux/CMakeLists.txt']:
                     shutil.copyfile(ROOT / name, root / name)
+                (root / 'snap').mkdir()
+                (root / 'snap/snapcraft.yaml').write_text('base: core26\n')
+                scaffold = root / 'scaffold'
+                (scaffold / 'meta').mkdir(parents=True)
+                version = 'core24' if case == 'wrong-base' else 'core26'
+                (scaffold / 'meta/snap.yaml').write_text(f'base: {version}\n')
                 (root / 'bin').mkdir()
                 spy = root / 'bin/flutter'
                 spy.write_text('''#!/usr/bin/python3
@@ -195,7 +261,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 result = subprocess.run(
                     ['bash', str(root / 'tools/build_install_snap_local.sh'),
                      '--no-install', '--no-run', '--skip-tests', '--skip-bundled-git',
-                     '--root', str(protected), '--scaffold', str(root / 'unused'),
+                     '--root', str(protected), '--scaffold', str(scaffold),
                      '--output', str(root / 'unused.snap')],
                     cwd=root, env=env, capture_output=True, text=True, timeout=15)
                 observed = [json.loads(line) for line in calls.read_text().splitlines()] if calls.exists() else []
@@ -203,6 +269,11 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
                     self.assertEqual(observed, [['--version', '--machine']] if case == 'wrong-version' else [])
                     self.assertIn('official Flutter 3.50.1', result.stderr)
+                elif case == 'wrong-base':
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    self.assertEqual(observed, [['--version', '--machine']])
+                    self.assertIn('expected a core26 scaffold', result.stderr)
+                    self.assertIn('found core24', result.stderr)
                 else:
                     self.assertEqual(result.returncode, 77, result.stdout + result.stderr)
                     self.assertEqual(observed, [['--version', '--machine'], ['pub', 'get', '--enforce-lockfile']])
@@ -211,8 +282,8 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
 
     def test_pull_requests_cover_the_integrated_release_and_main(self):
         triggers = self.workflow.get('on', self.workflow.get(True))
-        self.assertTrue({'main', 'release/v0.7.0'}.issubset(triggers['pull_request']['branches']))
-        self.assertIn('main', triggers['push']['branches'])
+        for event in ['pull_request', 'push']:
+            self.assertTrue({'main', 'release/v0.8.0'}.issubset(triggers[event]['branches']))
         for event in ['pull_request', 'push']:
             self.assertNotIn('paths', triggers[event])
             self.assertNotIn('paths-ignore', triggers[event])
@@ -229,7 +300,8 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         self.assertNotIn('if', caller)
         self.assertNotIn('needs', caller)
         self.assertNotIn('continue-on-error', caller)
-        self.assertIs(caller['with']['run-stress'], False)
+        self.assertEqual(caller['with']['run-stress'],
+                         "${{ github.ref == 'refs/heads/release/v0.8.0' }}")
         triggers = self.native.get('on', self.native.get(True))
         setting = triggers['workflow_call']['inputs']['run-stress']
         self.assertEqual(setting['type'], 'boolean')
@@ -251,8 +323,9 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
             ],
             'snap': [
                 ('sudo snap install --dangerous "${{ steps.snap-artifact.outputs.snap }}"',
-                 ['snap-artifact', 'strict-desktop']),
-                ('gdk-pixbuf-query-loaders', ['strict-install', 'strict-session']),
+                 ['snap-artifact', 'snap-metadata', 'strict-desktop']),
+                ('gtk-encode-symbolic-svg', ['strict-install', 'strict-session']),
+                ('tools/verify_audio_decoders.sh snap', ['strict-install', 'strict-session']),
                 ('inspect_dependencies()', ['strict-install', 'strict-session']),
                 ('before_revision=', ['strict-install', 'strict-session']),
                 ('visualization-release-x11.json', ['strict-install', 'strict-session']),
@@ -580,13 +653,14 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
         self.assertEqual(len(preparation), 1)
         self.assertIn('python3 tools/checkout_shared_dependencies.py',
                       preparation[0]['run'].splitlines())
-        # Clean jobs need dependency resolution before either --no-pub build.
+        # Clean jobs need dependency resolution before each --no-pub build.
         self.assertIn("steps.flutter-sdk.outcome == 'success'", preparation[0]['if'])
         self.assertIn('!cancelled()', preparation[0]['if'])
         self.assertNotIn('continue-on-error', preparation[0])
         builds = [step for step in steps
                   if step.get('run', '').startswith('flutter build linux ')]
-        self.assertEqual(len(builds), 2)
+        self.assertEqual(len(builds), 3)
+        self.assertIn('--target lib/main.dart', builds[-1]['run'])
         for build in builds:
             with self.subTest(build=build['name']):
                 self.assertIn('--no-pub', shlex.split(build['run']))

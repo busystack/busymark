@@ -140,6 +140,9 @@ final _busyMarkDefaultCommandRegistryProvider =
             BusyMarkCommandIds.sidebarToc,
             BusyMarkCommandIds.sidebarOutline,
             BusyMarkCommandIds.sidebarGit,
+            BusyMarkCommandIds.insertAudio,
+            BusyMarkCommandIds.readAloud,
+            BusyMarkCommandIds.generateAudio,
           ])
             id: () => ref
                 .read(workspaceNavigationCommandProvider.notifier)
@@ -271,6 +274,27 @@ final _busyMarkDefaultCommandRegistryProvider =
                 .contains(entry.value),
           BusyMarkCommandIds.save: () => saveCommandAvailable(saveAs: false),
           BusyMarkCommandIds.saveAs: () => saveCommandAvailable(saveAs: true),
+          for (final id in [
+            BusyMarkCommandIds.insertAudio,
+            BusyMarkCommandIds.readAloud,
+            BusyMarkCommandIds.generateAudio,
+          ])
+            id: () {
+              final state = ref.read(workspaceControllerProvider);
+              return ref
+                      .read(searchSessionProvider.notifier)
+                      .workspaceVisible &&
+                  ref.read(localHistoryControllerProvider).selectedRevision ==
+                      null &&
+                  ref
+                          .read(sharedGitReviewProvider)[state.workspace?.id]
+                          ?.activeId ==
+                      null &&
+                  busyMarkCanUseDocumentSpeech(
+                    state,
+                    inserting: id == BusyMarkCommandIds.insertAudio,
+                  );
+            },
           BusyMarkCommandIds.export: () =>
               ref.read(searchSessionProvider.notifier).workspaceVisible &&
               canExportWorkspace(ref.read(workspaceControllerProvider)),

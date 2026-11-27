@@ -9,6 +9,8 @@ import 'package:html/src/tokenizer.dart' as html_tokenizer;
 
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import 'audio_media.dart';
+import 'audio_syntax.dart';
 import 'busymark_document.dart';
 import 'raw_html_policy.dart';
 import 'semantic_html_inline.dart';
@@ -118,6 +120,7 @@ class RawHtmlAdapter {
     if (candidate == null ||
         voidHtmlTags.contains(candidate) ||
         (candidate != 'a' &&
+            candidate != 'audio' &&
             !isSafeBlockHtmlTag(candidate) &&
             !isUnsafeHtmlTag(candidate))) {
       return null;
@@ -136,6 +139,9 @@ class RawHtmlAdapter {
           if (balance == 0 && token.name != candidate) return null;
           if (token.name == candidate) {
             if (candidate == 'a' && (balance > 0 || token.selfClosing)) {
+              return null;
+            }
+            if (candidate == 'audio' && (balance > 0 || token.selfClosing)) {
               return null;
             }
             if (!token.selfClosing) balance++;
@@ -165,6 +171,13 @@ class RawHtmlAdapter {
         if (balance == 0 && span != null) {
           final newline = source.indexOf('\n', start + span.end.offset);
           final end = newline < 0 ? source.length : newline + 1;
+          if (candidate == 'audio' &&
+              source
+                  .substring(start + span.end.offset, end)
+                  .trim()
+                  .isNotEmpty) {
+            return null;
+          }
           return candidate == 'a' &&
                   !_isStandaloneBlockLink(source.substring(start, end))
               ? null
@@ -194,10 +207,12 @@ class RawHtmlAdapter {
 
   List<BusyInline>? parseRawHtmlInlineFragment(String text) {
     if (!_mayContainHtml(text)) return null;
-    final normalized = _HtmlSourceProjection.create(
-      text,
-      standaloneBreakLayoutRemovals(text),
-    ).normalized;
+    final normalized = authoredAudioOpening.hasMatch(text)
+        ? text
+        : _HtmlSourceProjection.create(
+            text,
+            standaloneBreakLayoutRemovals(text),
+          ).normalized;
     final fragment = _parseFragment(normalized);
     if (fragment == null) return null;
     final elementScan = _HtmlElementScanState();
@@ -378,7 +393,10 @@ class RawHtmlAdapter {
     bool generateSpans = false,
   }) {
     try {
-      return html_parser.parseFragment(source, generateSpans: generateSpans);
+      return html_parser.parseFragment(
+        source,
+        generateSpans: generateSpans || authoredAudioOpening.hasMatch(source),
+      );
     } on Object {
       return null;
     }
@@ -456,6 +474,10 @@ class RawHtmlAdapter {
     if (!isSafeHtmlTag(tag)) {
       return false;
     }
+    if (tag == 'source' && node.parent?.localName != 'audio' ||
+        tag == 'audio' && !isWellFormedAudioElement(node)) {
+      return false;
+    }
     if (inlineOnly && !isSafeInlineHtmlTag(tag)) {
       return false;
     }
@@ -477,6 +499,13 @@ class RawHtmlAdapter {
     final blocks = <BusyBlock>[];
     final inlineBuffer = <BusyInline>[];
     final inlineNodes = <html.Node>[];
+    final soleContent = nodes
+        .where(
+          (node) =>
+              node is html.Element ||
+              node is html.Text && node.data.trim().isNotEmpty,
+        )
+        .singleOrNull;
 
     void flushInlineBuffer() {
       final inlines = _trimInlineEdges(inlineBuffer);
@@ -510,7 +539,7 @@ class RawHtmlAdapter {
         continue;
       }
       final tag = node.localName?.toLowerCase() ?? '';
-      if (tag == 'img') {
+      if (tag == 'img' || tag == 'audio' && identical(node, soleContent)) {
         flushInlineBuffer();
         blocks.addAll(_blocksFromElement(node, nextId));
         continue;
@@ -646,6 +675,15 @@ class RawHtmlAdapter {
       ],
       'table' => _tableBlocksFromElement(element, attributes, nextId),
       'img' => [_imageBlockFromElement(element, attributes, nextId)],
+      'audio' => [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.audio,
+          audio: BusyAudio.fromHtml(element),
+          inlines: _trimInlineEdges(_inlinesFromNodes(children)),
+          attributes: attributes,
+        ),
+      ],
       'thead' || 'tbody' || 'tfoot' || 'tr' || 'th' || 'td' => const [],
       'colgroup' || 'col' => const [],
       _ =>
@@ -1373,6 +1411,16 @@ class RawHtmlAdapter {
           attributes: inlineAttributes,
         ),
       ],
+      'audio' => [
+        BusyInline(
+          kind: BusyInlineKind.audio,
+          text: text,
+          audio: BusyAudio.fromHtml(element),
+          children: children,
+          attributes: attributes,
+        ),
+      ],
+      'source' => const [],
       'br' => [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
       'wbr' => const [],
       _ =>
@@ -1387,7 +1435,9 @@ class RawHtmlAdapter {
               ]
             : children,
     };
-    if (semanticTag || direction != null && tag != 'img' && tag != 'br') {
+    if (semanticTag ||
+        direction != null &&
+            !const {'img', 'br', 'audio', 'source'}.contains(tag)) {
       final contents = semanticTag ? children : result;
       result = [
         BusyInline(

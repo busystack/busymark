@@ -25,6 +25,8 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../ai/ai_models.dart';
 import '../../assets/asset_ingestion_service.dart';
+import '../../assets/audio_asset_format.dart';
+import '../audio_authoring.dart';
 import '../../assets/asset_input_service.dart';
 import '../../clipboard/clipboard_insertion.dart';
 import '../../clipboard/clipboard_models.dart';
@@ -39,6 +41,7 @@ import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../../core/local_image_resolver.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/audio_media.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
@@ -126,6 +129,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.audioDirectory = '',
     this.assetWorkspaceKind,
     this.assetIngestionService = const AssetIngestionService(),
     this.assetInputService,
@@ -190,6 +194,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final String audioDirectory;
   final AssetWorkspaceKind? assetWorkspaceKind;
   final AssetIngestionService assetIngestionService;
   final AssetInputService? assetInputService;
@@ -7240,6 +7245,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     workspaceRoot: widget.workspaceRoot,
     writersideRoot: widget.writersideRoot,
     imagesDir: widget.imagesDir,
+    audioDir: widget.audioDirectory,
   );
 
   void _listenForDroppedAssets() {
@@ -7266,6 +7272,58 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _ClipboardTarget? clipboardTarget,
   }) async {
     try {
+      final captured = clipboardTarget ?? _captureClipboardTarget();
+      final localMedia = DocumentMediaScope.of(context) == null;
+      if (!_documentController.document.isXmlTopic &&
+          widget.writersideRoot == null &&
+          await AudioAssetFormat.inspect(File(sourcePath)) != null) {
+        if (!_isClipboardTargetCurrent(captured)) {
+          return (result: ClipboardPasteResult.staleTarget, bytes: null);
+        }
+        final service = widget.assetIngestionService;
+        final asset = await service.ingestAudioFile(
+          sourcePath: sourcePath,
+          request: _assetIngestionRequest,
+          origin: origin,
+        );
+        if (!_isClipboardTargetCurrent(captured)) {
+          await service.rollback(asset);
+          return (result: ClipboardPasteResult.staleTarget, bytes: null);
+        }
+        final markup = audioReferenceMarkup(
+          asset.markdownPath,
+          localPath: localMedia,
+        );
+        final parsed = const MarkdownParser().parse(
+          filePath: _documentController.document.filePath,
+          source: markup,
+          mode: _documentController.document.mode,
+          validateLocalReferences: false,
+        );
+        final block = parsed.busyDocument.blocks.singleOrNull;
+        final inserted =
+            block != null &&
+            _pasteStyledClipboardIntoActiveBlock([
+              BusyWysiwygStyledBlock(
+                kind: block.kind,
+                text: block.plainText,
+                ranges: const [],
+                attributes: block.attributes,
+                completeBlock: block,
+              ),
+            ], markup);
+        if (inserted) {
+          await _finalizeInsertedClipboardAssets([asset]);
+        } else {
+          await service.rollback(asset);
+        }
+        return (
+          result: inserted
+              ? ClipboardPasteResult.inserted
+              : ClipboardPasteResult.unsupported,
+          bytes: null,
+        );
+      }
       final snapshot = await widget.assetIngestionService.ingestFileSnapshot(
         sourcePath: sourcePath,
         request: _assetIngestionRequest,
@@ -7782,6 +7840,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     });
   }
+
+  AiEditorSnapshot? narrationSelection() =>
+      _aiEditorSnapshot(_documentController.markdown);
 
   AiEditorSnapshot? _aiEditorSnapshot(String source) {
     final activeBlockId = _activeBlockId;
@@ -9186,6 +9247,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   ) async {
     final destinations = <String, String>{};
     final assets = <IngestedAsset>[];
+    final audio = fragment.audioReferences;
     try {
       for (final entry in fragment.mediaPaths.entries) {
         final bytes = snapshot.mediaBytes[entry.key];
@@ -9193,7 +9255,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        final asset = await widget.assetIngestionService.ingestMediaBytes(
+        final ingest = audio.contains(entry.key)
+            ? widget.assetIngestionService.ingestAudioBytes
+            : widget.assetIngestionService.ingestMediaBytes;
+        final asset = await ingest(
           bytes: bytes,
           suggestedFileName: p.basename(entry.value),
           request: _assetIngestionRequest,
@@ -9204,7 +9269,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        destinations[entry.key] = asset.markdownPath;
+        destinations[entry.key] =
+            audio.contains(entry.key) &&
+                mounted &&
+                DocumentMediaScope.of(context) == null
+            ? asset.markdownPath.split('/').map(Uri.encodeComponent).join('/')
+            : asset.markdownPath;
       }
       return (
         fragment: fragment.rebase(
@@ -9311,7 +9381,16 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     List<BusyWysiwygStyledBlock> blocks,
   ) {
     final references = <String>{};
+    void addAudio(BusyAudio? audio) {
+      if (audio != null) {
+        references.addAll(
+          audio.authoredSources.map((source) => source.destination),
+        );
+      }
+    }
+
     void inline(BusyInline value) {
+      addAudio(value.audio);
       if (value.kind == BusyInlineKind.image && value.destination != null) {
         references.add(value.destination!);
       }
@@ -9319,6 +9398,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
 
     void block(BusyBlock value) {
+      addAudio(value.audio);
       final mediaAttributes = switch (value.kind) {
         BusyBlockKind.video => busyMarkVideoMediaAttributes,
         BusyBlockKind.image => const {'src'},

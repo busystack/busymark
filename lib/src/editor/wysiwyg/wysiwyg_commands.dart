@@ -101,6 +101,7 @@ bool busyMarkWysiwygCanApplyBlockCommand(
     BusyBlockKind.thematicBreak ||
     BusyBlockKind.image ||
     BusyBlockKind.video ||
+    BusyBlockKind.audio ||
     BusyBlockKind.table ||
     BusyBlockKind.htmlBlock ||
     BusyBlockKind.writersideAdmonition ||

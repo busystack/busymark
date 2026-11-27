@@ -21,7 +21,7 @@ Options:
                        Verify a completed full test corpus for these exact inputs.
   --output FILE        Write the packed snap to FILE.
   --root DIR           Use DIR as the temporary snap root.
-  --scaffold DIR       Use DIR instead of /snap/<snap-name>/current.
+  --scaffold DIR       Use a matching-base scaffold instead of /snap/<snap-name>/current.
   --snap-name NAME     Override the snap name.
   --binary-name NAME   Override the Linux executable name.
   --app-id ID          Override the desktop/application id.
@@ -75,11 +75,11 @@ cmake_value() {
     linux/CMakeLists.txt | head -n 1
 }
 
-snapcraft_value() {
-  local key="$1"
-  [[ -f snap/snapcraft.yaml ]] || return 0
+snap_metadata_value() {
+  local path="$1" key="$2"
+  [[ -f "$path" ]] || return 0
   sed -nE "s/^${key}:[[:space:]]*['\"]?([^'\"]+)['\"]?[[:space:]]*$/\\1/p" \
-    snap/snapcraft.yaml | head -n 1
+    "$path" | head -n 1
 }
 
 copy_into_snap_root() {
@@ -309,12 +309,18 @@ BINARY_NAME="${BINARY_NAME:-$(cmake_value BINARY_NAME)}"
 BINARY_NAME="${BINARY_NAME:-$PROJECT_NAME}"
 APP_ID="${APP_ID:-$(cmake_value APPLICATION_ID)}"
 APP_ID="${APP_ID:-$SNAP_NAME}"
-ICON_SOURCE="${ICON_SOURCE:-$(snapcraft_value icon)}"
+ICON_SOURCE="${ICON_SOURCE:-$(snap_metadata_value snap/snapcraft.yaml icon)}"
 
 SNAP_SCAFFOLD="${SNAP_SCAFFOLD:-/snap/${SNAP_NAME}/current}"
 SNAP_ROOT="${SNAP_ROOT:-/tmp/${SNAP_NAME}-snap-root}"
 OUT="${OUT:-${SNAP_NAME}_${VERSION}_amd64_$(date +%Y%m%d%H%M%S).snap}"
 BUNDLE_DIR="build/linux/x64/release/bundle"
+
+recipe_base="$(snap_metadata_value snap/snapcraft.yaml base)"
+scaffold_base="$(snap_metadata_value "$SNAP_SCAFFOLD/meta/snap.yaml" base)"
+[[ -n "$recipe_base" ]] || fail "could not read base from snap/snapcraft.yaml"
+[[ "$scaffold_base" == "$recipe_base" ]] || \
+  fail "expected a $recipe_base scaffold at $SNAP_SCAFFOLD; found ${scaffold_base:-no base}. Build a matching scaffold using clean Snapcraft"
 
 echo "== ${SNAP_NAME} local snap build =="
 echo "Project:  $PROJECT_ROOT"
@@ -420,7 +426,7 @@ fi
 if [[ "$BUNDLE_GIT" == "1" ]]; then
   if scaffold_has_bundled_git_tools; then
     echo "== Stage bundled Git tools =="
-    echo "Retaining core24-compatible Git and OpenSSH tools from the snap scaffold"
+    echo "Retaining $scaffold_base Git and OpenSSH tools from the snap scaffold"
   else
     stage_bundled_git_tools
   fi

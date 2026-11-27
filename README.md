@@ -44,7 +44,8 @@ for filesystem and Git-integration details.
 
 ## Run from source
 
-BusyMark uses Flutter 3.50.1 with its bundled Dart 3.14.0. Install the Linux
+Ubuntu 26.04 LTS (amd64) is the primary Linux build and verification
+environment. BusyMark uses Flutter 3.50.1 with its bundled Dart 3.14.0. Install the Linux
 packages required by Flutter and BusyMark's CMake configuration:
 
 ```bash
@@ -55,6 +56,7 @@ sudo apt-get install -y \
   fonts-noto-core \
   fonts-noto-mono \
   libgtk-3-dev \
+  libgstreamer1.0-dev \
   libhandy-1-dev \
   libsecret-1-dev \
   libcurl4-openssl-dev \
@@ -71,6 +73,23 @@ sudo apt-get install -y zlib1g-dev
 
 Node.js 22 or newer with npm is also required to build the bundled web
 components.
+
+For desktop audio decoding and offline speech on Ubuntu 26.04, install the
+runtime packages:
+
+```bash
+sudo apt-get install -y \
+  gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav \
+  espeak-ng python3.14
+```
+
+The Ubuntu 26.04 standalone bundle includes the Piper runtime and uses the
+distribution's Python 3.14. A source build can stage the same locked runtime
+with `bash tools/install_piper_runtime.sh build/linux/x64/release/bundle`
+after installing `python3-venv` and building the release. The strict Snap
+supplies its own Python interpreter and eSpeak NG packages. Select a voice
+separately in BusyMark.
 
 Prepare and run the application:
 
@@ -158,12 +177,14 @@ reproducing release verification.
 ## Snap release and security builds
 
 Release, security-refresh, and packaging-change artifacts must be built from
-the current `snap/snapcraft.yaml` in a clean Ubuntu 24.04 amd64 Snapcraft build
-environment. The authoritative build sequence is:
+the current `snap/snapcraft.yaml` in a clean Ubuntu 26.04 amd64 Snapcraft build
+environment using official Snapcraft 9.2 or newer with the core26 GNOME
+extension. The authoritative build sequence is:
 
 ```bash
 export SNAPCRAFT_BUILD_INFO=1
 snapcraft --version
+snap list snapcraft
 snapcraft expand-extensions
 snapcraft clean
 snapcraft
@@ -175,6 +196,10 @@ failed build must not fall back to an older `.snap`. The `snap` job in
 [native acceptance](.github/workflows/flutter-linux-native.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
 Build information embeds the original recipe for the workflow's identity check.
+The standalone archive targets Ubuntu 26.04 amd64 with the GTK 3, WebKitGTK
+4.1 and media runtime packages listed above. Its artifact includes the observed
+ELF version requirements and dependency resolutions. See the [core26 build
+notes](docs/development/core26.md) for runtime ownership and verification.
 
 `tools/build_install_snap_local.sh` is intentionally different: it replaces
 the Flutter payload in an installed Snap scaffold for quick development and
@@ -183,6 +208,7 @@ may retain that scaffold's Ubuntu libraries and bundled tools. Even with
 a release, a security update, or validation of `stage-packages` changes.
 It selects Flutter from PATH; `BUSYMARK_FLUTTER_BIN` can select an executable
 by command name or path. The selected SDK must match the pinned version.
+The scaffold must declare the same base as the current recipe.
 
 ## Screenshots
 

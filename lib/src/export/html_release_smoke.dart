@@ -1,7 +1,11 @@
 import 'dart:io';
+import 'dart:math' as trigonometry;
+import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import '../markdown/markdown_model.dart';
 import '../math/math_coordinator.dart';
+import '../speech/speech_pcm.dart';
+import '../speech/speech_provider.dart';
 import '../visualization/visualization_coordinator.dart';
 import 'html_export_models.dart';
 import 'html_export_service.dart';
@@ -42,6 +46,13 @@ This is **semantic HTML**, with $x^2 + y^2 = z^2$ inline mathematics.
 <details><summary>Printable disclosure</summary><p>Disclosure body must print.</p><dl><dt>Term</dt><dd>Definition</dd></dl></details>
 
 ![Local image](logo.svg "A local asset")
+
+<audio controls muted preload="none" aria-label="Offline audio sample">
+  <source src="tone.wav" type="audio/wav">
+  <a href="tone.wav">Download the audio sample</a>
+</audio>
+
+Nearby transcript: this fixture contains a one-second tone.
 
 ## Mathematics
 
@@ -87,6 +98,20 @@ paths:
   await File(p.join(sourceRoot.path, 'logo.svg')).writeAsString(
     '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="60"><rect width="100" height="60" rx="8" fill="#1559aa"/><text x="8" y="35" fill="white">BusyMark</text></svg>',
   );
+  const sampleRate = 16000;
+  final samples = ByteData(sampleRate * 2);
+  for (var frame = 0; frame < sampleRate; frame++) {
+    final phase = 2 * trigonometry.pi * frame * 440 / sampleRate;
+    samples.setInt16(
+      frame * 2,
+      (trigonometry.sin(phase) * 2400).round(),
+      Endian.little,
+    );
+  }
+  final pcm = SpeechPcm(samples.buffer.asUint8List(), sampleRate: sampleRate);
+  await File(
+    p.join(sourceRoot.path, 'tone.wav'),
+  ).writeAsBytes(encodeSpeechWave(pcm), flush: true);
   final documentPath = p.join(sourceRoot.path, 'offline.md');
   await File(documentPath).writeAsString(markdown);
   final document = await exporter.exportMarkdown(
