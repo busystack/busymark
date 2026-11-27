@@ -135,6 +135,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   }) async {
     final deadline = AiDeadline(const Duration(seconds: 95));
     final expectedMime = streaming ? 'audio/l16' : 'audio/wav';
@@ -150,6 +151,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
       },
       cancellationToken,
       deadline,
+      requestUsage: requestUsage,
       body: {
         'model': _model,
         'input': [
@@ -187,6 +189,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
         expectedMime,
         cancellationToken,
         deadline,
+        requestUsage,
       );
     }
     final output = objectMap(
@@ -197,6 +200,8 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
         limit: speechChunkMaxBytes * 2,
       ),
     );
+    final usage = _usage(output);
+    requestUsage?.report(usage);
     if (output['status'] != 'completed') {
       throw const AiException(
         AiFailureCode.rejected,
@@ -214,10 +219,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
     }
     if (audio == null) invalidSpeechResponse();
     final bytes = decodeSpeechBase64(audio['data']);
-    return SpeechChunk(
-      _decodeAudio(bytes, audio, expectedMime),
-      usage: _usage(output),
-    );
+    return SpeechChunk(_decodeAudio(bytes, audio, expectedMime), usage: usage);
   }
 
   Future<SpeechChunk> _readEvents(
@@ -225,6 +227,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
     String expectedMime,
     AiCancellationToken token,
     AiDeadline deadline,
+    SpeechRequestUsage? requestUsage,
   ) async {
     final events = StreamIterator(
       const SseDecoder(maxBytes: speechChunkMaxBytes * 2).decode(source),
@@ -245,6 +248,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
         final data = objectMap(jsonDecode(event.data));
         final type = data['event_type'] ?? data['type'] ?? event.event;
         if (type == 'error' || type == 'interaction.failed') {
+          requestUsage?.report(_usage(objectMap(data['interaction'])));
           throw const AiException(
             AiFailureCode.rejected,
             'Gemini rejected the speech request.',
@@ -252,6 +256,8 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
         }
         if (type == 'interaction.completed') {
           final interaction = objectMap(data['interaction']);
+          final usage = _usage(interaction);
+          requestUsage?.report(usage);
           if (interaction['status'] != 'completed' || bytes.isEmpty) {
             invalidSpeechResponse();
           }
@@ -260,7 +266,7 @@ class GeminiSpeechProvider implements SpeechProvider, SpeechSession {
               'mime_type': mime,
               'sample_rate': sampleRate,
             }, expectedMime),
-            usage: _usage(interaction),
+            usage: usage,
           );
         }
         if (type != 'step.delta') continue;

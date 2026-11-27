@@ -54,6 +54,7 @@ class SpeechDialog extends StatefulWidget {
     this.readAloud = false,
     this.sample = false,
     this.insert,
+    this.service,
   });
 
   final SpeechOptions options;
@@ -64,6 +65,7 @@ class SpeechDialog extends StatefulWidget {
   final bool readAloud;
   final bool sample;
   final Future<bool> Function(NarrationPlan plan, Uint8List bytes)? insert;
+  final SpeechService? service;
 
   @override
   State<SpeechDialog> createState() => _SpeechDialogState();
@@ -71,7 +73,7 @@ class SpeechDialog extends StatefulWidget {
 
 class _SpeechDialogState extends State<SpeechDialog> {
   final _audio = AudioPlayback.shared;
-  final _service = SpeechService();
+  late final _service = widget.service ?? SpeechService();
   late var _scope = widget.initialScope;
   late var _plan = widget.planForScope(_scope);
   AiCancellationToken? _job;
@@ -161,7 +163,6 @@ class _SpeechDialogState extends State<SpeechDialog> {
       _finished = _total = 0;
       _systemPaused = _systemCompleted = false;
     });
-    SpeechResult? completed;
     try {
       await _audio.pause();
       if (_system) {
@@ -184,7 +185,6 @@ class _SpeechDialogState extends State<SpeechDialog> {
         resumeCompletedChunks: _resumeChunks,
         onProgress: (finished, total) => _progress(job, finished, total),
       );
-      completed = result;
       if (!mounted || !identical(_job, job) || job.isCancelled) return;
       setState(() => _result = result);
       if (widget.readAloud) await _play();
@@ -209,16 +209,6 @@ class _SpeechDialogState extends State<SpeechDialog> {
         });
       }
     } finally {
-      if (widget.options.backend.isCloud) {
-        try {
-          await SpeechUsageLedger.shared.record(
-            widget.options.backend,
-            completed,
-          );
-        } on Exception {
-          // The synthesis result remains available if the local ledger is unavailable.
-        }
-      }
       await job.dispose();
       if (mounted && identical(_job, job)) setState(() => _job = null);
     }

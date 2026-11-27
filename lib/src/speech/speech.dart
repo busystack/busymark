@@ -18,6 +18,7 @@ import 'piper_voice_store.dart';
 import 'speech_credentials.dart';
 import 'speech_pcm.dart';
 import 'speech_provider.dart';
+import 'speech_usage.dart';
 import 'system_speech.dart';
 
 export '../ai/ai_models.dart'
@@ -35,15 +36,18 @@ class SpeechService {
     PiperVoiceStore? piperVoices,
     SpeechProviderFactory? providerFactory,
     http.Client Function()? client,
+    SpeechUsageLedger? usageLedger,
   }) : piperVoices = piperVoices ?? PiperVoiceStore(),
        _providerFactory = providerFactory,
-       _client = client ?? http.Client.new;
+       _client = client ?? http.Client.new,
+       _usageLedger = usageLedger ?? SpeechUsageLedger.shared;
 
   final SpeechCredentials credentials;
   final PiperVoiceStore piperVoices;
   final SpeechProviderFactory? _providerFactory;
   final http.Client Function() _client;
-  final _elevenLabsLimits = <String, int>{};
+  final SpeechUsageLedger _usageLedger;
+  static final _elevenLabsLimits = ElevenLabsModelLimits();
   _SpeechResume? _resume;
   AiCancellationToken? _active;
   SystemSpeech? _system;
@@ -61,21 +65,7 @@ class SpeechService {
     final client = _client();
     try {
       final provider = await _provider(options, client, cancellationToken);
-      final catalog = await provider.discover(cancellationToken);
-      if (options.backend == SpeechBackend.elevenLabs) {
-        _elevenLabsLimits
-          ..clear()
-          ..addEntries(
-            catalog.models
-                .where(
-                  (item) =>
-                      item.maximumInputBytes != null &&
-                      item.maximumInputBytes! > 0,
-                )
-                .map((item) => MapEntry(item.id, item.maximumInputBytes!)),
-          );
-      }
-      return catalog;
+      return await provider.discover(cancellationToken);
     } finally {
       client.close();
     }
@@ -118,10 +108,7 @@ class SpeechService {
         client: client,
         key: await key(),
         options: options,
-        accountLimit:
-            _elevenLabsLimits[options.model.isEmpty
-                ? ElevenLabsSpeechProvider.defaultModel
-                : options.model],
+        modelLimits: _elevenLabsLimits,
       ),
       SpeechBackend.ollama => OllamaSpeechProvider(
         client: client,
@@ -169,17 +156,14 @@ class SpeechService {
           chunk = resume.completed[index];
         } else {
           session ??= await provider.open(cancellationToken);
-          final raw = await session.synthesize(
-            segment.text,
-            language: options.language.isNotEmpty
-                ? options.language
-                : segment.language,
-            cancellationToken: cancellationToken,
+          final raw = await _synthesize(
+            session,
+            segment,
+            options,
+            cancellationToken,
           );
-          cancellationToken.throwIfCancelled();
           final pcm = raw.pcm;
           final normalized = await Isolate.run(() => normalizeSpeechPcm(pcm));
-          cancellationToken.throwIfCancelled();
           chunk = SpeechChunk(
             SpeechPcm(normalized, sampleRate: speechResultSampleRate),
             usage: raw.usage,
@@ -201,7 +185,9 @@ class SpeechService {
         bytes.add(chunk.pcm.bytes);
         if (pause > 0) bytes.add(Uint8List(pause));
         if (chunk.usage case final value?) usage.add(value);
+        // A completed response remains reusable if stop raced its conversion.
         if (index == resume.completed.length) resume.completed.add(chunk);
+        cancellationToken.throwIfCancelled();
         onProgress?.call(index + 1, planned.length);
       }
       cancellationToken.throwIfCancelled();
@@ -225,6 +211,36 @@ class SpeechService {
       } finally {
         client.close();
         _active = null;
+      }
+    }
+  }
+
+  Future<SpeechChunk> _synthesize(
+    SpeechSession session,
+    SpeechSegment segment,
+    SpeechOptions options,
+    AiCancellationToken cancellationToken,
+  ) async {
+    final requestUsage = options.backend.isCloud ? SpeechRequestUsage() : null;
+    try {
+      return await session.synthesize(
+        segment.text,
+        language:
+            nonBlankSpeechSetting(options.language) ??
+            nonBlankSpeechSetting(segment.language),
+        cancellationToken: cancellationToken,
+        requestUsage: requestUsage,
+      );
+    } finally {
+      if (requestUsage != null && requestUsage.sent) {
+        try {
+          await _usageLedger.recordRequest(
+            options.backend,
+            requestUsage.reported,
+          );
+        } on Exception {
+          // Preserve an audio result or the original provider error if storage fails.
+        }
       }
     }
   }
@@ -253,9 +269,9 @@ class SpeechService {
         await system.speak(
           segment.text,
           voice: options.voice,
-          language: options.language.isNotEmpty
-              ? options.language
-              : segment.language,
+          language:
+              nonBlankSpeechSetting(options.language) ??
+              nonBlankSpeechSetting(segment.language),
           cancellationToken: cancellationToken,
         );
         if (segment.pauseAfter > Duration.zero) {
@@ -297,15 +313,10 @@ class SpeechService {
   }
 
   static void _validateOptions(SpeechOptions options) {
-    final minimum = options.backend == SpeechBackend.elevenLabs ? 0.7 : 0.5;
-    final maximum = switch (options.backend) {
-      SpeechBackend.elevenLabs => 1.2,
-      SpeechBackend.openai => 1.5,
-      _ => 2.0,
-    };
-    if (!options.speed.isFinite ||
-        options.speed < minimum ||
-        options.speed > maximum ||
+    final validSpeed =
+        options.speed.isFinite &&
+        (options.backend.synthesisSpeed?.allows(options.speed) ?? true);
+    if (!validSpeed ||
         options.pitch < 0 ||
         options.pitch > 99 ||
         options.style.length > 300 ||

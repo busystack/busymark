@@ -91,9 +91,7 @@ class SpeechPreferences {
       model: string('model'),
       voice: string('voice'),
       language: string('language'),
-      speed: speed is num && speed.isFinite
-          ? speed.toDouble().clamp(0.7, 1.2)
-          : 1,
+      speed: speed is num && speed.isFinite ? speed.toDouble() : 1,
       pitch: pitch is int ? pitch.clamp(0, 99) : 50,
       style: string('style'),
     );

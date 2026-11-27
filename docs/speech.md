@@ -61,15 +61,19 @@ commit-message AI.
 Use **Discover engines and voices** to update the available choices. **Generate
 voice sample** opens a short example for explicit playback or synthesis. Voice
 selection and editing preferences do not generate audio. Playback speed applies
-to audio already generated. Synthesis speed affects the next recording.
+to audio already generated. Synthesis speed affects the next recording, and
+the field displays the selected provider's accepted range.
 
 ## Cloud generation and privacy
 
 Confirm the selected provider, spoken text and size before generating. Cloud
 providers may charge for accepted requests, including requests cancelled after
 submission. Use the pricing link in the dialog to check current rates and the
-account’s terms. The result shows provider-reported usage when available.
-Actual charges are available from the provider.
+account’s terms. The result shows provider-reported usage when available. The
+monthly totals in Speech settings count each submitted generation request,
+including reported usage from rejected or cancelled results. A request whose
+usage is unavailable is reported separately. Reusing completed chunks adds no
+request. Actual charges are available from the provider.
 
 BusyMark uses local semantic projection for Markdown. OpenAI Realtime returns
 a transcript along with audio. BusyMark checks that transcript against the

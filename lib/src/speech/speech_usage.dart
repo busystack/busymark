@@ -20,20 +20,23 @@ Uri? speechPricingPage(SpeechBackend backend) => switch (backend) {
 /// Aggregates provider counts only. Missing reports remain separate from
 /// observed zero usage. No text, audio, server identifiers or keys are stored.
 class SpeechUsageLedger {
-  SpeechUsageLedger._();
-  static final shared = SpeechUsageLedger._();
+  SpeechUsageLedger({Future<Directory> Function()? supportDirectory})
+    : _supportDirectory = supportDirectory ?? getApplicationSupportDirectory;
+
+  static final shared = SpeechUsageLedger();
+  final Future<Directory> Function() _supportDirectory;
 
   Future<void> _pending = Future.value();
 
-  Future<void> record(SpeechBackend backend, SpeechResult? result) {
+  Future<void> recordRequest(SpeechBackend backend, SpeechUsage? usage) {
     if (!backend.isCloud) return Future.value();
-    final operation = _pending.then((_) => _update(backend, result));
+    final operation = _pending.then((_) => _update(backend, usage));
     _pending = operation.catchError((Object _) {});
     return operation;
   }
 
-  Future<void> _update(SpeechBackend backend, SpeechResult? result) async {
-    final support = await getApplicationSupportDirectory();
+  Future<void> _update(SpeechBackend backend, SpeechUsage? usage) async {
+    final support = await _supportDirectory();
     await support.create(recursive: true);
     final target = File(p.join(support.path, 'speech-usage.json'));
     final lock = await File('${target.path}.lock').open(mode: FileMode.append);
@@ -54,6 +57,8 @@ class SpeechUsageLedger {
                   for (final field in [
                     'jobs',
                     'unreportedJobs',
+                    'requests',
+                    'unreportedRequests',
                     'inputTokens',
                     'outputTokens',
                     'inputAudioTokens',
@@ -75,30 +80,21 @@ class SpeechUsageLedger {
         current[key] = (prior is int && prior >= 0 ? prior : 0) + value;
       }
 
-      add('jobs', 1);
-      final reported = result?.usage ?? const <SpeechUsage>[];
-      if (reported.isEmpty ||
-          reported.any(
-            (usage) =>
-                usage.inputTokens == null &&
-                usage.outputTokens == null &&
-                usage.inputAudioTokens == null &&
-                usage.outputAudioTokens == null &&
-                usage.characters == null,
-          )) {
-        add('unreportedJobs', 1);
-      }
-      for (final usage in reported) {
-        for (final (key, value) in [
-          ('inputTokens', usage.inputTokens),
-          ('outputTokens', usage.outputTokens),
-          ('inputAudioTokens', usage.inputAudioTokens),
-          ('outputAudioTokens', usage.outputAudioTokens),
-          ('characters', usage.characters),
-        ]) {
-          if (value != null && value >= 0) add(key, value);
-        }
-      }
+      add('requests', 1);
+      final counts = <String, int>{
+        if (usage?.inputTokens case final count? when count >= 0)
+          'inputTokens': count,
+        if (usage?.outputTokens case final count? when count >= 0)
+          'outputTokens': count,
+        if (usage?.inputAudioTokens case final count? when count >= 0)
+          'inputAudioTokens': count,
+        if (usage?.outputAudioTokens case final count? when count >= 0)
+          'outputAudioTokens': count,
+        if (usage?.characters case final count? when count >= 0)
+          'characters': count,
+      };
+      if (counts.isEmpty) add('unreportedRequests', 1);
+      counts.forEach(add);
       records[backend.name] = current;
       final staged = File('${target.path}.tmp');
       await staged.writeAsString(jsonEncode(records), flush: true);

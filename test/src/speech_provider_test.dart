@@ -8,6 +8,8 @@ import 'package:busymark/src/speech/gemini_speech_provider.dart';
 import 'package:busymark/src/speech/openai_speech_provider.dart';
 import 'package:busymark/src/speech/speech.dart';
 import 'package:busymark/src/speech/speech_pcm.dart';
+import 'package:busymark/src/speech/speech_preferences.dart';
+import 'package:busymark/src/speech/speech_usage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -220,15 +222,29 @@ void main() {
         }
       });
       addTearDown(client.close);
+      final limits = ElevenLabsModelLimits();
       final provider = ElevenLabsSpeechProvider(
         client: client,
         key: 'fixture',
         options: const SpeechOptions(backend: SpeechBackend.elevenLabs),
+        modelLimits: limits,
       );
       final catalog = await provider.discover(token);
       expect(catalog.models.single.maximumInputBytes, 1250);
       expect(catalog.voices.map((entry) => entry.id), ['abc', 'def']);
       expect(requests, ['/v1/models', '/v2/voices', '/v2/voices']);
+      ElevenLabsSpeechProvider generationAccount(String key) =>
+          ElevenLabsSpeechProvider(
+            client: client,
+            key: key,
+            options: const SpeechOptions(
+              backend: SpeechBackend.elevenLabs,
+              model: 'voice-model',
+            ),
+            modelLimits: limits,
+          );
+      expect(generationAccount('fixture').maximumInputBytes, 1250);
+      expect(generationAccount('different-fixture').maximumInputBytes, 1800);
     },
   );
 
@@ -285,14 +301,30 @@ void main() {
         );
         expect(result.pcm.bytes, [1, 0, 2, 0]);
         expect(result.usage?.characters, 9);
+        final malformed = SpeechRequestUsage();
         await expectLater(
-          session.synthesize('bad', language: 'fr', cancellationToken: token),
+          session.synthesize(
+            'bad',
+            language: 'fr',
+            cancellationToken: token,
+            requestUsage: malformed,
+          ),
           throwsA(_speechError(AiFailureCode.malformedResponse)),
         );
+        expect(malformed.sent, isTrue);
+        expect(malformed.reported?.characters, 9);
+        final quota = SpeechRequestUsage();
         await expectLater(
-          session.synthesize('quota', language: 'fr', cancellationToken: token),
+          session.synthesize(
+            'quota',
+            language: 'fr',
+            cancellationToken: token,
+            requestUsage: quota,
+          ),
           throwsA(_speechError(AiFailureCode.rateLimited)),
         );
+        expect(quota.sent, isTrue);
+        expect(quota.reported?.characters, isNull);
       }
     },
   );
@@ -360,6 +392,219 @@ void main() {
     },
   );
 
+  test(
+    'Realtime ledger counts each terminal attempt independently of audio',
+    () async {
+      final support = await Directory.systemTemp.createTemp(
+        'speech-usage-test-',
+      );
+      addTearDown(() => support.delete(recursive: true));
+      final ledger = SpeechUsageLedger(supportDirectory: () async => support);
+      const options = SpeechOptions(backend: SpeechBackend.openai);
+      for (final (status, transcript, usage, failure) in [
+        ('incomplete', 'Maya found 42 pages.', true, AiFailureCode.rejected),
+        ('failed', 'Maya found 42 pages.', true, AiFailureCode.rejected),
+        ('completed', 'Maya found 40 pages.', true, AiFailureCode.validation),
+        ('incomplete', 'Maya found 42 pages.', false, AiFailureCode.rejected),
+      ]) {
+        final fixture = await _RealtimeFixture.start(
+          status,
+          transcript,
+          includeUsage: usage,
+        );
+        addTearDown(fixture.close);
+        final service = _realtimeService(fixture, ledger);
+        await expectLater(
+          service.generate(
+            [const SpeechSegment('Maya found 42 pages.')],
+            options,
+            cancellationToken: token,
+          ),
+          throwsA(_speechError(failure)),
+        );
+      }
+
+      final fixture = await _RealtimeFixture.start(
+        'cancelled',
+        '',
+        awaitCancel: true,
+      );
+      addTearDown(fixture.close);
+      final service = _realtimeService(fixture, ledger);
+      final generating = service.generate(
+        [const SpeechSegment('Cancel this narration sample.')],
+        options,
+        cancellationToken: token,
+      );
+      final cancelled = expectLater(
+        generating,
+        throwsA(_speechError(AiFailureCode.cancelled)),
+      );
+      await fixture.created.future;
+      token.cancel();
+      await cancelled;
+      expect(await fixture.cancelled.future, 'response-fixture');
+
+      final content = await File(
+        '${support.path}/speech-usage.json',
+      ).readAsString();
+      expect(jsonDecode(content)['openai'], {
+        'requests': 5,
+        'unreportedRequests': 1,
+        'inputTokens': 160,
+        'outputTokens': 100,
+        'outputAudioTokens': 84,
+      });
+      expect(content, isNot(contains('response-fixture')));
+      expect(content, isNot(contains('Maya')));
+    },
+  );
+
+  test(
+    'ledger retains completed paid chunks once across failure and resume',
+    () async {
+      final support = await Directory.systemTemp.createTemp(
+        'speech-resume-test-',
+      );
+      addTearDown(() => support.delete(recursive: true));
+      final provider = _ResumableSpeech();
+      final service = SpeechService(
+        providerFactory: (_) => provider,
+        usageLedger: SpeechUsageLedger(supportDirectory: () async => support),
+      );
+      const segments = [
+        SpeechSegment('First chunk'),
+        SpeechSegment('Second chunk'),
+      ];
+      const options = SpeechOptions(backend: SpeechBackend.openai);
+
+      await expectLater(
+        service.generate(segments, options, cancellationToken: token),
+        throwsA(_speechError(AiFailureCode.rejected)),
+      );
+      final ledger = File('${support.path}/speech-usage.json');
+      expect(jsonDecode(await ledger.readAsString())['openai'], {
+        'requests': 2,
+        'inputTokens': 12,
+        'outputTokens': 0,
+      });
+
+      final resumed = await service.generate(
+        segments,
+        options,
+        cancellationToken: token,
+        resumeCompletedChunks: true,
+      );
+      expect(decodeSpeechWave(resumed.wavBytes).bytes, [1, 0, 2, 0]);
+      expect(provider.calls, ['First chunk', 'Second chunk', 'Second chunk']);
+      expect(jsonDecode(await ledger.readAsString())['openai'], {
+        'requests': 3,
+        'inputTokens': 17,
+        'outputTokens': 0,
+      });
+    },
+  );
+
+  test(
+    'persisted speeds retain their numbers and validate by provider',
+    () async {
+      final support = await Directory.systemTemp.createTemp(
+        'speech-speed-test-',
+      );
+      addTearDown(() => support.delete(recursive: true));
+      final ledger = SpeechUsageLedger(supportDirectory: () async => support);
+      for (final (backend, accepted, rejected) in [
+        (SpeechBackend.espeak, 2.0, 2.1),
+        (SpeechBackend.piper, 0.5, 0.49),
+        (SpeechBackend.openai, 1.5, 1.51),
+        (SpeechBackend.elevenLabs, 0.7, 0.69),
+      ]) {
+        SpeechOptions stored(double speed) => SpeechPreferences.fromJson({
+          'backend': backend.name,
+          'providers': {
+            backend.name: {'speed': speed},
+          },
+        }).options;
+        expect(stored(accepted).speed, accepted);
+        expect(stored(rejected).speed, rejected);
+
+        final provider = _ResumableSpeech();
+        final observed = <double>[];
+        final service = SpeechService(
+          usageLedger: ledger,
+          providerFactory: (options) {
+            observed.add(options.speed);
+            return provider;
+          },
+        );
+        await service.generate(
+          [const SpeechSegment('First chunk')],
+          stored(accepted),
+          cancellationToken: token,
+        );
+        await expectLater(
+          service.generate(
+            [const SpeechSegment('First chunk')],
+            stored(rejected),
+            cancellationToken: token,
+          ),
+          throwsA(_speechError(AiFailureCode.invalidConfiguration)),
+        );
+        expect(observed, [accepted]);
+      }
+    },
+  );
+
+  test(
+    'completed audio and its usage survive a stop before the next chunk',
+    () async {
+      final support = await Directory.systemTemp.createTemp(
+        'speech-stop-test-',
+      );
+      addTearDown(() => support.delete(recursive: true));
+      final provider = _ResumableSpeech(failSecondOnce: false);
+      final service = SpeechService(
+        providerFactory: (_) => provider,
+        usageLedger: SpeechUsageLedger(supportDirectory: () async => support),
+      );
+      const options = SpeechOptions(backend: SpeechBackend.openai);
+      const segments = [
+        SpeechSegment('First chunk'),
+        SpeechSegment('Second chunk'),
+      ];
+      final stopped = service.generate(
+        segments,
+        options,
+        cancellationToken: token,
+        onProgress: (completed, _) {
+          if (completed == 1) token.cancel();
+        },
+      );
+      await expectLater(
+        stopped,
+        throwsA(_speechError(AiFailureCode.cancelled)),
+      );
+      final ledger = File('${support.path}/speech-usage.json');
+      expect(jsonDecode(await ledger.readAsString())['openai']['requests'], 1);
+
+      final retry = AiCancellationToken();
+      addTearDown(retry.dispose);
+      final result = await service.generate(
+        segments,
+        options,
+        cancellationToken: retry,
+        resumeCompletedChunks: true,
+      );
+      expect(decodeSpeechWave(result.wavBytes).bytes, [1, 0, 2, 0]);
+      expect(provider.calls, ['First chunk', 'Second chunk']);
+      expect(jsonDecode(await ledger.readAsString())['openai'], {
+        'requests': 2,
+        'inputTokens': 12,
+        'outputTokens': 0,
+      });
+    },
+  );
+
   test('transcript equivalence retains order, values and words', () {
     expect(
       matchesSpokenTranscript(
@@ -395,6 +640,60 @@ void main() {
 Matcher _speechError(AiFailureCode code) =>
     isA<AiException>().having((error) => error.code, 'code', code);
 
+SpeechService _realtimeService(
+  _RealtimeFixture fixture,
+  SpeechUsageLedger ledger,
+) => SpeechService(
+  usageLedger: ledger,
+  providerFactory: (options) => OpenAiSpeechProvider(
+    key: 'fixture',
+    options: options,
+    connect: (model, key, token) => WebSocket.connect(fixture.url),
+  ),
+);
+
+class _ResumableSpeech implements SpeechProvider, SpeechSession {
+  _ResumableSpeech({this.failSecondOnce = true});
+
+  final bool failSecondOnce;
+  final calls = <String>[];
+
+  @override
+  int get maximumInputBytes => 40;
+
+  @override
+  Future<SpeechCatalog> discover(AiCancellationToken cancellationToken) async =>
+      const SpeechCatalog();
+
+  @override
+  Future<SpeechSession> open(AiCancellationToken cancellationToken) async =>
+      this;
+
+  @override
+  Future<SpeechChunk> synthesize(
+    String text, {
+    String? language,
+    required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
+  }) async {
+    calls.add(text);
+    requestUsage?.markSent();
+    final first = text == 'First chunk';
+    final usage = SpeechUsage(inputTokens: first ? 7 : 5, outputTokens: 0);
+    requestUsage?.report(usage);
+    if (failSecondOnce && !first && calls.length == 2) {
+      throw const AiException(AiFailureCode.rejected, 'Fixture ended early.');
+    }
+    return SpeechChunk(
+      SpeechPcm(Uint8List.fromList([first ? 1 : 2, 0]), sampleRate: 24000),
+      usage: usage,
+    );
+  }
+
+  @override
+  Future<void> close() async {}
+}
+
 class _RealtimeFixture {
   _RealtimeFixture(this.server);
   final HttpServer server;
@@ -410,6 +709,7 @@ class _RealtimeFixture {
     String status,
     String transcript, {
     bool awaitCancel = false,
+    bool includeUsage = true,
   }) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final fixture = _RealtimeFixture(server);
@@ -427,11 +727,12 @@ class _RealtimeFixture {
         'response': {
           'id': responseId,
           'status': terminalStatus,
-          'usage': {
-            'input_tokens': 40,
-            'output_tokens': 25,
-            'output_token_details': {'audio_tokens': 21},
-          },
+          if (includeUsage)
+            'usage': {
+              'input_tokens': 40,
+              'output_tokens': 25,
+              'output_token_details': {'audio_tokens': 21},
+            },
         },
       });
       socket.listen((data) {

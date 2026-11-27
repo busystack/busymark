@@ -248,6 +248,7 @@ class _RealtimeSpeechSession implements SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   }) async {
     cancellationToken.throwIfCancelled();
     final deadline = AiDeadline(const Duration(seconds: 75));
@@ -277,6 +278,7 @@ class _RealtimeSpeechSession implements SpeechSession {
         ],
       },
     });
+    requestUsage?.markSent();
     final samples = BytesBuilder(copy: false);
     (String, int, int)? part;
     String? transcript;
@@ -299,6 +301,7 @@ class _RealtimeSpeechSession implements SpeechSession {
         if (type == 'response.done' && response['id'] == responseId) {
           terminal = true;
           final usage = _usage(response, responseId);
+          requestUsage?.report(usage);
           onUsage?.call(usage);
           if (response['status'] != 'completed') {
             throw const AiException(
@@ -354,7 +357,7 @@ class _RealtimeSpeechSession implements SpeechSession {
         }
       }
     } finally {
-      if (!terminal) await _cancel(responseId, request);
+      if (!terminal) await _cancel(responseId, request, requestUsage);
     }
   }
 
@@ -413,7 +416,11 @@ class _RealtimeSpeechSession implements SpeechSession {
     );
   }
 
-  Future<void> _cancel(String? id, String request) async {
+  Future<void> _cancel(
+    String? id,
+    String request,
+    SpeechRequestUsage? requestUsage,
+  ) async {
     final token = AiCancellationToken();
     final deadline = AiDeadline(const Duration(seconds: 2));
     void sendCancel(String responseId) =>
@@ -433,7 +440,9 @@ class _RealtimeSpeechSession implements SpeechSession {
         if (responseId != null &&
             event['type'] == 'response.done' &&
             response['id'] == responseId) {
-          onUsage?.call(_usage(response, responseId));
+          final usage = _usage(response, responseId);
+          requestUsage?.report(usage);
+          onUsage?.call(usage);
           break;
         }
       }

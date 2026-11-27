@@ -13,19 +13,22 @@ import 'speech.dart';
 import 'speech_dialog.dart';
 
 class SpeechSettings extends ConsumerStatefulWidget {
-  const SpeechSettings({super.key});
+  const SpeechSettings({super.key, this.createService = SpeechService.new});
+
+  final SpeechService Function() createService;
 
   @override
   ConsumerState<SpeechSettings> createState() => _SpeechSettingsState();
 }
 
 class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
-  final _service = SpeechService();
+  late final _service = widget.createService();
   final _key = TextEditingController();
   final _catalogs = <SpeechBackend, SpeechCatalog>{};
   AiCancellationToken? _operation;
   String? _status;
   double? _progress;
+  bool _invalidSpeed = false;
 
   @override
   void dispose() {
@@ -79,13 +82,14 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
         (
           speech: SpeechSegment(
             l10n.speechSampleText,
-            language: options.language,
+            language: nonBlankSpeechSetting(options.language),
           ),
           source: null,
         ),
       ],
       omissions: const [],
     );
+    final service = widget.createService();
     unawaited(
       showDialog<void>(
         context: context,
@@ -97,6 +101,7 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
           suggestedFilename: 'busymark-sample.wav',
           sample: true,
           readAloud: options.backend == SpeechBackend.system,
+          service: service,
         ),
       ),
     );
@@ -112,11 +117,12 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
         }
         if (!mounted) return;
         _key.clear();
-        setState(
-          () => _status = delete
+        setState(() {
+          _catalogs.remove(provider);
+          _status = delete
               ? context.l10n.speechKeyDeleted
-              : context.l10n.speechKeyStored,
-        );
+              : context.l10n.speechKeyStored;
+        });
       });
 
   @override
@@ -133,6 +139,10 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
     final rules = settings.narration;
     final busy = _operation != null;
     final catalog = _catalogs[engine];
+    final speedRange = engine.synthesisSpeed;
+    final speedInvalid =
+        speedRange != null &&
+        (_invalidSpeed || !speedRange.allows(options.speed));
     void update({
       String? model,
       String? voice,
@@ -185,7 +195,10 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
               : (backend) {
                   if (backend == null) return;
                   _key.clear();
-                  setState(() => _status = null);
+                  setState(() {
+                    _status = null;
+                    _invalidSpeed = false;
+                  });
                   unawaited(save(settings.copyWith(backend: backend)));
                 },
         ),
@@ -291,7 +304,7 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
               child: Text(l10n.speechRefresh),
             ),
             TextButton(
-              onPressed: busy ? null : () => _sample(options),
+              onPressed: busy || speedInvalid ? null : () => _sample(options),
               child: Text(l10n.speechSample),
             ),
             if (busy)
@@ -333,16 +346,18 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
             value: options.style,
             save: (value) => update(style: value),
           ),
-        if (engine.supportsSpeed)
+        if (speedRange != null)
           _settingField(
             key: ValueKey((engine, 'speed')),
             label: l10n.speechSpeed,
             value: options.speed.toString(),
+            range: '${speedRange.minimum}–${speedRange.maximum}',
+            invalid: speedInvalid,
             save: (value) {
-              if (double.tryParse(value) case final speed?
-                  when speed.isFinite) {
-                update(speed: speed.clamp(0.7, 1.2));
-              }
+              final speed = double.tryParse(value);
+              final valid = speedRange.allows(speed);
+              setState(() => _invalidSpeed = !valid);
+              if (valid) update(speed: speed);
             },
           ),
         if (engine.supportsPitch)
@@ -447,12 +462,21 @@ Widget _settingField({
   required String label,
   required String value,
   required ValueChanged<String> save,
+  String? range,
+  bool invalid = false,
 }) => Padding(
   key: key,
   padding: const EdgeInsets.only(top: 12),
   child: TextFormField(
     initialValue: value,
-    decoration: InputDecoration(labelText: label),
+    keyboardType: range == null
+        ? null
+        : const TextInputType.numberWithOptions(decimal: true),
+    decoration: InputDecoration(
+      labelText: label,
+      helperText: invalid ? null : range,
+      errorText: invalid ? range : null,
+    ),
     onChanged: (value) => save(value.trim()),
   ),
 );

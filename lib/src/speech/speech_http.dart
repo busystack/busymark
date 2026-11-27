@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../ai/ai_http_transport.dart';
 import '../ai/ai_models.dart';
 import 'speech_pcm.dart';
+import 'speech_provider.dart';
 
 class SpeechHttp {
   const SpeechHttp(this.client, this.provider);
@@ -20,7 +21,10 @@ class SpeechHttp {
     AiCancellationToken token,
     AiDeadline deadline, {
     Map<String, Object?>? body,
+    SpeechRequestUsage? requestUsage,
+    void Function(http.StreamedResponse response)? onResponse,
   }) {
+    token.throwIfCancelled();
     final request = http.AbortableRequest(
       body == null ? 'GET' : 'POST',
       uri,
@@ -31,8 +35,11 @@ class SpeechHttp {
       request.headers['content-type'] = 'application/json';
       request.body = jsonEncode(body);
     }
+    requestUsage?.markSent();
     return transport.send(
-      client: client,
+      client: onResponse == null
+          ? client
+          : _ObservingClient(client, onResponse),
       request: request,
       cancellationToken: token,
       deadline: deadline,
@@ -85,6 +92,20 @@ class SpeechHttp {
     } on FormatException {
       return invalidSpeechResponse();
     }
+  }
+}
+
+class _ObservingClient extends http.BaseClient {
+  _ObservingClient(this.client, this.onResponse);
+
+  final http.Client client;
+  final void Function(http.StreamedResponse response) onResponse;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final response = await client.send(request);
+    onResponse(response);
+    return response;
   }
 }
 

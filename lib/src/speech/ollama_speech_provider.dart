@@ -143,6 +143,7 @@ class OllamaSpeechProvider implements SpeechProvider, SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   }) async {
     if (!_verified) {
       throw const AiException(AiFailureCode.invalidConfiguration, unavailable);

@@ -46,6 +46,17 @@ or routed to a different provider. The WebSocket cancellation command names the
 precise out-of-band response. The local process supervisor terminates only its
 owned subprocess.
 
+The service meters each dispatched billable request. Terminal Realtime usage
+is retained when the response is incomplete, cancelled, or rejected by the
+transcript check. Interrupted requests without provider counters remain
+unreported. Replaying a whole result or resuming from a cached chunk emits no
+second usage record. Existing monthly job totals are retained alongside the
+new request totals. ElevenLabs account discovery is shared across Settings and
+generation for the same credential during the session. The model's documented
+character limit is applied conservatively as a UTF-8 byte limit. [Realtime
+server events](https://developers.openai.com/api/reference/resources/realtime/server-events) ·
+[ElevenLabs model discovery](https://elevenlabs.io/docs/api-reference/models/list)
+
 ## Reproducing qualification
 
 `test/src/speech_provider_test.dart` uses in-process HTTP and WebSocket fixtures

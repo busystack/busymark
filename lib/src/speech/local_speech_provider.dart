@@ -75,8 +75,12 @@ class EspeakSpeechProvider implements SpeechProvider, SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   }) async {
-    final voice = options.voice.isNotEmpty ? options.voice : language ?? 'en';
+    final voice =
+        nonBlankSpeechSetting(options.voice) ??
+        nonBlankSpeechSetting(language) ??
+        'en';
     if (!RegExp(r'^[a-zA-Z0-9_-]{1,64}$').hasMatch(voice)) {
       throw const AiException(
         AiFailureCode.invalidConfiguration,
@@ -228,6 +232,7 @@ class _PiperSession implements SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   }) async {
     cancellationToken.throwIfCancelled();
     final deadline = AiDeadline(const Duration(seconds: 95));

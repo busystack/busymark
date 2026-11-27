@@ -17,9 +17,28 @@ enum SpeechBackend {
   };
 
   bool get supportsFiles => this != system;
-  bool get supportsSpeed =>
-      this == espeak || this == piper || this == openai || this == elevenLabs;
+  SpeechSpeedRange? get synthesisSpeed => switch (this) {
+    espeak || piper => const SpeechSpeedRange(0.5, 2),
+    openai => const SpeechSpeedRange(0.5, 1.5),
+    elevenLabs => const SpeechSpeedRange(0.7, 1.2),
+    _ => null,
+  };
   bool get supportsPitch => this == espeak;
+}
+
+class SpeechSpeedRange {
+  const SpeechSpeedRange(this.minimum, this.maximum);
+
+  final double minimum;
+  final double maximum;
+
+  bool allows(double? speed) =>
+      speed != null && speed.isFinite && speed >= minimum && speed <= maximum;
+}
+
+String? nonBlankSpeechSetting(String? value) {
+  final trimmed = value?.trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 enum SpeechLocality { offline, remote, unknown }
@@ -106,6 +125,18 @@ class SpeechUsage {
   final String? requestId;
 }
 
+/// Observes one synthesis attempt even if its audio is rejected or cancelled.
+class SpeechRequestUsage {
+  bool _sent = false;
+  SpeechUsage? _reported;
+
+  bool get sent => _sent;
+  SpeechUsage? get reported => _reported;
+
+  void markSent() => _sent = true;
+  void report(SpeechUsage usage) => _reported = usage;
+}
+
 /// Decoded signed 16-bit little-endian PCM with interleaved frames.
 class SpeechPcm {
   SpeechPcm(this.bytes, {required this.sampleRate, this.channels = 1}) {
@@ -163,6 +194,7 @@ abstract interface class SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   });
 
   Future<void> close();

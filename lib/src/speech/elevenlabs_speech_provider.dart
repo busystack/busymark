@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 import '../ai/ai_http_transport.dart';
@@ -6,6 +9,29 @@ import 'speech_http.dart';
 import 'speech_pcm.dart';
 import 'speech_provider.dart';
 
+/// In-memory model bounds for the account that last refreshed its catalog.
+class ElevenLabsModelLimits {
+  String? _credentialFingerprint;
+  Map<String, int> _limits = const {};
+
+  int? lookup(String credential, String model) =>
+      _credentialFingerprint == _fingerprint(credential)
+      ? _limits[model]
+      : null;
+
+  void publish(String credential, List<SpeechChoice> models) {
+    _credentialFingerprint = _fingerprint(credential);
+    _limits = {
+      for (final model in models)
+        if (model.maximumInputBytes case final limit? when limit > 0)
+          model.id: limit,
+    };
+  }
+
+  static String _fingerprint(String credential) =>
+      sha256.convert(utf8.encode(credential)).toString();
+}
+
 class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
   ElevenLabsSpeechProvider({
     required http.Client client,
@@ -13,8 +39,10 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
     required this.options,
     this.streaming = true,
     int? accountLimit,
+    ElevenLabsModelLimits? modelLimits,
   }) : _http = SpeechHttp(client, 'ElevenLabs'),
-       maximumInputBytes = (accountLimit ?? 1800).clamp(1, 1800);
+       _accountLimit = accountLimit,
+       _modelLimits = modelLimits;
 
   static const _host = 'api.elevenlabs.io';
   static const defaultModel = 'eleven_multilingual_v2';
@@ -24,9 +52,17 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
   final String key;
   final SpeechOptions options;
   final bool streaming;
+  final int? _accountLimit;
+  final ElevenLabsModelLimits? _modelLimits;
+
+  String get _model => options.model.isEmpty ? defaultModel : options.model;
 
   @override
-  final int maximumInputBytes;
+  int get maximumInputBytes =>
+      (_accountLimit ?? _modelLimits?.lookup(key, _model) ?? 1800).clamp(
+        1,
+        1800,
+      );
 
   Map<String, String> get _headers => {'xi-api-key': key};
 
@@ -93,6 +129,8 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
         invalidSpeechResponse();
       }
     } while (true);
+    cancellationToken.throwIfCancelled();
+    _modelLimits?.publish(key, models);
     return SpeechCatalog(
       models: List.unmodifiable(models),
       voices: List.unmodifiable(voices.values),
@@ -116,10 +154,18 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
     String text, {
     String? language,
     required AiCancellationToken cancellationToken,
+    SpeechRequestUsage? requestUsage,
   }) async {
+    if (utf8.encode(text).length > maximumInputBytes) {
+      throw const AiException(
+        AiFailureCode.responseTooLarge,
+        'The speech text exceeds the ElevenLabs model input limit.',
+      );
+    }
     final deadline = AiDeadline(const Duration(seconds: 95));
-    final model = options.model.isEmpty ? defaultModel : options.model;
+    final model = _model;
     final code = language?.split(RegExp('[-_]')).first.toLowerCase();
+    SpeechUsage? usage;
     final response = await _http.request(
       Uri.https(
         _host,
@@ -129,6 +175,16 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
       _headers,
       cancellationToken,
       deadline,
+      requestUsage: requestUsage,
+      onResponse: (response) {
+        final count = int.tryParse(response.headers['character-cost'] ?? '');
+        final reported = SpeechUsage(
+          characters: count != null && count >= 0 ? count : null,
+          requestId: response.headers['request-id'],
+        );
+        usage = reported;
+        requestUsage?.report(reported);
+      },
       body: {
         'text': text,
         'model_id': model,
@@ -158,14 +214,7 @@ class ElevenLabsSpeechProvider implements SpeechProvider, SpeechSession {
             body[2] == 0x33)) {
       invalidSpeechAudio();
     }
-    final count = int.tryParse(response.headers['character-cost'] ?? '');
-    return SpeechChunk(
-      SpeechPcm(body, sampleRate: 24000),
-      usage: SpeechUsage(
-        characters: count != null && count >= 0 ? count : null,
-        requestId: response.headers['request-id'],
-      ),
-    );
+    return SpeechChunk(SpeechPcm(body, sampleRate: 24000), usage: usage);
   }
 
   @override
