@@ -22,6 +22,7 @@ output="$(realpath -- "$output")"
 
 snapshot="$(mktemp -d)"
 session_pids=()
+wayland_socket=""
 settings=""
 staged_voice=""
 auth=""
@@ -50,7 +51,7 @@ restore_connection() {
   fi
 }
 cleanup() {
-  local result=$? cleanup_failed=0
+  local result=$? cleanup_failed=0 index pid
   trap - EXIT
   if [[ -n "$pulse_module" ]]; then
     pactl unload-module "$pulse_module" || cleanup_failed=1
@@ -58,12 +59,15 @@ cleanup() {
       pactl set-default-sink "$pulse_default" || cleanup_failed=1
     fi
   fi
-  for pid in "${session_pids[@]}"; do
+  # Weston and the window manager must exit while their X server is alive.
+  for (( index=${#session_pids[@]}-1; index>=0; index-- )); do
+    pid="${session_pids[index]}"
     if kill -0 "$pid" 2>/dev/null; then kill "$pid" || cleanup_failed=1; fi
-  done
-  for pid in "${session_pids[@]}"; do
     wait "$pid" 2>/dev/null || true
   done
+  if [[ -n "$wayland_socket" ]]; then
+    rm -f -- "$wayland_socket" "$wayland_socket.lock" || cleanup_failed=1
+  fi
   if [[ -n "$auth" ]]; then rm -f -- "$auth" || cleanup_failed=1; fi
   if [[ -n "$staged_voice" ]]; then rm -r -- "$staged_voice" || cleanup_failed=1; fi
   if [[ -n "$settings" ]]; then
@@ -246,8 +250,13 @@ run_audio x11 editor
 run_audio x11 preview
 run_speech x11
 
-export WAYLAND_DISPLAY=wayland-43
-test ! -e "$runtime/$WAYLAND_DISPLAY"
+export WAYLAND_DISPLAY="wayland-$BASHPID"
+socket="$runtime/$WAYLAND_DISPLAY"
+if [[ -e "$socket" || -L "$socket" || -e "$socket.lock" || -L "$socket.lock" ]]; then
+  echo 'The disposable Wayland socket path is already occupied.' >&2
+  exit 1
+fi
+wayland_socket="$socket"
 # The desktop shell needs a real seat to post GTK menus. Weston receives its
 # seat from the test X server. BusyMark itself only sees the Wayland socket.
 weston --backend=x11-backend.so --renderer=pixman --width=1200 --height=850 \
@@ -259,14 +268,20 @@ for attempt in {1..40}; do
   kill -0 "${session_pids[-1]}"
   sleep 0.25
 done
-test -S "$runtime/$WAYLAND_DISPLAY"
+if ! test -S "$wayland_socket"; then
+  echo 'The disposable Wayland compositor did not open its socket.' >&2
+  exit 1
+fi
 export BUSYMARK_INPUT_DISPLAY="$DISPLAY" BUSYMARK_INPUT_XAUTHORITY="$XAUTHORITY"
 for attempt in {1..40}; do
   if BUSYMARK_INPUT_WINDOW="$(xdotool search --onlyvisible --name '^Weston Compositor - screen0$')"; then break; fi
   kill -0 "${session_pids[-1]}"
   sleep 0.25
 done
-[[ "$BUSYMARK_INPUT_WINDOW" =~ ^[0-9]+$ ]]
+if ! [[ "$BUSYMARK_INPUT_WINDOW" =~ ^[0-9]+$ ]]; then
+  echo 'The disposable compositor has no uniquely identified input window.' >&2
+  exit 1
+fi
 export BUSYMARK_INPUT_WINDOW
 export GDK_BACKEND=wayland
 unset DISPLAY XAUTHORITY
