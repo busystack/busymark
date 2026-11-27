@@ -804,6 +804,10 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
         self.assertEqual(len(setup), 1, 'Parallel-instance setup must be a shared step')
         setup = setup[0]
         self.assertNotIn('continue-on-error', setup)
+        fixture_build = next(step for step in steps if step.get('id') == 'close-fixture-snap')
+        self.assertLess(steps.index(fixture_build), steps.index(setup))
+        self.assertEqual(fixture_build['working-directory'],
+                         '${{ runner.temp }}/strict-compiled-close-source')
         ordinary = [
             step for step in steps
             if re.search(r'\bsnap run (?:--shell )?busymark\b(?!_)', step.get('run', ''))

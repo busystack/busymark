@@ -75,6 +75,13 @@ retains Snapcraft's build manifest and compares the embedded recipe byte for
 byte with the source recipe before installing the package. [Snapcraft build
 options][build-options] · [Ubuntu sudo-rs][sudo-rs]
 
+The strict compiled-close fixture builds from an isolated source archive on
+the CI runner before the job enables parallel Snap instances. LXD 6.10.1
+could not start a new managed build container after the parallel-instance
+mount namespace change. The fixture has its own verified embedded recipe
+and the job rechecks the shipping artifact checksum after the fixture run.
+[LXD issue 12168][lxd-parallel]
+
 The locked Android path-provider dependency can discover an optional JVM when
 a Linux builder happens to have a JDK. Linux uses its own path-provider
 implementation. BusyMark disables that optional JNI discovery in its own
@@ -88,4 +95,5 @@ desktop runtime.
 [resolute]: https://packages.ubuntu.com/resolute/
 [build-options]: https://ubuntu.com/docs/snapcraft/9/reference/build-environment-options/
 [sudo-rs]: https://ubuntu.com/server/docs/how-to/security/user-management/#sudo-rs
+[lxd-parallel]: https://github.com/canonical/lxd/issues/12168
 [piper]: https://github.com/OHF-Voice/piper1-gpl/releases/tag/v1.8.0

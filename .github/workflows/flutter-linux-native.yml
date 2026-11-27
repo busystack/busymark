@@ -719,8 +719,32 @@ jobs:
           COMPILED
           exit "$checks_failed"
 
-      # Toggling parallel instances can invalidate existing content mounts.
-      # Complete all ordinary-instance launches before changing the flag.
+      - name: Prepare a separate compiled-close fixture source
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
+        id: strict-fixture-source
+        run: |
+          set -o pipefail
+          fixture_root="${RUNNER_TEMP}/strict-compiled-close-source"
+          mkdir "$fixture_root"
+          git archive HEAD | tar -xf - -C "$fixture_root"
+          python3 - "$fixture_root/snap/snapcraft.yaml" <<'PYCODE'
+          import sys
+          from pathlib import Path
+          recipe = Path(sys.argv[1])
+          text = recipe.read_text()
+          assert text.count('--target lib/main.dart') == 1
+          recipe.write_text(text.replace('--target lib/main.dart', '--target tools/window_close_smoke.dart'))
+          PYCODE
+
+      - name: Build genuine strict compiled-close fixture
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-fixture-source.outcome == 'success' }}
+        id: close-fixture-snap
+        working-directory: ${{ runner.temp }}/strict-compiled-close-source
+        run: bash tools/pack_core26_ci_snap.sh
+
+      # Enable parallel instances only after the ordinary-instance launches
+      # and all LXD builds. LXD cannot reliably start new build containers
+      # after the mount namespace change (canonical/lxd#12168).
       - name: Enable parallel Snap instances
         if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
         id: strict-parallel
@@ -752,33 +776,21 @@ jobs:
           path: ${{ runner.temp }}/close-strict-snap
           if-no-files-found: ignore
 
-      - name: Prepare a separate compiled-close fixture package
-        if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
-        id: strict-fixture-source
-        run: |
-          cp "${{ steps.snap-artifact.outputs.snap }}" "${RUNNER_TEMP}/shipping-main.snap"
-          cp snap/snapcraft.yaml "${RUNNER_TEMP}/shipping-snapcraft.yaml"
-          rm -f ./*.snap
-          python3 - <<'PYCODE'
-          from pathlib import Path
-          recipe = Path('snap/snapcraft.yaml')
-          text = recipe.read_text()
-          assert text.count('--target lib/main.dart') == 1
-          recipe.write_text(text.replace('--target lib/main.dart', '--target tools/window_close_smoke.dart'))
-          PYCODE
-      - name: Build genuine strict compiled-close fixture
-        if: ${{ !cancelled() && inputs.run-stress && steps.strict-fixture-source.outcome == 'success' }}
-        id: close-fixture-snap
-        run: bash tools/pack_core26_ci_snap.sh
       - name: Install strict compiled-close fixture
         if: ${{ !cancelled() && inputs.run-stress && steps.close-fixture-snap.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-fixture-install
+        env:
+          FIXTURE_SNAP: ${{ steps.close-fixture-snap.outputs.snap }}
         run: |
-          fixture="${{ steps.close-fixture-snap.outputs.snap }}"
-          test -f "$fixture"
-          unsquashfs -cat "$fixture" snap/snapcraft.yaml > "${RUNNER_TEMP}/fixture-snapcraft.yaml"
-          cmp snap/snapcraft.yaml "${RUNNER_TEMP}/fixture-snapcraft.yaml"
-          sudo snap install --dangerous --name=busymark_fixture "$fixture"
+          fixture_root="${RUNNER_TEMP}/strict-compiled-close-source"
+          case "$FIXTURE_SNAP" in
+            "$fixture_root"/*.snap) ;;
+            *) echo "Expected the Snap from the isolated fixture build." >&2; exit 1 ;;
+          esac
+          test -f "$FIXTURE_SNAP"
+          unsquashfs -cat "$FIXTURE_SNAP" snap/snapcraft.yaml > "${RUNNER_TEMP}/fixture-snapcraft.yaml"
+          cmp "$fixture_root/snap/snapcraft.yaml" "${RUNNER_TEMP}/fixture-snapcraft.yaml"
+          sudo snap install --dangerous --name=busymark_fixture "$FIXTURE_SNAP"
           fixture_root="$HOME/snap/busymark_fixture/common"
           mkdir -p "$fixture_root/fixtures"
           cp test/fixtures/media/close-testsrc.mp4 "$fixture_root/fixtures/"
@@ -803,18 +815,11 @@ jobs:
             ~/snap/busymark_fixture/common/close-live
           if-no-files-found: ignore
 
-      - name: Restore shipping Snap recipe and archive
-        if: ${{ always() && inputs.run-stress && steps.strict-fixture-source.outcome != 'skipped' }}
-        env:
-          SHIPPING_SNAP: ${{ steps.snap-artifact.outputs.snap }}
+      - name: Verify the fixture build preserved the shipping Snap and recipe
+        if: ${{ !cancelled() && inputs.run-stress && steps.snap-metadata.outcome == 'success' }}
         run: |
-          if [ -f "${RUNNER_TEMP}/shipping-snapcraft.yaml" ]; then
-            cp "${RUNNER_TEMP}/shipping-snapcraft.yaml" snap/snapcraft.yaml
-          fi
-          if [ -f "${RUNNER_TEMP}/shipping-main.snap" ]; then
-            cp "${RUNNER_TEMP}/shipping-main.snap" "$SHIPPING_SNAP"
-            sha256sum --check "${RUNNER_TEMP}/core26-build/snap.sha256"
-          fi
+          cmp snap/snapcraft.yaml "${RUNNER_TEMP}/core26-build/snapcraft.yaml"
+          sha256sum --check "${RUNNER_TEMP}/core26-build/snap.sha256"
 
       - name: Preserve installed content connection evidence
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' }}
