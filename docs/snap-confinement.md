@@ -64,18 +64,21 @@ private keys. This confined agent is separate from an existing desktop agent.
 Key access alone does not grant access to the desktop's GPG-agent socket.
 See the upstream [GnuPG configuration interface](https://www.gnupg.org/documentation/manuals/gnupg26/gpgconf.1.html).
 
-The `ssh-keys` connection grants key/configuration access; it does not grant
-access to the desktop SSH agent. In particular, snapd 2.77.1 on Ubuntu 26.04
+The `ssh-keys` connection grants read access to key and configuration files.
+The desktop SSH agent requires access to a separate Unix socket. In particular,
+snapd 2.77.1 on Ubuntu 26.04
 denies the GNOME GCR socket at `/run/user/<uid>/gcr/ssh` to the strict Snap.
 An already unlocked desktop key therefore does not establish that authentication
 will work inside BusyMark. The same isolated transport succeeds outside the
 Snap, while the confined client records an AppArmor socket-connect denial.
-Desktop-agent interoperability remains an installed acceptance blocker; do not
-disable confinement, copy private keys into repositories, or install a modified
-snapd policy to work around it. See Canonical's
-[SSH-agent interface discussion](https://forum.snapcraft.io/t/ssh-agent-plug-request/1250)
-and the current
-[`ssh-keys` interface](https://snapcraft.io/docs/reference/interfaces/ssh-keys-interface/).
+The released snapd 2.78 `ssh-keys` policy still grants only file reads and an
+SSH executable rule. Existing Git operations can use configured SSH identities
+visible through `ssh-keys` or HTTPS with an available configured credential
+helper. Workflows requiring the host desktop agent remain blocked in the strict
+Snap pending an official socket interface. BusyMark retains the existing SSH
+host verification and does not copy private keys into its profile. [Released
+snapd 2.78 policy](https://raw.githubusercontent.com/canonical/snapd/2.78/interfaces/builtin/ssh_keys.go) ·
+[Canonical's SSH agent interface discussion](https://forum.snapcraft.io/t/ssh-agent-plug-request/1250)
 
 Shared source archives are verified against their pinned hashes. Snapcraft
 recreates their extracted siblings inside its managed part directory on each

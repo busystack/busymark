@@ -403,6 +403,29 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                         self.assertIn('inputs.run-stress &&', step['if'])
         self.assertEqual(found, gated_ids)
 
+    def test_strict_media_suite_is_required_by_release_acceptance(self):
+        steps = self.native['jobs']['snap']['steps']
+        positions = {step['id']: index for index, step in enumerate(steps) if 'id' in step}
+        stage = steps[positions['strict-media']]
+        self.assertNotIn('continue-on-error', stage)
+        self.assertIn('inputs.run-stress &&', stage['if'])
+        for prerequisite in ('strict-media-dependencies', 'strict-install', 'strict-session'):
+            self.assertLess(positions[prerequisite], positions['strict-media'])
+            self.assertIn(f"steps.{prerequisite}.outcome == 'success'", stage['if'])
+        self.assertEqual(stage['env']['SNAP_PATH'], '${{ steps.snap-artifact.outputs.snap }}')
+        self.assertIn('tools/run_installed_media_acceptance.sh', stage['run'])
+        evidence = next(step for step in steps
+                        if step.get('with', {}).get('name') == 'strict-installed-media-acceptance')
+        self.assertEqual(evidence['if'], '${{ always() && inputs.run-stress }}')
+
+    def test_standalone_archive_receipt_includes_staged_speech_launcher(self):
+        steps = self.native['jobs']['verify']['steps']
+        script = next(step for step in steps if step.get('id') == 'release-bundle')['run']
+        commands = ['git_native_build_receipt.py capture', 'flutter build linux',
+                    'install_piper_runtime.sh', 'git_native_build_receipt.py seal', 'tar -C']
+        positions = [script.index(command) for command in commands]
+        self.assertEqual(positions, sorted(positions))
+
     def test_standalone_desktop_sessions_are_scoped(self):
         steps = self._automatic_product_jobs()['verify']['steps']
         dependencies = next(s for s in steps if s.get('id') == 'linux-dependencies')

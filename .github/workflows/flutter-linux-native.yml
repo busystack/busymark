@@ -167,13 +167,15 @@ jobs:
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         id: release-bundle
         run: |
+          evidence="${RUNNER_TEMP}/ubuntu-26.04-bundle"
+          mkdir -p "$evidence"
+          python3 tools/git_native_build_receipt.py capture "$evidence/build-receipt.json"
           flutter build linux --release --no-pub --target lib/main.dart
           bundle=build/linux/x64/release/bundle
           bash tools/install_piper_runtime.sh "$bundle"
           "$bundle/bin/busymark-piper-python" -c 'import onnxruntime, piper; from importlib.metadata import version; assert version("piper-tts") == "1.8.0"'
           test ! -e "$bundle/lib/libdartjni.so"
-          evidence="${RUNNER_TEMP}/ubuntu-26.04-bundle"
-          mkdir -p "$evidence"
+          python3 tools/git_native_build_receipt.py seal "$evidence/build-receipt.json" "$bundle/busymark"
           for elf in "$bundle/busymark" "$bundle"/lib/*.so; do
             readelf --version-info "$elf"
             ldd "$elf"
@@ -197,6 +199,14 @@ jobs:
           unpacked="$(mktemp -d)"
           trap 'rm -rf -- "$unpacked"' EXIT
           tar -xf "$evidence"/busymark-*-ubuntu26.04-amd64.tar.gz -C "$unpacked"
+          PYTHONPATH=tools /usr/bin/python3 - "$evidence/build-receipt.json" "$unpacked/busymark" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          from git_native_build_receipt import verify
+          verify(json.loads(Path(sys.argv[1]).read_bytes()), Path(sys.argv[2]))
+          PY
+          "$unpacked/bin/busymark-piper-python" -c 'import onnxruntime, piper'
           report="$evidence/standalone-x11.json"
           timeout --signal=TERM 300s xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
@@ -431,6 +441,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session at-spi2-core xdg-desktop-portal-gtk ffmpeg
 
+      - name: Install media desktop acceptance dependencies
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-desktop.outcome == 'success' }}
+        id: strict-media-dependencies
+        run: |
+          sudo apt-get install -y gir1.2-atspi-2.0 gnome-keyring libsecret-tools \
+            openbox pulseaudio pulseaudio-utils xauth xdotool x11-utils
+
       - name: Install strict Snap
         id: strict-install
         if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' && steps.snap-metadata.outcome == 'success' && steps.strict-desktop.outcome == 'success' }}
@@ -622,6 +639,25 @@ jobs:
       - name: Decode required audio formats with the installed strict Snap
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
         run: bash tools/verify_audio_decoders.sh snap
+
+      - name: Verify installed audio controls, offline narration and secure credential restart
+        id: strict-media
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-media-dependencies.outcome == 'success' && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
+        timeout-minutes: 20
+        env:
+          SNAP_PATH: ${{ steps.snap-artifact.outputs.snap }}
+        run: |
+          bash tools/run_installed_media_acceptance.sh \
+            "$HOME/snap/busymark/common/native-media-acceptance" \
+            "$SNAP_PATH" "$(git rev-parse HEAD)"
+
+      - name: Preserve installed audio and speech acceptance evidence
+        if: ${{ always() && inputs.run-stress }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: strict-installed-media-acceptance
+          path: ~/snap/busymark/common/native-media-acceptance
+          if-no-files-found: ignore
 
       - name: Install one strict-Snap dictionary and verify refresh/offline use
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}

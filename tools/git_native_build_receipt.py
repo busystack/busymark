@@ -61,7 +61,7 @@ def sources(workspace=None, host="busymark"):
 
 def payloads(binary):
     candidates = {binary}
-    for folder in ['data', 'lib', 'libexec', 'share']:
+    for folder in ['bin', 'data', 'lib', 'libexec', 'share']:
         candidates.update(p for p in (binary.parent/folder).rglob('*') if p.is_file())
     return {str(p.relative_to(binary.parent)): sha(p) for p in sorted(candidates) if p.is_file()}
 

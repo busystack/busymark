@@ -106,6 +106,36 @@ class NativeBuildReceiptTest(unittest.TestCase):
                 source.write_text('original source')
             verify(receipt, binary, root)
 
+    def test_receipt_rejects_changed_missing_and_added_bin_launchers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                library = root / name / 'lib'
+                library.mkdir(parents=True)
+                (library / 'source.dart').write_text('original source')
+            binary = root / 'bundle' / 'busymark'
+            launcher = binary.parent / 'bin' / 'busymark-piper-python'
+            launcher.parent.mkdir(parents=True)
+            binary.write_bytes(b'owned test binary')
+            original = b'#!/bin/sh\nexec /usr/bin/python3.14 "$@"\n'
+            launcher.write_bytes(original)
+            launcher.chmod(0o755)
+            receipt = {'sealed': True, 'sources': sources(root),
+                       'payloads': payloads(binary)}
+            self.assertEqual(receipt['payloads']['bin/busymark-piper-python'],
+                             sha(launcher))
+            verify(receipt, binary, root)
+            launcher.write_bytes(b'#!/bin/sh\nexit 0\n')
+            with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                verify(receipt, binary, root)
+            launcher.unlink()
+            with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                verify(receipt, binary, root)
+            launcher.write_bytes(original)
+            (launcher.parent / 'unexpected-launcher').write_bytes(original)
+            with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                verify(receipt, binary, root)
+
     def test_manifest_only_workspace_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
