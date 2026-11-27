@@ -15,6 +15,14 @@ import 'narration.dart';
 import 'speech.dart';
 import 'speech_usage.dart';
 
+final _speechDialogs = <_SpeechDialogState>{};
+
+Future<void> settleSpeechDialogsForWindowClose() async {
+  await Future.wait([
+    for (final dialog in _speechDialogs.toList()) dialog._retire(),
+  ]);
+}
+
 String speechBackendLabel(BuildContext context, SpeechBackend backend) =>
     switch (backend) {
       SpeechBackend.system => context.l10n.speechSystem,
@@ -76,17 +84,55 @@ class _SpeechDialogState extends State<SpeechDialog> {
   bool _systemCompleted = false;
   bool _resumeChunks = false;
   bool _uncertainCloud = false;
+  Future<void>? _synthesis;
+  Future<void>? _openingPlayback;
+  Future<void>? _stoppingPlayback;
+  Future<void>? _retirement;
 
   bool get _system => widget.options.backend == SpeechBackend.system;
 
   @override
+  void initState() {
+    super.initState();
+    _speechDialogs.add(this);
+  }
+
+  @override
   void dispose() {
-    _job?.cancel();
-    unawaited(_cleanup());
+    unawaited(_retire());
     super.dispose();
   }
 
-  Future<void> _cleanup() async {
+  Future<void> _retire() => _retirement ??= _finishWork();
+
+  Future<void> _finishWork() async {
+    _job?.cancel();
+    try {
+      await _synthesis;
+    } finally {
+      try {
+        await _stopPlayback();
+      } finally {
+        _speechDialogs.remove(this);
+      }
+    }
+  }
+
+  Future<void> _dismiss() async {
+    if (_publishing || _retirement != null) return;
+    await _retire();
+    if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _stopPlayback() =>
+      _stoppingPlayback ??= _releasePlayback().whenComplete(() {
+        _stoppingPlayback = null;
+      });
+
+  Future<void> _releasePlayback() async {
+    await _openingPlayback;
     await _audio.close(this);
     final directory = _temporary;
     _temporary = null;
@@ -96,6 +142,12 @@ class _SpeechDialogState extends State<SpeechDialog> {
     } on FileSystemException {
       // The temporary directory may have already been removed.
     }
+  }
+
+  void _startGeneration() {
+    if (_retirement != null) return;
+    _synthesis = _generate();
+    unawaited(_synthesis);
   }
 
   Future<void> _generate() async {
@@ -194,6 +246,13 @@ class _SpeechDialogState extends State<SpeechDialog> {
   }
 
   Future<void> _play() async {
+    if (_retirement != null || _stoppingPlayback != null) return;
+    await (_openingPlayback ??= _preparePlayback().whenComplete(() {
+      _openingPlayback = null;
+    }));
+  }
+
+  Future<void> _preparePlayback() async {
     final result = _result;
     if (result == null) return;
     try {
@@ -253,7 +312,8 @@ class _SpeechDialogState extends State<SpeechDialog> {
       final inserted = await publish(_plan, result.wavBytes);
       if (!mounted) return;
       if (inserted) {
-        Navigator.pop(context);
+        await _retire();
+        if (mounted) Navigator.pop(context);
       } else {
         setState(() => _error = context.l10n.audioStaleTarget);
       }
@@ -299,7 +359,15 @@ class _SpeechDialogState extends State<SpeechDialog> {
   };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PopScope(
+    canPop: false,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) unawaited(_dismiss());
+    },
+    child: _buildDialog(context),
+  );
+
+  Widget _buildDialog(BuildContext context) {
     final l10n = context.l10n;
     final result = _result;
     final job = _job;
@@ -412,7 +480,7 @@ class _SpeechDialogState extends State<SpeechDialog> {
                         Wrap(
                           children: [
                             TextButton(
-                              onPressed: () => unawaited(_audio.close(this)),
+                              onPressed: () => unawaited(_stopPlayback()),
                               child: Text(l10n.speechStop),
                             ),
                             if (_audio.seekable) ...[
@@ -471,7 +539,7 @@ class _SpeechDialogState extends State<SpeechDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _publishing ? null : () => Navigator.pop(context),
+          onPressed: _publishing ? null : _dismiss,
           child: Text(l10n.close),
         ),
         if (job != null) ...[
@@ -486,7 +554,9 @@ class _SpeechDialogState extends State<SpeechDialog> {
           ),
         ] else if (result == null)
           FilledButton(
-            onPressed: !available || _plan.passages.isEmpty ? null : _generate,
+            onPressed: !available || _plan.passages.isEmpty
+                ? null
+                : _startGeneration,
             child: Text(title),
           )
         else if (!widget.readAloud && !widget.sample) ...[

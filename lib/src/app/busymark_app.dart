@@ -7,6 +7,7 @@ import '../nextcloud_notes/application/notes_navigation.dart';
 import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
 import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../references/reference_controller.dart';
+import '../speech/speech_dialog.dart';
 import 'dart:async';
 import '../core/debug_log.dart';
 import '../editor/editor_text_context_menu.dart';
@@ -956,7 +957,11 @@ class _BusyMarkWindowLifecycleState
             beginClose: beginClose,
           );
         },
-        finalCloseGuard: () async => _closing || await beginClose(),
+        finalCloseGuard: () async {
+          if (!_closing && !await beginClose()) return false;
+          await settleSpeechDialogsForWindowClose();
+          return true;
+        },
       );
     } finally {
       if (mounted && !_windowControlService.isClosing && settling) {
