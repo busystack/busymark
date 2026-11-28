@@ -59,12 +59,15 @@ void main() {
   testWidgets(
     'Insert Audio uses grouped controls and restores document focus',
     (tester) async {
+      await tester.binding.setSurfaceSize(const Size(520, 620));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       final focus = FocusNode();
       addTearDown(focus.dispose);
       final host = await mount(
         tester,
         locale: const Locale('en'),
         brightness: Brightness.light,
+        scale: 1.45,
         focus: focus,
       );
       focus.requestFocus();
@@ -81,6 +84,10 @@ void main() {
       expect(find.byType(BusyMarkDialogShell), findsOneWidget);
       expect(find.byType(BusyMarkGroupedList), findsNWidgets(2));
       expect(find.byType(BusyMarkActionRow), findsNWidgets(2));
+      expect(
+        tester.getSize(find.text(labels.audioCopyFile)).height,
+        greaterThan(36),
+      );
       expect(
         tester
             .widget<BusyMarkDialogButton>(action(labels.insertAudio))

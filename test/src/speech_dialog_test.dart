@@ -144,7 +144,7 @@ void main() {
     tester,
   ) async {
     final service = _ControlledSpeechService();
-    await tester.binding.setSurfaceSize(const Size(360, 540));
+    await tester.binding.setSurfaceSize(const Size(360, 460));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await _mount(
       tester,
@@ -152,6 +152,10 @@ void main() {
       sample: true,
       locale: const Locale('ar'),
       textScaler: TextScaler.linear(1.6),
+      planForScope: (scope) => _plan(
+        scope,
+        text: List.filled(40, 'A passage long enough to scroll.').join(' '),
+      ),
     );
     final l10n = _l10n(tester);
     expect(
@@ -165,7 +169,12 @@ void main() {
     expect(service.requests, 1);
     service.completion.complete(_result());
     await tester.pumpAndSettle();
-    expect(find.byType(BusyMarkAudioTransport), findsOneWidget);
+    final play = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkCompactIconButton &&
+          widget.semanticLabel == l10n.audioPlay,
+    );
+    expect(play.hitTestable(), findsOneWidget);
     expect(_action(l10n.speechSaveAudio), findsNothing);
     expect(_action(l10n.insertAudio), findsNothing);
     expect(tester.takeException(), isNull);
@@ -269,7 +278,7 @@ Future<void> _mount(
   await tester.pumpAndSettle();
 }
 
-NarrationPlan _plan(NarrationScope scope) => NarrationPlan(
+NarrationPlan _plan(NarrationScope scope, {String? text}) => NarrationPlan(
   documentId: 'fixture-document',
   providerId: 'fixture-provider',
   revision: 1,
@@ -278,7 +287,10 @@ NarrationPlan _plan(NarrationScope scope) => NarrationPlan(
   passages: [
     (
       speech: SpeechSegment(
-        scope == NarrationScope.section ? 'Section only.' : 'Whole draft.',
+        text ??
+            (scope == NarrationScope.section
+                ? 'Section only.'
+                : 'Whole draft.'),
       ),
       source: null,
     ),

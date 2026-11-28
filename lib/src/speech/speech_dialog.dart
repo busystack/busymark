@@ -422,6 +422,43 @@ class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
       title: title,
       maxWidth: BusyMarkSizes.dialogWide,
       closable: idle,
+      footer: result != null
+          ? BusyMarkGroupedSurface(
+              child: Padding(
+                padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: BusyMarkSpacing.xs,
+                  children: [
+                    Text(
+                      l10n.speechGenerated,
+                      style: busyMarkSectionHeaderStyle(context),
+                    ),
+                    _buildPlayback(context, result),
+                  ],
+                ),
+              ),
+            )
+          : job != null
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: BusyMarkSpacing.xs,
+              children: [
+                BusyMarkProgressIndicator(
+                  value: _total == 0
+                      ? null
+                      : (_finished / _total).clamp(0.0, 1.0),
+                  semanticsLabel: l10n.speechProgress,
+                ),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(l10n.speechSynthesizing),
+                ),
+              ],
+            )
+          : null,
       body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -463,6 +500,8 @@ class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
                 kind: BusyMarkStatusKind.warning,
               ),
           ],
+          if (result != null && widget.options.backend.isCloud)
+            Text(_usageLabel(result.usage)),
           if (_system && widget.readAloud && job == null)
             BusyMarkStatusBox(
               message: l10n.speechUnknownLocality,
@@ -477,6 +516,14 @@ class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
             BusyMarkStatusBox(
               message: l10n.speechReadComplete,
               kind: BusyMarkStatusKind.success,
+            ),
+          if (_error case final error?)
+            Semantics(
+              liveRegion: true,
+              child: BusyMarkStatusBox(
+                message: error,
+                kind: BusyMarkStatusKind.error,
+              ),
             ),
           BusyMarkGroupedSurface(
             child: Padding(
@@ -495,34 +542,15 @@ class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
           if (_plan.omissions.isNotEmpty)
             BusyMarkGroupedList(
               title: l10n.speechOmissions,
-              children: [Text(_plan.omissions.map(_omission).join(' · '))],
-            ),
-          if (job != null) ...[
-            BusyMarkProgressIndicator(
-              value: _total == 0 ? null : (_finished / _total).clamp(0.0, 1.0),
-              semanticsLabel: l10n.speechProgress,
-            ),
-            Semantics(liveRegion: true, child: Text(l10n.speechSynthesizing)),
-          ],
-          if (_error case final error?)
-            Semantics(
-              liveRegion: true,
-              child: BusyMarkStatusBox(
-                message: error,
-                kind: BusyMarkStatusKind.error,
-              ),
-            ),
-          if (result != null)
-            BusyMarkGroupedList(
-              title: l10n.speechGenerated,
-              description: widget.options.backend.isCloud
-                  ? _usageLabel(result.usage)
-                  : null,
-              filled: true,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                  child: _buildPlayback(context, result),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BusyMarkSpacing.xs,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(_plan.omissions.map(_omission).join(' · ')),
+                  ),
                 ),
               ],
             ),

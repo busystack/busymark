@@ -4067,8 +4067,8 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ));
-    final interactive =
-        widget.enabled && (widget.onTap != null || widget.onActivated != null);
+    final hasAction = widget.onTap != null || widget.onActivated != null;
+    final interactive = widget.enabled && hasAction;
     final row = BusyMarkListTile.square(
       leading: widget.leading,
       title:
@@ -4102,13 +4102,16 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
             child: row,
           );
 
+    final semanticRow = hasAction
+        ? Semantics(button: true, enabled: widget.enabled, child: trackedRow)
+        : trackedRow;
     if (widget.enabled || widget.tooltip == null) {
-      return trackedRow;
+      return semanticRow;
     }
 
     return Tooltip(
       message: widget.tooltip!,
-      child: Opacity(opacity: 0.6, child: IgnorePointer(child: trackedRow)),
+      child: Opacity(opacity: 0.6, child: IgnorePointer(child: semanticRow)),
     );
   }
 
@@ -4801,6 +4804,7 @@ class BusyMarkDialogShell extends StatelessWidget {
     this.expanded = false,
     this.maxWidth = BusyMarkSizes.dialog,
     this.header,
+    this.footer,
     this.actions = const [],
     this.closable = true,
   });
@@ -4811,6 +4815,9 @@ class BusyMarkDialogShell extends StatelessWidget {
   final bool expanded;
   final double maxWidth;
   final Widget? header;
+
+  /// Content that stays visible between the scrollable body and the actions.
+  final Widget? footer;
   final List<Widget> actions;
   final bool closable;
 
@@ -4857,6 +4864,16 @@ class BusyMarkDialogShell extends StatelessWidget {
                           children: [if (body != null) body!, ...children],
                         ),
                       ),
+                    ),
+                  if (footer != null)
+                    Padding(
+                      padding: EdgeInsetsDirectional.fromSTEB(
+                        BusyMarkSpacing.lg,
+                        0,
+                        BusyMarkSpacing.lg,
+                        actions.isEmpty ? BusyMarkSpacing.lg : 0,
+                      ),
+                      child: footer,
                     ),
                   if (actions.isNotEmpty)
                     Padding(

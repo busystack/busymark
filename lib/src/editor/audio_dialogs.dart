@@ -73,12 +73,14 @@ class _InsertAudioDialogState extends State<InsertAudioDialog> {
           children: [
             BusyMarkActionRow(
               title: l10n.audioCopyFile,
+              titleWidget: Text(l10n.audioCopyFile),
               leading: const Icon(BusyMarkGlyphs.audioFile),
               onTap: () => Navigator.pop(context, const AudioInsertion.file()),
             ),
             if (widget.canLinkFile)
               BusyMarkActionRow(
                 title: l10n.audioLinkFile,
+                titleWidget: Text(l10n.audioLinkFile),
                 leading: const Icon(BusyMarkGlyphs.link),
                 onTap: () => Navigator.pop(
                   context,

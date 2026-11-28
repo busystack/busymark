@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -294,7 +295,18 @@ cat sample.wav
       await tester.enterText(key, 'speech-test-placeholder');
       final storeKey = _action(l10n.speechStoreKey);
       await tester.ensureVisible(storeKey);
-      await tester.tap(storeKey);
+      final semantics = tester.ensureSemantics();
+      try {
+        await tester.pump();
+        final storeButton = find.bySemanticsLabel(l10n.speechStoreKey);
+        expect(storeButton, findsOneWidget);
+        final data = tester.getSemantics(storeButton).getSemanticsData();
+        expect(data.hasFlag(ui.SemanticsFlag.isButton), isTrue);
+        expect(data.hasAction(ui.SemanticsAction.tap), isTrue);
+        tester.semantics.tap(find.semantics.byLabel(l10n.speechStoreKey));
+      } finally {
+        semantics.dispose();
+      }
       await tester.pumpAndSettle();
       final status = find.byType(BusyMarkStatusBox);
       expect(
