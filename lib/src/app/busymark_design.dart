@@ -1257,6 +1257,8 @@ class BusyMarkCompactIconButton extends StatelessWidget {
     this.glyphSize = BusyMarkSizes.compactIcon,
     this.foregroundColor,
     this.focusNode,
+    this.selected,
+    this.semanticLabel,
   });
 
   final String tooltip;
@@ -1266,11 +1268,20 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   final double glyphSize;
   final Color? foregroundColor;
   final FocusNode? focusNode;
+  final bool? selected;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final semanticStyle = ButtonStyle(
+      backgroundColor: selected == true
+          ? WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.disabled)
+                  ? colors.disabledControl
+                  : colors.controlActive,
+            )
+          : null,
       foregroundColor: foregroundColor == null
           ? null
           : WidgetStateProperty.resolveWith((states) {
@@ -1280,10 +1291,11 @@ class BusyMarkCompactIconButton extends StatelessWidget {
               return foregroundColor;
             }),
     );
-    final button = YaruIconButton(
+    Widget button = YaruIconButton(
       tooltip: tooltip,
       icon: Icon(
         icon,
+        semanticLabel: semanticLabel,
         size: glyphSize,
         color: onPressed == null ? colors.disabledForeground : foregroundColor,
       ),
@@ -1295,6 +1307,9 @@ class BusyMarkCompactIconButton extends StatelessWidget {
       focusNode: focusNode,
       onPressed: onPressed,
     );
+    if (selected != null) {
+      button = Semantics(selected: selected, child: button);
+    }
     return YaruTheme.maybeOf(context)?.focusBorders == true
         ? BusyMarkFocusIndicator(
             borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
@@ -1302,6 +1317,103 @@ class BusyMarkCompactIconButton extends StatelessWidget {
           )
         : button;
   }
+}
+
+/// A continuous or stepped range control using the desktop focus convention.
+class BusyMarkRangeSlider extends StatelessWidget {
+  const BusyMarkRangeSlider({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.min = 0,
+    this.max = 1,
+    this.divisions,
+    this.formatValue,
+    this.compact = false,
+  });
+
+  final String label;
+  final double value;
+  final ValueChanged<double>? onChanged;
+  final double min;
+  final double max;
+  final int? divisions;
+  final String Function(double)? formatValue;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget control = Slider(
+      value: value,
+      min: min,
+      max: max,
+      divisions: divisions,
+      label: formatValue?.call(value),
+      semanticFormatterCallback: formatValue,
+      onChanged: onChanged,
+      padding: compact
+          ? const EdgeInsetsDirectional.symmetric(
+              horizontal: BusyMarkSpacing.sm,
+            )
+          : null,
+    );
+    if (compact) {
+      control = SizedBox(
+        height: BusyMarkSizes.compactIconButton,
+        child: SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: BusyMarkSpacing.xxs,
+            thumbShape: const RoundSliderThumbShape(
+              enabledThumbRadius: BusyMarkSpacing.headerInset,
+            ),
+            overlayShape: const RoundSliderOverlayShape(
+              overlayRadius: BusyMarkSpacing.smPlus,
+            ),
+          ),
+          child: control,
+        ),
+      );
+    }
+    return BusyMarkFocusIndicator(
+      enabled:
+          onChanged != null &&
+          YaruTheme.maybeOf(context)?.focusBorders != false,
+      borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+      child: Semantics(label: label, child: control),
+    );
+  }
+}
+
+/// Determinate or indeterminate progress for dialogs and compact controls.
+class BusyMarkProgressIndicator extends StatelessWidget {
+  const BusyMarkProgressIndicator({
+    super.key,
+    this.value,
+    this.semanticsLabel,
+    this.compact = false,
+  });
+
+  final double? value;
+  final String? semanticsLabel;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => compact
+      ? SizedBox.square(
+          dimension: BusyMarkSizes.iconSm,
+          child: CircularProgressIndicator(
+            value: value,
+            semanticsLabel: semanticsLabel,
+            strokeWidth: BusyMarkStroke.hairline * 2,
+          ),
+        )
+      : LinearProgressIndicator(
+          value: value,
+          semanticsLabel: semanticsLabel,
+          minHeight: BusyMarkSpacing.xs,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+        );
 }
 
 /// Opens a header menu as soon as its trigger has been laid out.

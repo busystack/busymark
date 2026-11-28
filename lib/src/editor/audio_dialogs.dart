@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../markdown/audio_media.dart';
@@ -52,50 +53,56 @@ class _InsertAudioDialogState extends State<InsertAudioDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return AlertDialog(
-      title: Text(l10n.insertAudio),
-      content: SizedBox(
-        width: 480,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () =>
-                    Navigator.pop(context, const AudioInsertion.file()),
-                icon: const Icon(BusyMarkGlyphs.audioFile),
-                label: Text(l10n.audioCopyFile),
-              ),
-              if (widget.canLinkFile)
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(
-                    context,
-                    const AudioInsertion.file(link: true),
-                  ),
-                  icon: const Icon(BusyMarkGlyphs.link),
-                  label: Text(l10n.audioLinkFile),
+    return BusyMarkDialogShell(
+      title: l10n.insertAudio,
+      maxWidth: BusyMarkSizes.dialogNarrow,
+      children: [
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkActionRow(
+              title: l10n.audioCopyFile,
+              leading: const Icon(BusyMarkGlyphs.audioFile),
+              onTap: () => Navigator.pop(context, const AudioInsertion.file()),
+            ),
+            if (widget.canLinkFile)
+              BusyMarkActionRow(
+                title: l10n.audioLinkFile,
+                leading: const Icon(BusyMarkGlyphs.link),
+                onTap: () => Navigator.pop(
+                  context,
+                  const AudioInsertion.file(link: true),
                 ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _url,
-                decoration: InputDecoration(
-                  labelText: l10n.audioUrl,
-                  errorText: _error,
-                ),
-                onChanged: (_) => setState(() => _error = null),
-                onSubmitted: (_) => _insertUrl(),
               ),
-            ],
-          ),
+          ],
         ),
-      ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkGroupedTextEntry(
+              label: l10n.audioUrl,
+              controller: _url,
+              errorText: _error,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              enableSuggestions: false,
+              onChanged: (_) => setState(() => _error = null),
+              onSubmitted: (_) => _insertUrl(),
+            ),
+          ],
+        ),
+      ],
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: l10n.cancel,
           onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
         ),
-        FilledButton(onPressed: _insertUrl, child: Text(l10n.insertAudio)),
+        BusyMarkDialogButton(
+          label: l10n.insertAudio,
+          onPressed: _insertUrl,
+          suggested: true,
+        ),
       ],
     );
   }
@@ -145,51 +152,51 @@ class _AudioPropertiesDialogState extends State<AudioPropertiesDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return AlertDialog(
-      title: Text(l10n.audioProperties),
-      content: SizedBox(
-        width: 570,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _markup,
-                minLines: 3,
-                maxLines: 10,
-                decoration: InputDecoration(
-                  labelText: l10n.audioMarkup,
-                  errorText: _error,
-                ),
-                onChanged: (_) => setState(() => _error = null),
+    return BusyMarkDialogShell(
+      title: l10n.audioProperties,
+      maxWidth: BusyMarkSizes.dialogWide,
+      children: [
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkGroupedTextEntry(
+              label: l10n.audioMarkup,
+              controller: _markup,
+              minLines: 3,
+              maxLines: 10,
+              errorText: _error,
+              autocorrect: false,
+              enableSuggestions: false,
+              onChanged: (_) => setState(() => _error = null),
+            ),
+            if (widget.localPath != null) ...[
+              BusyMarkActionRow(
+                title: l10n.audioExternalOpen,
+                onTap: () => unawaited(_open(false)),
               ),
-              if (widget.localPath != null)
-                Wrap(
-                  children: [
-                    TextButton(
-                      onPressed: () => unawaited(_open(false)),
-                      child: Text(l10n.audioExternalOpen),
-                    ),
-                    TextButton(
-                      onPressed: () => unawaited(_open(true)),
-                      child: Text(l10n.audioShowFolder),
-                    ),
-                  ],
-                ),
+              BusyMarkActionRow(
+                title: l10n.audioShowFolder,
+                onTap: () => unawaited(_open(true)),
+              ),
             ],
-          ),
+          ],
         ),
-      ),
+      ],
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: l10n.cancel,
           onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
         ),
-        TextButton(
+        BusyMarkDialogButton(
+          label: l10n.audioRemove,
           onPressed: () => Navigator.pop(context, ''),
-          child: Text(l10n.audioRemove),
+          destructive: true,
         ),
-        FilledButton(onPressed: _apply, child: Text(l10n.apply)),
+        BusyMarkDialogButton(
+          label: l10n.apply,
+          onPressed: _apply,
+          suggested: true,
+        ),
       ],
     );
   }

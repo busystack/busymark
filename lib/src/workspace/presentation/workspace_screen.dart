@@ -9663,8 +9663,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         .read(appSettingsControllerProvider)
         .speech
         .audioDirectory;
-    final choice = await showDialog<AudioInsertion>(
-      context: context,
+    final choice = await showBusyMarkModalDialog<AudioInsertion>(
+      context,
       builder: (_) => InsertAudioDialog(
         canLinkFile: !buffer.isRemote && buffer.filePath != null,
       ),
@@ -9761,8 +9761,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             }
           }();
     if (!mounted || !_audioTargetIsCurrent(buffer, workspace)) return;
-    final changed = await showDialog<String>(
-      context: context,
+    final changed = await showBusyMarkModalDialog<String>(
+      context,
       builder: (_) => AudioPropertiesDialog(audio: audio, localPath: local),
     );
     if (changed == null) return;
@@ -9822,53 +9822,50 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         : p.basename(preferences.outputName);
     final mayInsert =
         !readAloud && busyMarkCanUseDocumentSpeech(state, inserting: true);
-    await showDialog<void>(
-      context: context,
-      builder: (_) => SpeechDialog(
-        options: preferences.options,
-        planForScope: (scope) => const NarrationProjection().project(
-          document: document,
-          capturedSource: buffer.text,
-          documentId: buffer.id,
-          providerId: buffer.remoteNote?.accountId ?? 'filesystem',
-          revision: buffer.revision,
-          scope: scope,
-          anchor: selection.selection.extentOffset,
-          selectionStart: selection.selection.start,
-          selectionEnd: selection.selection.end,
-          rules: preferences.narration,
-          language: preferences.options.language,
-          completedTask: l10n.speechTaskDone,
-          incompleteTask: l10n.speechTaskOpen,
-        ),
-        initialScope: outlineTarget != null
-            ? NarrationScope.section
-            : canSelect
-            ? NarrationScope.selection
-            : NarrationScope.document,
-        scopes: scopes,
-        suggestedFilename: p.setExtension(outputName, '.wav'),
-        readAloud: readAloud,
-        insert: mayInsert
-            ? (plan, bytes) => _publishAudio(
-                workspace,
-                buffer,
-                (service) => service.ingestAudioBytes(
-                  bytes: bytes,
-                  suggestedFileName: p.setExtension(outputName, '.wav'),
-                  request: _audioIngestionRequest(
-                    workspace,
-                    buffer,
-                    preferences.audioDirectory,
-                  ),
-                  origin: AssetIngestionOrigin.speechGeneration,
-                ),
-                offset: plan.insertionOffset,
-                accessibleName:
-                    '${l10n.speechGenerated} · ${buffer.displayName}',
-              )
-            : null,
+    await showSpeechNarrationDialog(
+      context,
+      options: preferences.options,
+      planForScope: (scope) => const NarrationProjection().project(
+        document: document,
+        capturedSource: buffer.text,
+        documentId: buffer.id,
+        providerId: buffer.remoteNote?.accountId ?? 'filesystem',
+        revision: buffer.revision,
+        scope: scope,
+        anchor: selection.selection.extentOffset,
+        selectionStart: selection.selection.start,
+        selectionEnd: selection.selection.end,
+        rules: preferences.narration,
+        language: preferences.options.language,
+        completedTask: l10n.speechTaskDone,
+        incompleteTask: l10n.speechTaskOpen,
       ),
+      initialScope: outlineTarget != null
+          ? NarrationScope.section
+          : canSelect
+          ? NarrationScope.selection
+          : NarrationScope.document,
+      scopes: scopes,
+      suggestedFilename: p.setExtension(outputName, '.wav'),
+      readAloud: readAloud,
+      insert: mayInsert
+          ? (plan, bytes) => _publishAudio(
+              workspace,
+              buffer,
+              (service) => service.ingestAudioBytes(
+                bytes: bytes,
+                suggestedFileName: p.setExtension(outputName, '.wav'),
+                request: _audioIngestionRequest(
+                  workspace,
+                  buffer,
+                  preferences.audioDirectory,
+                ),
+                origin: AssetIngestionOrigin.speechGeneration,
+              ),
+              offset: plan.insertionOffset,
+              accessibleName: '${l10n.speechGenerated} · ${buffer.displayName}',
+            )
+          : null,
     );
   }
 

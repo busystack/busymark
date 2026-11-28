@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/editor/audio_authoring.dart';
 import 'package:busymark/src/editor/document_audio_view.dart';
@@ -114,6 +116,9 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(requests, isEmpty);
+        expect(find.byType(BusyMarkModalShortcutBoundary), findsOneWidget);
+        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(find.byType(BusyMarkDialogButton), findsNWidgets(2));
         await tester.runAsync(
           () => tester.tap(find.text('Allow in this document')),
         );

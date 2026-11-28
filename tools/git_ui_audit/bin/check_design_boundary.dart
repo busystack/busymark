@@ -8,6 +8,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../lib/material_boundary.dart';
+
 // Only real application mounting/lifetime sites may consume Git UI contracts.
 // These are exact symbol identities, not a prefix/name exemption for wrappers.
 const mounts = <String, Set<String>>{
@@ -124,7 +126,7 @@ class Boundary extends RecursiveAstVisitor<void> {
 List<String> auditUnit(String relative, CompilationUnit unit) {
   final visitor = Boundary(relative);
   unit.accept(visitor);
-  final errors = [...visitor.errors];
+  final errors = [...visitor.errors, ...auditMaterialControls(relative, unit)];
   // Imports and re-exports with no use must also fail. Exact mount permission
   // still checks every resolved symbol; it never permits generic primitives.
   for (final directive in unit.directives.whereType<UriBasedDirective>()) {
@@ -228,6 +230,15 @@ Future<void> main(List<String> args) async {
         'good': "import 'package:busymark/src/app/busymark_design.dart'; const good = BusyMarkSidebarHeader(title: 'Files');",
         'decoration_style': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; final style = g.gitTreeDecorationStyle;",
         'decoration_data': "import 'package:busystack_git_flutter/busystack_git_flutter.dart' as g; import 'package:busymark/src/git/application/shared_git_decorations.dart'; g.GitTreeDecoration? decoration; g.GitFileTreeDecorations? decorations; final adapt = busyMarkFileTreeDecorations;",
+        'material_direct': "import 'package:material_ui/material_ui.dart' as m; Object play() => m.Slider(value: 0.5, onChanged: (_) {});",
+        'material_alias': "import 'package:material_ui/material_ui.dart' as m; typedef Renamed = m.TextButton; const bad = Renamed.new;",
+        'material_route': "import 'package:material_ui/material_ui.dart' as m; final bad = m.showDialog<void>;",
+        'material_wrapper': "import 'package:material_ui/material_ui.dart' as m; Object disguised() => m.AlertDialog();",
+        'material_subclass': "import 'package:material_ui/material_ui.dart' as m; class Disguised extends m.TextButton { Disguised() : super(onPressed: null, child: const m.Text('Bad')); }",
+        'material_good': "import 'package:busymark/src/app/busymark_design.dart'; const good = BusyMarkRangeSlider(label: 'Volume', value: .5, onChanged: null);",
+        'material_shadowed': 'class TextButton { const TextButton(); } const local = TextButton();',
+        'legacy_material_one': "import 'package:material_ui/material_ui.dart' as m; class SearchSidebar { Object build() => m.TextButton(onPressed: null, child: const m.Text('Existing')); }",
+        'legacy_material_two': "import 'package:material_ui/material_ui.dart' as m; class SearchSidebar { Object build() => [m.TextButton(onPressed: null, child: const m.Text('Existing')), m.TextButton(onPressed: null, child: const m.Text('Extra'))]; }",
       };
       final files = <String, File>{};
       for (final entry in fixtures.entries) {
@@ -242,6 +253,11 @@ Future<void> main(List<String> args) async {
         'export_all',
         'helper',
         'adapter',
+        'material_direct',
+        'material_alias',
+        'material_route',
+        'material_wrapper',
+        'material_subclass',
       ]) {
         if (!errors.any((e) => e.contains('/$key.dart:'))) {
           throw StateError('Violation escaped: $key');
@@ -250,6 +266,11 @@ Future<void> main(List<String> args) async {
       if (errors.any((e) => e.contains('/good.dart:'))) {
         throw StateError('BusyMark design rejected');
       }
+      for (final key in ['material_good', 'material_shadowed']) {
+        if (errors.any((e) => e.contains('/$key.dart:'))) {
+          throw StateError('Non-Material usage rejected: $key');
+        }
+      }
       if (errors.any((e) => e.startsWith('Cannot resolve'))) {
         throw StateError('Adversarial fixture failed to resolve: $errors');
       }
@@ -257,26 +278,37 @@ Future<void> main(List<String> args) async {
         includedPaths: [folder.absolute.path],
       );
       try {
+        Future<List<String>> checkFixture(String relative, String key) async {
+          final path = files[key]!.absolute.path;
+          final result = await collection
+              .contextFor(path)
+              .currentSession
+              .getResolvedUnit(path);
+          if (result is! ResolvedUnitResult ||
+              result.diagnostics.any(
+                (d) => d.diagnosticCode.severity == DiagnosticSeverity.ERROR,
+              )) {
+            throw StateError('Cannot resolve mount fixture: $key');
+          }
+          return auditUnit(relative, result.unit);
+        }
+
+        const design = 'src/app/busymark_design.dart';
+        const similar = 'src/editor/renamed/busymark_design.dart';
+        if ((await checkFixture(design, 'material_direct')).isNotEmpty ||
+            (await checkFixture(similar, 'material_direct')).isEmpty) {
+          throw StateError('Material design ownership escaped its exact file');
+        }
+        const legacy = 'src/search/search_sidebar.dart';
+        if ((await checkFixture(legacy, 'legacy_material_one')).isNotEmpty ||
+            (await checkFixture(legacy, 'legacy_material_two')).length != 1) {
+          throw StateError('Legacy raw control allowance is not bounded');
+        }
         for (final entry in {
           'src/app/busymark_design.dart': 'decoration_style',
           'src/workspace/presentation/workspace_screen.dart': 'decoration_data',
         }.entries) {
-          Future<List<String>> checkFixture(String key) async {
-            final path = files[key]!.absolute.path;
-            final result = await collection
-                .contextFor(path)
-                .currentSession
-                .getResolvedUnit(path);
-            if (result is! ResolvedUnitResult ||
-                result.diagnostics.any(
-                  (d) => d.diagnosticCode.severity == DiagnosticSeverity.ERROR,
-                )) {
-              throw StateError('Cannot resolve mount fixture: $key');
-            }
-            return auditUnit(entry.key, result.unit);
-          }
-
-          if ((await checkFixture(entry.value)).isNotEmpty) {
+          if ((await checkFixture(entry.key, entry.value)).isNotEmpty) {
             throw StateError('Files VCS decoration rejected at ${entry.key}');
           }
           for (final key in [
@@ -286,11 +318,12 @@ Future<void> main(List<String> args) async {
             'export_all',
             'helper',
           ]) {
-            if ((await checkFixture(key)).isEmpty) {
+            if ((await checkFixture(entry.key, key)).isEmpty) {
               throw StateError('Git primitive escaped at ${entry.key}: $key');
             }
           }
           if ((await checkFixture(
+            entry.key,
             entry.value == 'decoration_style'
                 ? 'decoration_data'
                 : 'decoration_style',

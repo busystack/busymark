@@ -6,6 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app/busymark_design.dart';
+import '../app/busymark_dialogs.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../app/save_destination_picker.dart';
@@ -16,7 +18,7 @@ import 'narration.dart';
 import 'speech.dart';
 import 'speech_usage.dart';
 
-final _speechDialogs = <_SpeechDialogState>{};
+final _speechDialogs = <_SpeechNarrationDialogState>{};
 
 Future<void> settleSpeechDialogsForWindowClose() async {
   await Future.wait([
@@ -43,8 +45,34 @@ String _scopeLabel(BuildContext context, NarrationScope scope) =>
       NarrationScope.document => context.l10n.speechDocument,
     };
 
-class SpeechDialog extends StatefulWidget {
-  const SpeechDialog({
+Future<void> showSpeechNarrationDialog(
+  BuildContext context, {
+  required SpeechOptions options,
+  required NarrationPlan Function(NarrationScope) planForScope,
+  required NarrationScope initialScope,
+  required List<NarrationScope> scopes,
+  required String suggestedFilename,
+  bool readAloud = false,
+  bool sample = false,
+  Future<bool> Function(NarrationPlan, Uint8List)? insert,
+  SpeechService? service,
+}) => showBusyMarkModalDialog<void>(
+  context,
+  builder: (_) => SpeechNarrationDialog(
+    options: options,
+    planForScope: planForScope,
+    initialScope: initialScope,
+    scopes: scopes,
+    suggestedFilename: suggestedFilename,
+    readAloud: readAloud,
+    sample: sample,
+    insert: insert,
+    service: service,
+  ),
+);
+
+class SpeechNarrationDialog extends StatefulWidget {
+  const SpeechNarrationDialog({
     super.key,
     required this.options,
     required this.planForScope,
@@ -68,10 +96,10 @@ class SpeechDialog extends StatefulWidget {
   final SpeechService? service;
 
   @override
-  State<SpeechDialog> createState() => _SpeechDialogState();
+  State<SpeechNarrationDialog> createState() => _SpeechNarrationDialogState();
 }
 
-class _SpeechDialogState extends State<SpeechDialog> {
+class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
   final _audio = AudioPlayback.shared;
   late final _service = widget.service ?? SpeechService();
   late var _scope = widget.initialScope;
@@ -123,7 +151,9 @@ class _SpeechDialogState extends State<SpeechDialog> {
 
   Future<void> _dismiss() async {
     if (_publishing || _retirement != null) return;
-    await _retire();
+    final retirement = _retire();
+    setState(() {});
+    await retirement;
     if (mounted && ModalRoute.of(context)?.isCurrent == true) {
       Navigator.pop(context);
     }
@@ -148,13 +178,17 @@ class _SpeechDialogState extends State<SpeechDialog> {
   }
 
   void _startGeneration() {
-    if (_retirement != null) return;
+    if (_retirement != null ||
+        _job != null ||
+        _result != null ||
+        _plan.passages.isEmpty) {
+      return;
+    }
     _synthesis = _generate();
     unawaited(_synthesis);
   }
 
   Future<void> _generate() async {
-    if (_job != null || _result != null || _plan.passages.isEmpty) return;
     final job = AiCancellationToken();
     final plan = _plan;
     setState(() {
@@ -212,6 +246,21 @@ class _SpeechDialogState extends State<SpeechDialog> {
       await job.dispose();
       if (mounted && identical(_job, job)) setState(() => _job = null);
     }
+  }
+
+  void _selectScope(NarrationScope scope) {
+    if (!mounted ||
+        _retirement != null ||
+        _job != null ||
+        _result != null ||
+        scope == _scope) {
+      return;
+    }
+    setState(() {
+      _scope = scope;
+      _plan = widget.planForScope(scope);
+      _error = null;
+    });
   }
 
   void _progress(AiCancellationToken job, int finished, int total) {
@@ -362,65 +411,77 @@ class _SpeechDialogState extends State<SpeechDialog> {
     final l10n = context.l10n;
     final result = _result;
     final job = _job;
+    final idle = !_publishing && _retirement == null;
     final available = widget.readAloud || widget.options.backend.supportsFiles;
     final title = widget.sample
         ? l10n.speechSample
         : widget.readAloud
         ? l10n.readAloud
         : l10n.generateAudio;
-    return AlertDialog(
-      title: Text(title),
-      content: SizedBox(
-        width: 570,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!widget.sample)
-                DropdownButtonFormField<NarrationScope>(
-                  initialValue: _scope,
-                  decoration: InputDecoration(labelText: l10n.speechScope),
-                  items: [
-                    for (final scope in widget.scopes)
-                      DropdownMenuItem(
-                        value: scope,
-                        child: Text(_scopeLabel(context, scope)),
-                      ),
-                  ],
-                  onChanged: job != null || result != null
-                      ? null
-                      : (scope) {
-                          if (scope == null) return;
-                          setState(() {
-                            _scope = scope;
-                            _plan = widget.planForScope(scope);
-                            _error = null;
-                          });
-                        },
+    return BusyMarkDialogShell(
+      title: title,
+      maxWidth: BusyMarkSizes.dialogWide,
+      closable: idle,
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: BusyMarkSpacing.md,
+        children: [
+          if (!widget.sample)
+            BusyMarkGroupedList(
+              filled: true,
+              children: [
+                BusyMarkComboRow<NarrationScope>(
+                  title: l10n.speechScope,
+                  values: widget.scopes,
+                  selected: _scope,
+                  labelFor: (scope) => _scopeLabel(context, scope),
+                  enabled: idle && job == null && result == null,
+                  onSelected: _selectScope,
                 ),
-              const SizedBox(height: 12),
-              Text(
-                speechBackendLabel(context, widget.options.backend),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              if (widget.options.backend.isCloud && result == null) ...[
-                const SizedBox(height: 8),
-                Text(l10n.speechCloudConsent),
-                Text(l10n.speechInputCharacters(_plan.text.runes.length)),
-                if (speechPricingPage(widget.options.backend) case final uri?)
-                  TextButton(
-                    onPressed: () => unawaited(launchUrl(uri)),
-                    child: Text(l10n.speechProviderPricing),
-                  ),
-                if (_uncertainCloud) Text(l10n.speechBillingUncertain),
               ],
-              if (_system && widget.readAloud && job == null)
-                Text(l10n.speechUnknownLocality),
-              if (!available) Text(l10n.speechUnavailable),
-              if (_systemCompleted) Text(l10n.speechReadComplete),
-              const SizedBox(height: 12),
-              ConstrainedBox(
+            ),
+          Text(
+            speechBackendLabel(context, widget.options.backend),
+            style: busyMarkSectionHeaderStyle(context),
+          ),
+          if (widget.options.backend.isCloud && result == null) ...[
+            BusyMarkStatusBox(message: l10n.speechCloudConsent),
+            Text(l10n.speechInputCharacters(_plan.text.runes.length)),
+            if (speechPricingPage(widget.options.backend) case final uri?)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: BusyMarkPushButton.flat(
+                  context: context,
+                  onPressed: idle ? () => unawaited(launchUrl(uri)) : null,
+                  child: Text(l10n.speechProviderPricing),
+                ),
+              ),
+            if (_uncertainCloud)
+              BusyMarkStatusBox(
+                message: l10n.speechBillingUncertain,
+                kind: BusyMarkStatusKind.warning,
+              ),
+          ],
+          if (_system && widget.readAloud && job == null)
+            BusyMarkStatusBox(
+              message: l10n.speechUnknownLocality,
+              kind: BusyMarkStatusKind.warning,
+            ),
+          if (!available)
+            BusyMarkStatusBox(
+              message: l10n.speechUnavailable,
+              kind: BusyMarkStatusKind.warning,
+            ),
+          if (_systemCompleted)
+            BusyMarkStatusBox(
+              message: l10n.speechReadComplete,
+              kind: BusyMarkStatusKind.success,
+            ),
+          BusyMarkGroupedSurface(
+            child: Padding(
+              padding: const EdgeInsets.all(BusyMarkSpacing.md),
+              child: ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 230),
                 child: SingleChildScrollView(
                   primary: false,
@@ -429,145 +490,151 @@ class _SpeechDialogState extends State<SpeechDialog> {
                   ),
                 ),
               ),
-              if (_plan.omissions.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  l10n.speechOmissions,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                Text(_plan.omissions.map(_omission).join(' · ')),
-              ],
-              if (job != null) ...[
-                const SizedBox(height: 12),
-                LinearProgressIndicator(
-                  value: _total == 0 ? null : _finished / _total,
-                  semanticsLabel: l10n.speechProgress,
-                ),
-                Text(l10n.speechSynthesizing),
-              ],
-              if (_error case final error?) ...[
-                const SizedBox(height: 12),
-                Text(
-                  error,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ],
-              if (result != null) ...[
-                const SizedBox(height: 12),
-                Text(l10n.speechGenerated),
-                if (widget.options.backend.isCloud)
-                  Text(_usageLabel(result.usage)),
-                ListenableBuilder(
-                  listenable: _audio,
-                  builder: (context, _) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      BusyMarkAudioTransport(
-                        owner: this,
-                        label: l10n.speechGenerated,
-                        start: _play,
-                      ),
-                      if (widget.readAloud && _audio.owns(this))
-                        Wrap(
-                          children: [
-                            TextButton(
-                              onPressed: () => unawaited(_stopPlayback()),
-                              child: Text(l10n.speechStop),
-                            ),
-                            if (_audio.seekable) ...[
-                              IconButton(
-                                tooltip: l10n.speechPreviousSegment,
-                                icon: Icon(
-                                  BusyMarkGlyphs.previousSegment,
-                                  semanticLabel: l10n.speechPreviousSegment,
-                                ),
-                                onPressed: () {
-                                  final target =
-                                      result.segmentOffsets
-                                          .where(
-                                            (offset) =>
-                                                offset.inMilliseconds / 1000 <
-                                                _audio.position - 0.35,
-                                          )
-                                          .lastOrNull ??
-                                      Duration.zero;
-                                  unawaited(
-                                    _audio.seek(
-                                      this,
-                                      target.inMilliseconds / 1000,
-                                    ),
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                tooltip: l10n.speechNextSegment,
-                                icon: Icon(
-                                  BusyMarkGlyphs.nextSegment,
-                                  semanticLabel: l10n.speechNextSegment,
-                                ),
-                                onPressed: () {
-                                  final target = result.segmentOffsets
-                                      .where(
-                                        (offset) =>
-                                            offset.inMilliseconds / 1000 >
-                                            _audio.position + 0.1,
-                                      )
-                                      .firstOrNull;
-                                  if (target != null) {
-                                    unawaited(
-                                      _audio.seek(
-                                        this,
-                                        target.inMilliseconds / 1000,
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
-        ),
+          if (_plan.omissions.isNotEmpty)
+            BusyMarkGroupedList(
+              title: l10n.speechOmissions,
+              children: [Text(_plan.omissions.map(_omission).join(' · '))],
+            ),
+          if (job != null) ...[
+            BusyMarkProgressIndicator(
+              value: _total == 0 ? null : (_finished / _total).clamp(0.0, 1.0),
+              semanticsLabel: l10n.speechProgress,
+            ),
+            Semantics(liveRegion: true, child: Text(l10n.speechSynthesizing)),
+          ],
+          if (_error case final error?)
+            Semantics(
+              liveRegion: true,
+              child: BusyMarkStatusBox(
+                message: error,
+                kind: BusyMarkStatusKind.error,
+              ),
+            ),
+          if (result != null)
+            BusyMarkGroupedList(
+              title: l10n.speechGenerated,
+              description: widget.options.backend.isCloud
+                  ? _usageLabel(result.usage)
+                  : null,
+              filled: true,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+                  child: _buildPlayback(context, result),
+                ),
+              ],
+            ),
+        ],
       ),
       actions: [
-        TextButton(
-          onPressed: _publishing ? null : _dismiss,
-          child: Text(l10n.close),
+        BusyMarkDialogButton(
+          label: l10n.close,
+          onPressed: idle ? _dismiss : null,
         ),
         if (job != null) ...[
           if (_system && _total > 0)
-            TextButton(
-              onPressed: _toggleSystem,
-              child: Text(_systemPaused ? l10n.audioPlay : l10n.audioPause),
+            BusyMarkDialogButton(
+              label: _systemPaused ? l10n.audioPlay : l10n.audioPause,
+              onPressed: idle && !job.isCancelled ? _toggleSystem : null,
             ),
-          TextButton(
-            onPressed: job.isCancelled ? null : () => setState(job.cancel),
-            child: Text(_system ? l10n.speechStop : l10n.speechCancelJob),
+          BusyMarkDialogButton(
+            label: _system ? l10n.speechStop : l10n.speechCancelJob,
+            onPressed: !idle || job.isCancelled
+                ? null
+                : () => setState(job.cancel),
           ),
         ] else if (result == null)
-          FilledButton(
-            onPressed: !available || _plan.passages.isEmpty
-                ? null
-                : _startGeneration,
-            child: Text(title),
+          BusyMarkDialogButton(
+            label: title,
+            suggested: true,
+            onPressed: idle && available && _plan.passages.isNotEmpty
+                ? _startGeneration
+                : null,
           )
         else if (!widget.readAloud && !widget.sample) ...[
-          TextButton(
-            onPressed: _publishing ? null : _save,
-            child: Text(l10n.speechSaveAudio),
+          BusyMarkDialogButton(
+            label: l10n.speechSaveAudio,
+            suggested: widget.insert == null,
+            onPressed: idle ? _save : null,
           ),
           if (widget.insert != null)
-            FilledButton(
-              onPressed: _publishing ? null : _insert,
-              child: Text(l10n.insertAudio),
+            BusyMarkDialogButton(
+              label: l10n.insertAudio,
+              suggested: true,
+              onPressed: idle ? _insert : null,
             ),
         ],
       ],
+    );
+  }
+
+  Widget _buildPlayback(BuildContext context, SpeechResult result) {
+    final l10n = context.l10n;
+    return ListenableBuilder(
+      listenable: _audio,
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          BusyMarkAudioTransport(
+            owner: this,
+            label: l10n.speechGenerated,
+            start: _play,
+          ),
+          if (widget.readAloud && _audio.owns(this))
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                BusyMarkPushButton.flat(
+                  context: context,
+                  onPressed: () => unawaited(_stopPlayback()),
+                  child: Text(l10n.speechStop),
+                ),
+                if (_audio.seekable) ...[
+                  BusyMarkCompactIconButton(
+                    tooltip: l10n.speechPreviousSegment,
+                    semanticLabel: l10n.speechPreviousSegment,
+                    icon: BusyMarkGlyphs.previousSegment,
+                    onPressed: () {
+                      final target =
+                          result.segmentOffsets
+                              .where(
+                                (offset) =>
+                                    offset.inMilliseconds / 1000 <
+                                    _audio.position - 0.35,
+                              )
+                              .lastOrNull ??
+                          Duration.zero;
+                      unawaited(
+                        _audio.seek(this, target.inMilliseconds / 1000),
+                      );
+                    },
+                  ),
+                  BusyMarkCompactIconButton(
+                    tooltip: l10n.speechNextSegment,
+                    semanticLabel: l10n.speechNextSegment,
+                    icon: BusyMarkGlyphs.nextSegment,
+                    onPressed: () {
+                      final target = result.segmentOffsets
+                          .where(
+                            (offset) =>
+                                offset.inMilliseconds / 1000 >
+                                _audio.position + 0.1,
+                          )
+                          .firstOrNull;
+                      if (target != null) {
+                        unawaited(
+                          _audio.seek(this, target.inMilliseconds / 1000),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+        ],
+      ),
     );
   }
 }

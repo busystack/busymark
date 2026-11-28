@@ -1660,12 +1660,13 @@ class _EditorFontSizeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slider = Slider(
+    final slider = BusyMarkRangeSlider(
+      label: context.l10n.editorFontSize,
       value: value,
       min: 11,
       max: 24,
       divisions: 13,
-      label: value.toStringAsFixed(0),
+      formatValue: (value) => value.toStringAsFixed(0),
       onChanged: onChanged,
     );
     return LayoutBuilder(

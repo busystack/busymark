@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 
+import '../app/busymark_design.dart';
+import '../app/busymark_dialogs.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../assets/asset_limits.dart';
@@ -378,19 +380,23 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
             uri!.hasAuthority &&
             uri.userInfo.isEmpty) {
           if (!approvedOrigins.contains(uri.origin)) {
-            final allowed = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(context.l10n.audioRemotePermission),
-                content: Text(uri.origin),
+            final allowed = await showBusyMarkModalDialog<bool>(
+              context,
+              builder: (context) => BusyMarkDialogShell(
+                title: context.l10n.audioRemotePermission,
+                maxWidth: BusyMarkSizes.dialogNarrow,
+                children: [
+                  SelectableText(uri.origin, textDirection: TextDirection.ltr),
+                ],
                 actions: [
-                  TextButton(
+                  BusyMarkDialogButton(
+                    label: context.l10n.cancel,
                     onPressed: () => Navigator.pop(context, false),
-                    child: Text(context.l10n.cancel),
                   ),
-                  TextButton(
+                  BusyMarkDialogButton(
+                    label: context.l10n.audioAllowForDocument,
                     onPressed: () => Navigator.pop(context, true),
-                    child: Text(context.l10n.audioAllowForDocument),
+                    suggested: true,
                   ),
                 ],
               ),
@@ -503,7 +509,7 @@ class BusyMarkDocumentAudioView extends StatelessWidget {
     final localized = context.l10n;
     final name = audio.accessibleName ?? localized.audio;
     final edit = editable ? scope?.widget.editAudio : null;
-    Widget properties() => _audioButton(
+    Widget properties() => _audioControl(
       label: localized.audioProperties,
       onPressed: edit == null ? null : () => edit(audio),
       icon: BusyMarkGlyphs.audioFile,
@@ -527,6 +533,8 @@ class BusyMarkDocumentAudioView extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([scope.playback, status]),
       builder: (context, _) => Wrap(
+        spacing: BusyMarkSpacing.xs,
+        runSpacing: BusyMarkSpacing.xs,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           BusyMarkAudioTransport(
@@ -543,23 +551,17 @@ class BusyMarkDocumentAudioView extends StatelessWidget {
   }
 }
 
-Widget _audioButton({
+Widget _audioControl({
   required String label,
   required IconData icon,
   required VoidCallback? onPressed,
-  bool? isSelected,
-  IconData? selectedIcon,
-}) => Tooltip(
-  message: label,
-  excludeFromSemantics: true,
-  child: IconButton(
-    icon: Icon(icon, semanticLabel: label),
-    selectedIcon: selectedIcon == null
-        ? null
-        : Icon(selectedIcon, semanticLabel: label),
-    isSelected: isSelected,
-    onPressed: onPressed,
-  ),
+  bool? selected,
+}) => BusyMarkCompactIconButton(
+  tooltip: label,
+  semanticLabel: label,
+  icon: icon,
+  onPressed: onPressed,
+  selected: selected,
 );
 
 class BusyMarkAudioTransport extends StatelessWidget {
@@ -600,9 +602,11 @@ class BusyMarkAudioTransport extends StatelessWidget {
       container: true,
       label: label,
       child: Wrap(
+        spacing: BusyMarkSpacing.xs,
+        runSpacing: BusyMarkSpacing.xs,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          _audioButton(
+          _audioControl(
             label: busy && cancelOpening != null
                 ? localized.cancel
                 : failed
@@ -637,42 +641,50 @@ class BusyMarkAudioTransport extends StatelessWidget {
               audio.streamed &&
               cancelOpening != null &&
               (running || state == AudioPlaybackState.paused))
-            _audioButton(
+            _audioControl(
               label: localized.cancel,
               icon: BusyMarkGlyphs.stopAudio,
               onPressed: () => unawaited(cancelOpening!()),
             ),
           if (busy)
             const Padding(
-              padding: EdgeInsets.all(6),
-              child: SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              padding: EdgeInsets.all(BusyMarkSpacing.xs),
+              child: BusyMarkProgressIndicator(compact: true),
             ),
           if (failed)
-            Text(
-              localized.audioPlaybackFailure,
-              style: Theme.of(context).textTheme.bodySmall,
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: BusyMarkSizes.dialogNarrow,
+              ),
+              child: Semantics(
+                liveRegion: true,
+                child: BusyMarkStatusBox(
+                  message: localized.audioPlaybackFailure,
+                  kind: BusyMarkStatusKind.error,
+                ),
+              ),
             )
           else ...[
             Text(
               '${_time(current ? audio.position : 0)} / ${duration == null ? '—' : _time(duration)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: BusyMarkSurfaceColors.of(context).mutedForeground,
+              ),
             ),
             if (current && audio.seekable && duration != null && duration > 0)
               SizedBox(
                 width: 120,
-                child: Semantics(
+                child: BusyMarkRangeSlider(
                   label: localized.audioPosition,
-                  child: Slider(
-                    value: audio.position.clamp(0, duration),
-                    max: duration,
-                    onChanged: (value) => unawaited(audio.seek(owner, value)),
-                  ),
+                  compact: true,
+                  value: audio.position.clamp(0, duration),
+                  max: duration,
+                  formatValue: _time,
+                  onChanged: (value) => unawaited(audio.seek(owner, value)),
                 ),
               ),
             if (current) ...[
-              _audioButton(
+              _audioControl(
                 label: audio.mute ? localized.audioUnmute : localized.audioMute,
                 icon: audio.mute
                     ? BusyMarkGlyphs.mutedSpeaker
@@ -682,44 +694,42 @@ class BusyMarkAudioTransport extends StatelessWidget {
               ),
               SizedBox(
                 width: 86,
-                child: Semantics(
+                child: BusyMarkRangeSlider(
                   label: localized.audioVolume,
-                  child: Slider(
-                    value: audio.volume,
-                    onChanged: (value) =>
-                        unawaited(audio.configure(owner, level: value)),
-                  ),
+                  compact: true,
+                  value: audio.volume,
+                  onChanged: (value) =>
+                      unawaited(audio.configure(owner, level: value)),
                 ),
               ),
               if (!audio.streamed)
-                PopupMenuButton<double>(
-                  tooltip: localized.audioPlaybackRate,
-                  enabled: audio.seekable,
-                  onSelected: (value) => unawaited(
-                    audio.seek(owner, audio.position, speed: value),
-                  ),
-                  itemBuilder: (context) => [
-                    for (final value in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
-                      CheckedPopupMenuItem(
-                        value: value,
-                        checked: audio.rate == value,
-                        child: Text('$value×'),
-                      ),
-                  ],
-                  child: Semantics(
-                    label: localized.audioPlaybackRate,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text('${audio.rate}×'),
+                SizedBox(
+                  width: 88,
+                  child: BusyMarkPopupSelector<double>(
+                    value: audio.rate,
+                    label: '${audio.rate}×',
+                    tooltip: localized.audioPlaybackRate,
+                    enabled: audio.seekable,
+                    popupMinWidth: BusyMarkSizes.popupMenuMinWidth,
+                    onSelected: (value) => unawaited(
+                      audio.seek(owner, audio.position, speed: value),
                     ),
+                    options: [
+                      for (final value in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
+                        BusyMarkPopupSelectorOption(
+                          value: value,
+                          label: '$value×',
+                        ),
+                    ],
                   ),
                 ),
               if (!audio.streamed)
-                _audioButton(
+                _audioControl(
                   label: localized.audioLoop,
-                  isSelected: audio.loop,
-                  icon: BusyMarkGlyphs.repeatAudio,
-                  selectedIcon: BusyMarkGlyphs.repeatAudioOnce,
+                  selected: audio.loop,
+                  icon: audio.loop
+                      ? BusyMarkGlyphs.repeatAudioOnce
+                      : BusyMarkGlyphs.repeatAudio,
                   onPressed: () =>
                       unawaited(audio.configure(owner, looping: !audio.loop)),
                 ),
