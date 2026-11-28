@@ -56,6 +56,17 @@ class _InsertAudioDialogState extends State<InsertAudioDialog> {
     return BusyMarkDialogShell(
       title: l10n.insertAudio,
       maxWidth: BusyMarkSizes.dialogNarrow,
+      actions: [
+        BusyMarkDialogButton(
+          label: l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: l10n.insertAudio,
+          onPressed: _insertUrl,
+          suggested: true,
+        ),
+      ],
       children: [
         BusyMarkGroupedList(
           filled: true,
@@ -91,17 +102,6 @@ class _InsertAudioDialogState extends State<InsertAudioDialog> {
               onSubmitted: (_) => _insertUrl(),
             ),
           ],
-        ),
-      ],
-      actions: [
-        BusyMarkDialogButton(
-          label: l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: l10n.insertAudio,
-          onPressed: _insertUrl,
-          suggested: true,
         ),
       ],
     );
@@ -155,6 +155,22 @@ class _AudioPropertiesDialogState extends State<AudioPropertiesDialog> {
     return BusyMarkDialogShell(
       title: l10n.audioProperties,
       maxWidth: BusyMarkSizes.dialogWide,
+      actions: [
+        BusyMarkDialogButton(
+          label: l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: l10n.audioRemove,
+          onPressed: () => Navigator.pop(context, ''),
+          destructive: true,
+        ),
+        BusyMarkDialogButton(
+          label: l10n.apply,
+          onPressed: _apply,
+          suggested: true,
+        ),
+      ],
       children: [
         BusyMarkGroupedList(
           filled: true,
@@ -180,22 +196,6 @@ class _AudioPropertiesDialogState extends State<AudioPropertiesDialog> {
               ),
             ],
           ],
-        ),
-      ],
-      actions: [
-        BusyMarkDialogButton(
-          label: l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: l10n.audioRemove,
-          onPressed: () => Navigator.pop(context, ''),
-          destructive: true,
-        ),
-        BusyMarkDialogButton(
-          label: l10n.apply,
-          onPressed: _apply,
-          suggested: true,
         ),
       ],
     );

@@ -385,9 +385,6 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
               builder: (context) => BusyMarkDialogShell(
                 title: context.l10n.audioRemotePermission,
                 maxWidth: BusyMarkSizes.dialogNarrow,
-                children: [
-                  SelectableText(uri.origin, textDirection: TextDirection.ltr),
-                ],
                 actions: [
                   BusyMarkDialogButton(
                     label: context.l10n.cancel,
@@ -398,6 +395,9 @@ class _DocumentAudioScopeState extends State<DocumentAudioScope> {
                     onPressed: () => Navigator.pop(context, true),
                     suggested: true,
                   ),
+                ],
+                children: [
+                  SelectableText(uri.origin, textDirection: TextDirection.ltr),
                 ],
               ),
             );

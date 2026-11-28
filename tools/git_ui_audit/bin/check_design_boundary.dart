@@ -7,8 +7,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../lib/material_boundary.dart';
+import 'package:busymark_git_ui_audit/material_boundary.dart';
 
 // Only real application mounting/lifetime sites may consume Git UI contracts.
 // These are exact symbol identities, not a prefix/name exemption for wrappers.
