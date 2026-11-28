@@ -18,17 +18,22 @@ enum WritersideHtmlAttributeQuote { doubleQuoted, singleQuoted, unquoted }
 
 String escapeAuthoredHtmlAttribute(
   String value,
-  WritersideHtmlAttributeQuote quote,
-) {
+  WritersideHtmlAttributeQuote quote, {
+  bool preserveUnquoted = false,
+}) {
   final escaped = HtmlEscape(
     quote == WritersideHtmlAttributeQuote.singleQuoted
         ? HtmlEscapeMode.sqAttribute
         : const HtmlEscapeMode(escapeLtGt: true, escapeQuot: true),
   ).convert(value);
-  return quote == WritersideHtmlAttributeQuote.unquoted &&
-          RegExp(r'''[\s"'`=<>]''').hasMatch(value)
-      ? '"$escaped"'
-      : escaped;
+  if (quote != WritersideHtmlAttributeQuote.unquoted) return escaped;
+  if (preserveUnquoted) {
+    return escaped.replaceAllMapped(
+      RegExp(r"[\s'`=]"),
+      (match) => '&#${match[0]!.codeUnitAt(0)};',
+    );
+  }
+  return RegExp(r'''[\s"'`=<>]''').hasMatch(value) ? '"$escaped"' : escaped;
 }
 
 class WritersideAuthoredHtmlAnchorReference {

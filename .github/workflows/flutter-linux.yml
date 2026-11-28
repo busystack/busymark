@@ -252,6 +252,9 @@ jobs:
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
 
+      - name: Verify native audio EOF retains the ended state
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: bash tools/test_audio_player_host.sh
 
       - name: Exercise demand-driven native visualization lifecycle
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}

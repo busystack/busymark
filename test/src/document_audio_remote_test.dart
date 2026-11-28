@@ -211,6 +211,97 @@ void main() {
       await tester.pump();
     },
   );
+
+  testWidgets('Play reopens a completed non-seekable HTTPS response', (
+    tester,
+  ) async {
+    final requests = <Uri>[];
+    final clients = <_Client>[];
+    final opened = <int>[];
+    final finished = <int>[];
+    final closed = <int>[];
+    final received = <int, BytesBuilder>{};
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(_channel, (call) async {
+      final arguments = call.arguments as Map;
+      final id = arguments['id'] as int;
+      switch (call.method) {
+        case 'openStream':
+          opened.add(id);
+          received[id] = BytesBuilder();
+          return true;
+        case 'streamBytes':
+          final audio = received[id]!;
+          audio.add(arguments['bytes'] as Uint8List);
+          if (audio.length == _wave.length) await state(id, 'playing');
+          return 1;
+        case 'finishStream':
+          finished.add(id);
+          return 1;
+        case 'close':
+          closed.add(id);
+          return true;
+        case 'position':
+          return {'position': 0.1, 'duration': -1.0, 'seekable': false};
+        default:
+          fail('Unexpected native command: ${call.method}');
+      }
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(_channel, null));
+
+    const url = 'https://example.invalid/live?recording=1';
+    await selectAudio(tester, '<audio controls src="$url"></audio>');
+    await HttpOverrides.runZoned(
+      () async {
+        await tester.tap(find.bySemanticsLabel('Play'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(requests, isEmpty);
+        await tester.tap(find.text('Allow in this document'));
+        await pumpUntil(
+          tester,
+          () => finished.length == 1,
+          operation: 'finish the first response',
+        );
+        expect(opened, [finished.single]);
+        expect(find.bySemanticsLabel('Pause'), findsOneWidget);
+        await state(finished.single, 'ended');
+        await tester.pump();
+
+        await tester.tap(find.bySemanticsLabel('Play'));
+        await pumpUntil(
+          tester,
+          () => finished.length == 2,
+          operation: 'finish the fresh response after one Play',
+        );
+        expect(opened, finished);
+        expect(opened.toSet(), hasLength(2));
+        expect(closed, [opened.first]);
+        expect(requests, [Uri.parse(url), Uri.parse(url)]);
+        expect(find.bySemanticsLabel('Pause'), findsOneWidget);
+        expect(find.bySemanticsLabel('Retry'), findsNothing);
+        for (final payload in received.values) {
+          expect(payload.takeBytes(), _wave);
+        }
+
+        await state(finished.last, 'ended');
+        await settleDocumentAudioForWindowClose();
+        expect(closed, opened);
+        expect(clients.every((client) => client.closed), isTrue);
+      },
+      createHttpClient: (_) {
+        final client = _Client((uri) {
+          requests.add(uri.removeFragment());
+          return _Response(Stream.value(_wave), -1);
+        });
+        clients.add(client);
+        return client;
+      },
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 }
 
 class _Client implements HttpClient {

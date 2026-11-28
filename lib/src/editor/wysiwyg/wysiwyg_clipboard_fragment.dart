@@ -340,8 +340,13 @@ class WysiwygClipboardFragment {
         ? null
         : rebaseAuthoredAudio(
             value,
-            (source) =>
-                destination(source, media: true, rawHtml: true, audio: true) ??
+            (source, {required media}) =>
+                destination(
+                  source,
+                  media: media,
+                  rawHtml: true,
+                  audio: media,
+                ) ??
                 source,
           );
 
@@ -404,7 +409,7 @@ class WysiwygClipboardFragment {
                     '"' => WritersideHtmlAttributeQuote.doubleQuoted,
                     "'" => WritersideHtmlAttributeQuote.singleQuoted,
                     _ => WritersideHtmlAttributeQuote.unquoted,
-                  }),
+                  }, preserveUnquoted: parent != null || tag == 'audio'),
                 ));
               }
               continue;

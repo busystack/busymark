@@ -105,8 +105,9 @@ gboolean on_message(GstBus*, GstMessage* message, gpointer data) {
             gst_element_set_state(host->player, GST_STATE_NULL);
             notify(host, "failed");
           }
-        } else if (current == GST_STATE_PAUSED && !host->playing &&
+        } else if (current == GST_STATE_PAUSED && !host->playing && !host->ended &&
                    pending == GST_STATE_VOID_PENDING) {
+          // The PAUSED transition requested at EOS must leave the UI ended.
           notify(host, "paused");
         }
       }

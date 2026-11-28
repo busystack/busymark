@@ -397,7 +397,9 @@ class MarkdownAstAdapter {
         final html = _rawHtmlAdapter.parseRawHtmlBlock(segment.text, nextId);
         if (html != null) {
           final audio = html.safe ? html.blocks.singleOrNull : null;
-          if (audio?.kind == BusyBlockKind.audio) {
+          if (audio?.kind == BusyBlockKind.audio &&
+              authoredAudioOpening.matchAsPrefix(segment.text.trimLeft()) !=
+                  null) {
             blocks.add(
               audio!.copyWith(
                 rawSource: segment.text.trimRight(),
@@ -483,7 +485,8 @@ class MarkdownAstAdapter {
       final html = _rawHtmlAdapter.parseRawHtmlBlock(rawText, nextId);
       if (html != null) {
         final audio = html.safe ? html.blocks.singleOrNull : null;
-        if (audio?.kind == BusyBlockKind.audio) {
+        if (audio?.kind == BusyBlockKind.audio &&
+            authoredAudioOpening.matchAsPrefix(rawText.trimLeft()) != null) {
           return [audio!.copyWith(rawSource: rawText, preserveRaw: true)];
         }
         return [

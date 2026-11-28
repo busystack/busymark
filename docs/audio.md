@@ -65,8 +65,9 @@ document visit. BusyMark checks redirects against the approved origin. Finite
 responses with a declared size download before playback, up to 100 MiB in two
 minutes. A direct audio response without a declared size can play as it
 arrives, up to 100 MiB or 30 minutes. An idle stream times out after 15 seconds.
-Use **Cancel** to close a live stream. Live streams have no seek, playback rate
-or loop controls. Playlist protocols
+Use **Cancel** to close a live stream. After a stream ends, **Play** opens a new
+request from the beginning. Live streams have no seek, playback rate or loop
+controls. Playlist protocols
 such as HLS and DASH are unsupported. Switching documents pauses the active
 recording.
 Starting a different recording or narration transfers the in-app transport.

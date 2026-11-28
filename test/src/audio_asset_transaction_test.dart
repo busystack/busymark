@@ -120,16 +120,18 @@ void main() {
   );
 
   test(
-    'rich clipboard rebases all audio sources and retains exact surrounding markup',
+    'rich clipboard rebases audio and transcript links with separate ownership',
     () {
       const markup = """<audio controls='false' data-extra='preserved'>
 <source src=first.ogg type='audio/ogg'>
 <source src="second.wav?take=8&amp;sample=1">
 <span data-extra='Keep'><a href=second.wav#download>Recording</a></span>
-<a href="transcript.md">Transcript</a></audio>""";
+<a data-extra='original' href="../transcripts/R%C3%A9cit%20(1).md?view=full&amp;lang=fr#part%202">Transcript</a>
+<a href=transcript.vtt?lang&#61;fr#cue>Captions</a>
+<a href='https://example.invalid/transcript?x=1&amp;y=2#part'>Online</a></audio>""";
       final parsed = const MarkdownParser()
           .parse(
-            filePath: '/docs/source.md',
+            filePath: '/docs/session/source.md',
             source: markup,
             validateLocalReferences: false,
           )
@@ -156,10 +158,13 @@ void main() {
         'second.wav#download',
       });
       final pasted = decoded.rebase(
-        '/docs/target.md',
+        '/docs/published/voice/target.md',
         mediaDestinations: {
           'first.ogg': 'audio/rebased.ogg',
           'second.wav?take=8&sample=1': 'audio/other.wav',
+          // Only owned audio may consume a media destination.
+          '../transcripts/R%C3%A9cit%20(1).md?view=full&lang=fr#part%202':
+              'audio/not-a-recording.wav',
         },
       );
       final result = pasted.documentBlocks.single.audio!;
@@ -168,9 +173,90 @@ void main() {
         markup
             .replaceFirst('first.ogg', 'audio/rebased.ogg')
             .replaceFirst('second.wav?', 'audio/other.wav?')
-            .replaceFirst('second.wav#download', 'audio/other.wav#download'),
+            .replaceFirst('second.wav#download', 'audio/other.wav#download')
+            .replaceFirst('../transcripts/', '../../transcripts/')
+            .replaceFirst(
+              'href=transcript.vtt',
+              'href=../../session/transcript.vtt',
+            ),
       );
       expect(result.controls, isTrue);
     },
   );
+
+  test('inline audio keeps its transcript link when copied across folders', () {
+    const markup =
+        "Before <audio controls src='clip.wav'>"
+        "<a href='text/transcript.md?v=2#first'><em>Read</em></a>"
+        '</audio> after.';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/docs/session/source.md',
+          source: markup,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final block = document.blocks.single;
+    final clipboard = WysiwygClipboardFragment(
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: const [],
+          completeBlock: block,
+        ),
+      ],
+      mode: document.mode,
+      sourcePath: document.filePath,
+    );
+    expect(clipboard.audioReferences, {'clip.wav'});
+    final pasted = clipboard.rebase(
+      '/docs/published/target.md',
+      mediaDestinations: {'clip.wav': 'audio/copied.wav'},
+    );
+    expect(
+      pasted.markdown.trim(),
+      markup
+          .replaceFirst('clip.wav', 'audio/copied.wav')
+          .replaceFirst('text/transcript.md', '../session/text/transcript.md'),
+    );
+  });
+
+  test('rebases authored transcript links inside an HTML container', () {
+    const markup = """<div data-extra='keep'>
+<audio controls src='clip.wav'><a href=notes.vtt?v&#61;3#cue>Read</a></audio>
+</div>""";
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/docs/session/source.md',
+          source: markup,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final block = document.blocks.single;
+    expect(block.kind, BusyBlockKind.htmlBlock);
+    final clipboard = WysiwygClipboardFragment(
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: const [],
+          completeBlock: block,
+        ),
+      ],
+      mode: document.mode,
+      sourcePath: document.filePath,
+    );
+    expect(clipboard.audioReferences, {'clip.wav'});
+    final pasted = clipboard.rebase(
+      '/docs/published/target.md',
+      mediaDestinations: {'clip.wav': 'audio/copied.wav'},
+    );
+    expect(
+      pasted.markdown.trim(),
+      markup
+          .replaceFirst('clip.wav', 'audio/copied.wav')
+          .replaceFirst('notes.vtt', '../session/notes.vtt'),
+    );
+  });
 }

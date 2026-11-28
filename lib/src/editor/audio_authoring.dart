@@ -72,39 +72,41 @@ Iterable<String> authoredAudioClipboardReferences(BusyAudio audio) sync* {
   final element = _parseAuthoredAudioElement(audio.rawSource);
   if (element == null) return;
   for (final link in element.querySelectorAll('a[href]')) {
-    final href = _audioFallbackReference(link, audio);
-    if (href != null) yield href;
+    final href = sanitizeHtmlAttributes('a', link.attributes)?['href'];
+    if (href != null && audio.ownsFallbackReference(href)) yield href;
   }
-}
-
-String? _audioFallbackReference(dom.Element link, BusyAudio audio) {
-  final href = sanitizeHtmlAttributes('a', link.attributes)?['href'];
-  return href != null && audio.ownsFallbackReference(href) ? href : null;
 }
 
 BusyAudio rebaseAuthoredAudio(
   BusyAudio audio,
-  String Function(String source) rebase,
+  String Function(String reference, {required bool media}) rebase,
 ) {
   final element = _parseAuthoredAudioElement(audio.rawSource);
   if (element == null) return audio;
   final positioned = BusyAudio.fromHtml(element);
-  final edits = <({String destination, int start, int end})>[
+  final edits = <({String destination, bool media, int start, int end})>[
     for (final source in positioned.authoredSources)
       if (source.sourceSpan case final span?)
         (
           destination: source.destination,
+          media: true,
           start: span.startOffset,
           end: span.endOffset,
         ),
     for (final link in element.querySelectorAll('a[href]'))
-      if (_audioFallbackReference(link, positioned) case final href?)
+      if (sanitizeHtmlAttributes('a', link.attributes)?['href']
+          case final href?)
         if (link.attributeValueSpans?['href'] case final span?)
-          (destination: href, start: span.start.offset, end: span.end.offset),
+          (
+            destination: href,
+            media: positioned.ownsFallbackReference(href),
+            start: span.start.offset,
+            end: span.end.offset,
+          ),
   ]..sort((a, b) => b.start.compareTo(a.start));
   var rewritten = audio.rawSource;
   for (final source in edits) {
-    final changed = rebase(source.destination);
+    final changed = rebase(source.destination, media: source.media);
     if (changed == source.destination) continue;
     final offset = source.start;
     final quote = offset > 0 ? rewritten[offset - 1] : '';
@@ -112,7 +114,7 @@ BusyAudio rebaseAuthoredAudio(
       '"' => WritersideHtmlAttributeQuote.doubleQuoted,
       "'" => WritersideHtmlAttributeQuote.singleQuoted,
       _ => WritersideHtmlAttributeQuote.unquoted,
-    });
+    }, preserveUnquoted: true);
     rewritten = rewritten.replaceRange(offset, source.end, encoded);
   }
   return parseAuthoredAudio(rewritten) ?? audio;
