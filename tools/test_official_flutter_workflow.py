@@ -537,28 +537,38 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         resources = next(s for s in steps if s.get('id') == 'spelling-resources')
         self.assertLess(steps.index(resources), steps.index(corpus))
         self.assertNotIn('continue-on-error', corpus)
-        for scenario in ['ready', 'failed-test', 'missing-dictionaries']:
+        browser = 'test/src/html_export_options_test.dart'
+        other_files = ['test/src/nested/file with a space_test.dart', 'test/top_test.dart']
+        for scenario in ['ready', 'failed-browser', 'failed-test',
+                         'missing-browser', 'missing-dictionaries']:
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as temp:
                 root = Path(temp)
                 spelling = root / shlex.split(resources['run'])[-1]
                 spelling.mkdir(parents=True)
                 if scenario != 'missing-dictionaries':
                     (spelling / 'dictionaries.json').write_text('{}')
+                for relative in [browser, *other_files, 'test/src/support.dart']:
+                    path = root / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    if relative != browser or scenario != 'missing-browser':
+                        path.touch()
                 binary = root / 'bin'
                 binary.mkdir()
                 flutter = binary / 'flutter'
-                flutter.write_text('''#!/usr/bin/python3
+                flutter.write_text(r'''#!/usr/bin/python3
 import json, os, sys
 from pathlib import Path
 display = os.environ['DISPLAY']
 number = display.removeprefix(':').split('.')[0]
-Path(os.environ['CONTROLLED_CALLS']).write_text(json.dumps({
-    'argv': sys.argv[1:], 'display': display,
-    'nativeDisplay': os.environ.get('BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY'),
-    'spellingRoot': os.environ.get('BUSYMARK_TEST_SPELLING_ROOT'),
-    'liveXSocket': Path('/tmp/.X11-unix/X' + number).is_socket(),
-}))
-raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
+with Path(os.environ['CONTROLLED_CALLS']).open('a') as calls:
+    calls.write(json.dumps({
+        'argv': sys.argv[1:], 'display': display,
+        'nativeDisplay': os.environ.get('BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY'),
+        'spellingRoot': os.environ.get('BUSYMARK_TEST_SPELLING_ROOT'),
+        'liveXSocket': Path('/tmp/.X11-unix/X' + number).is_socket(),
+    }) + '\n')
+variable = 'CONTROLLED_BROWSER_EXIT' if len(sys.argv) == 4 else 'CONTROLLED_FLUTTER_EXIT'
+raise SystemExit(int(os.environ[variable]))
 ''')
                 flutter.chmod(0o700)
                 calls = root / 'calls.json'
@@ -570,20 +580,24 @@ raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
                          'PATH': str(binary) + ':' + os.environ['PATH'],
                          'DISPLAY': ':inherited-display-must-not-be-used',
                          'CONTROLLED_CALLS': str(calls),
+                         'CONTROLLED_BROWSER_EXIT': '72' if scenario == 'failed-browser' else '0',
                          'CONTROLLED_FLUTTER_EXIT': '73' if scenario == 'failed-test' else '0'},
                     capture_output=True, text=True, timeout=20)
-                if scenario == 'missing-dictionaries':
+                if scenario in ['missing-browser', 'missing-dictionaries']:
                     self.assertNotEqual(result.returncode, 0)
                     self.assertFalse(calls.exists())
                     continue
-                self.assertEqual(result.returncode, 73 if scenario == 'failed-test' else 0,
+                self.assertEqual(result.returncode, {'failed-browser': 72, 'failed-test': 73}.get(scenario, 0),
                                  result.stdout + result.stderr)
-                observed = json.loads(calls.read_text())
-                self.assertEqual(observed['argv'], ['test', '--concurrency=2'])
-                self.assertEqual(observed['nativeDisplay'], observed['display'])
-                self.assertNotEqual(observed['display'], ':inherited-display-must-not-be-used')
-                self.assertTrue(observed['liveXSocket'])
-                self.assertEqual(observed['spellingRoot'], str(spelling))
+                first, remaining = map(json.loads, calls.read_text().splitlines())
+                self.assertEqual(first['argv'], ['test', '--concurrency=2', browser])
+                self.assertEqual(remaining['argv'][:2], ['test', '--concurrency=2'])
+                self.assertCountEqual(remaining['argv'][2:], other_files)
+                for observed in [first, remaining]:
+                    self.assertEqual(observed['nativeDisplay'], observed['display'])
+                    self.assertNotEqual(observed['display'], ':inherited-display-must-not-be-used')
+                    self.assertTrue(observed['liveXSocket'])
+                    self.assertEqual(observed['spellingRoot'], str(spelling))
 
     def test_ordinary_standalone_checks_share_one_shipping_build(self):
         self._automatic_product_jobs()

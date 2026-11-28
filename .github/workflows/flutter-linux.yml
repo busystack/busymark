@@ -407,7 +407,22 @@ jobs:
           xvfb-run -a -s '-screen 0 1600x1100x24' \
             bash -euo pipefail <<'TESTS'
           export BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY="$DISPLAY"
-          exec flutter test --concurrency=2
+          # Start Chromium before the other widget suites compete for the
+          # runner. Every discovered test file still runs in exactly one batch.
+          browser_test=test/src/html_export_options_test.dart
+          test -f "$browser_test"
+          shopt -s globstar nullglob dotglob
+          remaining=()
+          for file in test/**/*_test.dart; do
+            if [[ -f "$file" && "$file" != "$browser_test" ]]; then
+              remaining+=("$file")
+            fi
+          done
+          test "${#remaining[@]}" -gt 0
+          browser_status=0
+          flutter test --concurrency=2 "$browser_test" || browser_status=$?
+          flutter test --concurrency=2 "${remaining[@]}"
+          exit "$browser_status"
           TESTS
 
       - name: Preserve compiled visualization report
