@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 
 import '../ai/ai_http_transport.dart';
 import '../ai/ai_models.dart';
+import '../ai/ai_secret_store.dart';
 import 'elevenlabs_speech_provider.dart';
 import 'gemini_speech_provider.dart';
 import 'local_speech_provider.dart';
@@ -86,10 +87,16 @@ class SpeechService {
         token,
         timeoutMessage: 'The secure credential service did not respond.',
       );
-      if (value == null || value.contains(RegExp(r'[\x00-\x1f\x7f]'))) {
-        throw const AiException(
-          AiFailureCode.invalidConfiguration,
+      if (value == null) {
+        throw const AiCredentialException(
+          AiCredentialIssue.missingKey,
           'Save a valid provider key in Settings before requesting speech.',
+        );
+      }
+      if (value.contains(RegExp(r'[\x00-\x1f\x7f]'))) {
+        throw const AiCredentialException(
+          AiCredentialIssue.invalidKey,
+          'Enter a valid speech API key.',
         );
       }
       return value;

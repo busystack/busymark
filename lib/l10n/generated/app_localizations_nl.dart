@@ -9274,6 +9274,18 @@ class AppLocalizationsNl extends AppLocalizations {
       'De sleutel is uit de beveiligde opslag verwijderd.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark kreeg geen toegang tot de beveiligde service voor aanmeldgegevens.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Voer een geldige API-sleutel voor spraaksynthese in.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Sla een geldige API-sleutel van de provider op in de spraakinstellingen voordat je spraaksynthese aanvraagt.';
+
+  @override
   String get speechScope => 'Voorleesbereik';
 
   @override

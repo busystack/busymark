@@ -9287,6 +9287,18 @@ class AppLocalizationsEs extends AppLocalizations {
       'La clave se eliminó del almacenamiento seguro.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark no pudo acceder al servicio seguro de credenciales.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Introduce una clave de API válida para la síntesis de voz.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Guarda una clave de API válida del proveedor en los ajustes de voz antes de solicitar la síntesis.';
+
+  @override
   String get speechScope => 'Alcance de la lectura';
 
   @override

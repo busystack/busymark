@@ -9196,6 +9196,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get speechKeyDeleted => 'Anahtar güvenli depodan kaldırıldı.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark güvenli kimlik bilgisi hizmetine erişemedi.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Konuşma sentezi için geçerli bir API anahtarı girin.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Konuşma sentezi istemeden önce konuşma ayarlarında sağlayıcının geçerli bir API anahtarını kaydedin.';
+
+  @override
   String get speechScope => 'Okuma kapsamı';
 
   @override

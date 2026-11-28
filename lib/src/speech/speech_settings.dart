@@ -57,7 +57,10 @@ class _SpeechSettingsState extends ConsumerState<SpeechSettings> {
     } on AiException catch (error) {
       if (mounted && !token.isCancelled) {
         setState(() {
-          _status = (message: error.message, kind: BusyMarkStatusKind.error);
+          _status = (
+            message: speechErrorLabel(context, error),
+            kind: BusyMarkStatusKind.error,
+          );
         });
       }
     } on IOException {

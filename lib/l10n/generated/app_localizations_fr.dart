@@ -9297,6 +9297,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get speechKeyDeleted => 'La clé a été supprimée du coffre sécurisé.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark n’a pas pu accéder au service sécurisé de gestion des identifiants.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Saisissez une clé API de synthèse vocale valide.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Enregistrez une clé API valide du fournisseur dans les paramètres de synthèse vocale avant de demander une synthèse.';
+
+  @override
   String get speechScope => 'Portée de la lecture';
 
   @override

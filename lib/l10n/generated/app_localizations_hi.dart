@@ -9190,6 +9190,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get speechKeyDeleted => 'कुंजी सुरक्षित भंडार से हटा दी गई है।';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark सुरक्षित क्रेडेंशियल सेवा तक नहीं पहुँच सका।';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'वाणी सेवा की मान्य API कुंजी दर्ज करें।';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'वाणी संश्लेषण का अनुरोध करने से पहले वाणी सेटिंग में सेवा प्रदाता की मान्य API कुंजी सहेजें।';
+
+  @override
   String get speechScope => 'पढ़ने का दायरा';
 
   @override

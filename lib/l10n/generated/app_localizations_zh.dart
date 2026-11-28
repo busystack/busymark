@@ -8813,6 +8813,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speechKeyDeleted => '密钥已从安全存储中移除。';
 
   @override
+  String get speechCredentialStoreUnavailable => 'BusyMark 无法访问安全凭据服务。';
+
+  @override
+  String get speechCredentialKeyInvalid => '请输入有效的语音合成 API 密钥。';
+
+  @override
+  String get speechCredentialKeyRequired => '请求语音合成之前，请在语音设置中保存有效的服务商 API 密钥。';
+
+  @override
   String get speechScope => '朗读范围';
 
   @override
@@ -17829,6 +17838,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get speechKeyDeleted => '密钥已从安全存储中移除。';
+
+  @override
+  String get speechCredentialStoreUnavailable => 'BusyMark 无法访问安全凭据服务。';
+
+  @override
+  String get speechCredentialKeyInvalid => '请输入有效的语音合成 API 密钥。';
+
+  @override
+  String get speechCredentialKeyRequired => '请求语音合成之前，请在语音设置中保存有效的服务商 API 密钥。';
 
   @override
   String get speechScope => '朗读范围';

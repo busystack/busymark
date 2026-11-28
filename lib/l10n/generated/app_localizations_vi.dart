@@ -9186,6 +9186,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String get speechKeyDeleted => 'Đã xóa khóa khỏi kho lưu trữ bảo mật.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark không thể truy cập dịch vụ lưu trữ thông tin xác thực an toàn.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Nhập khóa API hợp lệ cho dịch vụ tổng hợp giọng nói.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Lưu khóa API hợp lệ của nhà cung cấp trong phần cài đặt giọng nói trước khi yêu cầu tổng hợp giọng nói.';
+
+  @override
   String get speechScope => 'Phạm vi đọc';
 
   @override

@@ -9205,6 +9205,18 @@ class AppLocalizationsNb extends AppLocalizations {
   String get speechKeyDeleted => 'Nøkkelen ble fjernet fra det sikre lageret.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark fikk ikke tilgang til den sikre tjenesten for påloggingsopplysninger.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Skriv inn en gyldig API-nøkkel for talesyntese.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Lagre en gyldig API-nøkkel fra leverandøren i taleinnstillingene før du ber om talesyntese.';
+
+  @override
   String get speechScope => 'Omfang for opplesing';
 
   @override

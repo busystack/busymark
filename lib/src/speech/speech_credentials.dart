@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-import '../ai/ai_models.dart';
+import '../ai/ai_models.dart' show AiProviderKind;
 import '../ai/ai_secret_store.dart';
 import 'speech_provider.dart';
 
@@ -30,8 +30,8 @@ class SpeechCredentials {
     final aiProvider = _aiProvider(backend);
     final value = secret.trim();
     if (value.isEmpty || value.contains(RegExp(r'[\x00-\x1f\x7f]'))) {
-      throw const AiException(
-        AiFailureCode.invalidConfiguration,
+      throw const AiCredentialException(
+        AiCredentialIssue.invalidKey,
         'Enter a valid speech API key.',
       );
     }
@@ -63,8 +63,8 @@ class SpeechCredentials {
         if (value != null) 'value': value,
       });
     } on Object {
-      throw const AiException(
-        AiFailureCode.invalidConfiguration,
+      throw const AiCredentialException(
+        AiCredentialIssue.storeUnavailable,
         'BusyMark could not access the secure credential service.',
       );
     }

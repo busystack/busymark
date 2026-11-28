@@ -9,11 +9,55 @@ import 'package:busymark/src/speech/narration.dart';
 import 'package:busymark/src/speech/speech.dart';
 import 'package:busymark/src/speech/speech_dialog.dart';
 import 'package:busymark/src/speech/speech_pcm.dart';
-import 'package:flutter/services.dart' show LogicalKeyboardKey;
+import 'package:flutter/services.dart'
+    show LogicalKeyboardKey, MethodChannel, PlatformException;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() {
+  testWidgets('Russian speech review localizes credential failures offline', (
+    tester,
+  ) async {
+    const channel = MethodChannel('com.busymark.app/secure_credentials');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    var vaultAvailable = false;
+    var requests = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'read');
+      if (!vaultAvailable) throw PlatformException(code: 'unavailable');
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    await _mount(
+      tester,
+      service: SpeechService(
+        client: () => MockClient((_) async {
+          requests++;
+          throw StateError('No request is allowed without a credential');
+        }),
+      ),
+      options: const SpeechOptions(backend: SpeechBackend.elevenLabs),
+      sample: true,
+      locale: const Locale('ru'),
+    );
+    final l10n = _l10n(tester);
+    for (final (available, label) in [
+      (false, l10n.speechCredentialStoreUnavailable),
+      (true, l10n.speechCredentialKeyRequired),
+    ]) {
+      vaultAvailable = available;
+      await tester.tap(_action(l10n.speechSample));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(BusyMarkStatusBox, label), findsOneWidget);
+    }
+    expect(requests, 0);
+    expect(
+      find.text('BusyMark could not access the secure credential service.'),
+      findsNothing,
+    );
+  });
+
   testWidgets('document scope, consent and result use the shared modal', (
     tester,
   ) async {

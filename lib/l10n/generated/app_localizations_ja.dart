@@ -8951,6 +8951,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get speechKeyDeleted => 'キーを安全な保管領域から削除しました。';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark は安全な認証情報サービスにアクセスできませんでした。';
+
+  @override
+  String get speechCredentialKeyInvalid => '音声合成用の有効な API キーを入力してください。';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      '音声合成をリクエストする前に、音声設定でサービスの有効な API キーを保存してください。';
+
+  @override
   String get speechScope => '読み上げの範囲';
 
   @override

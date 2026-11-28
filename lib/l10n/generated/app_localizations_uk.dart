@@ -9288,6 +9288,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get speechKeyDeleted => 'Ключ видалено із захищеного сховища.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark не вдалося отримати доступ до служби захищеного зберігання облікових даних.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Введіть дійсний ключ API для синтезу мовлення.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Перш ніж запитувати синтез мовлення, збережіть дійсний ключ API постачальника в налаштуваннях мовлення.';
+
+  @override
   String get speechScope => 'Обсяг озвучення';
 
   @override

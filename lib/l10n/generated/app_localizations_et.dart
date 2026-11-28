@@ -9200,6 +9200,18 @@ class AppLocalizationsEt extends AppLocalizations {
   String get speechKeyDeleted => 'Võti eemaldati turvalisest hoidlast.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark ei saanud turvalisele mandaaditeenusele juurde pääseda.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Sisesta kehtiv kõnesünteesi API-võti.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Enne kõnesünteesi taotlemist salvesta kõne seadetes teenusepakkuja kehtiv API-võti.';
+
+  @override
   String get speechScope => 'Ettelugemise ulatus';
 
   @override

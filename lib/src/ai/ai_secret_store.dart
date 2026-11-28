@@ -2,6 +2,15 @@ import 'package:flutter/services.dart';
 
 import 'ai_models.dart';
 
+enum AiCredentialIssue { invalidKey, missingKey, storeUnavailable }
+
+class AiCredentialException extends AiException {
+  const AiCredentialException(this.issue, String message)
+    : super(AiFailureCode.invalidConfiguration, message);
+
+  final AiCredentialIssue issue;
+}
+
 abstract interface class AiSecretStore {
   Future<String?> read(AiProviderKind provider);
   Future<void> write(AiProviderKind provider, String secret);
@@ -28,8 +37,8 @@ class FlutterAiSecretStore implements AiSecretStore {
       final normalized = value?.trim() ?? '';
       return normalized.isEmpty ? null : normalized;
     } on Object catch (error) {
-      throw AiException(
-        AiFailureCode.invalidConfiguration,
+      throw AiCredentialException(
+        AiCredentialIssue.storeUnavailable,
         _failureMessage('BusyMark could not access secure credentials.', error),
       );
     }
@@ -50,8 +59,8 @@ class FlutterAiSecretStore implements AiSecretStore {
         'value': normalized,
       });
     } on Object catch (error) {
-      throw AiException(
-        AiFailureCode.invalidConfiguration,
+      throw AiCredentialException(
+        AiCredentialIssue.storeUnavailable,
         _failureMessage('BusyMark could not save the API key securely.', error),
       );
     }
@@ -62,8 +71,8 @@ class FlutterAiSecretStore implements AiSecretStore {
     try {
       await _channel.invokeMethod<void>('delete', {'key': _key(provider)});
     } on Object catch (error) {
-      throw AiException(
-        AiFailureCode.invalidConfiguration,
+      throw AiCredentialException(
+        AiCredentialIssue.storeUnavailable,
         _failureMessage(
           'BusyMark could not remove the securely stored API key.',
           error,

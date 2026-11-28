@@ -9212,6 +9212,18 @@ class AppLocalizationsFa extends AppLocalizations {
   String get speechKeyDeleted => 'کلید از فضای ذخیره‌سازی امن حذف شد.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark نتوانست به سرویس امن اطلاعات ورود دسترسی پیدا کند.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'یک کلید API معتبر برای تولید گفتار وارد کنید.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'پیش از درخواست تولید گفتار، یک کلید API معتبر از ارائه‌دهنده را در تنظیمات گفتار ذخیره کنید.';
+
+  @override
   String get speechScope => 'محدودهٔ خواندن';
 
   @override

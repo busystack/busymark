@@ -9200,6 +9200,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechKeyDeleted => 'The key was removed from secure storage.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark could not access the secure credential service.';
+
+  @override
+  String get speechCredentialKeyInvalid => 'Enter a valid speech API key.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Save a valid provider API key in Speech Settings before requesting speech.';
+
+  @override
   String get speechScope => 'Narration scope';
 
   @override

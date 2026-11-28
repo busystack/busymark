@@ -9209,6 +9209,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get speechKeyDeleted => 'Kunci dihapus dari penyimpanan aman.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark tidak dapat mengakses layanan kredensial aman.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Masukkan kunci API yang valid untuk sintesis suara.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Simpan kunci API yang valid dari penyedia di pengaturan suara sebelum meminta sintesis suara.';
+
+  @override
   String get speechScope => 'Cakupan pembacaan';
 
   @override

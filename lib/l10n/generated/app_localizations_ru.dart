@@ -9281,6 +9281,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get speechKeyDeleted => 'Ключ удалён из защищённого хранилища.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark не удалось получить доступ к службе защищённого хранения учётных данных.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Введите действительный ключ API для синтеза речи.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Перед запросом синтеза речи сохраните действительный ключ API поставщика в настройках раздела «Речь».';
+
+  @override
   String get speechScope => 'Область озвучивания';
 
   @override

@@ -9271,6 +9271,18 @@ class AppLocalizationsPl extends AppLocalizations {
   String get speechKeyDeleted => 'Klucz usunięto z bezpiecznego magazynu.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark nie uzyskał dostępu do bezpiecznej usługi poświadczeń.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Wprowadź prawidłowy klucz API do syntezy mowy.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Przed wysłaniem żądania syntezy mowy zapisz prawidłowy klucz API dostawcy w ustawieniach mowy.';
+
+  @override
   String get speechScope => 'Zakres odczytu';
 
   @override

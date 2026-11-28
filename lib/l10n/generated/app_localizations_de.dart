@@ -9294,6 +9294,18 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Schlüssel wurde aus dem sicheren Speicher entfernt.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark konnte nicht auf den sicheren Anmeldedatendienst zugreifen.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Geben Sie einen gültigen API-Schlüssel für die Sprachausgabe ein.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Speichern Sie vor einer Anfrage einen gültigen API-Schlüssel des Anbieters in den Einstellungen für die Sprachausgabe.';
+
+  @override
   String get speechScope => 'Vorlesebereich';
 
   @override

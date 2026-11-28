@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../ai/ai_secret_store.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_glyphs.dart';
@@ -36,6 +37,16 @@ String speechBackendLabel(BuildContext context, SpeechBackend backend) =>
       SpeechBackend.elevenLabs => 'ElevenLabs',
       SpeechBackend.ollama => 'Ollama',
     };
+
+String speechErrorLabel(BuildContext context, AiException error) {
+  if (error is! AiCredentialException) return error.message;
+  final l10n = context.l10n;
+  return switch (error.issue) {
+    AiCredentialIssue.invalidKey => l10n.speechCredentialKeyInvalid,
+    AiCredentialIssue.missingKey => l10n.speechCredentialKeyRequired,
+    AiCredentialIssue.storeUnavailable => l10n.speechCredentialStoreUnavailable,
+  };
+}
 
 String _scopeLabel(BuildContext context, NarrationScope scope) =>
     switch (scope) {
@@ -232,7 +243,7 @@ class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
                   error.code == AiFailureCode.timeout ||
                   error.code == AiFailureCode.connection ||
                   error.code == AiFailureCode.malformedResponse);
-          if (!job.isCancelled) _error = error.message;
+          if (!job.isCancelled) _error = speechErrorLabel(context, error);
         });
       }
     } on IOException {
@@ -281,7 +292,7 @@ class _SpeechNarrationDialogState extends State<SpeechNarrationDialog> {
       }
       if (mounted) setState(() => _systemPaused = !_systemPaused);
     } on AiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) setState(() => _error = speechErrorLabel(context, error));
     }
   }
 

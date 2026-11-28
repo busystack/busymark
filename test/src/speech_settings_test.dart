@@ -337,6 +337,55 @@ cat sample.wav
   );
 
   testWidgets(
+    'Russian credential settings localize invalid input and vault errors',
+    (tester) async {
+      const channel = MethodChannel('com.busymark.app/secure_credentials');
+      final messenger = tester.binding.defaultBinaryMessenger;
+      var writes = 0;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        expect(call.method, 'write');
+        writes++;
+        throw PlatformException(code: 'unavailable');
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+      await _mount(
+        tester,
+        _MemoryStore({
+          'speech': {'backend': 'elevenLabs'},
+        }),
+        const SpeechSettings(),
+        locale: const Locale('ru'),
+      );
+      final l10n = _localizations(tester);
+      final storeKey = _action(l10n.speechStoreKey);
+      await tester.ensureVisible(storeKey);
+      await tester.tap(storeKey);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<BusyMarkStatusBox>(find.byType(BusyMarkStatusBox))
+            .message,
+        l10n.speechCredentialKeyInvalid,
+      );
+      expect(writes, 0);
+
+      final key = _entry(l10n.speechKey);
+      await tester.ensureVisible(key);
+      await tester.enterText(key, 'synthetic-speech-key');
+      await tester.ensureVisible(storeKey);
+      await tester.tap(storeKey);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<BusyMarkStatusBox>(find.byType(BusyMarkStatusBox))
+            .message,
+        l10n.speechCredentialStoreUnavailable,
+      );
+      expect(writes, 1);
+    },
+  );
+
+  testWidgets(
     'discovery progress, cancellation and failures use native controls',
     (tester) async {
       final discovery = _SettingsDiscoveryService();

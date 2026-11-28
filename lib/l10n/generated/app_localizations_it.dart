@@ -9275,6 +9275,18 @@ class AppLocalizationsIt extends AppLocalizations {
       'La chiave è stata rimossa dall\'archivio sicuro.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark non è riuscito ad accedere al servizio sicuro per le credenziali.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Inserisci una chiave API valida per la sintesi vocale.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Salva una chiave API valida del fornitore nelle impostazioni di sintesi vocale prima di richiedere una sintesi.';
+
+  @override
   String get speechScope => 'Ambito di lettura';
 
   @override

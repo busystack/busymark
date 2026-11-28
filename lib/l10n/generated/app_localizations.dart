@@ -15639,6 +15639,24 @@ abstract class AppLocalizations {
   /// **'The key was removed from secure storage.'**
   String get speechKeyDeleted;
 
+  /// No description provided for @speechCredentialStoreUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not access the secure credential service.'**
+  String get speechCredentialStoreUnavailable;
+
+  /// No description provided for @speechCredentialKeyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid speech API key.'**
+  String get speechCredentialKeyInvalid;
+
+  /// No description provided for @speechCredentialKeyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a valid provider API key in Speech Settings before requesting speech.'**
+  String get speechCredentialKeyRequired;
+
   /// No description provided for @speechScope.
   ///
   /// In en, this message translates to:

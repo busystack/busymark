@@ -9195,6 +9195,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get speechKeyDeleted => 'أُزيل المفتاح من التخزين الآمن.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'تعذّر على BusyMark الوصول إلى خدمة بيانات الاعتماد الآمنة.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'أدخل مفتاح API صالحًا لخدمة توليد الكلام.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'احفظ مفتاح API صالحًا للمزوّد في إعدادات النطق قبل طلب توليد الكلام.';
+
+  @override
   String get speechScope => 'نطاق القراءة';
 
   @override

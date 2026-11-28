@@ -8948,6 +8948,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get speechKeyDeleted => '보안 저장소에서 키를 삭제했습니다.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'BusyMark가 보안 자격 증명 서비스에 접근하지 못했습니다.';
+
+  @override
+  String get speechCredentialKeyInvalid => '유효한 음성 합성 API 키를 입력하세요.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      '음성 합성을 요청하기 전에 음성 설정에 유효한 제공업체 API 키를 저장하세요.';
+
+  @override
   String get speechScope => '읽기 범위';
 
   @override

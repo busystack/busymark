@@ -9284,6 +9284,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'A chave foi removida do armazenamento seguro.';
 
   @override
+  String get speechCredentialStoreUnavailable =>
+      'O BusyMark não conseguiu aceder ao serviço seguro de credenciais.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Introduza uma chave de API válida para a síntese de voz.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Guarde uma chave de API válida do fornecedor nas definições de voz antes de pedir a síntese.';
+
+  @override
   String get speechScope => 'Âmbito da narração';
 
   @override
@@ -18777,6 +18789,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get speechKeyDeleted =>
       'A chave foi removida do armazenamento seguro.';
+
+  @override
+  String get speechCredentialStoreUnavailable =>
+      'O BusyMark não conseguiu acessar o serviço seguro de credenciais.';
+
+  @override
+  String get speechCredentialKeyInvalid =>
+      'Insira uma chave de API válida para a síntese de voz.';
+
+  @override
+  String get speechCredentialKeyRequired =>
+      'Salve uma chave de API válida do fornecedor nas configurações de voz antes de solicitar a síntese.';
 
   @override
   String get speechScope => 'Escopo da narração';
