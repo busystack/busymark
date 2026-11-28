@@ -301,7 +301,7 @@ cat sample.wav
         final storeButton = find.bySemanticsLabel(l10n.speechStoreKey);
         expect(storeButton, findsOneWidget);
         final data = tester.getSemantics(storeButton).getSemanticsData();
-        expect(data.hasFlag(ui.SemanticsFlag.isButton), isTrue);
+        expect(data.flagsCollection.isButton, isTrue);
         expect(data.hasAction(ui.SemanticsAction.tap), isTrue);
         tester.semantics.tap(find.semantics.byLabel(l10n.speechStoreKey));
       } finally {
