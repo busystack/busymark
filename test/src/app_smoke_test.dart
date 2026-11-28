@@ -162,7 +162,13 @@ void main() {
         .close(restoreFocus: false);
     await tester.pumpAndSettle();
 
-    final play = _findExcludedTooltip(l10n.audioPlay);
+    Finder audioControl(String label) => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkCompactIconButton &&
+          widget.tooltip == label &&
+          widget.semanticLabel == label,
+    );
+    final play = audioControl(l10n.audioPlay);
     expect(play, findsOneWidget);
     expect(find.text(l10n.audioRemotePermission), findsNothing);
     await tester.tap(play);
@@ -173,7 +179,7 @@ void main() {
 
     await tester.tap(find.text(l10n.cancel).last);
     await tester.pumpAndSettle();
-    expect(_findExcludedTooltip(l10n.audioRetry), findsOneWidget);
+    expect(audioControl(l10n.audioRetry), findsOneWidget);
     expect(
       harness.container.read(workspaceControllerProvider).isDirty,
       isFalse,
