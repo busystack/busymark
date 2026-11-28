@@ -2,6 +2,7 @@
 """Verify a synthetic speech credential through strict Snap restarts and deletion."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import re
@@ -17,7 +18,6 @@ from speech_desktop_smoke import assert_offline
 
 
 CREDENTIAL = 'busymark.speech.provider-key.elevenlabs'
-NO_KEY = 'Save a valid provider key in Settings before requesting speech.'
 OFFLINE = 'BusyMark could not connect to ElevenLabs.'
 
 
@@ -97,6 +97,8 @@ def app_phase(args, root, document, service, phase, action):
 def exercise(args, root, document, keyring_directory, report):
     if service_owner() is not None:
         raise RuntimeError('Refusing to replace an existing Secret Service')
+    english_catalog = Path(__file__).resolve().parents[1] / 'lib/l10n/app_en.arb'
+    no_key = json.loads(english_catalog.read_text(encoding='utf-8'))['speechCredentialKeyRequired']
     token = secrets.token_hex(24)
     with tempfile.TemporaryDirectory(prefix='vault-', dir=root) as temporary:
         control = Path(temporary) / 'control'
@@ -122,7 +124,7 @@ def exercise(args, root, document, keyring_directory, report):
 
             def store(app):
                 app.accessibility('click', 'Discover engines and voices', role='button')
-                app.accessibility('wait', NO_KEY)
+                app.accessibility('wait', no_key)
                 enter_synthetic_key(app, token)
                 app.accessibility('click', 'Store key', role='button')
                 app.accessibility('wait', 'The key was saved in secure storage.')
@@ -146,7 +148,7 @@ def exercise(args, root, document, keyring_directory, report):
                 app.accessibility('click', 'Delete key', role='button')
                 app.accessibility('wait', 'The key was removed from secure storage.')
                 app.accessibility('click', 'Discover engines and voices', role='button')
-                app.accessibility('wait', NO_KEY)
+                app.accessibility('wait', no_key)
                 report['deleted'] = stored_secret(environment) is None
                 if not report['deleted']:
                     raise RuntimeError('The isolated vault still contains the credential')
