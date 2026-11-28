@@ -57,7 +57,7 @@ void main() {
   );
 
   testWidgets(
-    'Insert Audio uses grouped controls and restores document focus',
+    'Insert Audio wraps localized choices and errors and restores focus',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(520, 620));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -65,7 +65,7 @@ void main() {
       addTearDown(focus.dispose);
       final host = await mount(
         tester,
-        locale: const Locale('en'),
+        locale: const Locale('ru'),
         brightness: Brightness.light,
         scale: 1.45,
         focus: focus,
@@ -95,8 +95,11 @@ void main() {
         isTrue,
       );
       await tester.tap(action(labels.insertAudio));
-      await tester.pump();
-      expect(find.text(labels.audioInvalidUrl), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSize(find.text(labels.audioInvalidUrl)).height,
+        greaterThan(36),
+      );
       await tester.enterText(entry, 'https://example.org/sound.ogg?v=1#t=3');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();

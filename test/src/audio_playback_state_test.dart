@@ -5,7 +5,7 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/localization.dart';
 import 'package:busymark/src/editor/audio_playback.dart';
 import 'package:busymark/src/editor/document_audio_view.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -128,6 +128,13 @@ void main() {
       1.5,
       2.0,
     ]);
+    await playback.seek(owner, 1, speed: 1.25);
+    await tester.pump();
+    final rateLabel = tester.renderObject<RenderParagraph>(find.text('1.25×'));
+    expect(
+      rateLabel.size.width + 0.5,
+      greaterThanOrEqualTo(rateLabel.getMaxIntrinsicWidth(double.infinity)),
+    );
     final loop = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkCompactIconButton &&

@@ -2674,6 +2674,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.buttonMaxWidth = BusyMarkSizes.languageButtonMaxWidth,
     this.leading,
     this.fullWidth = false,
+    this.shrinkWrap = false,
     this.maxLabelLines = 1,
   });
 
@@ -2688,6 +2689,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final double buttonMaxWidth;
   final Widget? leading;
   final bool fullWidth;
+  final bool shrinkWrap;
   final int maxLabelLines;
   @override
   Widget build(BuildContext context) {
@@ -2699,6 +2701,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
         .clamp(popupMinWidth, popupMaxWidth);
     return Align(
       alignment: AlignmentDirectional.centerEnd,
+      widthFactor: shrinkWrap ? 1 : null,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: fullWidth ? double.infinity : buttonMaxWidth,
@@ -2811,6 +2814,7 @@ InputDecorationThemeData busyMarkGroupedInputDecorationTheme(
     disabledBorder: InputBorder.none,
     errorBorder: InputBorder.none,
     focusedErrorBorder: InputBorder.none,
+    errorMaxLines: 3,
     contentPadding: EdgeInsets.zero,
     labelStyle: labelStyle,
     floatingLabelStyle: labelStyle,

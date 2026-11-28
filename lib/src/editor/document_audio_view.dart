@@ -703,25 +703,23 @@ class BusyMarkAudioTransport extends StatelessWidget {
                 ),
               ),
               if (!audio.streamed)
-                SizedBox(
-                  width: 88,
-                  child: BusyMarkPopupSelector<double>(
-                    value: audio.rate,
-                    label: '${audio.rate}×',
-                    tooltip: localized.audioPlaybackRate,
-                    enabled: audio.seekable,
-                    popupMinWidth: BusyMarkSizes.popupMenuMinWidth,
-                    onSelected: (value) => unawaited(
-                      audio.seek(owner, audio.position, speed: value),
-                    ),
-                    options: [
-                      for (final value in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
-                        BusyMarkPopupSelectorOption(
-                          value: value,
-                          label: '$value×',
-                        ),
-                    ],
+                BusyMarkPopupSelector<double>(
+                  value: audio.rate,
+                  label: '${audio.rate}×',
+                  tooltip: localized.audioPlaybackRate,
+                  enabled: audio.seekable,
+                  shrinkWrap: true,
+                  popupMinWidth: BusyMarkSizes.popupMenuMinWidth,
+                  onSelected: (value) => unawaited(
+                    audio.seek(owner, audio.position, speed: value),
                   ),
+                  options: [
+                    for (final value in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
+                      BusyMarkPopupSelectorOption(
+                        value: value,
+                        label: '$value×',
+                      ),
+                  ],
                 ),
               if (!audio.streamed)
                 _audioControl(
