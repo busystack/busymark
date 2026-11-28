@@ -427,6 +427,11 @@ void main() {
     expect(nativeMenu, contains('gtk_menu_popup_at_rect('));
     expect(nativeMenu, contains('rect_window, &window_anchor'));
     expect(nativeMenu, contains('data->trigger_event)'));
+    expect(
+      nativeMenu,
+      contains('gtk_widget_get_preferred_width(session->menu'),
+    );
+    expect(nativeMenu, contains('gdk_window_get_width(rect_window)'));
     expect(nativeMenu, contains('GDK_GRAVITY_SOUTH_WEST'));
     expect(nativeMenu, contains('GDK_GRAVITY_NORTH_WEST'));
     expect(nativeMenu, contains('GDK_ANCHOR_FLIP_Y'));

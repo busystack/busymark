@@ -1165,6 +1165,22 @@ static void show_native_menu(NativeMenuHandlerData* data,
 
   const gboolean open_above = preferred_position == GTK_POS_TOP;
   const gboolean rtl = direction == GTK_TEXT_DIR_RTL;
+  gint menu_width = 0;
+  gtk_widget_get_preferred_width(session->menu, nullptr, &menu_width);
+  const gint64 window_width = gdk_window_get_width(rect_window);
+  const gint64 left_space =
+      static_cast<gint64>(window_anchor.x) + window_anchor.width;
+  const gint64 right_space = window_width - window_anchor.x;
+  const gint64 start_space = rtl ? left_space : right_space;
+  const gint64 end_space = rtl ? right_space : left_space;
+  // Give edge controls a usable preferred placement even on compositors
+  // that leave an overflowing popup at its initial anchor.
+  const bool align_end = start_space < menu_width && end_space > start_space;
+  // GTK mirrors the requested gravity when the menu is right-to-left.
+  const GdkGravity top_edge =
+      align_end ? GDK_GRAVITY_NORTH_EAST : GDK_GRAVITY_NORTH_WEST;
+  const GdkGravity bottom_edge =
+      align_end ? GDK_GRAVITY_SOUTH_EAST : GDK_GRAVITY_SOUTH_WEST;
   g_object_set(session->menu, "anchor-hints",
                GDK_ANCHOR_FLIP_Y | GDK_ANCHOR_SLIDE | GDK_ANCHOR_RESIZE,
                nullptr);
@@ -1177,10 +1193,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
   // directly instead of a hidden proxy whose GTK allocation is deferred.
   gtk_menu_popup_at_rect(
       GTK_MENU(session->menu), rect_window, &window_anchor,
-      open_above ? (rtl ? GDK_GRAVITY_NORTH_EAST : GDK_GRAVITY_NORTH_WEST)
-                 : (rtl ? GDK_GRAVITY_SOUTH_EAST : GDK_GRAVITY_SOUTH_WEST),
-      open_above ? (rtl ? GDK_GRAVITY_SOUTH_EAST : GDK_GRAVITY_SOUTH_WEST)
-                 : (rtl ? GDK_GRAVITY_NORTH_EAST : GDK_GRAVITY_NORTH_WEST),
+      open_above ? top_edge : bottom_edge, open_above ? bottom_edge : top_edge,
       data->trigger_event);
   if (gtk_widget_get_mapped(session->menu)) {
     // Pause repeats from FlView's held presses across the grab. For example,
